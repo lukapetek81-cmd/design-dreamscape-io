@@ -1,4 +1,3 @@
-
 import React from 'react';
 import CommodityCard from '@/components/CommodityCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -21,6 +20,14 @@ const GRAIN_COMMODITIES = [
   { name: 'Wheat', symbol: 'ZW', price: 542.25, change: -0.45 }
 ];
 
+const ENERGY_COMMODITIES = [
+  { name: 'WTI Crude', symbol: 'CL', price: 76.80, change: 1.25 },
+  { name: 'Brent Crude', symbol: 'BZ', price: 81.45, change: 0.95 },
+  { name: 'Natural Gas', symbol: 'NG', price: 2.85, change: -2.15 },
+  { name: 'RBOB Gasoline', symbol: 'RB', price: 2.15, change: -0.45 },
+  { name: 'Heating Oil', symbol: 'HO', price: 2.65, change: 0.35 }
+];
+
 const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50">
@@ -34,6 +41,7 @@ const Index = () => {
           <TabsList className="w-full mb-4">
             <TabsTrigger value="metals" className="flex-1">Metals</TabsTrigger>
             <TabsTrigger value="grains" className="flex-1">Grains</TabsTrigger>
+            <TabsTrigger value="energy" className="flex-1">Energy</TabsTrigger>
           </TabsList>
           
           <TabsContent value="metals" className="space-y-4">
@@ -50,6 +58,18 @@ const Index = () => {
           
           <TabsContent value="grains" className="space-y-4">
             {GRAIN_COMMODITIES.map((commodity) => (
+              <CommodityCard
+                key={commodity.symbol}
+                name={commodity.name}
+                symbol={commodity.symbol}
+                price={commodity.price}
+                change={commodity.change}
+              />
+            ))}
+          </TabsContent>
+
+          <TabsContent value="energy" className="space-y-4">
+            {ENERGY_COMMODITIES.map((commodity) => (
               <CommodityCard
                 key={commodity.symbol}
                 name={commodity.name}
