@@ -1,3 +1,4 @@
+
 import React from 'react';
 import CommodityCard from '@/components/CommodityCard';
 
@@ -7,12 +8,17 @@ const COMMODITIES = [
   { name: 'Crude Oil', symbol: 'CL', price: 76.80, change: 1.25 },
   { name: 'Natural Gas', symbol: 'NG', price: 2.85, change: -2.15 },
   { name: 'Copper', symbol: 'HG', price: 3.85, change: 0.75 },
-  
-  // New metal prices
-  { name: 'Gold', symbol: 'XAU', price: 2024.50, change: 0.45 },
-  { name: 'Silver', symbol: 'XAG', price: 23.75, change: -0.32 },
   { name: 'Platinum', symbol: 'XPT', price: 904.20, change: 0.78 },
-  { name: 'Palladium', symbol: 'XPD', price: 1243.50, change: -1.15 }
+  { name: 'Palladium', symbol: 'XPD', price: 1243.50, change: -1.15 },
+  
+  // Grain commodities
+  { name: 'Corn', symbol: 'ZC', price: 442.25, change: -0.85 },
+  { name: 'Oats', symbol: 'ZO', price: 372.50, change: 1.20 },
+  { name: 'Rough Rice', symbol: 'ZR', price: 15.85, change: 0.32 },
+  { name: 'Soybeans', symbol: 'ZS', price: 1198.75, change: -0.65 },
+  { name: 'Soybean Meal', symbol: 'ZM', price: 352.80, change: -1.15 },
+  { name: 'Soybean Oil', symbol: 'ZL', price: 47.85, change: 0.92 },
+  { name: 'Wheat', symbol: 'ZW', price: 542.25, change: -0.45 }
 ];
 
 const Index = () => {
