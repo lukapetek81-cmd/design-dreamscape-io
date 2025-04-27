@@ -1,17 +1,17 @@
 
 import React from 'react';
 import CommodityCard from '@/components/CommodityCard';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-const COMMODITIES = [
+const METAL_COMMODITIES = [
   { name: 'Gold', symbol: 'XAU', price: 2024.50, change: 0.45 },
   { name: 'Silver', symbol: 'XAG', price: 23.75, change: -0.32 },
-  { name: 'Crude Oil', symbol: 'CL', price: 76.80, change: 1.25 },
-  { name: 'Natural Gas', symbol: 'NG', price: 2.85, change: -2.15 },
   { name: 'Copper', symbol: 'HG', price: 3.85, change: 0.75 },
   { name: 'Platinum', symbol: 'XPT', price: 904.20, change: 0.78 },
-  { name: 'Palladium', symbol: 'XPD', price: 1243.50, change: -1.15 },
-  
-  // Grain commodities
+  { name: 'Palladium', symbol: 'XPD', price: 1243.50, change: -1.15 }
+];
+
+const GRAIN_COMMODITIES = [
   { name: 'Corn', symbol: 'ZC', price: 442.25, change: -0.85 },
   { name: 'Oats', symbol: 'ZO', price: 372.50, change: 1.20 },
   { name: 'Rough Rice', symbol: 'ZR', price: 15.85, change: 0.32 },
@@ -30,17 +30,36 @@ const Index = () => {
           <p className="text-sm text-gray-500">Live market data</p>
         </header>
         
-        <div className="space-y-4">
-          {COMMODITIES.map((commodity) => (
-            <CommodityCard
-              key={commodity.symbol}
-              name={commodity.name}
-              symbol={commodity.symbol}
-              price={commodity.price}
-              change={commodity.change}
-            />
-          ))}
-        </div>
+        <Tabs defaultValue="metals" className="w-full">
+          <TabsList className="w-full mb-4">
+            <TabsTrigger value="metals" className="flex-1">Metals</TabsTrigger>
+            <TabsTrigger value="grains" className="flex-1">Grains</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="metals" className="space-y-4">
+            {METAL_COMMODITIES.map((commodity) => (
+              <CommodityCard
+                key={commodity.symbol}
+                name={commodity.name}
+                symbol={commodity.symbol}
+                price={commodity.price}
+                change={commodity.change}
+              />
+            ))}
+          </TabsContent>
+          
+          <TabsContent value="grains" className="space-y-4">
+            {GRAIN_COMMODITIES.map((commodity) => (
+              <CommodityCard
+                key={commodity.symbol}
+                name={commodity.name}
+                symbol={commodity.symbol}
+                price={commodity.price}
+                change={commodity.change}
+              />
+            ))}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
