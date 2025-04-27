@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import CommodityChart from './CommodityChart';
+import CommodityNews from './CommodityNews';
 
 interface CommodityCardProps {
   name: string;
@@ -37,6 +37,7 @@ const CommodityCard = ({ name, price, change, symbol }: CommodityCardProps) => {
       </CollapsibleTrigger>
       <CollapsibleContent>
         <CommodityChart name={name} basePrice={price} />
+        <CommodityNews commodity={name} />
       </CollapsibleContent>
     </Collapsible>
   );
