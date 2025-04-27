@@ -1,4 +1,3 @@
-
 import React from 'react';
 import CommodityCard from '@/components/CommodityCard';
 
@@ -8,6 +7,12 @@ const COMMODITIES = [
   { name: 'Crude Oil', symbol: 'CL', price: 76.80, change: 1.25 },
   { name: 'Natural Gas', symbol: 'NG', price: 2.85, change: -2.15 },
   { name: 'Copper', symbol: 'HG', price: 3.85, change: 0.75 },
+  
+  // New metal prices
+  { name: 'Gold', symbol: 'XAU', price: 2024.50, change: 0.45 },
+  { name: 'Silver', symbol: 'XAG', price: 23.75, change: -0.32 },
+  { name: 'Platinum', symbol: 'XPT', price: 904.20, change: 0.78 },
+  { name: 'Palladium', symbol: 'XPD', price: 1243.50, change: -1.15 }
 ];
 
 const Index = () => {
@@ -15,7 +20,7 @@ const Index = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-md mx-auto p-4">
         <header className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Commodity Prices</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Commodity & Metal Prices</h1>
           <p className="text-sm text-gray-500">Live market data</p>
         </header>
         
