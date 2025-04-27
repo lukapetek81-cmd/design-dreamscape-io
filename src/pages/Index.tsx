@@ -1,7 +1,7 @@
-
 import React from 'react';
 import CommodityCard from '@/components/CommodityCard';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SidebarProvider } from "@/components/ui/sidebar";
+import CommoditySidebar from '@/components/CommoditySidebar';
 
 const METAL_COMMODITIES = [
   { name: 'Gold', symbol: 'XAU', price: 2024.50, change: 0.45 },
@@ -30,35 +30,33 @@ const ENERGY_COMMODITIES = [
 ];
 
 const Index = () => {
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-md mx-auto p-4">
-        <header className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Commodity & Metal Prices</h1>
-          <p className="text-sm text-gray-500">Live market data</p>
-        </header>
-        
-        <Tabs defaultValue="energy" className="w-full">
-          <TabsList className="w-full mb-4">
-            <TabsTrigger value="energy" className="flex-1">Energy</TabsTrigger>
-            <TabsTrigger value="metals" className="flex-1">Metals</TabsTrigger>
-            <TabsTrigger value="grains" className="flex-1">Grains</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="energy" className="space-y-4">
-            {ENERGY_COMMODITIES.map((commodity) => (
-              <CommodityCard
-                key={commodity.symbol}
-                name={commodity.name}
-                symbol={commodity.symbol}
-                price={commodity.price}
-                change={commodity.change}
-              />
-            ))}
-          </TabsContent>
+  const [activeGroup, setActiveGroup] = React.useState("energy");
 
-          <TabsContent value="metals" className="space-y-4">
-            {METAL_COMMODITIES.map((commodity) => (
+  const getCommodities = () => {
+    switch (activeGroup) {
+      case "metals":
+        return METAL_COMMODITIES;
+      case "grains":
+        return GRAIN_COMMODITIES;
+      default:
+        return ENERGY_COMMODITIES;
+    }
+  };
+
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <CommoditySidebar 
+          activeGroup={activeGroup} 
+          onGroupSelect={setActiveGroup}
+        />
+        <div className="flex-1 p-4 md:p-6">
+          <header className="mb-6">
+            <h1 className="text-2xl font-bold text-foreground">Commodity & Metal Prices</h1>
+            <p className="text-sm text-muted-foreground">Live market data</p>
+          </header>
+          <div className="space-y-4">
+            {getCommodities().map((commodity) => (
               <CommodityCard
                 key={commodity.symbol}
                 name={commodity.name}
@@ -67,22 +65,10 @@ const Index = () => {
                 change={commodity.change}
               />
             ))}
-          </TabsContent>
-          
-          <TabsContent value="grains" className="space-y-4">
-            {GRAIN_COMMODITIES.map((commodity) => (
-              <CommodityCard
-                key={commodity.symbol}
-                name={commodity.name}
-                symbol={commodity.symbol}
-                price={commodity.price}
-                change={commodity.change}
-              />
-            ))}
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
