@@ -1,3 +1,4 @@
+
 import React from 'react';
 import CommodityCard from '@/components/CommodityCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -37,13 +38,25 @@ const Index = () => {
           <p className="text-sm text-gray-500">Live market data</p>
         </header>
         
-        <Tabs defaultValue="metals" className="w-full">
+        <Tabs defaultValue="energy" className="w-full">
           <TabsList className="w-full mb-4">
+            <TabsTrigger value="energy" className="flex-1">Energy</TabsTrigger>
             <TabsTrigger value="metals" className="flex-1">Metals</TabsTrigger>
             <TabsTrigger value="grains" className="flex-1">Grains</TabsTrigger>
-            <TabsTrigger value="energy" className="flex-1">Energy</TabsTrigger>
           </TabsList>
           
+          <TabsContent value="energy" className="space-y-4">
+            {ENERGY_COMMODITIES.map((commodity) => (
+              <CommodityCard
+                key={commodity.symbol}
+                name={commodity.name}
+                symbol={commodity.symbol}
+                price={commodity.price}
+                change={commodity.change}
+              />
+            ))}
+          </TabsContent>
+
           <TabsContent value="metals" className="space-y-4">
             {METAL_COMMODITIES.map((commodity) => (
               <CommodityCard
@@ -58,18 +71,6 @@ const Index = () => {
           
           <TabsContent value="grains" className="space-y-4">
             {GRAIN_COMMODITIES.map((commodity) => (
-              <CommodityCard
-                key={commodity.symbol}
-                name={commodity.name}
-                symbol={commodity.symbol}
-                price={commodity.price}
-                change={commodity.change}
-              />
-            ))}
-          </TabsContent>
-
-          <TabsContent value="energy" className="space-y-4">
-            {ENERGY_COMMODITIES.map((commodity) => (
               <CommodityCard
                 key={commodity.symbol}
                 name={commodity.name}
