@@ -15,7 +15,12 @@ const config: CapacitorConfig = {
       keystoreAlias: null,
       keystorePassword: null,
       keystoreKeyPassword: null,
+      signingType: 'apksigner',
     },
+    compileSdkVersion: 34,
+    minSdkVersion: 22,
+    targetSdkVersion: 34,
+    javaVersion: '17'
   },
 };
 
