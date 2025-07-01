@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Zap, Coins, Wheat, TrendingUp, Activity, BarChart3, Beef, Coffee, Package } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
+import UpgradeBox from "./UpgradeBox";
 
 interface CommodityCounts {
   energy: number;
@@ -174,6 +175,11 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
             </div>
           </SidebarGroupContent>
         </SidebarGroup>
+        
+        {/* Upgrade Box - positioned after stats section */}
+        <div className="mt-6 sm:mt-8">
+          <UpgradeBox />
+        </div>
       </SidebarContent>
     </Sidebar>
   );

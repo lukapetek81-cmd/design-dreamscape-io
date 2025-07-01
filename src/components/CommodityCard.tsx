@@ -6,6 +6,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import CommodityChart from './CommodityChart';
 import CommodityNews from './CommodityNews';
 import { useCommodityPrice } from '@/hooks/useCommodityData';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CommodityCardProps {
   name: string;
@@ -18,6 +19,10 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
   const [isOpen, setIsOpen] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
   const { price: apiPrice, loading: priceLoading } = useCommodityPrice(name);
+  const { profile } = useAuth();
+  
+  // Check if user has premium subscription
+  const isPremium = profile?.subscription_active && profile?.subscription_tier === 'premium';
   
   // Use API data if available, otherwise fallback to props
   const currentPrice = apiPrice?.price ?? fallbackPrice;
@@ -129,8 +134,12 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                       <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground number-display transition-colors group-hover:text-primary">
                         ${currentPrice.toFixed(2)}
                       </p>
-                      <span className="text-2xs sm:text-xs text-muted-foreground font-medium bg-muted/50 px-1.5 py-0.5 rounded">
-                        15min delayed
+                      <span className={`text-2xs sm:text-xs font-medium px-1.5 py-0.5 rounded ${
+                        isPremium 
+                          ? 'bg-green-100 dark:bg-green-950/20 text-green-700 dark:text-green-400' 
+                          : 'bg-muted/50 text-muted-foreground'
+                      }`}>
+                        {isPremium ? 'Real-time' : '15min delayed'}
                       </span>
                     </div>
                   </div>

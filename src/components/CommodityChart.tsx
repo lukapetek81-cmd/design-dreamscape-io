@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Calendar, Loader, AlertCircle } from 'lucide-react';
 import { useCommodityHistoricalData, useCommodityPrice } from '@/hooks/useCommodityData';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TimeframeOption {
   label: string;
@@ -26,7 +27,10 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
   const [selectedTimeframe, setSelectedTimeframe] = React.useState<string>('1m');
   const { data, loading, error } = useCommodityHistoricalData(name, selectedTimeframe);
   const { price: currentPrice } = useCommodityPrice(name);
+  const { profile } = useAuth();
 
+  const isPremium = profile?.subscription_active && profile?.subscription_tier === 'premium';
+  
   // Use current price from API if available, otherwise use base price
   const displayPrice = currentPrice?.price || basePrice;
   const isPositiveTrend = data.length > 1 && data[data.length - 1].price > data[0].price;
@@ -274,8 +278,12 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
             <p className="text-lg sm:text-xl font-bold text-foreground number-display">
               ${displayPrice.toFixed(2)}
             </p>
-            <span className="text-2xs text-muted-foreground font-medium bg-muted/50 px-1.5 py-0.5 rounded">
-              15min delayed
+            <span className={`text-2xs font-medium px-1.5 py-0.5 rounded ${
+              isPremium 
+                ? 'bg-green-100 dark:bg-green-950/20 text-green-700 dark:text-green-400' 
+                : 'bg-muted/50 text-muted-foreground'
+            }`}>
+              {isPremium ? 'Real-time' : '15min delayed'}
             </span>
           </div>
           {currentPrice && (

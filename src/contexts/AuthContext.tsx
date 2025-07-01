@@ -63,6 +63,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const checkSubscriptionStatus = async (userId: string) => {
+    try {
+      // Check subscription status after login
+      const session = await supabase.auth.getSession();
+      if (session.data.session?.access_token) {
+        await supabase.functions.invoke('check-subscription', {
+          headers: {
+            Authorization: `Bearer ${session.data.session.access_token}`,
+          },
+        });
+        // Refresh profile after checking subscription
+        setTimeout(() => {
+          fetchProfile(userId);
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('Error checking subscription status:', error);
+    }
+  };
+
   const refreshProfile = async () => {
     if (user) {
       await fetchProfile(user.id);
@@ -77,9 +97,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Defer profile fetching to avoid blocking auth state changes
+          // Defer profile fetching and subscription check to avoid blocking auth state changes
           setTimeout(() => {
             fetchProfile(session.user.id);
+            // Check subscription status on login (with slight delay)
+            setTimeout(() => {
+              checkSubscriptionStatus(session.user.id);
+            }, 2000);
           }, 0);
         } else {
           setProfile(null);
