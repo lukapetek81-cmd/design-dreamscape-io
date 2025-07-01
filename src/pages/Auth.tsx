@@ -1,0 +1,299 @@
+import React, { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TrendingUp, Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Link } from 'react-router-dom';
+
+const Auth = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    fullName: '',
+    confirmPassword: ''
+  });
+
+  const { user, signIn, signUp, loading: authLoading } = useAuth();
+
+  // Redirect if already authenticated
+  if (user && !authLoading) {
+    return <Navigate to="/" replace />;
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.email || !formData.password) return;
+
+    setIsLoading(true);
+    const { error } = await signIn(formData.email, formData.password);
+    setIsLoading(false);
+
+    if (!error) {
+      // Navigation will happen automatically via the Navigate component above
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.email || !formData.password || !formData.fullName) return;
+
+    if (formData.password !== formData.confirmPassword) {
+      return;
+    }
+
+    setIsLoading(true);
+    const { error } = await signUp(formData.email, formData.password, formData.fullName);
+    setIsLoading(false);
+  };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/20 to-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/20 to-background p-4">
+      <div className="w-full max-w-md space-y-6">
+        {/* Header */}
+        <div className="text-center space-y-4">
+          <Link 
+            to="/" 
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-4"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Link>
+          
+          <div className="flex items-center justify-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-medium">
+              <TrendingUp className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gradient">Markets Hub</h1>
+              <p className="text-sm text-muted-foreground">Real-time commodity trading platform</p>
+            </div>
+          </div>
+        </div>
+
+        <Card className="p-6 bg-gradient-to-br from-card/80 to-muted/20 border border-border/50 shadow-soft">
+          <Tabs defaultValue="signin" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="signin">Sign In</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            </TabsList>
+
+            {/* Sign In Tab */}
+            <TabsContent value="signin" className="space-y-4">
+              <div className="text-center space-y-2">
+                <h2 className="text-xl font-semibold">Welcome back</h2>
+                <p className="text-sm text-muted-foreground">
+                  Sign in to access your commodity dashboard
+                </p>
+              </div>
+
+              <form onSubmit={handleSignIn} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signin-email">Email</Label>
+                  <Input
+                    id="signin-email"
+                    name="email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                    className="transition-all duration-200 focus:scale-[1.02]"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signin-password">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="signin-password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Your password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      required
+                      className="pr-10 transition-all duration-200 focus:scale-[1.02]"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full"
+                  disabled={isLoading || !formData.email || !formData.password}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    'Sign In'
+                  )}
+                </Button>
+              </form>
+            </TabsContent>
+
+            {/* Sign Up Tab */}
+            <TabsContent value="signup" className="space-y-4">
+              <div className="text-center space-y-2">
+                <h2 className="text-xl font-semibold">Create account</h2>
+                <p className="text-sm text-muted-foreground">
+                  Get started with your commodity trading journey
+                </p>
+              </div>
+
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-name">Full Name</Label>
+                  <Input
+                    id="signup-name"
+                    name="fullName"
+                    type="text"
+                    placeholder="John Doe"
+                    value={formData.fullName}
+                    onChange={handleInputChange}
+                    required
+                    className="transition-all duration-200 focus:scale-[1.02]"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email">Email</Label>
+                  <Input
+                    id="signup-email"
+                    name="email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                    className="transition-all duration-200 focus:scale-[1.02]"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="signup-password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Choose a strong password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      required
+                      minLength={6}
+                      className="pr-10 transition-all duration-200 focus:scale-[1.02]"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">Confirm Password</Label>
+                  <Input
+                    id="confirm-password"
+                    name="confirmPassword"
+                    type="password"
+                    placeholder="Confirm your password"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    required
+                    className="transition-all duration-200 focus:scale-[1.02]"
+                  />
+                  {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                    <p className="text-sm text-red-500">Passwords do not match</p>
+                  )}
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full"
+                  disabled={
+                    isLoading || 
+                    !formData.email || 
+                    !formData.password || 
+                    !formData.fullName ||
+                    !formData.confirmPassword ||
+                    formData.password !== formData.confirmPassword
+                  }
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating account...
+                    </>
+                  ) : (
+                    'Create Account'
+                  )}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+
+          <div className="mt-6 text-center">
+            <p className="text-xs text-muted-foreground">
+              By continuing, you agree to our terms of service and privacy policy.
+            </p>
+          </div>
+        </Card>
+
+        <div className="text-center">
+          <p className="text-sm text-muted-foreground">
+            Need help? Contact our support team for assistance.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Auth;

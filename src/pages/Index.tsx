@@ -1,18 +1,39 @@
 
 import React from 'react';
+import { Navigate } from 'react-router-dom';
 import CommodityCard from '@/components/CommodityCard';
+import UserProfile from '@/components/UserProfile';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import CommoditySidebar from '@/components/CommoditySidebar';
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { BarChart3, Activity, Menu, TrendingUp, Loader } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/contexts/AuthContext';
 import ApiSettings from '@/components/ApiSettings';
 import { useAvailableCommodities } from '@/hooks/useCommodityData';
 
 const Index = () => {
   const [activeGroup, setActiveGroup] = React.useState("energy");
   const isMobile = useIsMobile();
+  const { user, loading: authLoading } = useAuth();
   const { commodities, loading, error } = useAvailableCommodities();
+
+  // Redirect to auth if not logged in (after loading is complete)
+  if (!authLoading && !user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Show loading screen while auth is checking
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20">
+        <div className="text-center space-y-4">
+          <Loader className="w-8 h-8 animate-spin text-primary mx-auto" />
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   const getCommodities = () => {
     return commodities.filter(commodity => commodity.category === activeGroup);
@@ -113,6 +134,7 @@ const Index = () => {
                     {loading ? (isMobile ? 'Loading' : 'Loading Markets') : error ? 'Error' : (isMobile ? 'Live' : 'Live Market')}
                   </span>
                 </div>
+                <UserProfile />
               </div>
             </div>
           </header>
@@ -137,7 +159,7 @@ const Index = () => {
                       </span>
                       <span className="flex items-center gap-1">
                         <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                        Updated every 5min
+                        Updated every 15min
                       </span>
                     </div>
                   </div>
