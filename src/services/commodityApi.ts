@@ -440,13 +440,12 @@ export class CommodityApiService {
       
       console.log(`Fetching historical data for ${commodityName} (${symbol}) with timeframe ${timeframe}`);
       
-      // Use different FMP endpoints based on timeframe for better accuracy
       let endpoint = '';
       let dataLimit = this.getTimeframeDays(timeframe);
       
-      if (timeframe === '7d' || timeframe === '1m') {
-        // Use daily historical data for short timeframes
-        endpoint = `https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${apiKey}&timeseries=${dataLimit}`;
+      if (timeframe === '1d') {
+        // Use intraday data for 1-day timeframe to get 15-minute intervals
+        endpoint = `https://financialmodelingprep.com/api/v3/historical-chart/15min/${symbol}?apikey=${apiKey}`;
       } else {
         // Use daily historical data for longer timeframes
         endpoint = `https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${apiKey}&timeseries=${dataLimit}`;
@@ -467,20 +466,47 @@ export class CommodityApiService {
         throw new Error(data.error);
       }
       
-      if (!data.historical || !Array.isArray(data.historical)) {
-        console.warn('No historical data found, using fallback');
-        return this.generateMockHistoricalData(commodityName, timeframe);
-      }
+      let historicalData: any[] = [];
       
-      // Process the historical data
-      const historicalData = data.historical
-        .slice(0, dataLimit)
-        .map((item: any) => ({
-          date: item.date,
-          price: parseFloat(item.close) || parseFloat(item.price) || 0
-        }))
-        .reverse() // FMP returns newest first, we want oldest first for chart
-        .filter((item: any) => item.price > 0); // Filter out invalid prices
+      if (timeframe === '1d') {
+        // Process intraday data (array format)
+        if (!Array.isArray(data)) {
+          console.warn('No intraday data found, using fallback');
+          return this.generateMockHistoricalData(commodityName, timeframe);
+        }
+        
+        // Get last 24 hours of 15-minute data (96 intervals)
+        const now = new Date();
+        const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        
+        historicalData = data
+          .filter((item: any) => {
+            const itemDate = new Date(item.date);
+            return itemDate >= oneDayAgo;
+          })
+          .slice(0, 96) // Limit to 96 intervals (24 hours * 4 intervals per hour)
+          .map((item: any) => ({
+            date: item.date,
+            price: parseFloat(item.close) || parseFloat(item.price) || 0
+          }))
+          .reverse() // FMP returns newest first, we want oldest first for chart
+          .filter((item: any) => item.price > 0); // Filter out invalid prices
+      } else {
+        // Process daily data (object format with historical array)
+        if (!data.historical || !Array.isArray(data.historical)) {
+          console.warn('No historical data found, using fallback');
+          return this.generateMockHistoricalData(commodityName, timeframe);
+        }
+        
+        historicalData = data.historical
+          .slice(0, dataLimit)
+          .map((item: any) => ({
+            date: item.date,
+            price: parseFloat(item.close) || parseFloat(item.price) || 0
+          }))
+          .reverse() // FMP returns newest first, we want oldest first for chart
+          .filter((item: any) => item.price > 0); // Filter out invalid prices
+      }
       
       console.log(`Processed ${historicalData.length} data points for ${commodityName}`);
       
@@ -511,28 +537,52 @@ export class CommodityApiService {
 
   private generateMockHistoricalData(commodityName: string, timeframe: string): any[] {
     console.log(`Generating mock data for ${commodityName} with timeframe ${timeframe}`);
-    const days = this.getTimeframeDays(timeframe);
     const basePrice = this.getFallbackPrice(commodityName).price;
     const data = [];
     const now = new Date();
     
-    for (let i = days; i >= 0; i--) {
-      const date = new Date(now);
-      date.setDate(date.getDate() - i);
+    if (timeframe === '1d') {
+      // Generate 15-minute intervals for 24 hours (96 data points)
+      for (let i = 95; i >= 0; i--) {
+        const date = new Date(now);
+        date.setMinutes(date.getMinutes() - (i * 15));
+        
+        // Create more realistic intraday price movements
+        const trend = Math.sin(i / 20) * 0.01; // Small intraday trend
+        const randomChange = (Math.random() - 0.5) * 0.02; // Smaller random component for intraday
+        const volatility = 1 + trend + randomChange;
+        const price = basePrice * volatility;
+        
+        // Ensure price is positive and realistic
+        const finalPrice = Math.max(price, basePrice * 0.95);
+        
+        data.push({
+          date: date.toISOString(),
+          price: parseFloat(finalPrice.toFixed(2))
+        });
+      }
+    } else {
+      // Keep existing daily mock data generation for other timeframes
+      const days = this.getTimeframeDays(timeframe);
       
-      // Create more realistic price movements
-      const trend = Math.sin(i / 10) * 0.02; // Small trend component
-      const randomChange = (Math.random() - 0.5) * 0.05; // Random component
-      const volatility = 1 + trend + randomChange;
-      const price = basePrice * volatility;
-      
-      // Ensure price is positive and realistic
-      const finalPrice = Math.max(price, basePrice * 0.8);
-      
-      data.push({
-        date: date.toISOString().split('T')[0],
-        price: parseFloat(finalPrice.toFixed(2))
-      });
+      for (let i = days; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        
+        // Create more realistic price movements
+        const trend = Math.sin(i / 10) * 0.02; // Small trend component
+        const randomChange = (Math.random() - 0.5) * 0.05; // Random component
+        const volatility = 1 + trend + randomChange;
+        const price = basePrice * volatility;
+        
+        // Ensure price is positive and realistic
+        const finalPrice = Math.max(price, basePrice * 0.8);
+        
+        data.push({
+          date: date.toISOString().split('T')[0],
+          price: parseFloat(finalPrice.toFixed(2))
+        });
+      }
     }
     
     return data;
