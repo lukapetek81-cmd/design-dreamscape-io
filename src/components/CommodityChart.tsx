@@ -3,8 +3,8 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Calendar, Loader } from 'lucide-react';
-import { useCommodityHistoricalData } from '@/hooks/useCommodityData';
+import { TrendingUp, Calendar, Loader, AlertCircle } from 'lucide-react';
+import { useCommodityHistoricalData, useCommodityPrice } from '@/hooks/useCommodityData';
 
 interface TimeframeOption {
   label: string;
@@ -24,10 +24,24 @@ interface CommodityChartProps {
 }
 
 const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
-  const [selectedTimeframe, setSelectedTimeframe] = React.useState<string>('7d');
+  const [selectedTimeframe, setSelectedTimeframe] = React.useState<string>('1m');
   const { data, loading, error } = useCommodityHistoricalData(name, selectedTimeframe);
+  const { price: currentPrice } = useCommodityPrice(name);
 
+  // Use current price from API if available, otherwise use base price
+  const displayPrice = currentPrice?.price || basePrice;
   const isPositiveTrend = data.length > 1 && data[data.length - 1].price > data[0].price;
+
+  // Calculate price change
+  const priceChange = data.length > 1 ? 
+    ((data[data.length - 1].price - data[0].price) / data[0].price) * 100 : 0;
+
+  console.log(`Chart data for ${name}:`, { 
+    dataPoints: data.length, 
+    currentPrice: displayPrice, 
+    trend: isPositiveTrend ? 'positive' : 'negative',
+    priceChange: priceChange.toFixed(2) + '%'
+  });
 
   return (
     <Card className="p-4 sm:p-6 mt-4 sm:mt-6 bg-gradient-to-br from-card/80 to-muted/20 border border-border/50 shadow-soft hover:shadow-medium transition-all duration-300 animate-fade-in">
@@ -44,6 +58,13 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
             <h4 className="text-sm sm:text-base font-bold text-foreground">{name} Price History</h4>
             <p className="text-xs sm:text-sm text-muted-foreground font-medium">
               {selectedTimeframe.toUpperCase()} • {loading ? 'Loading...' : `${data.length} data points`}
+              {data.length > 0 && (
+                <span className={`ml-2 font-semibold ${
+                  isPositiveTrend ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                }`}>
+                  {priceChange > 0 ? '+' : ''}{priceChange.toFixed(2)}%
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -75,17 +96,19 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
         {loading && (
           <div className="flex items-center justify-center h-full">
             <Loader className="w-6 h-6 animate-spin text-primary" />
-            <span className="ml-2 text-sm text-muted-foreground">Loading chart data...</span>
+            <span className="ml-2 text-sm text-muted-foreground">Loading real market data...</span>
           </div>
         )}
 
         {error && (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
+              <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
               <p className="text-sm text-red-600 dark:text-red-400 mb-2">
-                Unable to load chart data
+                Unable to load real market data
               </p>
               <p className="text-xs text-muted-foreground">{error}</p>
+              <p className="text-xs text-muted-foreground mt-1">Using fallback data</p>
             </div>
           </div>
         )}
@@ -117,6 +140,7 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
                 axisLine={{ stroke: 'hsl(var(--border))' }}
                 tickLine={{ stroke: 'hsl(var(--border))' }}
                 tickFormatter={(value) => `$${value.toFixed(0)}`}
+                domain={['dataMin - 5', 'dataMax + 5']}
               />
               <Tooltip 
                 labelFormatter={(label) => new Date(label).toLocaleDateString('en-US', { 
@@ -168,10 +192,10 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
           }`}></div>
           <div>
             <p className="text-xs sm:text-sm font-semibold text-foreground">
-              {loading ? 'Loading...' : error ? 'Data Error' : isPositiveTrend ? 'Upward Trend' : 'Downward Trend'}
+              {loading ? 'Loading Real Data...' : error ? 'Using Fallback Data' : isPositiveTrend ? 'Upward Trend' : 'Downward Trend'}
             </p>
             <p className="text-2xs sm:text-xs text-muted-foreground">
-              {loading ? 'Fetching data...' : `Based on ${selectedTimeframe.toUpperCase()} data`}
+              {loading ? 'Fetching from FMP API...' : `Based on ${selectedTimeframe.toUpperCase()} data`}
             </p>
           </div>
         </div>
@@ -179,8 +203,15 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
         <div className="text-right">
           <p className="text-xs sm:text-sm font-semibold text-muted-foreground">Current Price</p>
           <p className="text-lg sm:text-xl font-bold text-foreground number-display">
-            ${data.length > 0 ? data[data.length - 1]?.price.toFixed(2) : basePrice.toFixed(2)}
+            ${displayPrice.toFixed(2)}
           </p>
+          {currentPrice && (
+            <p className={`text-xs font-medium ${
+              currentPrice.change >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+            }`}>
+              {currentPrice.change >= 0 ? '+' : ''}{currentPrice.change.toFixed(2)} ({currentPrice.changePercent.toFixed(2)}%)
+            </p>
+          )}
         </div>
       </div>
     </Card>

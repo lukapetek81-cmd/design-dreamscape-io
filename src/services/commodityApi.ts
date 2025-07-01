@@ -21,7 +21,7 @@ export interface NewsItem {
   urlToImage?: string;
 }
 
-// Commodity symbol mappings for Financial Modeling Prep API
+// Updated commodity symbol mappings for Financial Modeling Prep API
 const COMMODITY_SYMBOLS: Record<string, string> = {
   'Gold': 'GCUSD',
   'Silver': 'SIUSD', 
@@ -33,22 +33,22 @@ const COMMODITY_SYMBOLS: Record<string, string> = {
   'Natural Gas': 'NGUSD',
   'RBOB Gasoline': 'RBUSD',
   'Heating Oil': 'HOUSD',
-  'Corn': 'ZC=F',
-  'Wheat': 'ZW=F',
-  'Soybeans': 'ZS=F',
-  'Soybean Meal': 'ZM=F',
-  'Soybean Oil': 'ZL=F',
-  'Oats': 'ZO=F',
-  'Rough Rice': 'ZR=F',
-  'Feeder Cattle': 'FC=F',
-  'Live Cattle': 'LC=F',
-  'Lean Hogs': 'LH=F',
-  'Cocoa': 'CC=F',
-  'Coffee': 'KC=F',
-  'Cotton': 'CT=F',
-  'Lumber': 'LB=F',
-  'Orange Juice': 'OJ=F',
-  'Sugar': 'SB=F'
+  'Corn': 'CORNUSD',
+  'Wheat': 'WHEATUSD',
+  'Soybeans': 'SOYBNUSD',
+  'Soybean Meal': 'SOYBNUSD',
+  'Soybean Oil': 'SOYBNUSD',
+  'Oats': 'CORNUSD',
+  'Rough Rice': 'WHEATUSD',
+  'Feeder Cattle': 'LCUSD',
+  'Live Cattle': 'LCUSD',
+  'Lean Hogs': 'LHUSD',
+  'Cocoa': 'CCUSD',
+  'Coffee': 'KCUSD',
+  'Cotton': 'CTUSD',
+  'Lumber': 'LBUSD',
+  'Orange Juice': 'OJUSD',
+  'Sugar': 'SBUSD'
 };
 
 export class CommodityApiService {
@@ -438,28 +438,56 @@ export class CommodityApiService {
       const symbol = COMMODITY_SYMBOLS[commodityName] || commodityName;
       const apiKey = getFmpApiKey();
       
-      // Use Financial Modeling Prep for historical data
-      const response = await fetch(
-        `https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${apiKey}`
-      );
+      console.log(`Fetching historical data for ${commodityName} (${symbol}) with timeframe ${timeframe}`);
+      
+      // Use different FMP endpoints based on timeframe for better accuracy
+      let endpoint = '';
+      let dataLimit = this.getTimeframeDays(timeframe);
+      
+      if (timeframe === '7d' || timeframe === '1m') {
+        // Use daily historical data for short timeframes
+        endpoint = `https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${apiKey}&timeseries=${dataLimit}`;
+      } else {
+        // Use daily historical data for longer timeframes
+        endpoint = `https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${apiKey}&timeseries=${dataLimit}`;
+      }
+      
+      const response = await fetch(endpoint);
       
       if (!response.ok) {
+        console.error(`FMP API error: ${response.status} ${response.statusText}`);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
+      console.log(`FMP API response for ${commodityName}:`, data);
       
-      if (data.error || !data.historical) {
+      if (data.error) {
+        console.error('FMP API returned error:', data.error);
+        throw new Error(data.error);
+      }
+      
+      if (!data.historical || !Array.isArray(data.historical)) {
+        console.warn('No historical data found, using fallback');
         return this.generateMockHistoricalData(commodityName, timeframe);
       }
       
+      // Process the historical data
       const historicalData = data.historical
-        .slice(0, this.getTimeframeDays(timeframe))
+        .slice(0, dataLimit)
         .map((item: any) => ({
           date: item.date,
-          price: parseFloat(item.close) || 0
+          price: parseFloat(item.close) || parseFloat(item.price) || 0
         }))
-        .reverse();
+        .reverse() // FMP returns newest first, we want oldest first for chart
+        .filter((item: any) => item.price > 0); // Filter out invalid prices
+      
+      console.log(`Processed ${historicalData.length} data points for ${commodityName}`);
+      
+      if (historicalData.length === 0) {
+        console.warn('No valid historical data after processing, using fallback');
+        return this.generateMockHistoricalData(commodityName, timeframe);
+      }
       
       this.cache.set(cacheKey, { data: historicalData, timestamp: Date.now() });
       return historicalData;
@@ -481,6 +509,7 @@ export class CommodityApiService {
   }
 
   private generateMockHistoricalData(commodityName: string, timeframe: string): any[] {
+    console.log(`Generating mock data for ${commodityName} with timeframe ${timeframe}`);
     const days = this.getTimeframeDays(timeframe);
     const basePrice = this.getFallbackPrice(commodityName).price;
     const data = [];
@@ -489,12 +518,19 @@ export class CommodityApiService {
     for (let i = days; i >= 0; i--) {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
-      const randomChange = (Math.random() - 0.5) * 2;
-      const price = basePrice + (randomChange * (basePrice * 0.1));
+      
+      // Create more realistic price movements
+      const trend = Math.sin(i / 10) * 0.02; // Small trend component
+      const randomChange = (Math.random() - 0.5) * 0.05; // Random component
+      const volatility = 1 + trend + randomChange;
+      const price = basePrice * volatility;
+      
+      // Ensure price is positive and realistic
+      const finalPrice = Math.max(price, basePrice * 0.8);
       
       data.push({
         date: date.toISOString().split('T')[0],
-        price: parseFloat(price.toFixed(2))
+        price: parseFloat(finalPrice.toFixed(2))
       });
     }
     
