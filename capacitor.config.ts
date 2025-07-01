@@ -42,7 +42,14 @@ const config: CapacitorConfig = {
       'android.dependency.useJavaLibraryVariants': 'false',
       'android.dependencyResolutionAtConfigurationTime.disallow': 'false',
       'org.gradle.unsafe.configuration-cache': 'false',
-      'android.suppressUnsupportedOptionWarnings': 'true'
+      'android.suppressUnsupportedOptionWarnings': 'true',
+      // Force Java 17 compilation
+      'java.sourceCompatibility': '17',
+      'java.targetCompatibility': '17',
+      'kotlin.jvm.target.validation.mode': 'warning',
+      // Explicitly disable Java 21 features
+      'java.vendor': 'openjdk',
+      'java.version': '17'
     }
   }
 };
