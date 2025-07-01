@@ -1,4 +1,3 @@
-
 import React from 'react';
 import CommodityCard from '@/components/CommodityCard';
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -6,6 +5,7 @@ import CommoditySidebar from '@/components/CommoditySidebar';
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { TrendingUp, BarChart3, Activity, Menu } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import ApiSettings from '@/components/ApiSettings';
 
 const METAL_COMMODITIES = [
   { name: 'Gold', symbol: 'XAU', price: 2024.50, change: 0.45 },
@@ -125,7 +125,7 @@ const Index = () => {
                       </span>
                       <span className="flex items-center gap-1">
                         <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                        Updated every 15s
+                        Updated every 30s
                       </span>
                     </div>
                   </div>
@@ -176,7 +176,7 @@ const Index = () => {
                         Last Update
                       </p>
                       <p className="text-lg sm:text-xl lg:text-2xl font-bold text-emerald-900 dark:text-emerald-100 number-display">
-                        2s ago
+                        Just now
                       </p>
                     </div>
                     <Activity className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-emerald-500 shrink-0" />
@@ -204,6 +204,9 @@ const Index = () => {
             </div>
           </main>
         </div>
+        
+        {/* API Settings Component */}
+        <ApiSettings />
       </div>
     </SidebarProvider>
   );

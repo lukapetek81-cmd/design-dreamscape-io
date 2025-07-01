@@ -5,6 +5,7 @@ import { TrendingUp, TrendingDown, ChevronDown, ChevronUp, DollarSign, Activity 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import CommodityChart from './CommodityChart';
 import CommodityNews from './CommodityNews';
+import { useCommodityPrice } from '@/hooks/useCommodityData';
 
 interface CommodityCardProps {
   name: string;
@@ -13,10 +14,15 @@ interface CommodityCardProps {
   symbol: string;
 }
 
-const CommodityCard = ({ name, price, change, symbol }: CommodityCardProps) => {
+const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, symbol }: CommodityCardProps) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
-  const isPositive = change >= 0;
+  const { price: apiPrice, loading: priceLoading } = useCommodityPrice(name);
+  
+  // Use API data if available, otherwise fallback to props
+  const currentPrice = apiPrice?.price ?? fallbackPrice;
+  const currentChange = apiPrice?.changePercent ?? fallbackChange;
+  const isPositive = currentChange >= 0;
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -51,9 +57,17 @@ const CommodityCard = ({ name, price, change, symbol }: CommodityCardProps) => {
                       <h3 className="text-base sm:text-lg lg:text-xl font-bold text-foreground transition-colors tracking-tight truncate group-hover:text-primary">
                         {name}
                       </h3>
-                      <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-bold bg-muted/60 rounded-full text-muted-foreground uppercase tracking-wider">
-                        {symbol}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-bold bg-muted/60 rounded-full text-muted-foreground uppercase tracking-wider">
+                          {symbol}
+                        </span>
+                        {priceLoading && (
+                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+                        )}
+                        {apiPrice && (
+                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                        )}
+                      </div>
                     </div>
                   </div>
                   
@@ -76,7 +90,7 @@ const CommodityCard = ({ name, price, change, symbol }: CommodityCardProps) => {
                   <div className="space-y-1">
                     <p className="text-xs sm:text-sm font-medium text-muted-foreground">Current Price</p>
                     <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground number-display transition-colors group-hover:text-primary">
-                      ${price.toFixed(2)}
+                      ${currentPrice.toFixed(2)}
                     </p>
                   </div>
                   
@@ -86,7 +100,7 @@ const CommodityCard = ({ name, price, change, symbol }: CommodityCardProps) => {
                       : 'bg-gradient-to-r from-red-50 to-rose-50 text-red-700 border border-red-200 dark:from-red-950/20 dark:to-rose-950/20 dark:text-red-400 dark:border-red-800'
                   } ${isHovered ? 'scale-105' : ''}`}>
                     {isPositive ? <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" /> : <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4" />}
-                    <span className="number-display">{Math.abs(change).toFixed(2)}%</span>
+                    <span className="number-display">{Math.abs(currentChange).toFixed(2)}%</span>
                   </div>
                 </div>
               </div>
@@ -144,7 +158,7 @@ const CommodityCard = ({ name, price, change, symbol }: CommodityCardProps) => {
       
       <CollapsibleContent className="overflow-hidden">
         <div className="mt-3 sm:mt-4 space-y-4 sm:space-y-6 animate-accordion-down">
-          <CommodityChart name={name} basePrice={price} />
+          <CommodityChart name={name} basePrice={currentPrice} />
           <CommodityNews commodity={name} />
         </div>
       </CollapsibleContent>
