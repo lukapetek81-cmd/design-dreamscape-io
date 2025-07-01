@@ -122,12 +122,19 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                 
                 {/* Price and Change - Responsive Layout */}
                 <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:gap-4 lg:gap-6">
+                <div className="flex flex-col sm:flex-row sm:items-end sm:gap-3">
                   <div className="space-y-1">
                     <p className="text-xs sm:text-sm font-medium text-muted-foreground">Current Price</p>
-                    <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground number-display transition-colors group-hover:text-primary">
-                      ${currentPrice.toFixed(2)}
-                    </p>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground number-display transition-colors group-hover:text-primary">
+                        ${currentPrice.toFixed(2)}
+                      </p>
+                      <span className="text-2xs sm:text-xs text-muted-foreground font-medium bg-muted/50 px-1.5 py-0.5 rounded">
+                        15min delayed
+                      </span>
+                    </div>
                   </div>
+                </div>
                   
                   <div className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold shadow-soft transition-all duration-300 w-fit ${
                     isPositive 

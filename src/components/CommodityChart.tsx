@@ -270,9 +270,14 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
         
         <div className="text-right">
           <p className="text-xs sm:text-sm font-semibold text-muted-foreground">Current Price</p>
-          <p className="text-lg sm:text-xl font-bold text-foreground number-display">
-            ${displayPrice.toFixed(2)}
-          </p>
+          <div className="flex items-baseline justify-end gap-2">
+            <p className="text-lg sm:text-xl font-bold text-foreground number-display">
+              ${displayPrice.toFixed(2)}
+            </p>
+            <span className="text-2xs text-muted-foreground font-medium bg-muted/50 px-1.5 py-0.5 rounded">
+              15min delayed
+            </span>
+          </div>
           {currentPrice && (
             <p className={`text-xs font-medium ${
               currentPrice.change >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
