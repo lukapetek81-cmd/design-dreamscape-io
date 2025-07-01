@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card } from '@/components/ui/card';
-import { TrendingUp, TrendingDown, ChevronDown, ChevronUp, DollarSign, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown, ChevronDown, ChevronUp, DollarSign, Activity, BarChart3 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import CommodityChart from './CommodityChart';
 import CommodityNews from './CommodityNews';
@@ -113,8 +113,8 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                     <p className="text-sm lg:text-lg font-bold number-display">$2.4M</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-2xs lg:text-xs font-semibold text-muted-foreground uppercase tracking-wider">Market Cap</p>
-                    <p className="text-xs lg:text-sm font-semibold text-muted-foreground number-display">$45.2B</p>
+                    <p className="text-2xs lg:text-xs font-semibold text-muted-foreground uppercase tracking-wider">Volatility</p>
+                    <p className="text-xs lg:text-sm font-semibold text-muted-foreground number-display">±2.8%</p>
                   </div>
                 </div>
                 
@@ -140,8 +140,8 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                   <p className="text-sm font-bold number-display">$2.4M</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">Market Cap</p>
-                  <p className="text-sm font-bold number-display">$45.2B</p>
+                  <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">Volatility</p>
+                  <p className="text-sm font-bold number-display">±2.8%</p>
                 </div>
                 <div className="text-center">
                   <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">Status</p>
