@@ -75,28 +75,37 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    /* Enhanced mobile optimizations */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    /* Better touch handling */
+    touch-action: manipulation;
   }
   
+  /* Enhanced responsive typography */
   h1, h2, h3, h4, h5, h6 {
     @apply font-semibold tracking-tight;
+    text-wrap: balance;
   }
   
   h1 {
-    @apply text-3xl md:text-4xl lg:text-5xl;
+    @apply text-2xl sm:text-3xl md:text-4xl lg:text-5xl;
   }
   
   h2 {
-    @apply text-2xl md:text-3xl lg:text-4xl;
+    @apply text-xl sm:text-2xl md:text-3xl lg:text-4xl;
   }
   
   h3 {
-    @apply text-xl md:text-2xl;
+    @apply text-lg sm:text-xl md:text-2xl;
   }
   
   h4 {
-    @apply text-lg md:text-xl;
+    @apply text-base sm:text-lg md:text-xl;
   }
   
+  /* Enhanced utility classes */
   .text-gradient {
     @apply bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent;
   }
@@ -108,11 +117,51 @@
   .number-display {
     @apply font-mono tabular-nums;
   }
+  
+  /* Enhanced touch targets for mobile */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+  
+  /* Improved focus states for accessibility */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background;
+  }
+  
+  /* Enhanced scrollbar styling */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground)) hsl(var(--muted));
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 3px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground));
+    border-radius: 3px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--foreground));
+  }
 }
 
 @layer components {
+  /* Enhanced interactive components */
   .card-hover-effect {
-    @apply transition-all duration-300 hover:shadow-strong hover:-translate-y-1 hover:scale-[1.02];
+    @apply transition-all duration-300 hover:shadow-strong hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.98] active:translate-y-0;
+  }
+  
+  .button-press-effect {
+    @apply transition-all duration-150 active:scale-95 active:brightness-95;
   }
   
   .text-shine {
@@ -120,8 +169,114 @@
     animation: shine 3s ease-in-out infinite;
   }
   
+  /* Enhanced mobile-friendly components */
+  .mobile-card {
+    @apply rounded-xl p-4 bg-card shadow-soft border border-border/50 
+           hover:shadow-medium hover:scale-[1.02] 
+           active:scale-[0.98] active:shadow-soft
+           transition-all duration-200 touch-manipulation;
+  }
+  
+  .mobile-button {
+    @apply px-4 py-3 rounded-lg font-medium text-sm
+           min-h-[44px] min-w-[44px]
+           bg-primary text-primary-foreground
+           hover:bg-primary/90 hover:scale-105
+           active:scale-95 active:bg-primary/80
+           focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
+           transition-all duration-200 touch-manipulation;
+  }
+  
+  /* Loading states */
+  .skeleton {
+    @apply bg-muted animate-pulse rounded;
+  }
+  
+  .shimmer {
+    @apply relative overflow-hidden;
+  }
+  
+  .shimmer::after {
+    @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent;
+    content: '';
+    animation: shimmer 2s infinite;
+  }
+  
+  /* Enhanced responsive grid */
+  .responsive-grid {
+    @apply grid gap-3 sm:gap-4 lg:gap-6
+           grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+  
+  .responsive-flex {
+    @apply flex flex-col sm:flex-row gap-3 sm:gap-4 lg:gap-6;
+  }
+  
   @keyframes shine {
     0%, 100% { background-position: 200% 0%; }
     50% { background-position: -200% 0%; }
+  }
+  
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  
+  /* Enhanced print styles */
+  @media print {
+    .no-print {
+      @apply hidden;
+    }
+    
+    .print-friendly {
+      @apply bg-white text-black shadow-none;
+    }
+  }
+  
+  /* Enhanced reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .card-hover-effect {
+      @apply hover:transform-none hover:scale-100;
+    }
+    
+    .text-shine {
+      animation: none;
+    }
+    
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Enhanced mobile-specific styles */
+@media (max-width: 640px) {
+  .mobile-optimized {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  .mobile-full-width {
+    @apply w-full min-w-0;
+  }
+  
+  .mobile-spacing {
+    @apply px-4 py-3;
+  }
+}
+
+/* Enhanced tablet-specific styles */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .tablet-optimized {
+    @apply px-6 py-4;
+  }
+}
+
+/* Enhanced high-DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .crisp-edges {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
   }
 }
