@@ -42,23 +42,39 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
     priceChange: priceChange.toFixed(2) + '%'
   });
 
-  // Calculate dynamic y-axis domain based on timeframe
+  // Calculate dynamic y-axis domain to prevent flat-looking charts
   const getYAxisDomain = () => {
     if (data.length === 0) return ['auto', 'auto'];
     
     const prices = data.map(d => d.price);
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
+    const range = maxPrice - minPrice;
     
-    if (selectedTimeframe === '1d') {
-      // For daily charts, use a tighter range to show intraday movements
-      const range = maxPrice - minPrice;
-      const padding = Math.max(range * 0.1, 0.5); // 10% padding or minimum $0.50
-      return [minPrice - padding, maxPrice + padding];
-    } else {
-      // For longer timeframes, use the existing approach
-      return ['dataMin - 5', 'dataMax + 5'];
+    // If the price range is very small (flat chart), artificially expand it
+    if (range < maxPrice * 0.005) { // Less than 0.5% variation
+      const center = (minPrice + maxPrice) / 2;
+      const artificialRange = Math.max(center * 0.02, 1); // 2% of center price or $1 minimum
+      return [center - artificialRange, center + artificialRange];
     }
+    
+    // Different padding strategies based on timeframe and price level
+    let paddingPercentage;
+    if (selectedTimeframe === '1d') {
+      // For daily charts, use more aggressive padding to show intraday movements
+      paddingPercentage = Math.max(0.15, 0.5 / maxPrice); // 15% padding or $0.50 minimum
+    } else if (selectedTimeframe === '1m') {
+      paddingPercentage = 0.1; // 10% padding for monthly
+    } else {
+      paddingPercentage = 0.08; // 8% padding for longer timeframes
+    }
+    
+    const padding = Math.max(range * paddingPercentage, maxPrice * 0.01); // At least 1% of max price
+    
+    return [
+      Math.max(0, minPrice - padding), // Don't go below 0 for prices
+      maxPrice + padding
+    ];
   };
 
   // Format function for x-axis based on timeframe

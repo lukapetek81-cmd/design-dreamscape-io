@@ -92,15 +92,19 @@ const COMMODITY_SYMBOLS: Record<string, {
   '2-Year T-Note Futures': { fmp: 'ZTUSD', yahoo: 'ZT=F', alphaVantage: 'TNX' }
 };
 
-// Generate fallback historical data when APIs fail
+// Generate fallback historical data with realistic price movements
 const generateFallbackHistoricalData = (commodityName: string, timeframe: string, basePrice: number): any[] => {
   const dataPoints = timeframe === '1d' ? 24 : timeframe === '7d' ? 7 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180;
   const data: any[] = [];
   const now = new Date();
   
-  // Generate realistic price movements
+  // Generate realistic price movements with trending behavior
   let currentPrice = basePrice;
-  const volatility = basePrice * 0.02; // 2% volatility
+  const volatility = basePrice * (timeframe === '1d' ? 0.015 : timeframe === '1m' ? 0.03 : 0.05); // Higher volatility for longer timeframes
+  
+  // Add a subtle trend component (random walk with drift)
+  const trendDirection = Math.random() > 0.5 ? 1 : -1;
+  const trendStrength = 0.0005; // Very subtle trend per data point
   
   for (let i = dataPoints - 1; i >= 0; i--) {
     let date: Date;
@@ -113,14 +117,17 @@ const generateFallbackHistoricalData = (commodityName: string, timeframe: string
       date = new Date(now.getTime() - (i * 24 * 60 * 60 * 1000));
     }
     
-    // Add some realistic price movement
-    const change = (Math.random() - 0.5) * volatility;
-    currentPrice += change;
+    // Generate more realistic price movement with trend and mean reversion
+    const randomChange = (Math.random() - 0.5) * volatility * 2;
+    const trendComponent = trendDirection * trendStrength * basePrice * (dataPoints - i);
+    const meanReversionComponent = (basePrice - currentPrice) * 0.01; // 1% pull back to base price
     
-    // Ensure price doesn't go negative
-    if (currentPrice < basePrice * 0.5) {
-      currentPrice = basePrice * 0.5;
-    }
+    currentPrice += randomChange + trendComponent + meanReversionComponent;
+    
+    // Ensure price doesn't deviate too much from base price (within ±30%)
+    const minPrice = basePrice * 0.7;
+    const maxPrice = basePrice * 1.3;
+    currentPrice = Math.max(minPrice, Math.min(maxPrice, currentPrice));
     
     data.push({
       date: date.toISOString(),
