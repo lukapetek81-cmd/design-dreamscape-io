@@ -1,6 +1,5 @@
 // Commodity price API service
 const getFmpApiKey = () => localStorage.getItem('fmpApiKey') || 'demo';
-const getNewsApiKey = () => localStorage.getItem('newsApiKey') || 'demo';
 
 export interface CommodityPrice {
   symbol: string;
@@ -167,11 +166,10 @@ export class CommodityApiService {
     }
 
     try {
-      const apiKey = getNewsApiKey();
-      // Use NewsAPI for commodity-related news
-      const query = `${commodityName} commodity market price trading`;
+      const apiKey = getFmpApiKey();
+      // Use Financial Modeling Prep's general news endpoint
       const response = await fetch(
-        `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&pageSize=${limit}&apiKey=${apiKey}`
+        `https://financialmodelingprep.com/api/v3/general_news?page=0&apikey=${apiKey}`
       );
       
       if (!response.ok) {
@@ -180,20 +178,39 @@ export class CommodityApiService {
       
       const data = await response.json();
       
-      if (data.status === 'error') {
-        console.warn('NewsAPI error:', data.message);
+      if (data.error || !Array.isArray(data)) {
+        console.warn('Financial Modeling Prep news API error:', data);
         return this.getFallbackNews(commodityName);
       }
       
-      const news: NewsItem[] = data.articles?.map((article: any, index: number) => ({
-        id: `${commodityName}_${index}_${Date.now()}`,
+      // Filter news that might be related to the commodity and limit results
+      const filteredNews = data
+        .filter((article: any) => {
+          const title = (article.title || '').toLowerCase();
+          const text = (article.text || '').toLowerCase();
+          const commodityLower = commodityName.toLowerCase();
+          
+          // Check if the article mentions the commodity or related terms
+          return title.includes(commodityLower) || 
+                 text.includes(commodityLower) ||
+                 title.includes('commodity') ||
+                 title.includes('market') ||
+                 title.includes('trading');
+        })
+        .slice(0, limit);
+
+      // If no filtered results, take the first few general articles
+      const newsToProcess = filteredNews.length > 0 ? filteredNews : data.slice(0, limit);
+      
+      const news: NewsItem[] = newsToProcess.map((article: any, index: number) => ({
+        id: `fmp_${commodityName}_${index}_${Date.now()}`,
         title: article.title || `${commodityName} Market Update`,
-        description: article.description || `Latest news about ${commodityName} market`,
+        description: article.text ? article.text.substring(0, 200) + '...' : `Latest market news about ${commodityName}`,
         url: article.url || '#',
-        source: article.source?.name || 'Market News',
-        publishedAt: article.publishedAt || new Date().toISOString(),
-        urlToImage: article.urlToImage
-      })) || [];
+        source: article.site || 'Financial News',
+        publishedAt: article.publishedDate || new Date().toISOString(),
+        urlToImage: article.image
+      }));
       
       this.cache.set(cacheKey, { data: news, timestamp: Date.now() });
       return news;

@@ -9,18 +9,14 @@ import { toast } from 'sonner';
 
 const ApiSettings = () => {
   const [fmpApiKey, setFmpApiKey] = useState('');
-  const [newsApiKey, setNewsApiKey] = useState('');
   const [showFmp, setShowFmp] = useState(false);
-  const [showNewsApi, setShowNewsApi] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Load saved API keys from localStorage
+    // Load saved API key from localStorage
     const savedFmp = localStorage.getItem('fmpApiKey');
-    const savedNewsApi = localStorage.getItem('newsApiKey');
     
     if (savedFmp) setFmpApiKey(savedFmp);
-    if (savedNewsApi) setNewsApiKey(savedNewsApi);
   }, []);
 
   const handleSave = () => {
@@ -28,17 +24,14 @@ const ApiSettings = () => {
       if (fmpApiKey) {
         localStorage.setItem('fmpApiKey', fmpApiKey);
       }
-      if (newsApiKey) {
-        localStorage.setItem('newsApiKey', newsApiKey);
-      }
       
-      toast.success('API keys saved successfully!');
+      toast.success('API key saved successfully!');
       setIsOpen(false);
       
-      // Reload the page to use new API keys
+      // Reload the page to use new API key
       window.location.reload();
     } catch (error) {
-      toast.error('Failed to save API keys');
+      toast.error('Failed to save API key');
     }
   };
 
@@ -65,7 +58,7 @@ const ApiSettings = () => {
           </div>
           <div>
             <h3 className="text-lg font-bold text-foreground">API Settings</h3>
-            <p className="text-sm text-muted-foreground">Configure your API keys for real data</p>
+            <p className="text-sm text-muted-foreground">Configure your API key for real data</p>
           </div>
         </div>
 
@@ -103,46 +96,12 @@ const ApiSettings = () => {
               </a>
             </p>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="news-api">NewsAPI Key</Label>
-            <div className="relative">
-              <Input
-                id="news-api"
-                type={showNewsApi ? "text" : "password"}
-                value={newsApiKey}
-                onChange={(e) => setNewsApiKey(e.target.value)}
-                placeholder="Enter your NewsAPI key"
-                className="pr-10"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                onClick={() => setShowNewsApi(!showNewsApi)}
-              >
-                {showNewsApi ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Get your free API key from{' '}
-              <a
-                href="https://newsapi.org/register"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                NewsAPI
-              </a>
-            </p>
-          </div>
         </div>
 
         <div className="flex gap-3 mt-6">
           <Button onClick={handleSave} className="flex-1">
             <Save className="w-4 h-4 mr-2" />
-            Save Keys
+            Save Key
           </Button>
           <Button onClick={() => setIsOpen(false)} variant="outline">
             Cancel
@@ -151,8 +110,9 @@ const ApiSettings = () => {
 
         <div className="mt-4 p-3 bg-muted/50 rounded-lg">
           <p className="text-xs text-muted-foreground">
-            <strong>Note:</strong> API keys are stored locally in your browser. Without API keys, 
-            the app will use fallback data for demonstration purposes.
+            <strong>Note:</strong> The API key is stored locally in your browser. Financial Modeling Prep 
+            provides both price data and news data. Without an API key, the app will use fallback data 
+            for demonstration purposes.
           </p>
         </div>
       </Card>
