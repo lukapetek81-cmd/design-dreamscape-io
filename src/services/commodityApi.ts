@@ -151,8 +151,8 @@ const getBasePriceForCommodity = (commodityName: string): number => {
     'Palladium': 1800,
     
     // Energy
-    'Crude Oil': 75,
-    'Brent Crude Oil': 80,
+    'Crude Oil': 65,
+    'Brent Crude Oil': 67,
     'Natural Gas': 2.85,
     'Gasoline RBOB': 2.1,
     'Heating Oil': 2.3,
