@@ -24,6 +24,29 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
   const currentChange = apiPrice?.changePercent ?? fallbackChange;
   const isPositive = currentChange >= 0;
 
+  // Function to get the appropriate price units based on commodity name
+  const getPriceUnits = (commodityName: string) => {
+    const name = commodityName.toLowerCase();
+    
+    // Energy commodities
+    if (name.includes('crude') || name.includes('oil')) return 'USD/bbl';
+    if (name.includes('natural gas')) return 'USD/MMBtu';
+    if (name.includes('gasoline') || name.includes('heating oil')) return 'USD/gal';
+    
+    // Metals
+    if (name.includes('gold') || name.includes('silver') || name.includes('platinum') || name.includes('palladium')) return 'USD/oz';
+    if (name.includes('copper')) return 'USD/lb';
+    
+    // Grains and Agricultural
+    if (name.includes('corn') || name.includes('wheat') || name.includes('oats') || name.includes('soybeans')) return 'USD/bu';
+    if (name.includes('rice')) return 'USD/cwt';
+    if (name.includes('soybean meal')) return 'USD/ton';
+    if (name.includes('soybean oil')) return 'USD/lb';
+    
+    // Default fallback
+    return 'USD';
+  };
+
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <CollapsibleTrigger 
@@ -109,12 +132,8 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
               <div className="hidden sm:flex sm:items-center sm:gap-4 lg:gap-6">
                 <div className="text-right space-y-2 lg:space-y-3">
                   <div className="space-y-1">
-                    <p className="text-2xs lg:text-xs font-semibold text-muted-foreground uppercase tracking-wider">24h Volume</p>
-                    <p className="text-sm lg:text-lg font-bold number-display">$2.4M</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-2xs lg:text-xs font-semibold text-muted-foreground uppercase tracking-wider">Volatility</p>
-                    <p className="text-xs lg:text-sm font-semibold text-muted-foreground number-display">±2.8%</p>
+                    <p className="text-2xs lg:text-xs font-semibold text-muted-foreground uppercase tracking-wider">Price Units</p>
+                    <p className="text-xs lg:text-sm font-semibold text-muted-foreground number-display">{getPriceUnits(name)}</p>
                   </div>
                 </div>
                 
@@ -136,12 +155,8 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
             }`}>
               <div className="flex justify-around py-3 border-t border-border/50">
                 <div className="text-center">
-                  <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">Volume</p>
-                  <p className="text-sm font-bold number-display">$2.4M</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">Volatility</p>
-                  <p className="text-sm font-bold number-display">±2.8%</p>
+                  <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">Units</p>
+                  <p className="text-sm font-bold number-display">{getPriceUnits(name)}</p>
                 </div>
                 <div className="text-center">
                   <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">Status</p>
