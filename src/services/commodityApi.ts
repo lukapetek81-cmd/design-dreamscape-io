@@ -541,49 +541,79 @@ export class CommodityApiService {
     const data = [];
     const now = new Date();
     
+    // Create a seeded random function for consistent but varied data per commodity
+    const createSeededRandom = (seed: string) => {
+      let hash = 0;
+      for (let i = 0; i < seed.length; i++) {
+        const char = seed.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32bit integer
+      }
+      return () => {
+        hash = (hash * 9301 + 49297) % 233280;
+        return hash / 233280;
+      };
+    };
+    
+    const seededRandom = createSeededRandom(commodityName + timeframe);
+    
     if (timeframe === '1d') {
       // Generate 15-minute intervals for 24 hours (96 data points)
+      let currentPrice = basePrice;
+      
       for (let i = 95; i >= 0; i--) {
         const date = new Date(now);
         date.setMinutes(date.getMinutes() - (i * 15));
         
-        // Create more realistic intraday price movements
-        const trend = Math.sin(i / 20) * 0.01; // Small intraday trend
-        const randomChange = (Math.random() - 0.5) * 0.02; // Smaller random component for intraday
-        const volatility = 1 + trend + randomChange;
-        const price = basePrice * volatility;
+        // Create realistic intraday price movements with momentum
+        const momentum = (seededRandom() - 0.5) * 0.003; // Small momentum factor
+        const volatility = (seededRandom() - 0.5) * 0.008; // Random volatility
+        const meanReversion = (basePrice - currentPrice) * 0.001; // Pull back to base price
         
-        // Ensure price is positive and realistic
-        const finalPrice = Math.max(price, basePrice * 0.95);
+        const priceChange = momentum + volatility + meanReversion;
+        currentPrice = currentPrice * (1 + priceChange);
+        
+        // Ensure price stays within reasonable bounds
+        const minPrice = basePrice * 0.92;
+        const maxPrice = basePrice * 1.08;
+        currentPrice = Math.max(minPrice, Math.min(maxPrice, currentPrice));
         
         data.push({
           date: date.toISOString(),
-          price: parseFloat(finalPrice.toFixed(2))
+          price: parseFloat(currentPrice.toFixed(4))
         });
       }
     } else {
-      // Keep existing daily mock data generation for other timeframes
+      // Generate daily data for longer timeframes
       const days = this.getTimeframeDays(timeframe);
+      let currentPrice = basePrice;
       
       for (let i = days; i >= 0; i--) {
         const date = new Date(now);
         date.setDate(date.getDate() - i);
         
-        // Create more realistic price movements
-        const trend = Math.sin(i / 10) * 0.02; // Small trend component
-        const randomChange = (Math.random() - 0.5) * 0.05; // Random component
-        const volatility = 1 + trend + randomChange;
-        const price = basePrice * volatility;
+        // Create realistic daily price movements with trends
+        const trendFactor = Math.sin(i / (days / 4)) * 0.01; // Long-term trend
+        const momentum = (seededRandom() - 0.5) * 0.008; // Daily momentum
+        const volatility = (seededRandom() - 0.5) * 0.015; // Daily volatility
+        const meanReversion = (basePrice - currentPrice) * 0.002; // Pull back to base price
         
-        // Ensure price is positive and realistic
-        const finalPrice = Math.max(price, basePrice * 0.8);
+        const priceChange = trendFactor + momentum + volatility + meanReversion;
+        currentPrice = currentPrice * (1 + priceChange);
+        
+        // Ensure price stays within reasonable bounds
+        const minPrice = basePrice * 0.7;
+        const maxPrice = basePrice * 1.3;
+        currentPrice = Math.max(minPrice, Math.min(maxPrice, currentPrice));
         
         data.push({
           date: date.toISOString().split('T')[0],
-          price: parseFloat(finalPrice.toFixed(2))
+          price: parseFloat(currentPrice.toFixed(2))
         });
       }
     }
+    
+    console.log(`Generated ${data.length} mock data points for ${commodityName}, price range: $${Math.min(...data.map(d => d.price)).toFixed(2)} - $${Math.max(...data.map(d => d.price)).toFixed(2)}`);
     
     return data;
   }
