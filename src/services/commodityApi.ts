@@ -1,5 +1,7 @@
 // Commodity price API service
 const getFmpApiKey = () => localStorage.getItem('fmpApiKey') || 'demo';
+const getNewsApiKey = () => localStorage.getItem('newsApiKey') || '';
+const getAlphaVantageApiKey = () => localStorage.getItem('alphaVantageApiKey') || '';
 
 export interface CommodityPrice {
   symbol: string;
@@ -166,43 +168,61 @@ export class CommodityApiService {
     }
 
     try {
-      const apiKey = getFmpApiKey();
-      // Use Financial Modeling Prep's general news endpoint
-      const response = await fetch(
-        `https://financialmodelingprep.com/api/v3/general_news?page=0&apikey=${apiKey}`
-      );
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.error || !Array.isArray(data)) {
-        console.warn('Financial Modeling Prep news API error:', data);
-        return this.getFallbackNews(commodityName);
-      }
-      
-      // Filter news that might be related to the commodity and limit results
-      const filteredNews = data
-        .filter((article: any) => {
-          const title = (article.title || '').toLowerCase();
-          const text = (article.text || '').toLowerCase();
-          const commodityLower = commodityName.toLowerCase();
-          
-          // Check if the article mentions the commodity or related terms
-          return title.includes(commodityLower) || 
-                 text.includes(commodityLower) ||
-                 title.includes('commodity') ||
-                 title.includes('market') ||
-                 title.includes('trading');
-        })
-        .slice(0, limit);
+      // Fetch news from multiple sources in parallel
+      const newsPromises = [
+        this.fetchNewsFromFMP(commodityName),
+        this.fetchNewsFromNewsAPI(commodityName),
+        this.fetchNewsFromAlphaVantage(commodityName)
+      ];
 
-      // If no filtered results, take the first few general articles
-      const newsToProcess = filteredNews.length > 0 ? filteredNews : data.slice(0, limit);
+      const newsResults = await Promise.allSettled(newsPromises);
       
-      const news: NewsItem[] = newsToProcess.map((article: any, index: number) => ({
+      // Combine all successful results
+      let allNews: NewsItem[] = [];
+      newsResults.forEach((result, index) => {
+        if (result.status === 'fulfilled' && Array.isArray(result.value)) {
+          allNews = [...allNews, ...result.value];
+        } else {
+          console.warn(`News source ${index + 1} failed:`, result.status === 'rejected' ? result.reason : 'Unknown error');
+        }
+      });
+
+      // Remove duplicates based on title similarity
+      const uniqueNews = this.removeDuplicateNews(allNews);
+      
+      // Sort by relevance and recency
+      const sortedNews = this.sortNewsByRelevance(uniqueNews, commodityName);
+      
+      // Take the most relevant articles up to the limit
+      const finalNews = sortedNews.slice(0, limit);
+      
+      // If we don't have enough relevant news, add fallback news
+      const result = finalNews.length > 0 ? finalNews : this.getFallbackNews(commodityName).slice(0, limit);
+      
+      this.cache.set(cacheKey, { data: result, timestamp: Date.now() });
+      return result;
+      
+    } catch (error) {
+      console.error(`Error fetching news for ${commodityName}:`, error);
+      return this.getFallbackNews(commodityName);
+    }
+  }
+
+  private async fetchNewsFromFMP(commodityName: string): Promise<NewsItem[]> {
+    const apiKey = getFmpApiKey();
+    const response = await fetch(
+      `https://financialmodelingprep.com/api/v3/general_news?page=0&apikey=${apiKey}`
+    );
+    
+    if (!response.ok) throw new Error(`FMP API error: ${response.status}`);
+    
+    const data = await response.json();
+    if (!Array.isArray(data)) return [];
+    
+    return data
+      .filter(article => this.isRelevantTocommodity(article.title, article.text, commodityName))
+      .slice(0, 3)
+      .map((article: any, index: number) => ({
         id: `fmp_${commodityName}_${index}_${Date.now()}`,
         title: article.title || `${commodityName} Market Update`,
         description: article.text ? article.text.substring(0, 200) + '...' : `Latest market news about ${commodityName}`,
@@ -211,14 +231,169 @@ export class CommodityApiService {
         publishedAt: article.publishedDate || new Date().toISOString(),
         urlToImage: article.image
       }));
+  }
+
+  private async fetchNewsFromNewsAPI(commodityName: string): Promise<NewsItem[]> {
+    const apiKey = getNewsApiKey();
+    if (!apiKey) return [];
+
+    const query = this.buildNewsQuery(commodityName);
+    const response = await fetch(
+      `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&language=en&apiKey=${apiKey}`
+    );
+    
+    if (!response.ok) throw new Error(`NewsAPI error: ${response.status}`);
+    
+    const data = await response.json();
+    if (!data.articles || !Array.isArray(data.articles)) return [];
+    
+    return data.articles
+      .slice(0, 3)
+      .map((article: any, index: number) => ({
+        id: `newsapi_${commodityName}_${index}_${Date.now()}`,
+        title: article.title || `${commodityName} News`,
+        description: article.description || `Latest ${commodityName} market developments`,
+        url: article.url || '#',
+        source: article.source?.name || 'News API',
+        publishedAt: article.publishedAt || new Date().toISOString(),
+        urlToImage: article.urlToImage
+      }));
+  }
+
+  private async fetchNewsFromAlphaVantage(commodityName: string): Promise<NewsItem[]> {
+    const apiKey = getAlphaVantageApiKey();
+    if (!apiKey) return [];
+
+    const topics = this.getCommodityTopics(commodityName);
+    const response = await fetch(
+      `https://www.alphavantage.co/query?function=NEWS_SENTIMENT&topics=${topics}&apikey=${apiKey}`
+    );
+    
+    if (!response.ok) throw new Error(`Alpha Vantage error: ${response.status}`);
+    
+    const data = await response.json();
+    if (!data.feed || !Array.isArray(data.feed)) return [];
+    
+    return data.feed
+      .filter((article: any) => this.isRelevantTocommodity(article.title, article.summary, commodityName))
+      .slice(0, 3)
+      .map((article: any, index: number) => ({
+        id: `av_${commodityName}_${index}_${Date.now()}`,
+        title: article.title || `${commodityName} Analysis`,
+        description: article.summary ? article.summary.substring(0, 200) + '...' : `Market analysis for ${commodityName}`,
+        url: article.url || '#',
+        source: article.source || 'Alpha Vantage',
+        publishedAt: article.time_published || new Date().toISOString(),
+        urlToImage: article.banner_image
+      }));
+  }
+
+  private buildNewsQuery(commodityName: string): string {
+    const baseQuery = commodityName.toLowerCase();
+    const additionalTerms = {
+      'Gold': 'gold price precious metals',
+      'Silver': 'silver price precious metals',
+      'Copper': 'copper price industrial metals',
+      'WTI Crude': 'crude oil WTI petroleum',
+      'Brent Crude': 'brent crude oil petroleum',
+      'Natural Gas': 'natural gas energy',
+      'Corn': 'corn agriculture grain',
+      'Wheat': 'wheat agriculture grain',
+      'Soybeans': 'soybeans agriculture grain'
+    };
+    
+    return additionalTerms[commodityName as keyof typeof additionalTerms] || `${baseQuery} commodity market`;
+  }
+
+  private getCommodityTopics(commodityName: string): string {
+    const topicMap: Record<string, string> = {
+      'Gold': 'economy_macro,energy_transportation',
+      'Silver': 'economy_macro,manufacturing',
+      'Copper': 'manufacturing,economy_macro',
+      'WTI Crude': 'energy_transportation,economy_macro',
+      'Brent Crude': 'energy_transportation,economy_macro',
+      'Natural Gas': 'energy_transportation,economy_macro',
+      'Corn': 'economy_macro',
+      'Wheat': 'economy_macro',
+      'Soybeans': 'economy_macro'
+    };
+    
+    return topicMap[commodityName] || 'economy_macro';
+  }
+
+  private isRelevantTocommodity(title: string, content: string, commodityName: string): boolean {
+    const text = `${title} ${content}`.toLowerCase();
+    const commodity = commodityName.toLowerCase();
+    
+    // Direct commodity name match
+    if (text.includes(commodity)) return true;
+    
+    // Related terms for different commodities
+    const relatedTerms: Record<string, string[]> = {
+      'gold': ['precious metal', 'bullion', 'xau'],
+      'silver': ['precious metal', 'bullion', 'xag'],
+      'copper': ['industrial metal', 'mining'],
+      'wti crude': ['oil', 'petroleum', 'crude', 'wti'],
+      'brent crude': ['oil', 'petroleum', 'crude', 'brent'],
+      'natural gas': ['lng', 'gas price', 'energy'],
+      'corn': ['grain', 'agriculture', 'crop'],
+      'wheat': ['grain', 'agriculture', 'crop'],
+      'soybeans': ['grain', 'agriculture', 'crop', 'soy']
+    };
+    
+    const terms = relatedTerms[commodity] || [];
+    return terms.some(term => text.includes(term)) || 
+           text.includes('commodity') || 
+           text.includes('market') || 
+           text.includes('trading');
+  }
+
+  private removeDuplicateNews(news: NewsItem[]): NewsItem[] {
+    const seen = new Set<string>();
+    return news.filter(item => {
+      const key = item.title.toLowerCase().substring(0, 50);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  private sortNewsByRelevance(news: NewsItem[], commodityName: string): NewsItem[] {
+    return news.sort((a, b) => {
+      const aRelevance = this.calculateRelevanceScore(a, commodityName);
+      const bRelevance = this.calculateRelevanceScore(b, commodityName);
       
-      this.cache.set(cacheKey, { data: news, timestamp: Date.now() });
-      return news;
+      if (aRelevance !== bRelevance) {
+        return bRelevance - aRelevance; // Higher relevance first
+      }
       
-    } catch (error) {
-      console.error(`Error fetching news for ${commodityName}:`, error);
-      return this.getFallbackNews(commodityName);
-    }
+      // If relevance is equal, sort by date (newer first)
+      return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+    });
+  }
+
+  private calculateRelevanceScore(newsItem: NewsItem, commodityName: string): number {
+    let score = 0;
+    const text = `${newsItem.title} ${newsItem.description}`.toLowerCase();
+    const commodity = commodityName.toLowerCase();
+    
+    // Direct mention in title gets highest score
+    if (newsItem.title.toLowerCase().includes(commodity)) score += 10;
+    
+    // Direct mention in description
+    if (newsItem.description.toLowerCase().includes(commodity)) score += 5;
+    
+    // Related terms
+    if (text.includes('price')) score += 3;
+    if (text.includes('market')) score += 2;
+    if (text.includes('trading')) score += 2;
+    if (text.includes('commodity')) score += 3;
+    
+    // Recency bonus (articles from last 7 days get bonus)
+    const daysSincePublished = (Date.now() - new Date(newsItem.publishedAt).getTime()) / (1000 * 60 * 60 * 24);
+    if (daysSincePublished <= 7) score += 2;
+    
+    return score;
   }
 
   private getFallbackNews(commodityName: string): NewsItem[] {
