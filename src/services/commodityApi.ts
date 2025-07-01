@@ -1,7 +1,17 @@
+
 // Commodity price API service
+import { 
+  fetchNewsFromFMP, 
+  fetchNewsFromNewsAPI, 
+  fetchNewsFromAlphaVantage,
+  removeDuplicateNews,
+  sortNewsByRelevance,
+  getFallbackNews
+} from './newsHelpers';
+
 const getFmpApiKey = () => localStorage.getItem('fmpApiKey') || 'demo';
 const getNewsApiKey = () => localStorage.getItem('newsApiKey') || '';
-const getAlphaVantageApiKey = () => localStorage.getItem('alphaVantageApiKey') || '';
+const getAlphaVantageApiKey = () => localStorage.getItem('alphaVantageApiKey') || 'demo';
 
 export interface CommodityPrice {
   symbol: string;
@@ -21,34 +31,39 @@ export interface NewsItem {
   urlToImage?: string;
 }
 
-// Updated commodity symbol mappings for Financial Modeling Prep API
-const COMMODITY_SYMBOLS: Record<string, string> = {
-  'Gold': 'GCUSD',
-  'Silver': 'SIUSD', 
-  'Copper': 'HGUSD',
-  'Platinum': 'PLUSD',
-  'Palladium': 'PAUSD',
-  'WTI Crude': 'CLUSD',
-  'Brent Crude': 'BZUSD',
-  'Natural Gas': 'NGUSD',
-  'RBOB Gasoline': 'RBUSD',
-  'Heating Oil': 'HOUSD',
-  'Corn': 'CORNUSD',
-  'Wheat': 'WHEATUSD',
-  'Soybeans': 'SOYBNUSD',
-  'Soybean Meal': 'SOYBNUSD',
-  'Soybean Oil': 'SOYBNUSD',
-  'Oats': 'CORNUSD',
-  'Rough Rice': 'WHEATUSD',
-  'Feeder Cattle': 'LCUSD',
-  'Live Cattle': 'LCUSD',
-  'Lean Hogs': 'LHUSD',
-  'Cocoa': 'CCUSD',
-  'Coffee': 'KCUSD',
-  'Cotton': 'CTUSD',
-  'Lumber': 'LBUSD',
-  'Orange Juice': 'OJUSD',
-  'Sugar': 'SBUSD'
+// Updated commodity symbol mappings for multiple APIs
+const COMMODITY_SYMBOLS: Record<string, {
+  fmp: string;
+  yahoo: string;
+  alphaVantage: string;
+  quandl?: string;
+}> = {
+  'Gold': { fmp: 'GCUSD', yahoo: 'GC=F', alphaVantage: 'GOLD', quandl: 'LBMA/GOLD' },
+  'Silver': { fmp: 'SIUSD', yahoo: 'SI=F', alphaVantage: 'SILVER', quandl: 'LBMA/SILVER' },
+  'Copper': { fmp: 'HGUSD', yahoo: 'HG=F', alphaVantage: 'COPPER' },
+  'Platinum': { fmp: 'PLUSD', yahoo: 'PL=F', alphaVantage: 'PLATINUM' },
+  'Palladium': { fmp: 'PAUSD', yahoo: 'PA=F', alphaVantage: 'PALLADIUM' },
+  'WTI Crude': { fmp: 'CLUSD', yahoo: 'CL=F', alphaVantage: 'WTI' },
+  'Brent Crude': { fmp: 'BZUSD', yahoo: 'BZ=F', alphaVantage: 'BRENT' },
+  'Natural Gas': { fmp: 'NGUSD', yahoo: 'NG=F', alphaVantage: 'NATURAL_GAS' },
+  'RBOB Gasoline': { fmp: 'RBUSD', yahoo: 'RB=F', alphaVantage: 'GASOLINE' },
+  'Heating Oil': { fmp: 'HOUSD', yahoo: 'HO=F', alphaVantage: 'HEATING_OIL' },
+  'Corn': { fmp: 'CORNUSD', yahoo: 'ZC=F', alphaVantage: 'CORN' },
+  'Wheat': { fmp: 'WHEATUSD', yahoo: 'ZW=F', alphaVantage: 'WHEAT' },
+  'Soybeans': { fmp: 'SOYBNUSD', yahoo: 'ZS=F', alphaVantage: 'SOYBEANS' },
+  'Soybean Meal': { fmp: 'SOYBNUSD', yahoo: 'ZM=F', alphaVantage: 'SOYBEAN_MEAL' },
+  'Soybean Oil': { fmp: 'SOYBNUSD', yahoo: 'ZL=F', alphaVantage: 'SOYBEAN_OIL' },
+  'Oats': { fmp: 'CORNUSD', yahoo: 'ZO=F', alphaVantage: 'OATS' },
+  'Rough Rice': { fmp: 'WHEATUSD', yahoo: 'ZR=F', alphaVantage: 'RICE' },
+  'Feeder Cattle': { fmp: 'LCUSD', yahoo: 'GF=F', alphaVantage: 'FEEDER_CATTLE' },
+  'Live Cattle': { fmp: 'LCUSD', yahoo: 'LE=F', alphaVantage: 'LIVE_CATTLE' },
+  'Lean Hogs': { fmp: 'LHUSD', yahoo: 'HE=F', alphaVantage: 'LEAN_HOGS' },
+  'Cocoa': { fmp: 'CCUSD', yahoo: 'CC=F', alphaVantage: 'COCOA' },
+  'Coffee': { fmp: 'KCUSD', yahoo: 'KC=F', alphaVantage: 'COFFEE' },
+  'Cotton': { fmp: 'CTUSD', yahoo: 'CT=F', alphaVantage: 'COTTON' },
+  'Lumber': { fmp: 'LBUSD', yahoo: 'LBS=F', alphaVantage: 'LUMBER' },
+  'Orange Juice': { fmp: 'OJUSD', yahoo: 'OJ=F', alphaVantage: 'ORANGE_JUICE' },
+  'Sugar': { fmp: 'SBUSD', yahoo: 'SB=F', alphaVantage: 'SUGAR' }
 };
 
 export class CommodityApiService {
@@ -75,86 +90,117 @@ export class CommodityApiService {
       return cached.data;
     }
 
-    try {
-      const symbol = COMMODITY_SYMBOLS[commodityName] || commodityName;
-      const apiKey = getFmpApiKey();
-      
-      // Use Financial Modeling Prep API for commodity quotes
-      const response = await fetch(
-        `https://financialmodelingprep.com/api/v3/quote/${symbol}?apikey=${apiKey}`
-      );
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+    console.log(`Fetching real price data for ${commodityName}`);
+    
+    // Try multiple APIs in sequence
+    const apis = [
+      () => this.fetchPriceFromFMP(commodityName),
+      () => this.fetchPriceFromYahoo(commodityName),
+      () => this.fetchPriceFromAlphaVantage(commodityName)
+    ];
+
+    for (const fetchApi of apis) {
+      try {
+        const price = await fetchApi();
+        if (price) {
+          console.log(`Successfully fetched price for ${commodityName}:`, price);
+          this.cache.set(cacheKey, { data: price, timestamp: Date.now() });
+          return price;
+        }
+      } catch (error) {
+        console.warn(`API failed for ${commodityName}:`, error);
+        continue;
       }
-      
-      const data = await response.json();
-      
-      if (data.error || !Array.isArray(data) || data.length === 0) {
-        console.warn('Financial Modeling Prep API error or no data:', data);
-        return this.getFallbackPrice(commodityName);
-      }
-      
-      const quote = data[0];
-      if (!quote) {
-        return this.getFallbackPrice(commodityName);
-      }
-      
-      const price: CommodityPrice = {
-        symbol: symbol,
-        price: parseFloat(quote.price) || 0,
-        change: parseFloat(quote.change) || 0,
-        changePercent: parseFloat(quote.changesPercentage) || 0,
-        lastUpdate: new Date().toISOString()
-      };
-      
-      this.cache.set(cacheKey, { data: price, timestamp: Date.now() });
-      return price;
-      
-    } catch (error) {
-      console.error(`Error fetching price for ${commodityName}:`, error);
-      return this.getFallbackPrice(commodityName);
     }
+
+    console.error(`All APIs failed for ${commodityName}, no fallback used`);
+    return null;
   }
 
-  private getFallbackPrice(commodityName: string): CommodityPrice {
-    // Fallback prices based on current market ranges
-    const fallbackPrices: Record<string, { price: number; change: number }> = {
-      'Gold': { price: 2024.50, change: 0.45 },
-      'Silver': { price: 23.75, change: -0.32 },
-      'Copper': { price: 3.85, change: 0.75 },
-      'Platinum': { price: 904.20, change: 0.78 },
-      'Palladium': { price: 1243.50, change: -1.15 },
-      'WTI Crude': { price: 76.80, change: 1.25 },
-      'Brent Crude': { price: 81.45, change: 0.95 },
-      'Natural Gas': { price: 2.85, change: -2.15 },
-      'RBOB Gasoline': { price: 2.15, change: -0.45 },
-      'Heating Oil': { price: 2.65, change: 0.35 },
-      'Corn': { price: 442.25, change: -0.85 },
-      'Wheat': { price: 542.25, change: -0.45 },
-      'Soybeans': { price: 1198.75, change: -0.65 },
-      'Soybean Meal': { price: 352.80, change: -1.15 },
-      'Soybean Oil': { price: 47.85, change: 0.92 },
-      'Oats': { price: 372.50, change: 1.20 },
-      'Rough Rice': { price: 15.85, change: 0.32 },
-      'Feeder Cattle': { price: 245.50, change: 0.85 },
-      'Live Cattle': { price: 152.75, change: -0.25 },
-      'Lean Hogs': { price: 72.40, change: 1.15 },
-      'Cocoa': { price: 3125.00, change: 2.15 },
-      'Coffee': { price: 165.40, change: -1.25 },
-      'Cotton': { price: 68.75, change: 0.45 },
-      'Lumber': { price: 445.20, change: -2.35 },
-      'Orange Juice': { price: 385.50, change: 1.85 },
-      'Sugar': { price: 19.65, change: 0.75 }
-    };
+  private async fetchPriceFromFMP(commodityName: string): Promise<CommodityPrice | null> {
+    const symbols = COMMODITY_SYMBOLS[commodityName];
+    if (!symbols) return null;
 
-    const fallback = fallbackPrices[commodityName] || { price: 100, change: 0 };
+    const apiKey = getFmpApiKey();
+    const response = await fetch(
+      `https://financialmodelingprep.com/api/v3/quote/${symbols.fmp}?apikey=${apiKey}`
+    );
+    
+    if (!response.ok) throw new Error(`FMP API error: ${response.status}`);
+    
+    const data = await response.json();
+    if (!Array.isArray(data) || data.length === 0) return null;
+    
+    const quote = data[0];
+    return {
+      symbol: symbols.fmp,
+      price: parseFloat(quote.price) || 0,
+      change: parseFloat(quote.change) || 0,
+      changePercent: parseFloat(quote.changesPercentage) || 0,
+      lastUpdate: new Date().toISOString()
+    };
+  }
+
+  private async fetchPriceFromYahoo(commodityName: string): Promise<CommodityPrice | null> {
+    const symbols = COMMODITY_SYMBOLS[commodityName];
+    if (!symbols) return null;
+
+    // Using Yahoo Finance API proxy
+    const response = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${symbols.yahoo}?range=1d&interval=1d`
+    );
+    
+    if (!response.ok) throw new Error(`Yahoo API error: ${response.status}`);
+    
+    const data = await response.json();
+    if (!data.chart?.result?.[0]?.meta) return null;
+    
+    const meta = data.chart.result[0].meta;
+    const currentPrice = meta.regularMarketPrice;
+    const previousClose = meta.previousClose;
+    
+    if (!currentPrice || !previousClose) return null;
+    
+    const change = currentPrice - previousClose;
+    const changePercent = (change / previousClose) * 100;
     
     return {
-      symbol: COMMODITY_SYMBOLS[commodityName] || commodityName,
-      price: fallback.price,
-      change: fallback.change,
-      changePercent: fallback.change,
+      symbol: symbols.yahoo,
+      price: currentPrice,
+      change: change,
+      changePercent: changePercent,
+      lastUpdate: new Date().toISOString()
+    };
+  }
+
+  private async fetchPriceFromAlphaVantage(commodityName: string): Promise<CommodityPrice | null> {
+    const symbols = COMMODITY_SYMBOLS[commodityName];
+    if (!symbols) return null;
+
+    const apiKey = getAlphaVantageApiKey();
+    
+    // For commodities, use COMMODITY_INTRADAY function
+    const response = await fetch(
+      `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbols.alphaVantage}&apikey=${apiKey}`
+    );
+    
+    if (!response.ok) throw new Error(`Alpha Vantage API error: ${response.status}`);
+    
+    const data = await response.json();
+    if (!data['Global Quote']) return null;
+    
+    const quote = data['Global Quote'];
+    const price = parseFloat(quote['05. price']);
+    const change = parseFloat(quote['09. change']);
+    const changePercent = parseFloat(quote['10. change percent'].replace('%', ''));
+    
+    if (isNaN(price)) return null;
+    
+    return {
+      symbol: symbols.alphaVantage,
+      price: price,
+      change: change || 0,
+      changePercent: changePercent || 0,
       lastUpdate: new Date().toISOString()
     };
   }
@@ -170,9 +216,9 @@ export class CommodityApiService {
     try {
       // Fetch news from multiple sources in parallel
       const newsPromises = [
-        this.fetchNewsFromFMP(commodityName),
-        this.fetchNewsFromNewsAPI(commodityName),
-        this.fetchNewsFromAlphaVantage(commodityName)
+        fetchNewsFromFMP(commodityName),
+        fetchNewsFromNewsAPI(commodityName),
+        fetchNewsFromAlphaVantage(commodityName)
       ];
 
       const newsResults = await Promise.allSettled(newsPromises);
@@ -188,242 +234,24 @@ export class CommodityApiService {
       });
 
       // Remove duplicates based on title similarity
-      const uniqueNews = this.removeDuplicateNews(allNews);
+      const uniqueNews = removeDuplicateNews(allNews);
       
       // Sort by relevance and recency
-      const sortedNews = this.sortNewsByRelevance(uniqueNews, commodityName);
+      const sortedNews = sortNewsByRelevance(uniqueNews, commodityName);
       
       // Take the most relevant articles up to the limit
       const finalNews = sortedNews.slice(0, limit);
       
       // If we don't have enough relevant news, add fallback news
-      const result = finalNews.length > 0 ? finalNews : this.getFallbackNews(commodityName).slice(0, limit);
+      const result = finalNews.length > 0 ? finalNews : getFallbackNews(commodityName).slice(0, limit);
       
       this.cache.set(cacheKey, { data: result, timestamp: Date.now() });
       return result;
       
     } catch (error) {
       console.error(`Error fetching news for ${commodityName}:`, error);
-      return this.getFallbackNews(commodityName);
+      return getFallbackNews(commodityName);
     }
-  }
-
-  private async fetchNewsFromFMP(commodityName: string): Promise<NewsItem[]> {
-    const apiKey = getFmpApiKey();
-    const response = await fetch(
-      `https://financialmodelingprep.com/api/v3/general_news?page=0&apikey=${apiKey}`
-    );
-    
-    if (!response.ok) throw new Error(`FMP API error: ${response.status}`);
-    
-    const data = await response.json();
-    if (!Array.isArray(data)) return [];
-    
-    return data
-      .filter(article => this.isRelevantTocommodity(article.title, article.text, commodityName))
-      .slice(0, 3)
-      .map((article: any, index: number) => ({
-        id: `fmp_${commodityName}_${index}_${Date.now()}`,
-        title: article.title || `${commodityName} Market Update`,
-        description: article.text ? article.text.substring(0, 200) + '...' : `Latest market news about ${commodityName}`,
-        url: article.url || '#',
-        source: article.site || 'Financial News',
-        publishedAt: article.publishedDate || new Date().toISOString(),
-        urlToImage: article.image
-      }));
-  }
-
-  private async fetchNewsFromNewsAPI(commodityName: string): Promise<NewsItem[]> {
-    const apiKey = getNewsApiKey();
-    if (!apiKey) return [];
-
-    const query = this.buildNewsQuery(commodityName);
-    const response = await fetch(
-      `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&language=en&apiKey=${apiKey}`
-    );
-    
-    if (!response.ok) throw new Error(`NewsAPI error: ${response.status}`);
-    
-    const data = await response.json();
-    if (!data.articles || !Array.isArray(data.articles)) return [];
-    
-    return data.articles
-      .slice(0, 3)
-      .map((article: any, index: number) => ({
-        id: `newsapi_${commodityName}_${index}_${Date.now()}`,
-        title: article.title || `${commodityName} News`,
-        description: article.description || `Latest ${commodityName} market developments`,
-        url: article.url || '#',
-        source: article.source?.name || 'News API',
-        publishedAt: article.publishedAt || new Date().toISOString(),
-        urlToImage: article.urlToImage
-      }));
-  }
-
-  private async fetchNewsFromAlphaVantage(commodityName: string): Promise<NewsItem[]> {
-    const apiKey = getAlphaVantageApiKey();
-    if (!apiKey) return [];
-
-    const topics = this.getCommodityTopics(commodityName);
-    const response = await fetch(
-      `https://www.alphavantage.co/query?function=NEWS_SENTIMENT&topics=${topics}&apikey=${apiKey}`
-    );
-    
-    if (!response.ok) throw new Error(`Alpha Vantage error: ${response.status}`);
-    
-    const data = await response.json();
-    if (!data.feed || !Array.isArray(data.feed)) return [];
-    
-    return data.feed
-      .filter((article: any) => this.isRelevantTocommodity(article.title, article.summary, commodityName))
-      .slice(0, 3)
-      .map((article: any, index: number) => ({
-        id: `av_${commodityName}_${index}_${Date.now()}`,
-        title: article.title || `${commodityName} Analysis`,
-        description: article.summary ? article.summary.substring(0, 200) + '...' : `Market analysis for ${commodityName}`,
-        url: article.url || '#',
-        source: article.source || 'Alpha Vantage',
-        publishedAt: article.time_published || new Date().toISOString(),
-        urlToImage: article.banner_image
-      }));
-  }
-
-  private buildNewsQuery(commodityName: string): string {
-    const baseQuery = commodityName.toLowerCase();
-    const additionalTerms = {
-      'Gold': 'gold price precious metals',
-      'Silver': 'silver price precious metals',
-      'Copper': 'copper price industrial metals',
-      'WTI Crude': 'crude oil WTI petroleum',
-      'Brent Crude': 'brent crude oil petroleum',
-      'Natural Gas': 'natural gas energy',
-      'Corn': 'corn agriculture grain',
-      'Wheat': 'wheat agriculture grain',
-      'Soybeans': 'soybeans agriculture grain'
-    };
-    
-    return additionalTerms[commodityName as keyof typeof additionalTerms] || `${baseQuery} commodity market`;
-  }
-
-  private getCommodityTopics(commodityName: string): string {
-    const topicMap: Record<string, string> = {
-      'Gold': 'economy_macro,energy_transportation',
-      'Silver': 'economy_macro,manufacturing',
-      'Copper': 'manufacturing,economy_macro',
-      'WTI Crude': 'energy_transportation,economy_macro',
-      'Brent Crude': 'energy_transportation,economy_macro',
-      'Natural Gas': 'energy_transportation,economy_macro',
-      'Corn': 'economy_macro',
-      'Wheat': 'economy_macro',
-      'Soybeans': 'economy_macro'
-    };
-    
-    return topicMap[commodityName] || 'economy_macro';
-  }
-
-  private isRelevantTocommodity(title: string, content: string, commodityName: string): boolean {
-    const text = `${title} ${content}`.toLowerCase();
-    const commodity = commodityName.toLowerCase();
-    
-    // Direct commodity name match
-    if (text.includes(commodity)) return true;
-    
-    // Related terms for different commodities
-    const relatedTerms: Record<string, string[]> = {
-      'gold': ['precious metal', 'bullion', 'xau'],
-      'silver': ['precious metal', 'bullion', 'xag'],
-      'copper': ['industrial metal', 'mining'],
-      'wti crude': ['oil', 'petroleum', 'crude', 'wti'],
-      'brent crude': ['oil', 'petroleum', 'crude', 'brent'],
-      'natural gas': ['lng', 'gas price', 'energy'],
-      'corn': ['grain', 'agriculture', 'crop'],
-      'wheat': ['grain', 'agriculture', 'crop'],
-      'soybeans': ['grain', 'agriculture', 'crop', 'soy']
-    };
-    
-    const terms = relatedTerms[commodity] || [];
-    return terms.some(term => text.includes(term)) || 
-           text.includes('commodity') || 
-           text.includes('market') || 
-           text.includes('trading');
-  }
-
-  private removeDuplicateNews(news: NewsItem[]): NewsItem[] {
-    const seen = new Set<string>();
-    return news.filter(item => {
-      const key = item.title.toLowerCase().substring(0, 50);
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }
-
-  private sortNewsByRelevance(news: NewsItem[], commodityName: string): NewsItem[] {
-    return news.sort((a, b) => {
-      const aRelevance = this.calculateRelevanceScore(a, commodityName);
-      const bRelevance = this.calculateRelevanceScore(b, commodityName);
-      
-      if (aRelevance !== bRelevance) {
-        return bRelevance - aRelevance; // Higher relevance first
-      }
-      
-      // If relevance is equal, sort by date (newer first)
-      return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
-    });
-  }
-
-  private calculateRelevanceScore(newsItem: NewsItem, commodityName: string): number {
-    let score = 0;
-    const text = `${newsItem.title} ${newsItem.description}`.toLowerCase();
-    const commodity = commodityName.toLowerCase();
-    
-    // Direct mention in title gets highest score
-    if (newsItem.title.toLowerCase().includes(commodity)) score += 10;
-    
-    // Direct mention in description
-    if (newsItem.description.toLowerCase().includes(commodity)) score += 5;
-    
-    // Related terms
-    if (text.includes('price')) score += 3;
-    if (text.includes('market')) score += 2;
-    if (text.includes('trading')) score += 2;
-    if (text.includes('commodity')) score += 3;
-    
-    // Recency bonus (articles from last 7 days get bonus)
-    const daysSincePublished = (Date.now() - new Date(newsItem.publishedAt).getTime()) / (1000 * 60 * 60 * 24);
-    if (daysSincePublished <= 7) score += 2;
-    
-    return score;
-  }
-
-  private getFallbackNews(commodityName: string): NewsItem[] {
-    const today = new Date();
-    return [
-      {
-        id: `${commodityName}_fallback_1`,
-        title: `${commodityName} prices affected by global supply chain disruptions`,
-        description: `Recent developments in global supply chains are impacting ${commodityName} markets with increased volatility.`,
-        url: '#',
-        source: 'Market Watch',
-        publishedAt: new Date(today.getTime() - 24 * 60 * 60 * 1000).toISOString()
-      },
-      {
-        id: `${commodityName}_fallback_2`,
-        title: `New regulations impact ${commodityName.toLowerCase()} market outlook`,
-        description: `Regulatory changes are creating new dynamics in the ${commodityName} trading landscape.`,
-        url: '#',
-        source: 'Reuters',
-        publishedAt: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString()
-      },
-      {
-        id: `${commodityName}_fallback_3`,
-        title: `Global demand shifts create volatility in ${commodityName.toLowerCase()} prices`,
-        description: `Changing global demand patterns are influencing ${commodityName} price movements across major markets.`,
-        url: '#',
-        source: 'Bloomberg',
-        publishedAt: new Date(today.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString()
-      }
-    ];
   }
 
   async fetchHistoricalData(commodityName: string, timeframe: string = '1M'): Promise<any[]> {
@@ -434,94 +262,171 @@ export class CommodityApiService {
       return cached.data;
     }
 
-    try {
-      const symbol = COMMODITY_SYMBOLS[commodityName] || commodityName;
-      const apiKey = getFmpApiKey();
-      
-      console.log(`Fetching historical data for ${commodityName} (${symbol}) with timeframe ${timeframe}`);
-      
-      let endpoint = '';
-      let dataLimit = this.getTimeframeDays(timeframe);
-      
-      if (timeframe === '1d') {
-        // Use intraday data for 1-day timeframe to get 15-minute intervals
-        endpoint = `https://financialmodelingprep.com/api/v3/historical-chart/15min/${symbol}?apikey=${apiKey}`;
-      } else {
-        // Use daily historical data for longer timeframes
-        endpoint = `https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${apiKey}&timeseries=${dataLimit}`;
-      }
-      
-      const response = await fetch(endpoint);
-      
-      if (!response.ok) {
-        console.error(`FMP API error: ${response.status} ${response.statusText}`);
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log(`FMP API response for ${commodityName}:`, data);
-      
-      if (data.error) {
-        console.error('FMP API returned error:', data.error);
-        throw new Error(data.error);
-      }
-      
-      let historicalData: any[] = [];
-      
-      if (timeframe === '1d') {
-        // Process intraday data (array format)
-        if (!Array.isArray(data)) {
-          console.warn('No intraday data found, using fallback');
-          return this.generateMockHistoricalData(commodityName, timeframe);
+    console.log(`Fetching real historical data for ${commodityName} (${timeframe})`);
+    
+    // Try multiple APIs in sequence for historical data
+    const apis = [
+      () => this.fetchHistoricalFromFMP(commodityName, timeframe),
+      () => this.fetchHistoricalFromYahoo(commodityName, timeframe),
+      () => this.fetchHistoricalFromAlphaVantage(commodityName, timeframe)
+    ];
+
+    for (const fetchApi of apis) {
+      try {
+        const data = await fetchApi();
+        if (data && data.length > 0) {
+          console.log(`Successfully fetched ${data.length} historical data points for ${commodityName}`);
+          this.cache.set(cacheKey, { data: data, timestamp: Date.now() });
+          return data;
         }
-        
-        // Get last 24 hours of 15-minute data (96 intervals)
-        const now = new Date();
-        const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        
-        historicalData = data
-          .filter((item: any) => {
-            const itemDate = new Date(item.date);
-            return itemDate >= oneDayAgo;
-          })
-          .slice(0, 96) // Limit to 96 intervals (24 hours * 4 intervals per hour)
-          .map((item: any) => ({
-            date: item.date,
-            price: parseFloat(item.close) || parseFloat(item.price) || 0
-          }))
-          .reverse() // FMP returns newest first, we want oldest first for chart
-          .filter((item: any) => item.price > 0); // Filter out invalid prices
-      } else {
-        // Process daily data (object format with historical array)
-        if (!data.historical || !Array.isArray(data.historical)) {
-          console.warn('No historical data found, using fallback');
-          return this.generateMockHistoricalData(commodityName, timeframe);
-        }
-        
-        historicalData = data.historical
-          .slice(0, dataLimit)
-          .map((item: any) => ({
-            date: item.date,
-            price: parseFloat(item.close) || parseFloat(item.price) || 0
-          }))
-          .reverse() // FMP returns newest first, we want oldest first for chart
-          .filter((item: any) => item.price > 0); // Filter out invalid prices
+      } catch (error) {
+        console.warn(`Historical API failed for ${commodityName}:`, error);
+        continue;
       }
-      
-      console.log(`Processed ${historicalData.length} data points for ${commodityName}`);
-      
-      if (historicalData.length === 0) {
-        console.warn('No valid historical data after processing, using fallback');
-        return this.generateMockHistoricalData(commodityName, timeframe);
-      }
-      
-      this.cache.set(cacheKey, { data: historicalData, timestamp: Date.now() });
-      return historicalData;
-      
-    } catch (error) {
-      console.error(`Error fetching historical data for ${commodityName}:`, error);
-      return this.generateMockHistoricalData(commodityName, timeframe);
     }
+
+    console.error(`All historical APIs failed for ${commodityName}`);
+    return [];
+  }
+
+  private async fetchHistoricalFromFMP(commodityName: string, timeframe: string): Promise<any[]> {
+    const symbols = COMMODITY_SYMBOLS[commodityName];
+    if (!symbols) return [];
+
+    const apiKey = getFmpApiKey();
+    let endpoint = '';
+    let dataLimit = this.getTimeframeDays(timeframe);
+    
+    if (timeframe === '1d') {
+      endpoint = `https://financialmodelingprep.com/api/v3/historical-chart/15min/${symbols.fmp}?apikey=${apiKey}`;
+    } else {
+      endpoint = `https://financialmodelingprep.com/api/v3/historical-price-full/${symbols.fmp}?apikey=${apiKey}&timeseries=${dataLimit}`;
+    }
+    
+    const response = await fetch(endpoint);
+    if (!response.ok) throw new Error(`FMP API error: ${response.status}`);
+    
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
+    
+    let historicalData: any[] = [];
+    
+    if (timeframe === '1d') {
+      if (!Array.isArray(data) || data.length === 0) return [];
+      
+      const now = new Date();
+      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      
+      historicalData = data
+        .filter((item: any) => {
+          const itemDate = new Date(item.date);
+          return itemDate >= oneDayAgo;
+        })
+        .slice(0, 96)
+        .map((item: any) => ({
+          date: item.date,
+          price: parseFloat(item.close) || parseFloat(item.price) || 0
+        }))
+        .reverse()
+        .filter((item: any) => item.price > 0);
+    } else {
+      if (!data.historical || !Array.isArray(data.historical)) return [];
+      
+      historicalData = data.historical
+        .slice(0, dataLimit)
+        .map((item: any) => ({
+          date: item.date,
+          price: parseFloat(item.close) || parseFloat(item.price) || 0
+        }))
+        .reverse()
+        .filter((item: any) => item.price > 0);
+    }
+    
+    return historicalData;
+  }
+
+  private async fetchHistoricalFromYahoo(commodityName: string, timeframe: string): Promise<any[]> {
+    const symbols = COMMODITY_SYMBOLS[commodityName];
+    if (!symbols) return [];
+
+    let period = '1mo';
+    let interval = '1d';
+    
+    if (timeframe === '1d') {
+      period = '1d';
+      interval = '15m';
+    } else if (timeframe === '7d') {
+      period = '7d';
+      interval = '1d';
+    } else if (timeframe === '1m') {
+      period = '1mo';
+      interval = '1d';
+    } else if (timeframe === '3m') {
+      period = '3mo';
+      interval = '1d';
+    } else if (timeframe === '6m') {
+      period = '6mo';
+      interval = '1d';
+    }
+    
+    const response = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${symbols.yahoo}?range=${period}&interval=${interval}`
+    );
+    
+    if (!response.ok) throw new Error(`Yahoo API error: ${response.status}`);
+    
+    const data = await response.json();
+    if (!data.chart?.result?.[0]) return [];
+    
+    const result = data.chart.result[0];
+    const timestamps = result.timestamp;
+    const prices = result.indicators.quote[0].close;
+    
+    if (!timestamps || !prices) return [];
+    
+    const historicalData = timestamps.map((timestamp: number, index: number) => ({
+      date: new Date(timestamp * 1000).toISOString(),
+      price: prices[index] || 0
+    })).filter((item: any) => item.price > 0);
+    
+    return historicalData;
+  }
+
+  private async fetchHistoricalFromAlphaVantage(commodityName: string, timeframe: string): Promise<any[]> {
+    const symbols = COMMODITY_SYMBOLS[commodityName];
+    if (!symbols) return [];
+
+    const apiKey = getAlphaVantageApiKey();
+    let functionName = 'TIME_SERIES_DAILY';
+    let seriesKey = 'Time Series (Daily)';
+    
+    if (timeframe === '1d') {
+      functionName = 'TIME_SERIES_INTRADAY';
+      seriesKey = 'Time Series (15min)';
+    }
+    
+    let url = `https://www.alphavantage.co/query?function=${functionName}&symbol=${symbols.alphaVantage}&apikey=${apiKey}`;
+    
+    if (timeframe === '1d') {
+      url += '&interval=15min';
+    }
+    
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Alpha Vantage API error: ${response.status}`);
+    
+    const data = await response.json();
+    if (!data[seriesKey]) return [];
+    
+    const timeSeries = data[seriesKey];
+    const historicalData = Object.entries(timeSeries)
+      .map(([date, values]: [string, any]) => ({
+        date: timeframe === '1d' ? new Date(date).toISOString() : date,
+        price: parseFloat(values['4. close']) || 0
+      }))
+      .filter((item: any) => item.price > 0)
+      .reverse();
+    
+    return historicalData;
   }
 
   private getTimeframeDays(timeframe: string): number {
@@ -533,89 +438,6 @@ export class CommodityApiService {
       case '6m': return 180;
       default: return 30;
     }
-  }
-
-  private generateMockHistoricalData(commodityName: string, timeframe: string): any[] {
-    console.log(`Generating mock data for ${commodityName} with timeframe ${timeframe}`);
-    const basePrice = this.getFallbackPrice(commodityName).price;
-    const data = [];
-    const now = new Date();
-    
-    // Create a seeded random function for consistent but varied data per commodity
-    const createSeededRandom = (seed: string) => {
-      let hash = 0;
-      for (let i = 0; i < seed.length; i++) {
-        const char = seed.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash; // Convert to 32bit integer
-      }
-      return () => {
-        hash = (hash * 9301 + 49297) % 233280;
-        return hash / 233280;
-      };
-    };
-    
-    const seededRandom = createSeededRandom(commodityName + timeframe);
-    
-    if (timeframe === '1d') {
-      // Generate 15-minute intervals for 24 hours (96 data points)
-      let currentPrice = basePrice;
-      
-      for (let i = 95; i >= 0; i--) {
-        const date = new Date(now);
-        date.setMinutes(date.getMinutes() - (i * 15));
-        
-        // Create realistic intraday price movements with momentum
-        const momentum = (seededRandom() - 0.5) * 0.003; // Small momentum factor
-        const volatility = (seededRandom() - 0.5) * 0.008; // Random volatility
-        const meanReversion = (basePrice - currentPrice) * 0.001; // Pull back to base price
-        
-        const priceChange = momentum + volatility + meanReversion;
-        currentPrice = currentPrice * (1 + priceChange);
-        
-        // Ensure price stays within reasonable bounds
-        const minPrice = basePrice * 0.92;
-        const maxPrice = basePrice * 1.08;
-        currentPrice = Math.max(minPrice, Math.min(maxPrice, currentPrice));
-        
-        data.push({
-          date: date.toISOString(),
-          price: parseFloat(currentPrice.toFixed(4))
-        });
-      }
-    } else {
-      // Generate daily data for longer timeframes
-      const days = this.getTimeframeDays(timeframe);
-      let currentPrice = basePrice;
-      
-      for (let i = days; i >= 0; i--) {
-        const date = new Date(now);
-        date.setDate(date.getDate() - i);
-        
-        // Create realistic daily price movements with trends
-        const trendFactor = Math.sin(i / (days / 4)) * 0.01; // Long-term trend
-        const momentum = (seededRandom() - 0.5) * 0.008; // Daily momentum
-        const volatility = (seededRandom() - 0.5) * 0.015; // Daily volatility
-        const meanReversion = (basePrice - currentPrice) * 0.002; // Pull back to base price
-        
-        const priceChange = trendFactor + momentum + volatility + meanReversion;
-        currentPrice = currentPrice * (1 + priceChange);
-        
-        // Ensure price stays within reasonable bounds
-        const minPrice = basePrice * 0.7;
-        const maxPrice = basePrice * 1.3;
-        currentPrice = Math.max(minPrice, Math.min(maxPrice, currentPrice));
-        
-        data.push({
-          date: date.toISOString().split('T')[0],
-          price: parseFloat(currentPrice.toFixed(2))
-        });
-      }
-    }
-    
-    console.log(`Generated ${data.length} mock data points for ${commodityName}, price range: $${Math.min(...data.map(d => d.price)).toFixed(2)} - $${Math.max(...data.map(d => d.price)).toFixed(2)}`);
-    
-    return data;
   }
 }
 
