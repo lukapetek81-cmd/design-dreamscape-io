@@ -25,7 +25,8 @@ interface CommoditySidebarProps {
 }
 
 const CommoditySidebar = ({ activeGroup, onGroupSelect }: CommoditySidebarProps) => {
-  const { collapsed } = useSidebar();
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
 
   return (
     <Sidebar className="border-r bg-gradient-to-b from-background to-muted/10 shadow-soft transition-all duration-300">
