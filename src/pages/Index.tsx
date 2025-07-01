@@ -1,4 +1,3 @@
-
 import React from 'react';
 import CommodityCard from '@/components/CommodityCard';
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -18,12 +17,10 @@ const METAL_COMMODITIES = [
 
 const GRAIN_COMMODITIES = [
   { name: 'Corn', symbol: 'ZC', price: 442.25, change: -0.85 },
-  { name: 'Oats', symbol: 'ZO', price: 372.50, change: 1.20 },
-  { name: 'Rough Rice', symbol: 'ZR', price: 15.85, change: 0.32 },
+  { name: 'Wheat', symbol: 'ZW', price: 542.25, change: -0.45 },
   { name: 'Soybeans', symbol: 'ZS', price: 1198.75, change: -0.65 },
   { name: 'Soybean Meal', symbol: 'ZM', price: 352.80, change: -1.15 },
-  { name: 'Soybean Oil', symbol: 'ZL', price: 47.85, change: 0.92 },
-  { name: 'Wheat', symbol: 'ZW', price: 542.25, change: -0.45 }
+  { name: 'Soybean Oil', symbol: 'ZL', price: 47.85, change: 0.92 }
 ];
 
 const ENERGY_COMMODITIES = [

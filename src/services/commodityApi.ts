@@ -30,39 +30,37 @@ export interface NewsItem {
   urlToImage?: string;
 }
 
-// Updated commodity symbol mappings for multiple APIs
+// Updated commodity symbol mappings for multiple APIs with corrected FMP symbols
 const COMMODITY_SYMBOLS: Record<string, {
   fmp: string;
   yahoo: string;
   alphaVantage: string;
   quandl?: string;
 }> = {
-  'Gold': { fmp: 'GCUSD', yahoo: 'GC=F', alphaVantage: 'GOLD', quandl: 'LBMA/GOLD' },
-  'Silver': { fmp: 'SIUSD', yahoo: 'SI=F', alphaVantage: 'SILVER', quandl: 'LBMA/SILVER' },
-  'Copper': { fmp: 'HGUSD', yahoo: 'HG=F', alphaVantage: 'COPPER' },
-  'Platinum': { fmp: 'PLUSD', yahoo: 'PL=F', alphaVantage: 'PLATINUM' },
-  'Palladium': { fmp: 'PAUSD', yahoo: 'PA=F', alphaVantage: 'PALLADIUM' },
-  'WTI Crude': { fmp: 'CLUSD', yahoo: 'CL=F', alphaVantage: 'WTI' },
-  'Brent Crude': { fmp: 'BZUSD', yahoo: 'BZ=F', alphaVantage: 'BRENT' },
-  'Natural Gas': { fmp: 'NGUSD', yahoo: 'NG=F', alphaVantage: 'NATURAL_GAS' },
-  'RBOB Gasoline': { fmp: 'RBUSD', yahoo: 'RB=F', alphaVantage: 'GASOLINE' },
-  'Heating Oil': { fmp: 'HOUSD', yahoo: 'HO=F', alphaVantage: 'HEATING_OIL' },
+  'Gold': { fmp: 'XAUUSD', yahoo: 'GC=F', alphaVantage: 'GOLD', quandl: 'LBMA/GOLD' },
+  'Silver': { fmp: 'XAGUSD', yahoo: 'SI=F', alphaVantage: 'SILVER', quandl: 'LBMA/SILVER' },
+  'Copper': { fmp: 'XCUUSD', yahoo: 'HG=F', alphaVantage: 'COPPER' },
+  'Platinum': { fmp: 'XPTUSD', yahoo: 'PL=F', alphaVantage: 'PLATINUM' },
+  'Palladium': { fmp: 'XPDUSD', yahoo: 'PA=F', alphaVantage: 'PALLADIUM' },
+  'WTI Crude': { fmp: 'WTOUSD', yahoo: 'CL=F', alphaVantage: 'WTI' },
+  'Brent Crude': { fmp: 'UKOIL', yahoo: 'BZ=F', alphaVantage: 'BRENT' },
+  'Natural Gas': { fmp: 'NGCUSD', yahoo: 'NG=F', alphaVantage: 'NATURAL_GAS' },
+  'RBOB Gasoline': { fmp: 'RBOBGASUSD', yahoo: 'RB=F', alphaVantage: 'GASOLINE' },
+  'Heating Oil': { fmp: 'HEATOILUSD', yahoo: 'HO=F', alphaVantage: 'HEATING_OIL' },
   'Corn': { fmp: 'CORNUSD', yahoo: 'ZC=F', alphaVantage: 'CORN' },
   'Wheat': { fmp: 'WHEATUSD', yahoo: 'ZW=F', alphaVantage: 'WHEAT' },
-  'Soybeans': { fmp: 'SOYBNUSD', yahoo: 'ZS=F', alphaVantage: 'SOYBEANS' },
-  'Soybean Meal': { fmp: 'SOYBNUSD', yahoo: 'ZM=F', alphaVantage: 'SOYBEAN_MEAL' },
-  'Soybean Oil': { fmp: 'SOYBNUSD', yahoo: 'ZL=F', alphaVantage: 'SOYBEAN_OIL' },
-  'Oats': { fmp: 'CORNUSD', yahoo: 'ZO=F', alphaVantage: 'OATS' },
-  'Rough Rice': { fmp: 'WHEATUSD', yahoo: 'ZR=F', alphaVantage: 'RICE' },
-  'Feeder Cattle': { fmp: 'LCUSD', yahoo: 'GF=F', alphaVantage: 'FEEDER_CATTLE' },
-  'Live Cattle': { fmp: 'LCUSD', yahoo: 'LE=F', alphaVantage: 'LIVE_CATTLE' },
-  'Lean Hogs': { fmp: 'LHUSD', yahoo: 'HE=F', alphaVantage: 'LEAN_HOGS' },
-  'Cocoa': { fmp: 'CCUSD', yahoo: 'CC=F', alphaVantage: 'COCOA' },
-  'Coffee': { fmp: 'KCUSD', yahoo: 'KC=F', alphaVantage: 'COFFEE' },
-  'Cotton': { fmp: 'CTUSD', yahoo: 'CT=F', alphaVantage: 'COTTON' },
-  'Lumber': { fmp: 'LBUSD', yahoo: 'LBS=F', alphaVantage: 'LUMBER' },
-  'Orange Juice': { fmp: 'OJUSD', yahoo: 'OJ=F', alphaVantage: 'ORANGE_JUICE' },
-  'Sugar': { fmp: 'SBUSD', yahoo: 'SB=F', alphaVantage: 'SUGAR' }
+  'Soybeans': { fmp: 'SOYBEANUSD', yahoo: 'ZS=F', alphaVantage: 'SOYBEANS' },
+  'Soybean Meal': { fmp: 'SOYBEANUSD', yahoo: 'ZM=F', alphaVantage: 'SOYBEAN_MEAL' },
+  'Soybean Oil': { fmp: 'SOYBEANUSD', yahoo: 'ZL=F', alphaVantage: 'SOYBEAN_OIL' },
+  'Feeder Cattle': { fmp: 'CATTLEUSD', yahoo: 'GF=F', alphaVantage: 'FEEDER_CATTLE' },
+  'Live Cattle': { fmp: 'CATTLEUSD', yahoo: 'LE=F', alphaVantage: 'LIVE_CATTLE' },
+  'Lean Hogs': { fmp: 'HOGSUSD', yahoo: 'HE=F', alphaVantage: 'LEAN_HOGS' },
+  'Cocoa': { fmp: 'COCOAUSD', yahoo: 'CC=F', alphaVantage: 'COCOA' },
+  'Coffee': { fmp: 'COFFEEUSD', yahoo: 'KC=F', alphaVantage: 'COFFEE' },
+  'Cotton': { fmp: 'COTTONUSD', yahoo: 'CT=F', alphaVantage: 'COTTON' },
+  'Lumber': { fmp: 'LUMBERUSD', yahoo: 'LBS=F', alphaVantage: 'LUMBER' },
+  'Orange Juice': { fmp: 'ORANGEJUICEUSD', yahoo: 'OJ=F', alphaVantage: 'ORANGE_JUICE' },
+  'Sugar': { fmp: 'SUGARUSD', yahoo: 'SB=F', alphaVantage: 'SUGAR' }
 };
 
 // Generate fallback historical data when APIs fail
@@ -122,8 +120,6 @@ const getBasePriceForCommodity = (commodityName: string): number => {
     'Soybeans': 1150,
     'Soybean Meal': 350,
     'Soybean Oil': 45,
-    'Oats': 350,
-    'Rough Rice': 16,
     'Feeder Cattle': 240,
     'Live Cattle': 170,
     'Lean Hogs': 75,
