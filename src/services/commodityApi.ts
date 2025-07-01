@@ -30,6 +30,15 @@ export interface NewsItem {
   urlToImage?: string;
 }
 
+export interface CommodityInfo {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  category: string;
+}
+
 // Updated commodity symbol mappings for multiple APIs with corrected FMP symbols
 const COMMODITY_SYMBOLS: Record<string, {
   fmp: string;
@@ -134,6 +143,52 @@ const getBasePriceForCommodity = (commodityName: string): number => {
   return basePrices[commodityName] || 100;
 };
 
+// Category mappings for FMP commodities
+const categorizeCommodity = (symbol: string, name: string): string => {
+  const upperSymbol = symbol.toUpperCase();
+  const upperName = name.toUpperCase();
+  
+  // Energy commodities
+  if (upperSymbol.includes('OIL') || upperSymbol.includes('WTI') || upperSymbol.includes('BRENT') || 
+      upperSymbol.includes('GAS') || upperSymbol.includes('GASOLINE') || upperSymbol.includes('HEATING') ||
+      upperName.includes('CRUDE') || upperName.includes('GAS') || upperName.includes('OIL')) {
+    return 'energy';
+  }
+  
+  // Metals
+  if (upperSymbol.includes('XAU') || upperSymbol.includes('XAG') || upperSymbol.includes('XCU') || 
+      upperSymbol.includes('XPT') || upperSymbol.includes('XPD') || upperSymbol.includes('GOLD') || 
+      upperSymbol.includes('SILVER') || upperSymbol.includes('COPPER') || upperSymbol.includes('PLATINUM') ||
+      upperName.includes('GOLD') || upperName.includes('SILVER') || upperName.includes('COPPER') || 
+      upperName.includes('PLATINUM') || upperName.includes('PALLADIUM')) {
+    return 'metals';
+  }
+  
+  // Grains/Agricultural
+  if (upperSymbol.includes('CORN') || upperSymbol.includes('WHEAT') || upperSymbol.includes('SOYBEAN') ||
+      upperSymbol.includes('RICE') || upperSymbol.includes('OATS') ||
+      upperName.includes('CORN') || upperName.includes('WHEAT') || upperName.includes('SOYBEAN') ||
+      upperName.includes('RICE') || upperName.includes('OATS')) {
+    return 'grains';
+  }
+  
+  // Livestock
+  if (upperSymbol.includes('CATTLE') || upperSymbol.includes('HOGS') || upperSymbol.includes('PORK') ||
+      upperName.includes('CATTLE') || upperName.includes('HOGS') || upperName.includes('PORK')) {
+    return 'livestock';
+  }
+  
+  // Softs
+  if (upperSymbol.includes('COCOA') || upperSymbol.includes('COFFEE') || upperSymbol.includes('COTTON') ||
+      upperSymbol.includes('SUGAR') || upperSymbol.includes('LUMBER') || upperSymbol.includes('ORANGE') ||
+      upperName.includes('COCOA') || upperName.includes('COFFEE') || upperName.includes('COTTON') ||
+      upperName.includes('SUGAR') || upperName.includes('LUMBER') || upperName.includes('ORANGE')) {
+    return 'softs';
+  }
+  
+  return 'other';
+};
+
 export class CommodityApiService {
   private static instance: CommodityApiService;
   private cache: Map<string, { data: any; timestamp: number }> = new Map();
@@ -148,6 +203,64 @@ export class CommodityApiService {
 
   private isCacheValid(timestamp: number): boolean {
     return Date.now() - timestamp < this.CACHE_DURATION;
+  }
+
+  async fetchAvailableCommodities(): Promise<CommodityInfo[]> {
+    const cacheKey = 'available_commodities';
+    const cached = this.cache.get(cacheKey);
+    
+    if (cached && this.isCacheValid(cached.timestamp)) {
+      return cached.data;
+    }
+
+    console.log('Fetching available commodities from FMP API');
+    
+    try {
+      const apiKey = getFmpApiKey();
+      const response = await fetch(
+        `https://financialmodelingprep.com/api/v3/quotes/commodity?apikey=${apiKey}`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`FMP API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (!Array.isArray(data)) {
+        throw new Error('Invalid response format from FMP API');
+      }
+      
+      const commodities: CommodityInfo[] = data.map((item: any) => ({
+        symbol: item.symbol || '',
+        name: item.name || item.symbol || '',
+        price: parseFloat(item.price) || 0,
+        change: parseFloat(item.change) || 0,
+        changePercent: parseFloat(item.changesPercentage) || 0,
+        category: categorizeCommodity(item.symbol || '', item.name || '')
+      })).filter(item => item.symbol && item.name);
+      
+      console.log(`Found ${commodities.length} commodities from FMP API`);
+      
+      this.cache.set(cacheKey, { data: commodities, timestamp: Date.now() });
+      return commodities;
+      
+    } catch (error) {
+      console.error('Error fetching commodities from FMP:', error);
+      
+      // Return fallback data based on our existing mappings
+      const fallbackCommodities: CommodityInfo[] = Object.entries(COMMODITY_SYMBOLS).map(([name, symbols]) => ({
+        symbol: symbols.fmp,
+        name,
+        price: getBasePriceForCommodity(name),
+        change: (Math.random() - 0.5) * 10,
+        changePercent: (Math.random() - 0.5) * 4,
+        category: categorizeCommodity(symbols.fmp, name)
+      }));
+      
+      this.cache.set(cacheKey, { data: fallbackCommodities, timestamp: Date.now() });
+      return fallbackCommodities;
+    }
   }
 
   async fetchCommodityPrice(commodityName: string): Promise<CommodityPrice | null> {

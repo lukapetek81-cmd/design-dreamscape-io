@@ -1,3 +1,4 @@
+
 import {
   Sidebar,
   SidebarContent,
@@ -9,25 +10,42 @@ import {
   SidebarMenuItem,
   SidebarHeader,
 } from "@/components/ui/sidebar";
-import { Zap, Coins, Wheat, TrendingUp, Activity, BarChart3, Beef, Coffee } from "lucide-react";
+import { Zap, Coins, Wheat, TrendingUp, Activity, BarChart3, Beef, Coffee, Package } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 
+interface CommodityCounts {
+  energy: number;
+  metals: number;
+  grains: number;
+  livestock: number;
+  softs: number;
+  other: number;
+}
+
 const COMMODITY_GROUPS = [
-  { id: "energy", label: "Energy", icon: Zap, color: "text-orange-500", count: 5 },
-  { id: "metals", label: "Metals", icon: Coins, color: "text-yellow-500", count: 5 },
-  { id: "grains", label: "Grains", icon: Wheat, color: "text-green-500", count: 5 },
-  { id: "livestock", label: "Livestock", icon: Beef, color: "text-red-500", count: 3 },
-  { id: "softs", label: "Softs", icon: Coffee, color: "text-brown-500", count: 6 },
+  { id: "energy", label: "Energy", icon: Zap, color: "text-orange-500" },
+  { id: "metals", label: "Metals", icon: Coins, color: "text-yellow-500" },
+  { id: "grains", label: "Grains", icon: Wheat, color: "text-green-500" },
+  { id: "livestock", label: "Livestock", icon: Beef, color: "text-red-500" },
+  { id: "softs", label: "Softs", icon: Coffee, color: "text-brown-500" },
+  { id: "other", label: "Other", icon: Package, color: "text-gray-500" },
 ];
 
 interface CommoditySidebarProps {
   activeGroup: string;
   onGroupSelect: (group: string) => void;
+  commodityCounts: CommodityCounts;
 }
 
-const CommoditySidebar = ({ activeGroup, onGroupSelect }: CommoditySidebarProps) => {
+const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: CommoditySidebarProps) => {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+
+  const getGroupCount = (groupId: string) => {
+    return commodityCounts[groupId as keyof CommodityCounts] || 0;
+  };
+
+  const totalCommodities = Object.values(commodityCounts).reduce((sum, count) => sum + count, 0);
 
   return (
     <Sidebar className="border-r bg-gradient-to-b from-background to-muted/10 shadow-soft transition-all duration-300">
@@ -59,6 +77,7 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect }: CommoditySidebarProps)
               {COMMODITY_GROUPS.map((group) => {
                 const Icon = group.icon;
                 const isActive = activeGroup === group.id;
+                const count = getGroupCount(group.id);
                 
                 return (
                   <SidebarMenuItem key={group.id}>
@@ -87,12 +106,12 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect }: CommoditySidebarProps)
                                 ? 'bg-primary/20 text-primary' 
                                 : 'bg-muted/50 text-muted-foreground'
                             }`}>
-                              {group.count}
+                              {count}
                             </span>
                           </>
                         )}
                         {collapsed && (
-                          <span className="text-2xs text-muted-foreground">{group.count}</span>
+                          <span className="text-2xs text-muted-foreground">{count}</span>
                         )}
                       </div>
                       {isActive && !collapsed && (
@@ -121,12 +140,12 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect }: CommoditySidebarProps)
                   {collapsed ? (
                     <>
                       <BarChart3 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                      <span className="text-xs font-bold text-purple-900 dark:text-purple-100 number-display">142</span>
+                      <span className="text-xs font-bold text-purple-900 dark:text-purple-100 number-display">{totalCommodities}</span>
                     </>
                   ) : (
                     <>
-                      <span className="text-2xs sm:text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Active Markets</span>
-                      <span className="text-xs sm:text-sm font-bold text-purple-900 dark:text-purple-100 number-display">142</span>
+                      <span className="text-2xs sm:text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Total Markets</span>
+                      <span className="text-xs sm:text-sm font-bold text-purple-900 dark:text-purple-100 number-display">{totalCommodities}</span>
                     </>
                   )}
                 </div>
@@ -139,14 +158,14 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect }: CommoditySidebarProps)
                   {collapsed ? (
                     <>
                       <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="text-xs font-bold text-green-900 dark:text-green-100 number-display">2s</span>
+                      <span className="text-xs font-bold text-green-900 dark:text-green-100 number-display">5m</span>
                     </>
                   ) : (
                     <>
-                      <span className="text-2xs sm:text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wider">Last Update</span>
+                      <span className="text-2xs sm:text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wider">Update Interval</span>
                       <div className="flex items-center gap-1">
                         <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                        <span className="text-xs sm:text-sm font-bold text-green-900 dark:text-green-100 number-display">2s ago</span>
+                        <span className="text-xs sm:text-sm font-bold text-green-900 dark:text-green-100 number-display">5 min</span>
                       </div>
                     </>
                   )}

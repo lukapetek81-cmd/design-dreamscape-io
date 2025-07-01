@@ -1,68 +1,21 @@
+
 import React from 'react';
 import CommodityCard from '@/components/CommodityCard';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import CommoditySidebar from '@/components/CommoditySidebar';
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { BarChart3, Activity, Menu, TrendingUp } from 'lucide-react';
+import { BarChart3, Activity, Menu, TrendingUp, Loader } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ApiSettings from '@/components/ApiSettings';
-
-const METAL_COMMODITIES = [
-  { name: 'Gold', symbol: 'XAU', price: 2024.50, change: 0.45 },
-  { name: 'Silver', symbol: 'XAG', price: 23.75, change: -0.32 },
-  { name: 'Copper', symbol: 'HG', price: 3.85, change: 0.75 },
-  { name: 'Platinum', symbol: 'XPT', price: 904.20, change: 0.78 },
-  { name: 'Palladium', symbol: 'XPD', price: 1243.50, change: -1.15 }
-];
-
-const GRAIN_COMMODITIES = [
-  { name: 'Corn', symbol: 'ZC', price: 442.25, change: -0.85 },
-  { name: 'Wheat', symbol: 'ZW', price: 542.25, change: -0.45 },
-  { name: 'Soybeans', symbol: 'ZS', price: 1198.75, change: -0.65 },
-  { name: 'Soybean Meal', symbol: 'ZM', price: 352.80, change: -1.15 },
-  { name: 'Soybean Oil', symbol: 'ZL', price: 47.85, change: 0.92 }
-];
-
-const ENERGY_COMMODITIES = [
-  { name: 'WTI Crude', symbol: 'CL', price: 76.80, change: 1.25 },
-  { name: 'Brent Crude', symbol: 'BZ', price: 81.45, change: 0.95 },
-  { name: 'Natural Gas', symbol: 'NG', price: 2.85, change: -2.15 },
-  { name: 'RBOB Gasoline', symbol: 'RB', price: 2.15, change: -0.45 },
-  { name: 'Heating Oil', symbol: 'HO', price: 2.65, change: 0.35 }
-];
-
-const LIVESTOCK_COMMODITIES = [
-  { name: 'Feeder Cattle', symbol: 'FC', price: 245.50, change: 0.85 },
-  { name: 'Live Cattle', symbol: 'LC', price: 152.75, change: -0.25 },
-  { name: 'Lean Hogs', symbol: 'LH', price: 72.40, change: 1.15 }
-];
-
-const SOFTS_COMMODITIES = [
-  { name: 'Cocoa', symbol: 'CC', price: 3125.00, change: 2.15 },
-  { name: 'Coffee', symbol: 'KC', price: 165.40, change: -1.25 },
-  { name: 'Cotton', symbol: 'CT', price: 68.75, change: 0.45 },
-  { name: 'Lumber', symbol: 'LB', price: 445.20, change: -2.35 },
-  { name: 'Orange Juice', symbol: 'OJ', price: 385.50, change: 1.85 },
-  { name: 'Sugar', symbol: 'SB', price: 19.65, change: 0.75 }
-];
+import { useAvailableCommodities } from '@/hooks/useCommodityData';
 
 const Index = () => {
   const [activeGroup, setActiveGroup] = React.useState("energy");
   const isMobile = useIsMobile();
+  const { commodities, loading, error } = useAvailableCommodities();
 
   const getCommodities = () => {
-    switch (activeGroup) {
-      case "metals":
-        return METAL_COMMODITIES;
-      case "grains":
-        return GRAIN_COMMODITIES;
-      case "livestock":
-        return LIVESTOCK_COMMODITIES;
-      case "softs":
-        return SOFTS_COMMODITIES;
-      default:
-        return ENERGY_COMMODITIES;
-    }
+    return commodities.filter(commodity => commodity.category === activeGroup);
   };
 
   const getGroupTitle = () => {
@@ -75,6 +28,8 @@ const Index = () => {
         return "Livestock Commodities";
       case "softs":
         return "Soft Commodities";
+      case "other":
+        return "Other Commodities";
       default:
         return "Energy Commodities";
     }
@@ -90,9 +45,15 @@ const Index = () => {
         return <Activity className="w-5 h-5 sm:w-6 sm:h-6" />;
       case "softs":
         return <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />;
+      case "other":
+        return <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />;
       default:
         return <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />;
     }
+  };
+
+  const getCommodityCount = (category: string) => {
+    return commodities.filter(commodity => commodity.category === category).length;
   };
 
   return (
@@ -101,6 +62,14 @@ const Index = () => {
         <CommoditySidebar 
           activeGroup={activeGroup} 
           onGroupSelect={setActiveGroup}
+          commodityCounts={{
+            energy: getCommodityCount('energy'),
+            metals: getCommodityCount('metals'),
+            grains: getCommodityCount('grains'),
+            livestock: getCommodityCount('livestock'),
+            softs: getCommodityCount('softs'),
+            other: getCommodityCount('other')
+          }}
         />
         <div className="flex-1 flex flex-col min-w-0">
           {/* Enhanced Responsive Header */}
@@ -120,10 +89,28 @@ const Index = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2 sm:gap-4">
-                <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-1 sm:py-2 rounded-full bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 hover:scale-105 transition-transform duration-200">
-                  <div className="h-1.5 w-1.5 sm:h-2.5 sm:w-2.5 bg-green-500 rounded-full animate-pulse shadow-sm shadow-green-500/50"></div>
-                  <span className="text-2xs sm:text-xs lg:text-sm font-semibold text-green-700 dark:text-green-400 whitespace-nowrap">
-                    {isMobile ? 'Live' : 'Live Market'}
+                <div className={`flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-1 sm:py-2 rounded-full border hover:scale-105 transition-transform duration-200 ${
+                  loading 
+                    ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800'
+                    : error 
+                      ? 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800'
+                      : 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800'
+                }`}>
+                  {loading ? (
+                    <Loader className="h-1.5 w-1.5 sm:h-2.5 sm:w-2.5 animate-spin text-blue-500" />
+                  ) : error ? (
+                    <div className="h-1.5 w-1.5 sm:h-2.5 sm:w-2.5 bg-red-500 rounded-full"></div>
+                  ) : (
+                    <div className="h-1.5 w-1.5 sm:h-2.5 sm:w-2.5 bg-green-500 rounded-full animate-pulse shadow-sm shadow-green-500/50"></div>
+                  )}
+                  <span className={`text-2xs sm:text-xs lg:text-sm font-semibold whitespace-nowrap ${
+                    loading
+                      ? 'text-blue-700 dark:text-blue-400'
+                      : error
+                        ? 'text-red-700 dark:text-red-400'
+                        : 'text-green-700 dark:text-green-400'
+                  }`}>
+                    {loading ? (isMobile ? 'Loading' : 'Loading Markets') : error ? 'Error' : (isMobile ? 'Live' : 'Live Market')}
                   </span>
                 </div>
               </div>
@@ -150,7 +137,7 @@ const Index = () => {
                       </span>
                       <span className="flex items-center gap-1">
                         <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                        Updated every 30s
+                        Updated every 5min
                       </span>
                     </div>
                   </div>
@@ -164,19 +151,19 @@ const Index = () => {
                 </div>
               </div>
 
-              {/* Enhanced Responsive Market Stats Cards - Removed Total Volume */}
+              {/* Enhanced Responsive Market Stats Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
                 <div className="p-3 sm:p-4 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/20 border border-purple-200 dark:border-purple-800 hover:scale-105 transition-all duration-300 cursor-pointer active:scale-95 touch-manipulation">
                   <div className="flex items-center justify-between">
                     <div className="min-w-0 flex-1">
                       <p className="text-2xs sm:text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider truncate">
-                        Active Markets
+                        Total Commodities
                       </p>
                       <p className="text-lg sm:text-xl lg:text-2xl font-bold text-purple-900 dark:text-purple-100 number-display">
-                        142
+                        {loading ? '...' : commodities.length}
                       </p>
                       <p className="text-2xs sm:text-xs text-purple-600/70 dark:text-purple-400/70 mt-1">
-                        Currently trading
+                        From FMP API
                       </p>
                     </div>
                     <BarChart3 className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-purple-500 shrink-0" />
@@ -190,7 +177,7 @@ const Index = () => {
                         Last Update
                       </p>
                       <p className="text-lg sm:text-xl lg:text-2xl font-bold text-emerald-900 dark:text-emerald-100 number-display">
-                        Just now
+                        {loading ? '...' : 'Just now'}
                       </p>
                       <p className="text-2xs sm:text-xs text-emerald-600/70 dark:text-emerald-400/70 mt-1">
                         Data refreshed
@@ -201,23 +188,64 @@ const Index = () => {
                 </div>
               </div>
 
-              {/* Enhanced Responsive Commodities Grid */}
-              <div className="grid gap-3 sm:gap-4 lg:gap-6">
-                {getCommodities().map((commodity, index) => (
-                  <div 
-                    key={commodity.symbol}
-                    className="animate-slide-up"
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <CommodityCard
-                      name={commodity.name}
-                      symbol={commodity.symbol}
-                      price={commodity.price}
-                      change={commodity.change}
-                    />
+              {/* Loading State */}
+              {loading && (
+                <div className="flex items-center justify-center py-16">
+                  <div className="text-center space-y-4">
+                    <Loader className="w-8 h-8 animate-spin text-primary mx-auto" />
+                    <div className="space-y-2">
+                      <p className="text-lg font-semibold text-foreground">Loading Commodities</p>
+                      <p className="text-sm text-muted-foreground">Fetching real-time data from FMP API...</p>
+                    </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+
+              {/* Error State */}
+              {error && !loading && (
+                <div className="p-6 rounded-xl bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/20 dark:to-rose-950/20 border border-red-200 dark:border-red-800">
+                  <div className="text-center space-y-2">
+                    <p className="text-lg font-semibold text-red-700 dark:text-red-400">Failed to Load Commodities</p>
+                    <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                    <p className="text-xs text-red-500 dark:text-red-500">Using fallback data instead</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Enhanced Responsive Commodities Grid */}
+              {!loading && getCommodities().length > 0 && (
+                <div className="grid gap-3 sm:gap-4 lg:gap-6">
+                  {getCommodities().map((commodity, index) => (
+                    <div 
+                      key={commodity.symbol}
+                      className="animate-slide-up"
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                      <CommodityCard
+                        name={commodity.name}
+                        symbol={commodity.symbol}
+                        price={commodity.price}
+                        change={commodity.changePercent}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Empty State */}
+              {!loading && !error && getCommodities().length === 0 && (
+                <div className="text-center py-16 space-y-4">
+                  <div className="w-16 h-16 mx-auto bg-muted/50 rounded-full flex items-center justify-center">
+                    <BarChart3 className="w-8 h-8 text-muted-foreground" />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-lg font-semibold text-foreground">No Commodities Found</p>
+                    <p className="text-sm text-muted-foreground">
+                      No commodities available in the {activeGroup} category
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </main>
         </div>

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { commodityApi, CommodityPrice, NewsItem } from '@/services/commodityApi';
+import { commodityApi, CommodityPrice, NewsItem, CommodityInfo } from '@/services/commodityApi';
 
 export const useCommodityPrice = (commodityName: string) => {
   const [price, setPrice] = useState<CommodityPrice | null>(null);
@@ -88,4 +88,35 @@ export const useCommodityHistoricalData = (commodityName: string, timeframe: str
   }, [commodityName, timeframe]);
 
   return { data, loading, error };
+};
+
+export const useAvailableCommodities = () => {
+  const [commodities, setCommodities] = useState<CommodityInfo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCommodities = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const commodityData = await commodityApi.fetchAvailableCommodities();
+        setCommodities(commodityData);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch commodities');
+        console.error('Error fetching available commodities:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCommodities();
+    
+    // Refresh commodities every 5 minutes
+    const interval = setInterval(fetchCommodities, 5 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  return { commodities, loading, error };
 };
