@@ -46,6 +46,7 @@ const COMMODITY_SYMBOLS: Record<string, {
   alphaVantage: string;
   quandl?: string;
 }> = {
+  // Metals
   'Gold Futures': { fmp: 'GCUSD', yahoo: 'GC=F', alphaVantage: 'GOLD', quandl: 'LBMA/GOLD' },
   'Micro Gold Futures': { fmp: 'MGCUSD', yahoo: 'MGC=F', alphaVantage: 'GOLD' },
   'Silver Futures': { fmp: 'SIUSD', yahoo: 'SI=F', alphaVantage: 'SILVER', quandl: 'LBMA/SILVER' },
@@ -53,25 +54,42 @@ const COMMODITY_SYMBOLS: Record<string, {
   'Copper': { fmp: 'HGUSD', yahoo: 'HG=F', alphaVantage: 'COPPER' },
   'Platinum': { fmp: 'PLUSD', yahoo: 'PL=F', alphaVantage: 'PLATINUM' },
   'Palladium': { fmp: 'PAUSD', yahoo: 'PA=F', alphaVantage: 'PALLADIUM' },
+  
+  // Energy
   'Brent Crude Oil': { fmp: 'BZUSD', yahoo: 'BZ=F', alphaVantage: 'BRENT' },
   'Crude Oil': { fmp: 'CLUSD', yahoo: 'CL=F', alphaVantage: 'WTI' },
   'Natural Gas': { fmp: 'NGUSD', yahoo: 'NG=F', alphaVantage: 'NATURAL_GAS' },
   'Heating Oil': { fmp: 'HOUSD', yahoo: 'HO=F', alphaVantage: 'HEATING_OIL' },
   'Gasoline RBOB': { fmp: 'RBUSD', yahoo: 'RB=F', alphaVantage: 'GASOLINE' },
+  
+  // Grains
   'Corn Futures': { fmp: 'ZCUSX', yahoo: 'ZC=F', alphaVantage: 'CORN' },
   'Wheat Futures': { fmp: 'ZWUSX', yahoo: 'ZW=F', alphaVantage: 'WHEAT' },
   'Soybean Futures': { fmp: 'ZSUSX', yahoo: 'ZS=F', alphaVantage: 'SOYBEANS' },
   'Soybean Meal Futures': { fmp: 'ZMUSD', yahoo: 'ZM=F', alphaVantage: 'SOYBEAN_MEAL' },
   'Soybean Oil Futures': { fmp: 'ZLUSX', yahoo: 'ZL=F', alphaVantage: 'SOYBEAN_OIL' },
+  
+  // Livestock
   'Live Cattle Futures': { fmp: 'LEUSX', yahoo: 'LE=F', alphaVantage: 'LIVE_CATTLE' },
   'Feeder Cattle Futures': { fmp: 'FCUSX', yahoo: 'GF=F', alphaVantage: 'FEEDER_CATTLE' },
   'Lean Hogs Futures': { fmp: 'HEUSX', yahoo: 'HE=F', alphaVantage: 'LEAN_HOGS' },
+  'Class III Milk Futures': { fmp: 'DCUSD', yahoo: 'DC=F', alphaVantage: 'MILK' },
+  
+  // Softs
   'Cocoa Futures': { fmp: 'CCUSD', yahoo: 'CC=F', alphaVantage: 'COCOA' },
   'Coffee Futures': { fmp: 'KCUSD', yahoo: 'KC=F', alphaVantage: 'COFFEE' },
   'Cotton Futures': { fmp: 'CTUSD', yahoo: 'CT=F', alphaVantage: 'COTTON' },
   'Lumber Futures': { fmp: 'LBUSD', yahoo: 'LBS=F', alphaVantage: 'LUMBER' },
   'Orange Juice Futures': { fmp: 'OJUSD', yahoo: 'OJ=F', alphaVantage: 'ORANGE_JUICE' },
-  'Sugar Futures': { fmp: 'SBUSD', yahoo: 'SB=F', alphaVantage: 'SUGAR' }
+  'Sugar Futures': { fmp: 'SBUSD', yahoo: 'SB=F', alphaVantage: 'SUGAR' },
+  
+  // Other/Financial
+  'US Dollar': { fmp: 'DXUSD', yahoo: 'DX-Y.NYB', alphaVantage: 'USD' },
+  'Micro E-mini Russell 2000 Index Futures': { fmp: 'RTYUSD', yahoo: 'RTY=F', alphaVantage: 'RTY' },
+  'Mini Dow Jones Industrial Average Index': { fmp: 'YMUSD', yahoo: 'YM=F', alphaVantage: 'YM' },
+  '30 Day Fed Fund Futures': { fmp: 'ZQUSD', yahoo: 'ZQ=F', alphaVantage: 'FF' },
+  'Five-Year US Treasury Note': { fmp: 'ZFUSD', yahoo: 'ZF=F', alphaVantage: 'FVX' },
+  '2-Year T-Note Futures': { fmp: 'ZTUSD', yahoo: 'ZT=F', alphaVantage: 'TNX' }
 };
 
 // Generate fallback historical data when APIs fail
