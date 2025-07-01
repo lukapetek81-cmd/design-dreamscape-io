@@ -1,4 +1,3 @@
-
 // Commodity price API service
 const getFmpApiKey = () => localStorage.getItem('fmpApiKey') || 'demo';
 const getNewsApiKey = () => localStorage.getItem('newsApiKey') || 'demo';
@@ -39,7 +38,16 @@ const COMMODITY_SYMBOLS: Record<string, string> = {
   'Soybean Meal': 'ZM=F',
   'Soybean Oil': 'ZL=F',
   'Oats': 'ZO=F',
-  'Rough Rice': 'ZR=F'
+  'Rough Rice': 'ZR=F',
+  'Feeder Cattle': 'FC=F',
+  'Live Cattle': 'LC=F',
+  'Lean Hogs': 'LH=F',
+  'Cocoa': 'CC=F',
+  'Coffee': 'KC=F',
+  'Cotton': 'CT=F',
+  'Lumber': 'LB=F',
+  'Orange Juice': 'OJ=F',
+  'Sugar': 'SB=F'
 };
 
 export class CommodityApiService {
@@ -127,7 +135,16 @@ export class CommodityApiService {
       'Soybean Meal': { price: 352.80, change: -1.15 },
       'Soybean Oil': { price: 47.85, change: 0.92 },
       'Oats': { price: 372.50, change: 1.20 },
-      'Rough Rice': { price: 15.85, change: 0.32 }
+      'Rough Rice': { price: 15.85, change: 0.32 },
+      'Feeder Cattle': { price: 245.50, change: 0.85 },
+      'Live Cattle': { price: 152.75, change: -0.25 },
+      'Lean Hogs': { price: 72.40, change: 1.15 },
+      'Cocoa': { price: 3125.00, change: 2.15 },
+      'Coffee': { price: 165.40, change: -1.25 },
+      'Cotton': { price: 68.75, change: 0.45 },
+      'Lumber': { price: 445.20, change: -2.35 },
+      'Orange Juice': { price: 385.50, change: 1.85 },
+      'Sugar': { price: 19.65, change: 0.75 }
     };
 
     const fallback = fallbackPrices[commodityName] || { price: 100, change: 0 };

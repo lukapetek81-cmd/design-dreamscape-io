@@ -1,3 +1,4 @@
+
 import React from 'react';
 import CommodityCard from '@/components/CommodityCard';
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -33,6 +34,21 @@ const ENERGY_COMMODITIES = [
   { name: 'Heating Oil', symbol: 'HO', price: 2.65, change: 0.35 }
 ];
 
+const LIVESTOCK_COMMODITIES = [
+  { name: 'Feeder Cattle', symbol: 'FC', price: 245.50, change: 0.85 },
+  { name: 'Live Cattle', symbol: 'LC', price: 152.75, change: -0.25 },
+  { name: 'Lean Hogs', symbol: 'LH', price: 72.40, change: 1.15 }
+];
+
+const SOFTS_COMMODITIES = [
+  { name: 'Cocoa', symbol: 'CC', price: 3125.00, change: 2.15 },
+  { name: 'Coffee', symbol: 'KC', price: 165.40, change: -1.25 },
+  { name: 'Cotton', symbol: 'CT', price: 68.75, change: 0.45 },
+  { name: 'Lumber', symbol: 'LB', price: 445.20, change: -2.35 },
+  { name: 'Orange Juice', symbol: 'OJ', price: 385.50, change: 1.85 },
+  { name: 'Sugar', symbol: 'SB', price: 19.65, change: 0.75 }
+];
+
 const Index = () => {
   const [activeGroup, setActiveGroup] = React.useState("energy");
   const isMobile = useIsMobile();
@@ -43,6 +59,10 @@ const Index = () => {
         return METAL_COMMODITIES;
       case "grains":
         return GRAIN_COMMODITIES;
+      case "livestock":
+        return LIVESTOCK_COMMODITIES;
+      case "softs":
+        return SOFTS_COMMODITIES;
       default:
         return ENERGY_COMMODITIES;
     }
@@ -54,6 +74,10 @@ const Index = () => {
         return "Metal Commodities";
       case "grains":
         return "Agricultural Commodities";
+      case "livestock":
+        return "Livestock Commodities";
+      case "softs":
+        return "Soft Commodities";
       default:
         return "Energy Commodities";
     }
@@ -65,6 +89,10 @@ const Index = () => {
         return <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6" />;
       case "grains":
         return <Activity className="w-5 h-5 sm:w-6 sm:h-6" />;
+      case "livestock":
+        return <Activity className="w-5 h-5 sm:w-6 sm:h-6" />;
+      case "softs":
+        return <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />;
       default:
         return <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />;
     }

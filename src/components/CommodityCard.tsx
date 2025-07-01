@@ -43,6 +43,18 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
     if (name.includes('soybean meal')) return 'USD/ton';
     if (name.includes('soybean oil')) return 'USD/lb';
     
+    // Livestock
+    if (name.includes('cattle')) return 'USD/lb';
+    if (name.includes('hogs')) return 'USD/lb';
+    
+    // Softs
+    if (name.includes('cocoa')) return 'USD/MT';
+    if (name.includes('coffee')) return 'USD/lb';
+    if (name.includes('cotton')) return 'USD/lb';
+    if (name.includes('lumber')) return 'USD/1000ft';
+    if (name.includes('orange juice')) return 'USD/lb';
+    if (name.includes('sugar')) return 'USD/lb';
+    
     // Default fallback
     return 'USD';
   };

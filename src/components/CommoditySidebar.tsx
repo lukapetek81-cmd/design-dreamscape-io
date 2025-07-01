@@ -10,13 +10,15 @@ import {
   SidebarMenuItem,
   SidebarHeader,
 } from "@/components/ui/sidebar";
-import { Zap, Coins, Wheat, TrendingUp, Activity, BarChart3 } from "lucide-react";
+import { Zap, Coins, Wheat, TrendingUp, Activity, BarChart3, Beef, Coffee } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 
 const COMMODITY_GROUPS = [
   { id: "energy", label: "Energy", icon: Zap, color: "text-orange-500", count: 5 },
   { id: "metals", label: "Metals", icon: Coins, color: "text-yellow-500", count: 5 },
   { id: "grains", label: "Grains", icon: Wheat, color: "text-green-500", count: 7 },
+  { id: "livestock", label: "Livestock", icon: Beef, color: "text-red-500", count: 3 },
+  { id: "softs", label: "Softs", icon: Coffee, color: "text-brown-500", count: 6 },
 ];
 
 interface CommoditySidebarProps {
