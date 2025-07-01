@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,6 +41,25 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
     trend: isPositiveTrend ? 'positive' : 'negative',
     priceChange: priceChange.toFixed(2) + '%'
   });
+
+  // Calculate dynamic y-axis domain based on timeframe
+  const getYAxisDomain = () => {
+    if (data.length === 0) return ['auto', 'auto'];
+    
+    const prices = data.map(d => d.price);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    
+    if (selectedTimeframe === '1d') {
+      // For daily charts, use a tighter range to show intraday movements
+      const range = maxPrice - minPrice;
+      const padding = Math.max(range * 0.1, 0.5); // 10% padding or minimum $0.50
+      return [minPrice - padding, maxPrice + padding];
+    } else {
+      // For longer timeframes, use the existing approach
+      return ['dataMin - 5', 'dataMax + 5'];
+    }
+  };
 
   // Format function for x-axis based on timeframe
   const formatXAxisTick = (date: string) => {
@@ -178,8 +196,8 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
                 }}
                 axisLine={{ stroke: 'hsl(var(--border))' }}
                 tickLine={{ stroke: 'hsl(var(--border))' }}
-                tickFormatter={(value) => `$${value.toFixed(0)}`}
-                domain={['dataMin - 5', 'dataMax + 5']}
+                tickFormatter={(value) => `$${value.toFixed(selectedTimeframe === '1d' ? 2 : 0)}`}
+                domain={getYAxisDomain()}
               />
               <Tooltip 
                 labelFormatter={formatTooltipLabel}
