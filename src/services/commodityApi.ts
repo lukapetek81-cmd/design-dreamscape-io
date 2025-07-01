@@ -39,37 +39,39 @@ export interface CommodityInfo {
   category: string;
 }
 
-// Updated commodity symbol mappings using actual FMP symbols that return data
+// Updated commodity symbol mappings using exact names from FMP API
 const COMMODITY_SYMBOLS: Record<string, {
   fmp: string;
   yahoo: string;
   alphaVantage: string;
   quandl?: string;
 }> = {
-  'Gold': { fmp: 'GCUSD', yahoo: 'GC=F', alphaVantage: 'GOLD', quandl: 'LBMA/GOLD' },
-  'Silver': { fmp: 'SIUSD', yahoo: 'SI=F', alphaVantage: 'SILVER', quandl: 'LBMA/SILVER' },
+  'Gold Futures': { fmp: 'GCUSD', yahoo: 'GC=F', alphaVantage: 'GOLD', quandl: 'LBMA/GOLD' },
+  'Micro Gold Futures': { fmp: 'MGCUSD', yahoo: 'MGC=F', alphaVantage: 'GOLD' },
+  'Silver Futures': { fmp: 'SIUSD', yahoo: 'SI=F', alphaVantage: 'SILVER', quandl: 'LBMA/SILVER' },
+  'Micro Silver Futures': { fmp: 'MSIUSD', yahoo: 'SIL=F', alphaVantage: 'SILVER' },
   'Copper': { fmp: 'HGUSD', yahoo: 'HG=F', alphaVantage: 'COPPER' },
   'Platinum': { fmp: 'PLUSD', yahoo: 'PL=F', alphaVantage: 'PLATINUM' },
   'Palladium': { fmp: 'PAUSD', yahoo: 'PA=F', alphaVantage: 'PALLADIUM' },
-  'Brent Crude': { fmp: 'BZUSD', yahoo: 'BZ=F', alphaVantage: 'BRENT' },
+  'Brent Crude Oil': { fmp: 'BZUSD', yahoo: 'BZ=F', alphaVantage: 'BRENT' },
   'Crude Oil': { fmp: 'CLUSD', yahoo: 'CL=F', alphaVantage: 'WTI' },
   'Natural Gas': { fmp: 'NGUSD', yahoo: 'NG=F', alphaVantage: 'NATURAL_GAS' },
   'Heating Oil': { fmp: 'HOUSD', yahoo: 'HO=F', alphaVantage: 'HEATING_OIL' },
-  'Gasoline': { fmp: 'RBUSD', yahoo: 'RB=F', alphaVantage: 'GASOLINE' },
-  'Corn': { fmp: 'ZCUSX', yahoo: 'ZC=F', alphaVantage: 'CORN' },
-  'Wheat': { fmp: 'ZWUSX', yahoo: 'ZW=F', alphaVantage: 'WHEAT' },
-  'Soybeans': { fmp: 'ZSUSX', yahoo: 'ZS=F', alphaVantage: 'SOYBEANS' },
-  'Soybean Meal': { fmp: 'ZMUSD', yahoo: 'ZM=F', alphaVantage: 'SOYBEAN_MEAL' },
-  'Soybean Oil': { fmp: 'ZLUSX', yahoo: 'ZL=F', alphaVantage: 'SOYBEAN_OIL' },
-  'Live Cattle': { fmp: 'LEUSX', yahoo: 'LE=F', alphaVantage: 'LIVE_CATTLE' },
-  'Feeder Cattle': { fmp: 'FCUSX', yahoo: 'GF=F', alphaVantage: 'FEEDER_CATTLE' },
-  'Lean Hogs': { fmp: 'HEUSX', yahoo: 'HE=F', alphaVantage: 'LEAN_HOGS' },
-  'Cocoa': { fmp: 'CCUSD', yahoo: 'CC=F', alphaVantage: 'COCOA' },
-  'Coffee': { fmp: 'KCUSD', yahoo: 'KC=F', alphaVantage: 'COFFEE' },
-  'Cotton': { fmp: 'CTUSD', yahoo: 'CT=F', alphaVantage: 'COTTON' },
-  'Lumber': { fmp: 'LBUSD', yahoo: 'LBS=F', alphaVantage: 'LUMBER' },
-  'Orange Juice': { fmp: 'OJUSD', yahoo: 'OJ=F', alphaVantage: 'ORANGE_JUICE' },
-  'Sugar': { fmp: 'SBUSD', yahoo: 'SB=F', alphaVantage: 'SUGAR' }
+  'Gasoline RBOB': { fmp: 'RBUSD', yahoo: 'RB=F', alphaVantage: 'GASOLINE' },
+  'Corn Futures': { fmp: 'ZCUSX', yahoo: 'ZC=F', alphaVantage: 'CORN' },
+  'Wheat Futures': { fmp: 'ZWUSX', yahoo: 'ZW=F', alphaVantage: 'WHEAT' },
+  'Soybean Futures': { fmp: 'ZSUSX', yahoo: 'ZS=F', alphaVantage: 'SOYBEANS' },
+  'Soybean Meal Futures': { fmp: 'ZMUSD', yahoo: 'ZM=F', alphaVantage: 'SOYBEAN_MEAL' },
+  'Soybean Oil Futures': { fmp: 'ZLUSX', yahoo: 'ZL=F', alphaVantage: 'SOYBEAN_OIL' },
+  'Live Cattle Futures': { fmp: 'LEUSX', yahoo: 'LE=F', alphaVantage: 'LIVE_CATTLE' },
+  'Feeder Cattle Futures': { fmp: 'FCUSX', yahoo: 'GF=F', alphaVantage: 'FEEDER_CATTLE' },
+  'Lean Hogs Futures': { fmp: 'HEUSX', yahoo: 'HE=F', alphaVantage: 'LEAN_HOGS' },
+  'Cocoa Futures': { fmp: 'CCUSD', yahoo: 'CC=F', alphaVantage: 'COCOA' },
+  'Coffee Futures': { fmp: 'KCUSD', yahoo: 'KC=F', alphaVantage: 'COFFEE' },
+  'Cotton Futures': { fmp: 'CTUSD', yahoo: 'CT=F', alphaVantage: 'COTTON' },
+  'Lumber Futures': { fmp: 'LBUSD', yahoo: 'LBS=F', alphaVantage: 'LUMBER' },
+  'Orange Juice Futures': { fmp: 'OJUSD', yahoo: 'OJ=F', alphaVantage: 'ORANGE_JUICE' },
+  'Sugar Futures': { fmp: 'SBUSD', yahoo: 'SB=F', alphaVantage: 'SUGAR' }
 };
 
 // Generate fallback historical data when APIs fail
