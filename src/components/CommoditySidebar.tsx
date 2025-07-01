@@ -158,14 +158,14 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
                   {collapsed ? (
                     <>
                       <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="text-xs font-bold text-green-900 dark:text-green-100 number-display">5m</span>
+                      <span className="text-xs font-bold text-green-900 dark:text-green-100 number-display">15m</span>
                     </>
                   ) : (
                     <>
                       <span className="text-2xs sm:text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wider">Update Interval</span>
                       <div className="flex items-center gap-1">
                         <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                        <span className="text-xs sm:text-sm font-bold text-green-900 dark:text-green-100 number-display">5 min</span>
+                        <span className="text-xs sm:text-sm font-bold text-green-900 dark:text-green-100 number-display">15 min</span>
                       </div>
                     </>
                   )}
