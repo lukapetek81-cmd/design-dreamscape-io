@@ -30,7 +30,8 @@ const config: CapacitorConfig = {
       'org.gradle.jvmargs': '-Xmx4608m -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8',
       'org.gradle.parallel': 'true',
       'org.gradle.caching': 'true',
-      'org.gradle.configureondemand': 'true'
+      'org.gradle.configureondemand': 'true',
+      'org.gradle.java.home': '/usr/lib/jvm/java-17-openjdk-amd64'
     }
   }
 };
