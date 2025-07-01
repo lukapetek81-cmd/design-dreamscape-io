@@ -113,33 +113,53 @@ const generateFallbackHistoricalData = (commodityName: string, timeframe: string
   return data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 };
 
-// Get base price for fallback data
+// Get base price for fallback data - updated to match FMP commodity names
 const getBasePriceForCommodity = (commodityName: string): number => {
   const basePrices: Record<string, number> = {
-    'Gold': 2000,
-    'Silver': 25,
+    // Metals
+    'Gold Futures': 2000,
+    'Micro Gold Futures': 2000,
+    'Silver Futures': 25,
+    'Micro Silver Futures': 25,
     'Copper': 4.2,
     'Platinum': 950,
     'Palladium': 1800,
-    'WTI Crude': 75,
-    'Brent Crude': 80,
+    
+    // Energy
+    'Crude Oil': 75,
+    'Brent Crude Oil': 80,
     'Natural Gas': 2.85,
-    'RBOB Gasoline': 2.1,
+    'Gasoline RBOB': 2.1,
     'Heating Oil': 2.3,
-    'Corn': 430,
-    'Wheat': 550,
-    'Soybeans': 1150,
-    'Soybean Meal': 350,
-    'Soybean Oil': 45,
-    'Feeder Cattle': 240,
-    'Live Cattle': 170,
-    'Lean Hogs': 75,
-    'Cocoa': 2800,
-    'Coffee': 180,
-    'Cotton': 75,
-    'Lumber': 450,
-    'Orange Juice': 120,
-    'Sugar': 19
+    
+    // Grains
+    'Corn Futures': 430,
+    'Wheat Futures': 550,
+    'Soybean Futures': 1150,
+    'Soybean Meal Futures': 350,
+    'Soybean Oil Futures': 45,
+    
+    // Livestock
+    'Live Cattle Futures': 170,
+    'Feeder Cattle Futures': 240,
+    'Lean Hogs Futures': 75,
+    
+    // Softs
+    'Cocoa Futures': 2800,
+    'Coffee Futures': 180,
+    'Cotton Futures': 75,
+    'Lumber Futures': 450,
+    'Orange Juice Futures': 120,
+    'Sugar Futures': 19,
+    
+    // Other commodities from FMP API
+    'Class III Milk Futures': 18,
+    'Micro E-mini Russell 2000 Index Futures': 2200,
+    'US Dollar': 96,
+    '30 Day Fed Fund Futures': 95,
+    'Five-Year US Treasury Note': 109,
+    '2-Year T-Note Futures': 104,
+    'Mini Dow Jones Industrial Average Index': 44000
   };
   
   return basePrices[commodityName] || 100;
