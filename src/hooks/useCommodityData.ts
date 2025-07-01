@@ -24,8 +24,8 @@ export const useCommodityPrice = (commodityName: string) => {
 
     fetchPrice();
     
-    // Refresh price every 30 seconds
-    const interval = setInterval(fetchPrice, 30000);
+    // Refresh price every 5 minutes instead of 30 seconds
+    const interval = setInterval(fetchPrice, 5 * 60 * 1000);
     
     return () => clearInterval(interval);
   }, [commodityName]);
