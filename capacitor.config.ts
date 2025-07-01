@@ -27,7 +27,7 @@ const config: CapacitorConfig = {
     gradleProperties: {
       'android.useAndroidX': 'true',
       'android.enableJetifier': 'true',
-      'org.gradle.jvmargs': '-Xmx2048m -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8',
+      'org.gradle.jvmargs': '-Xmx3072m -XX:MaxMetaspaceSize=768m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8',
       'org.gradle.parallel': 'false',
       'org.gradle.caching': 'false',
       'org.gradle.configureondemand': 'false',
@@ -35,7 +35,11 @@ const config: CapacitorConfig = {
       'android.enableR8.fullMode': 'false',
       'android.disableAutomaticComponentCreation': 'true',
       'android.nonTransitiveRClass': 'false',
-      'android.nonFinalResIds': 'false'
+      'android.nonFinalResIds': 'false',
+      'org.gradle.daemon': 'false',
+      'org.gradle.debug': 'false',
+      'android.enableDexingArtifactTransform': 'false',
+      'android.dependency.useJavaLibraryVariants': 'false'
     }
   }
 };
