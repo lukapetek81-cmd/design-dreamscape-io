@@ -43,6 +43,47 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
     priceChange: priceChange.toFixed(2) + '%'
   });
 
+  // Format function for x-axis based on timeframe
+  const formatXAxisTick = (date: string) => {
+    if (selectedTimeframe === '1d') {
+      // For daily timeframe, show hours (e.g., "09:00", "12:30")
+      return new Date(date).toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      });
+    } else {
+      // For other timeframes, show date (e.g., "Jan 15")
+      return new Date(date).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    }
+  };
+
+  // Format function for tooltip based on timeframe
+  const formatTooltipLabel = (label: string) => {
+    if (selectedTimeframe === '1d') {
+      // For daily timeframe, show full date and time
+      return new Date(label).toLocaleString('en-US', { 
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+    } else {
+      // For other timeframes, show date only
+      return new Date(label).toLocaleDateString('en-US', { 
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    }
+  };
+
   return (
     <Card className="p-4 sm:p-6 mt-4 sm:mt-6 bg-gradient-to-br from-card/80 to-muted/20 border border-border/50 shadow-soft hover:shadow-medium transition-all duration-300 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -118,11 +159,8 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
             <LineChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
               <XAxis 
                 dataKey="date" 
-                tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { 
-                  month: 'short', 
-                  day: 'numeric' 
-                })} 
-                minTickGap={30}
+                tickFormatter={formatXAxisTick}
+                minTickGap={selectedTimeframe === '1d' ? 60 : 30}
                 tick={{ 
                   fontSize: 12, 
                   fill: 'hsl(var(--muted-foreground))',
@@ -130,6 +168,7 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
                 }}
                 axisLine={{ stroke: 'hsl(var(--border))' }}
                 tickLine={{ stroke: 'hsl(var(--border))' }}
+                interval={selectedTimeframe === '1d' ? 'preserveStartEnd' : 'preserveStartEnd'}
               />
               <YAxis 
                 tick={{ 
@@ -143,12 +182,7 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
                 domain={['dataMin - 5', 'dataMax + 5']}
               />
               <Tooltip 
-                labelFormatter={(label) => new Date(label).toLocaleDateString('en-US', { 
-                  weekday: 'short',
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric'
-                })}
+                labelFormatter={formatTooltipLabel}
                 formatter={(value: number) => [`$${value.toFixed(2)}`, 'Price']}
                 contentStyle={{
                   backgroundColor: 'hsl(var(--background))',
