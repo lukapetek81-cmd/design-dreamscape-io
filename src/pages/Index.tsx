@@ -1,10 +1,9 @@
-
 import React from 'react';
 import CommodityCard from '@/components/CommodityCard';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import CommoditySidebar from '@/components/CommoditySidebar';
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { TrendingUp, BarChart3, Activity, Menu } from 'lucide-react';
+import { BarChart3, Activity, Menu } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ApiSettings from '@/components/ApiSettings';
 
@@ -167,22 +166,8 @@ const Index = () => {
                 </div>
               </div>
 
-              {/* Enhanced Responsive Market Stats Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
-                <div className="p-3 sm:p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/20 border border-blue-200 dark:border-blue-800 hover:scale-105 transition-all duration-300 cursor-pointer active:scale-95 touch-manipulation">
-                  <div className="flex items-center justify-between">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-2xs sm:text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider truncate">
-                        Total Volume
-                      </p>
-                      <p className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-900 dark:text-blue-100 number-display">
-                        $45.2B
-                      </p>
-                    </div>
-                    <TrendingUp className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-blue-500 shrink-0" />
-                  </div>
-                </div>
-                
+              {/* Enhanced Responsive Market Stats Cards - Removed Total Volume */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
                 <div className="p-3 sm:p-4 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/20 border border-purple-200 dark:border-purple-800 hover:scale-105 transition-all duration-300 cursor-pointer active:scale-95 touch-manipulation">
                   <div className="flex items-center justify-between">
                     <div className="min-w-0 flex-1">
@@ -192,12 +177,15 @@ const Index = () => {
                       <p className="text-lg sm:text-xl lg:text-2xl font-bold text-purple-900 dark:text-purple-100 number-display">
                         142
                       </p>
+                      <p className="text-2xs sm:text-xs text-purple-600/70 dark:text-purple-400/70 mt-1">
+                        Currently trading
+                      </p>
                     </div>
                     <BarChart3 className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-purple-500 shrink-0" />
                   </div>
                 </div>
                 
-                <div className="p-3 sm:p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/20 dark:to-emerald-900/20 border border-emerald-200 dark:border-emerald-800 hover:scale-105 transition-all duration-300 cursor-pointer active:scale-95 touch-manipulation sm:col-span-2 lg:col-span-1">
+                <div className="p-3 sm:p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/20 dark:to-emerald-900/20 border border-emerald-200 dark:border-emerald-800 hover:scale-105 transition-all duration-300 cursor-pointer active:scale-95 touch-manipulation">
                   <div className="flex items-center justify-between">
                     <div className="min-w-0 flex-1">
                       <p className="text-2xs sm:text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider truncate">
@@ -205,6 +193,9 @@ const Index = () => {
                       </p>
                       <p className="text-lg sm:text-xl lg:text-2xl font-bold text-emerald-900 dark:text-emerald-100 number-display">
                         Just now
+                      </p>
+                      <p className="text-2xs sm:text-xs text-emerald-600/70 dark:text-emerald-400/70 mt-1">
+                        Data refreshed
                       </p>
                     </div>
                     <Activity className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-emerald-500 shrink-0" />

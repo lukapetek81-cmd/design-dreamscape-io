@@ -115,19 +115,19 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect }: CommoditySidebarProps)
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <div className={`px-2 sm:px-4 py-3 sm:py-4 space-y-3 sm:space-y-4 ${collapsed ? 'px-1' : ''}`}>
-              <div className={`p-2 sm:p-3 rounded-xl bg-gradient-to-r from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/20 border border-blue-200 dark:border-blue-800 hover:scale-105 transition-transform duration-200 cursor-pointer ${
+              <div className={`p-2 sm:p-3 rounded-xl bg-gradient-to-r from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/20 border border-purple-200 dark:border-purple-800 hover:scale-105 transition-transform duration-200 cursor-pointer ${
                 collapsed ? 'text-center' : ''
               }`}>
                 <div className={`flex ${collapsed ? 'flex-col items-center space-y-1' : 'justify-between items-center'}`}>
                   {collapsed ? (
                     <>
-                      <BarChart3 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      <span className="text-xs font-bold text-blue-900 dark:text-blue-100 number-display">$45B</span>
+                      <BarChart3 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                      <span className="text-xs font-bold text-purple-900 dark:text-purple-100 number-display">142</span>
                     </>
                   ) : (
                     <>
-                      <span className="text-2xs sm:text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Total Volume</span>
-                      <span className="text-xs sm:text-sm font-bold text-blue-900 dark:text-blue-100 number-display">$45.2B</span>
+                      <span className="text-2xs sm:text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Active Markets</span>
+                      <span className="text-xs sm:text-sm font-bold text-purple-900 dark:text-purple-100 number-display">142</span>
                     </>
                   )}
                 </div>
@@ -139,33 +139,15 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect }: CommoditySidebarProps)
                 <div className={`flex ${collapsed ? 'flex-col items-center space-y-1' : 'justify-between items-center'}`}>
                   {collapsed ? (
                     <>
-                      <Activity className="w-4 h-4 text-green-600 dark:text-green-400" />
-                      <span className="text-xs font-bold text-green-900 dark:text-green-100 number-display">142</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-2xs sm:text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wider">Active Markets</span>
-                      <span className="text-xs sm:text-sm font-bold text-green-900 dark:text-green-100 number-display">142</span>
-                    </>
-                  )}
-                </div>
-              </div>
-              
-              <div className={`p-2 sm:p-3 rounded-xl bg-gradient-to-r from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/20 border border-purple-200 dark:border-purple-800 hover:scale-105 transition-transform duration-200 cursor-pointer ${
-                collapsed ? 'text-center' : ''
-              }`}>
-                <div className={`flex ${collapsed ? 'flex-col items-center space-y-1' : 'justify-between items-center'}`}>
-                  {collapsed ? (
-                    <>
                       <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="text-xs font-bold text-purple-900 dark:text-purple-100 number-display">2s</span>
+                      <span className="text-xs font-bold text-green-900 dark:text-green-100 number-display">2s</span>
                     </>
                   ) : (
                     <>
-                      <span className="text-2xs sm:text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Last Update</span>
+                      <span className="text-2xs sm:text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wider">Last Update</span>
                       <div className="flex items-center gap-1">
                         <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                        <span className="text-xs sm:text-sm font-bold text-purple-900 dark:text-purple-100 number-display">2s ago</span>
+                        <span className="text-xs sm:text-sm font-bold text-green-900 dark:text-green-100 number-display">2s ago</span>
                       </div>
                     </>
                   )}
