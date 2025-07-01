@@ -11,10 +11,10 @@ const config: CapacitorConfig = {
   },
   android: {
     buildOptions: {
-      keystorePath: null,
-      keystoreAlias: null,
-      keystorePassword: null,
-      keystoreKeyPassword: null,
+      keystorePath: undefined,
+      keystoreAlias: undefined,
+      keystorePassword: undefined,
+      keystoreKeyPassword: undefined,
       signingType: 'apksigner',
       sourceCompatibility: '17',
       targetCompatibility: '17',
@@ -32,7 +32,7 @@ const config: CapacitorConfig = {
       'org.gradle.caching': 'true',
       'org.gradle.configureondemand': 'true'
     }
-  },
+  }
 };
 
 export default config;
