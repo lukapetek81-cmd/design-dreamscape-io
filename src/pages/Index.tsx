@@ -1,9 +1,10 @@
+
 import React from 'react';
 import CommodityCard from '@/components/CommodityCard';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import CommoditySidebar from '@/components/CommoditySidebar';
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { BarChart3, Activity, Menu } from 'lucide-react';
+import { BarChart3, Activity, Menu, TrendingUp } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ApiSettings from '@/components/ApiSettings';
 
