@@ -1,5 +1,6 @@
+
 // Commodity price API service
-const getAlphaVantageApiKey = () => localStorage.getItem('alphaVantageApiKey') || 'demo';
+const getFmpApiKey = () => localStorage.getItem('fmpApiKey') || 'demo';
 const getNewsApiKey = () => localStorage.getItem('newsApiKey') || 'demo';
 
 export interface CommodityPrice {
@@ -20,25 +21,25 @@ export interface NewsItem {
   urlToImage?: string;
 }
 
-// Commodity symbol mappings for different APIs
+// Commodity symbol mappings for Financial Modeling Prep API
 const COMMODITY_SYMBOLS: Record<string, string> = {
-  'Gold': 'XAU',
-  'Silver': 'XAG',
-  'Copper': 'HG',
-  'Platinum': 'XPT',
-  'Palladium': 'XPD',
-  'WTI Crude': 'CL',
-  'Brent Crude': 'BZ',
-  'Natural Gas': 'NG',
-  'RBOB Gasoline': 'RB',
-  'Heating Oil': 'HO',
-  'Corn': 'ZC',
-  'Wheat': 'ZW',
-  'Soybeans': 'ZS',
-  'Soybean Meal': 'ZM',
-  'Soybean Oil': 'ZL',
-  'Oats': 'ZO',
-  'Rough Rice': 'ZR'
+  'Gold': 'GCUSD',
+  'Silver': 'SIUSD', 
+  'Copper': 'HGUSD',
+  'Platinum': 'PLUSD',
+  'Palladium': 'PAUSD',
+  'WTI Crude': 'CLUSD',
+  'Brent Crude': 'BZUSD',
+  'Natural Gas': 'NGUSD',
+  'RBOB Gasoline': 'RBUSD',
+  'Heating Oil': 'HOUSD',
+  'Corn': 'ZC=F',
+  'Wheat': 'ZW=F',
+  'Soybeans': 'ZS=F',
+  'Soybean Meal': 'ZM=F',
+  'Soybean Oil': 'ZL=F',
+  'Oats': 'ZO=F',
+  'Rough Rice': 'ZR=F'
 };
 
 export class CommodityApiService {
@@ -67,11 +68,11 @@ export class CommodityApiService {
 
     try {
       const symbol = COMMODITY_SYMBOLS[commodityName] || commodityName;
-      const apiKey = getAlphaVantageApiKey();
+      const apiKey = getFmpApiKey();
       
-      // Try Alpha Vantage API for commodity data
+      // Use Financial Modeling Prep API for commodity quotes
       const response = await fetch(
-        `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${apiKey}`
+        `https://financialmodelingprep.com/api/v3/quote/${symbol}?apikey=${apiKey}`
       );
       
       if (!response.ok) {
@@ -80,21 +81,21 @@ export class CommodityApiService {
       
       const data = await response.json();
       
-      if (data['Error Message'] || data['Note']) {
-        console.warn('Alpha Vantage API limit or error:', data);
+      if (data.error || !Array.isArray(data) || data.length === 0) {
+        console.warn('Financial Modeling Prep API error or no data:', data);
         return this.getFallbackPrice(commodityName);
       }
       
-      const quote = data['Global Quote'];
+      const quote = data[0];
       if (!quote) {
         return this.getFallbackPrice(commodityName);
       }
       
       const price: CommodityPrice = {
         symbol: symbol,
-        price: parseFloat(quote['05. price']) || 0,
-        change: parseFloat(quote['09. change']) || 0,
-        changePercent: parseFloat(quote['10. change percent']?.replace('%', '')) || 0,
+        price: parseFloat(quote.price) || 0,
+        change: parseFloat(quote.change) || 0,
+        changePercent: parseFloat(quote.changesPercentage) || 0,
         lastUpdate: new Date().toISOString()
       };
       
@@ -226,11 +227,11 @@ export class CommodityApiService {
 
     try {
       const symbol = COMMODITY_SYMBOLS[commodityName] || commodityName;
-      const apiKey = getAlphaVantageApiKey();
+      const apiKey = getFmpApiKey();
       
-      // Try to fetch from Alpha Vantage
+      // Use Financial Modeling Prep for historical data
       const response = await fetch(
-        `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${apiKey}`
+        `https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${apiKey}`
       );
       
       if (!response.ok) {
@@ -239,20 +240,15 @@ export class CommodityApiService {
       
       const data = await response.json();
       
-      if (data['Error Message'] || data['Note']) {
+      if (data.error || !data.historical) {
         return this.generateMockHistoricalData(commodityName, timeframe);
       }
       
-      const timeSeries = data['Time Series (Daily)'];
-      if (!timeSeries) {
-        return this.generateMockHistoricalData(commodityName, timeframe);
-      }
-      
-      const historicalData = Object.entries(timeSeries)
+      const historicalData = data.historical
         .slice(0, this.getTimeframeDays(timeframe))
-        .map(([date, values]: [string, any]) => ({
-          date,
-          price: parseFloat(values['4. close']) || 0
+        .map((item: any) => ({
+          date: item.date,
+          price: parseFloat(item.close) || 0
         }))
         .reverse();
       

@@ -8,25 +8,25 @@ import { Settings, Key, Save, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 const ApiSettings = () => {
-  const [alphaVantageKey, setAlphaVantageKey] = useState('');
+  const [fmpApiKey, setFmpApiKey] = useState('');
   const [newsApiKey, setNewsApiKey] = useState('');
-  const [showAlphaVantage, setShowAlphaVantage] = useState(false);
+  const [showFmp, setShowFmp] = useState(false);
   const [showNewsApi, setShowNewsApi] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     // Load saved API keys from localStorage
-    const savedAlphaVantage = localStorage.getItem('alphaVantageApiKey');
+    const savedFmp = localStorage.getItem('fmpApiKey');
     const savedNewsApi = localStorage.getItem('newsApiKey');
     
-    if (savedAlphaVantage) setAlphaVantageKey(savedAlphaVantage);
+    if (savedFmp) setFmpApiKey(savedFmp);
     if (savedNewsApi) setNewsApiKey(savedNewsApi);
   }, []);
 
   const handleSave = () => {
     try {
-      if (alphaVantageKey) {
-        localStorage.setItem('alphaVantageApiKey', alphaVantageKey);
+      if (fmpApiKey) {
+        localStorage.setItem('fmpApiKey', fmpApiKey);
       }
       if (newsApiKey) {
         localStorage.setItem('newsApiKey', newsApiKey);
@@ -71,14 +71,14 @@ const ApiSettings = () => {
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="alpha-vantage">Alpha Vantage API Key</Label>
+            <Label htmlFor="fmp-key">Financial Modeling Prep API Key</Label>
             <div className="relative">
               <Input
-                id="alpha-vantage"
-                type={showAlphaVantage ? "text" : "password"}
-                value={alphaVantageKey}
-                onChange={(e) => setAlphaVantageKey(e.target.value)}
-                placeholder="Enter your Alpha Vantage API key"
+                id="fmp-key"
+                type={showFmp ? "text" : "password"}
+                value={fmpApiKey}
+                onChange={(e) => setFmpApiKey(e.target.value)}
+                placeholder="Enter your FMP API key"
                 className="pr-10"
               />
               <Button
@@ -86,20 +86,20 @@ const ApiSettings = () => {
                 variant="ghost"
                 size="sm"
                 className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                onClick={() => setShowAlphaVantage(!showAlphaVantage)}
+                onClick={() => setShowFmp(!showFmp)}
               >
-                {showAlphaVantage ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showFmp ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
               Get your free API key from{' '}
               <a
-                href="https://www.alphavantage.co/support/#api-key"
+                href="https://financialmodelingprep.com/developer/docs"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline"
               >
-                Alpha Vantage
+                Financial Modeling Prep
               </a>
             </p>
           </div>
