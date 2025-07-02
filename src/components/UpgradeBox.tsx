@@ -60,21 +60,32 @@ const UpgradeBox = () => {
 
     setIsPortalLoading(true);
     try {
+      console.log('Starting customer portal request...');
+      
       // Get the current session and token
       const { data: sessionData } = await supabase.auth.getSession();
+      console.log('Session data:', sessionData);
+      
       if (!sessionData.session?.access_token) {
         throw new Error("No valid session found. Please log in again.");
       }
 
+      console.log('Calling customer-portal function...');
       const { data, error } = await supabase.functions.invoke('customer-portal', {
         headers: {
           Authorization: `Bearer ${sessionData.session.access_token}`,
         },
       });
 
-      if (error) throw error;
+      console.log('Function response:', { data, error });
+
+      if (error) {
+        console.error('Function error:', error);
+        throw error;
+      }
 
       if (data?.url) {
+        console.log('Opening portal URL:', data.url);
         // Open customer portal in a new tab
         window.open(data.url, '_blank');
         
@@ -82,12 +93,14 @@ const UpgradeBox = () => {
           title: "Redirecting to Customer Portal",
           description: "Manage your subscription in the new tab.",
         });
+      } else {
+        throw new Error("No portal URL received from server");
       }
     } catch (error) {
       console.error('Portal error:', error);
       toast({
         title: "Portal Error",
-        description: "Failed to open customer portal. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to open customer portal. Please try again.",
         variant: "destructive",
       });
     } finally {
