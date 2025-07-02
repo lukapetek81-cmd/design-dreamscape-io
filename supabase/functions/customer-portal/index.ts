@@ -84,8 +84,16 @@ serve(async (req) => {
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR in customer-portal", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    logStep("ERROR in customer-portal", { 
+      message: errorMessage, 
+      stack: error instanceof Error ? error.stack : undefined,
+      type: typeof error 
+    });
+    
+    return new Response(JSON.stringify({ 
+      error: errorMessage,
+      details: "Check function logs for more information"
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

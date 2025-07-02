@@ -62,6 +62,25 @@ const UpgradeBox = () => {
     try {
       console.log('Starting customer portal request...');
       
+      // First, check if user has an active subscription
+      console.log('Checking subscription status first...');
+      const { data: subscriptionData, error: subscriptionError } = await supabase.functions.invoke('check-subscription', {
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+      });
+      
+      if (subscriptionError) {
+        console.error('Subscription check error:', subscriptionError);
+        throw new Error('Failed to verify subscription status');
+      }
+      
+      console.log('Subscription data:', subscriptionData);
+      
+      if (!subscriptionData?.subscribed) {
+        throw new Error('No active subscription found. Please subscribe first to access the customer portal.');
+      }
+      
       // Get the current session and token
       const { data: sessionData } = await supabase.auth.getSession();
       console.log('Session data:', sessionData);
