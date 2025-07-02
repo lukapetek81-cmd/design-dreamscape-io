@@ -160,6 +160,10 @@ export const useAvailableCommodities = () => {
           { symbol: 'ZCUSX', name: 'Corn Futures', price: 430, change: -8, changePercent: -1.83, category: 'grains' },
           { symbol: 'ZWUSX', name: 'Wheat Futures', price: 550, change: 12, changePercent: 2.23, category: 'grains' },
           { symbol: 'ZSUSX', name: 'Soybean Futures', price: 1150, change: -25, changePercent: -2.13, category: 'grains' },
+          { symbol: 'LEUSX', name: 'Live Cattle Futures', price: 170, change: 2.5, changePercent: 1.49, category: 'livestock' },
+          { symbol: 'FCUSX', name: 'Feeder Cattle Futures', price: 240, change: -3.2, changePercent: -1.32, category: 'livestock' },
+          { symbol: 'HEUSX', name: 'Lean Hogs Futures', price: 75, change: 1.8, changePercent: 2.46, category: 'livestock' },
+          { symbol: 'DCUSD', name: 'Class III Milk Futures', price: 20.85, change: 0.32, changePercent: 1.56, category: 'livestock' },
           { symbol: 'ZOUSX', name: 'Oat Futures', price: 385, change: 8.50, changePercent: 2.26, category: 'softs' },
           { symbol: 'SBUSD', name: 'Sugar', price: 19.75, change: 0.45, changePercent: 2.33, category: 'softs' },
           { symbol: 'CTUSD', name: 'Cotton', price: 72.80, change: -1.25, changePercent: -1.69, category: 'softs' },
@@ -168,7 +172,7 @@ export const useAvailableCommodities = () => {
           { symbol: 'KCUSD', name: 'Coffee', price: 165, change: 3.50, changePercent: 2.17, category: 'softs' },
           { symbol: 'ZRUSX', name: 'Rough Rice', price: 16.25, change: 0.18, changePercent: 1.12, category: 'softs' },
           { symbol: 'CCUSD', name: 'Cocoa', price: 2850, change: -45, changePercent: -1.55, category: 'softs' },
-          { symbol: 'DC', name: 'Class III Milk Futures', price: 20.85, change: 0.32, changePercent: 1.56, category: 'softs' }
+          
         ];
         
         setCommodities(fallbackCommodities);

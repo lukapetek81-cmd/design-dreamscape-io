@@ -27,6 +27,10 @@ const COMMODITY_SYMBOLS: Record<string, {
   'Corn Futures': { fmp: 'ZCUSX', yahoo: 'ZC=F', alphaVantage: 'CORN' },
   'Wheat Futures': { fmp: 'ZWUSX', yahoo: 'ZW=F', alphaVantage: 'WHEAT' },
   'Soybean Futures': { fmp: 'ZSUSX', yahoo: 'ZS=F', alphaVantage: 'SOYBEANS' },
+  'Live Cattle Futures': { fmp: 'LEUSX', yahoo: 'LE=F', alphaVantage: 'LIVE_CATTLE' },
+  'Feeder Cattle Futures': { fmp: 'FCUSX', yahoo: 'GF=F', alphaVantage: 'FEEDER_CATTLE' },
+  'Lean Hogs Futures': { fmp: 'HEUSX', yahoo: 'HE=F', alphaVantage: 'LEAN_HOGS' },
+  'Class III Milk Futures': { fmp: 'DCUSD', yahoo: 'DC=F', alphaVantage: 'MILK' },
   'Oat Futures': { fmp: 'ZOUSX', yahoo: 'ZO=F', alphaVantage: 'OATS' },
   'Sugar': { fmp: 'SBUSD', yahoo: 'SB=F', alphaVantage: 'SUGAR' },
   'Cotton': { fmp: 'CTUSD', yahoo: 'CT=F', alphaVantage: 'COTTON' },
@@ -34,8 +38,7 @@ const COMMODITY_SYMBOLS: Record<string, {
   'Orange Juice': { fmp: 'OJUSD', yahoo: 'OJ=F', alphaVantage: 'ORANGE_JUICE' },
   'Coffee': { fmp: 'KCUSD', yahoo: 'KC=F', alphaVantage: 'COFFEE' },
   'Rough Rice': { fmp: 'ZRUSX', yahoo: 'ZR=F', alphaVantage: 'RICE' },
-  'Cocoa': { fmp: 'CCUSD', yahoo: 'CC=F', alphaVantage: 'COCOA' },
-  'Class III Milk Futures': { fmp: 'DC', yahoo: 'DC=F', alphaVantage: 'MILK' }
+  'Cocoa': { fmp: 'CCUSD', yahoo: 'CC=F', alphaVantage: 'COCOA' }
 };
 
 const generateFallbackData = (commodityName: string, timeframe: string, basePrice: number) => {
@@ -143,6 +146,10 @@ const getBasePriceForCommodity = (commodityName: string): number => {
     'Corn Futures': 430,
     'Wheat Futures': 550,
     'Soybean Futures': 1150,
+    'Live Cattle Futures': 170,
+    'Feeder Cattle Futures': 240,
+    'Lean Hogs Futures': 75,
+    'Class III Milk Futures': 20.85,
     'Oat Futures': 385,
     'Sugar': 19.75,
     'Cotton': 72.80,
@@ -151,7 +158,6 @@ const getBasePriceForCommodity = (commodityName: string): number => {
     'Coffee': 165,
     'Rough Rice': 16.25,
     'Cocoa': 2850,
-    'Class III Milk Futures': 20.85
   };
   return basePrices[commodityName] || 100;
 };
