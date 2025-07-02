@@ -154,11 +154,15 @@ export const useAvailableCommodities = () => {
           { symbol: 'ZCUSX', name: 'Corn Futures', price: 430, change: -8, changePercent: -1.83, category: 'grains' },
           { symbol: 'ZWUSX', name: 'Wheat Futures', price: 550, change: 12, changePercent: 2.23, category: 'grains' },
           { symbol: 'ZSUSX', name: 'Soybean Futures', price: 1150, change: -25, changePercent: -2.13, category: 'grains' },
-          { symbol: 'KC', name: 'Coffee', price: 165.50, change: 3.25, changePercent: 2.00, category: 'softs' },
-          { symbol: 'CC', name: 'Cocoa', price: 2890, change: -45, changePercent: -1.53, category: 'softs' },
-          { symbol: 'SB', name: 'Sugar', price: 19.85, change: 0.32, changePercent: 1.64, category: 'softs' },
-          { symbol: 'CT', name: 'Cotton', price: 72.45, change: -1.12, changePercent: -1.52, category: 'softs' },
-          { symbol: 'OJ', name: 'Orange Juice', price: 315.80, change: 8.45, changePercent: 2.75, category: 'softs' }
+          { symbol: 'ZOUSX', name: 'Oat Futures', price: 385, change: 8.50, changePercent: 2.26, category: 'softs' },
+          { symbol: 'SBUSD', name: 'Sugar', price: 19.75, change: 0.45, changePercent: 2.33, category: 'softs' },
+          { symbol: 'CTUSD', name: 'Cotton', price: 72.80, change: -1.25, changePercent: -1.69, category: 'softs' },
+          { symbol: 'LBSUSD', name: 'Lumber Futures', price: 485, change: 12.30, changePercent: 2.60, category: 'softs' },
+          { symbol: 'OJUSD', name: 'Orange Juice', price: 315, change: -8.75, changePercent: -2.70, category: 'softs' },
+          { symbol: 'KCUSD', name: 'Coffee', price: 165, change: 3.50, changePercent: 2.17, category: 'softs' },
+          { symbol: 'ZRUSX', name: 'Rough Rice', price: 16.25, change: 0.18, changePercent: 1.12, category: 'softs' },
+          { symbol: 'CCUSD', name: 'Cocoa', price: 2850, change: -45, changePercent: -1.55, category: 'softs' },
+          { symbol: 'DC', name: 'Class III Milk Futures', price: 20.85, change: 0.32, changePercent: 1.56, category: 'softs' }
         ];
         
         setCommodities(fallbackCommodities);

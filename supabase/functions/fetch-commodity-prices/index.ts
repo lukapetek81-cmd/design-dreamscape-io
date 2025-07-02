@@ -20,7 +20,16 @@ const COMMODITY_SYMBOLS: Record<string, {
   'Gasoline RBOB': { fmp: 'RBUSD', yahoo: 'RB=F', alphaVantage: 'GASOLINE' },
   'Corn Futures': { fmp: 'ZCUSX', yahoo: 'ZC=F', alphaVantage: 'CORN' },
   'Wheat Futures': { fmp: 'ZWUSX', yahoo: 'ZW=F', alphaVantage: 'WHEAT' },
-  'Soybean Futures': { fmp: 'ZSUSX', yahoo: 'ZS=F', alphaVantage: 'SOYBEANS' }
+  'Soybean Futures': { fmp: 'ZSUSX', yahoo: 'ZS=F', alphaVantage: 'SOYBEANS' },
+  'Oat Futures': { fmp: 'ZOUSX', yahoo: 'ZO=F', alphaVantage: 'OATS' },
+  'Sugar': { fmp: 'SBUSD', yahoo: 'SB=F', alphaVantage: 'SUGAR' },
+  'Cotton': { fmp: 'CTUSD', yahoo: 'CT=F', alphaVantage: 'COTTON' },
+  'Lumber Futures': { fmp: 'LBSUSD', yahoo: 'LBS=F', alphaVantage: 'LUMBER' },
+  'Orange Juice': { fmp: 'OJUSD', yahoo: 'OJ=F', alphaVantage: 'ORANGE_JUICE' },
+  'Coffee': { fmp: 'KCUSD', yahoo: 'KC=F', alphaVantage: 'COFFEE' },
+  'Rough Rice': { fmp: 'ZRUSX', yahoo: 'ZR=F', alphaVantage: 'RICE' },
+  'Cocoa': { fmp: 'CCUSD', yahoo: 'CC=F', alphaVantage: 'COCOA' },
+  'Class III Milk Futures': { fmp: 'DC', yahoo: 'DC=F', alphaVantage: 'MILK' }
 };
 
 const getBasePriceForCommodity = (commodityName: string): number => {
@@ -35,7 +44,16 @@ const getBasePriceForCommodity = (commodityName: string): number => {
     'Heating Oil': 2.3,
     'Corn Futures': 430,
     'Wheat Futures': 550,
-    'Soybean Futures': 1150
+    'Soybean Futures': 1150,
+    'Oat Futures': 385,
+    'Sugar': 19.75,
+    'Cotton': 72.80,
+    'Lumber Futures': 485,
+    'Orange Juice': 315,
+    'Coffee': 165,
+    'Rough Rice': 16.25,
+    'Cocoa': 2850,
+    'Class III Milk Futures': 20.85
   };
   return basePrices[commodityName] || 100;
 };
