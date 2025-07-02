@@ -19,8 +19,9 @@ const Auth = () => {
     fullName: '',
     confirmPassword: ''
   });
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
-  const { user, signIn, signUp, signInWithGoogle, loading: authLoading } = useAuth();
+  const { user, signIn, signUp, signInWithGoogle, resetPassword, loading: authLoading } = useAuth();
 
   // Redirect if already authenticated
   if (user && !authLoading) {
@@ -65,6 +66,19 @@ const Auth = () => {
     setIsLoading(true);
     const { error } = await signInWithGoogle();
     setIsLoading(false);
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.email) return;
+
+    setIsLoading(true);
+    const { error } = await resetPassword(formData.email);
+    setIsLoading(false);
+
+    if (!error) {
+      setShowForgotPassword(false);
+    }
   };
 
   if (authLoading) {
@@ -159,7 +173,17 @@ const Auth = () => {
                   </div>
                 </div>
 
-                <Button 
+                <div className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+
+                <Button
                   type="submit" 
                   className="w-full"
                   disabled={isLoading || !formData.email || !formData.password}
@@ -343,6 +367,63 @@ const Auth = () => {
               </Button>
             </TabsContent>
           </Tabs>
+
+          {/* Forgot Password Modal */}
+          {showForgotPassword && (
+            <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <Card className="w-full max-w-md p-6 bg-gradient-to-br from-card/90 to-muted/20 border border-border/50 shadow-soft">
+                <div className="space-y-4">
+                  <div className="text-center space-y-2">
+                    <h3 className="text-lg font-semibold">Reset Password</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Enter your email address and we'll send you a password reset link.
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleResetPassword} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="reset-email">Email</Label>
+                      <Input
+                        id="reset-email"
+                        name="email"
+                        type="email"
+                        placeholder="your@email.com"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        required
+                        className="transition-all duration-200 focus:scale-[1.02]"
+                      />
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button 
+                        type="submit" 
+                        className="flex-1"
+                        disabled={isLoading || !formData.email}
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          'Send Reset Link'
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowForgotPassword(false)}
+                        disabled={isLoading}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+              </Card>
+            </div>
+          )}
 
           <div className="mt-6 text-center">
             <p className="text-xs text-muted-foreground">
