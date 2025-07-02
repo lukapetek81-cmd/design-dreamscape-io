@@ -11,8 +11,12 @@ const COMMODITY_SYMBOLS: Record<string, {
   alphaVantage: string;
 }> = {
   'Gold Futures': { fmp: 'GCUSD', yahoo: 'GC=F', alphaVantage: 'GOLD' },
+  'Micro Gold Futures': { fmp: 'MGCUSD', yahoo: 'MGC=F', alphaVantage: 'GOLD' },
   'Silver Futures': { fmp: 'SIUSD', yahoo: 'SI=F', alphaVantage: 'SILVER' },
+  'Micro Silver Futures': { fmp: 'MSIUSD', yahoo: 'SIL=F', alphaVantage: 'SILVER' },
   'Copper': { fmp: 'HGUSD', yahoo: 'HG=F', alphaVantage: 'COPPER' },
+  'Platinum': { fmp: 'PLUSD', yahoo: 'PL=F', alphaVantage: 'PLATINUM' },
+  'Palladium': { fmp: 'PAUSD', yahoo: 'PA=F', alphaVantage: 'PALLADIUM' },
   'Crude Oil': { fmp: 'CLUSD', yahoo: 'CL=F', alphaVantage: 'WTI' },
   'Brent Crude Oil': { fmp: 'BZUSD', yahoo: 'BZ=F', alphaVantage: 'BRENT' },
   'Natural Gas': { fmp: 'NGUSD', yahoo: 'NG=F', alphaVantage: 'NATURAL_GAS' },
@@ -35,8 +39,12 @@ const COMMODITY_SYMBOLS: Record<string, {
 const getBasePriceForCommodity = (commodityName: string): number => {
   const basePrices: Record<string, number> = {
     'Gold Futures': 2000,
+    'Micro Gold Futures': 2000,
     'Silver Futures': 25,
+    'Micro Silver Futures': 25,
     'Copper': 4.2,
+    'Platinum': 950,
+    'Palladium': 1800,
     'Crude Oil': 65,
     'Brent Crude Oil': 67,
     'Natural Gas': 2.85,
