@@ -20,7 +20,17 @@ const UpgradeBox = () => {
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('create-checkout');
+      // Get the current session and token
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.access_token) {
+        throw new Error("No valid session found. Please log in again.");
+      }
+
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        headers: {
+          Authorization: `Bearer ${sessionData.session.access_token}`,
+        },
+      });
 
       if (error) throw error;
 
@@ -50,7 +60,17 @@ const UpgradeBox = () => {
 
     setIsPortalLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('customer-portal');
+      // Get the current session and token
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.access_token) {
+        throw new Error("No valid session found. Please log in again.");
+      }
+
+      const { data, error } = await supabase.functions.invoke('customer-portal', {
+        headers: {
+          Authorization: `Bearer ${sessionData.session.access_token}`,
+        },
+      });
 
       if (error) throw error;
 
@@ -79,7 +99,17 @@ const UpgradeBox = () => {
     if (!user) return;
 
     try {
-      const { error } = await supabase.functions.invoke('check-subscription');
+      // Get the current session and token
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.access_token) {
+        throw new Error("No valid session found. Please log in again.");
+      }
+
+      const { error } = await supabase.functions.invoke('check-subscription', {
+        headers: {
+          Authorization: `Bearer ${sessionData.session.access_token}`,
+        },
+      });
 
       if (error) throw error;
 
