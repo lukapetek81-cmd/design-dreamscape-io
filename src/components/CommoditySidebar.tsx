@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Zap, Coins, Wheat, TrendingUp, Activity, BarChart3, Beef, Coffee, Package } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
+import { useAuth } from "@/contexts/AuthContext";
 import UpgradeBox from "./UpgradeBox";
 
 interface CommodityCounts {
@@ -40,7 +41,12 @@ interface CommoditySidebarProps {
 
 const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: CommoditySidebarProps) => {
   const { state } = useSidebar();
+  const { profile } = useAuth();
   const collapsed = state === "collapsed";
+
+  // Check if user has premium subscription (real-time access)
+  const isPremiumUser = profile?.subscription_active && 
+    (profile?.subscription_tier === 'premium' || profile?.subscription_tier === 'pro');
 
   const getGroupCount = (groupId: string) => {
     return commodityCounts[groupId as keyof CommodityCounts] || 0;
@@ -152,26 +158,28 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
                 </div>
               </div>
               
-              <div className={`p-2 sm:p-3 rounded-xl bg-gradient-to-r from-green-50 to-emerald-100/50 dark:from-green-950/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 hover:scale-105 transition-transform duration-200 cursor-pointer ${
-                collapsed ? 'text-center' : ''
-              }`}>
-                <div className={`flex ${collapsed ? 'flex-col items-center space-y-1' : 'justify-between items-center'}`}>
-                  {collapsed ? (
-                    <>
-                      <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="text-xs font-bold text-green-900 dark:text-green-100 number-display">15m</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-2xs sm:text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wider">Update Interval</span>
-                      <div className="flex items-center gap-1">
-                        <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                        <span className="text-xs sm:text-sm font-bold text-green-900 dark:text-green-100 number-display">15 min</span>
-                      </div>
-                    </>
-                  )}
+              {!isPremiumUser && (
+                <div className={`p-2 sm:p-3 rounded-xl bg-gradient-to-r from-green-50 to-emerald-100/50 dark:from-green-950/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 hover:scale-105 transition-transform duration-200 cursor-pointer ${
+                  collapsed ? 'text-center' : ''
+                }`}>
+                  <div className={`flex ${collapsed ? 'flex-col items-center space-y-1' : 'justify-between items-center'}`}>
+                    {collapsed ? (
+                      <>
+                        <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse"></div>
+                        <span className="text-xs font-bold text-green-900 dark:text-green-100 number-display">15m</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-2xs sm:text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wider">Update Interval</span>
+                        <div className="flex items-center gap-1">
+                          <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                          <span className="text-xs sm:text-sm font-bold text-green-900 dark:text-green-100 number-display">15 min</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </SidebarGroupContent>
         </SidebarGroup>
