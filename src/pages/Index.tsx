@@ -9,14 +9,16 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { BarChart3, Activity, Menu, TrendingUp, Loader, Zap, Coins, Wheat, Beef, Coffee, Package } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRealtimeDataContext } from '@/contexts/RealtimeDataContext';
 import ApiSettings from '@/components/ApiSettings';
 import { useAvailableCommodities } from '@/hooks/useCommodityData';
 
 const Index = () => {
   const [activeGroup, setActiveGroup] = React.useState("energy");
   const isMobile = useIsMobile();
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const { commodities, loading, error } = useAvailableCommodities();
+  const { connected: realtimeConnected, lastUpdate, error: realtimeError } = useRealtimeDataContext();
 
   // Redirect to auth if not logged in (after loading is complete)
   if (!authLoading && !user) {
@@ -158,17 +160,39 @@ const Index = () => {
                         {getCommodities().length} active commodities
                       </span>
                       <span className="flex items-center gap-1">
-                        <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                        Updated every 15min
+                        <span className={`w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full ${
+                          profile?.subscription_active && realtimeConnected 
+                            ? 'bg-green-500 animate-pulse' 
+                            : 'bg-yellow-500'
+                        }`}></span>
+                        {profile?.subscription_active && realtimeConnected 
+                          ? 'Live updates (5s)' 
+                          : 'Updated every 15min'
+                        }
                       </span>
                     </div>
                   </div>
                 </div>
                 <div className="text-center sm:text-right space-y-1 shrink-0">
-                  <p className="text-2xs sm:text-xs lg:text-sm font-medium text-muted-foreground">Market Status</p>
+                  <p className="text-2xs sm:text-xs lg:text-sm font-medium text-muted-foreground">
+                    {profile?.subscription_active ? 'Real-time Status' : 'Market Status'}
+                  </p>
                   <div className="flex items-center justify-center sm:justify-end gap-2">
-                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm sm:text-base lg:text-lg font-bold text-green-600 dark:text-green-400">OPEN</span>
+                    <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${
+                      profile?.subscription_active && realtimeConnected 
+                        ? 'bg-blue-500 animate-pulse' 
+                        : 'bg-green-500 animate-pulse'
+                    }`}></div>
+                    <span className={`text-sm sm:text-base lg:text-lg font-bold ${
+                      profile?.subscription_active && realtimeConnected 
+                        ? 'text-blue-600 dark:text-blue-400' 
+                        : 'text-green-600 dark:text-green-400'
+                    }`}>
+                      {profile?.subscription_active && realtimeConnected 
+                        ? 'LIVE' 
+                        : 'OPEN'
+                      }
+                    </span>
                   </div>
                 </div>
               </div>

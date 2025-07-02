@@ -6,7 +6,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import CommodityChart from './CommodityChart';
 import CommodityNews from './CommodityNews';
 import { useCommodityPrice } from '@/hooks/useCommodityData';
-import { useRealtimeData } from '@/hooks/useRealtimeData';
+import { useRealtimeDataContext } from '@/contexts/RealtimeDataContext';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface CommodityCardProps {
@@ -27,18 +27,15 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
   const isPremium = profile?.subscription_active && 
     (profile?.subscription_tier === 'premium' || profile?.subscription_tier === 'pro');
   
-  // Use real-time data for premium users
-  const { prices: realtimePrices, connected: realtimeConnected } = useRealtimeData({
-    commodities: [name],
-    enabled: isPremium
-  });
+  // Use real-time data context
+  const { getPriceForCommodity, isLiveData, connected: realtimeConnected } = useRealtimeDataContext();
   
   // Determine data source priority: real-time > API > fallback
-  const realtimePrice = realtimePrices[name];
+  const realtimePrice = getPriceForCommodity(name);
   const currentPrice = realtimePrice?.price ?? apiPrice?.price ?? fallbackPrice;
   const currentChange = realtimePrice?.changePercent ?? apiPrice?.changePercent ?? fallbackChange;
   const isPositive = currentChange >= 0;
-  const isRealTime = isPremium && realtimeConnected && realtimePrice;
+  const isRealTime = isPremium && isLiveData(name);
 
   // Function to get the appropriate price units based on commodity name
   const getPriceUnits = (commodityName: string) => {
