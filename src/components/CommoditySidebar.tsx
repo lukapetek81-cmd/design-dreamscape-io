@@ -10,7 +10,7 @@ import {
   SidebarMenuItem,
   SidebarHeader,
 } from "@/components/ui/sidebar";
-import { Zap, Coins, Wheat, TrendingUp, Activity, BarChart3, Beef, Coffee, Package } from "lucide-react";
+import { Zap, Coins, Wheat, TrendingUp, Activity, BarChart3, Beef, Coffee, Package, Newspaper } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import UpgradeBox from "./UpgradeBox";
@@ -140,19 +140,22 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <div className={`px-2 sm:px-4 py-3 sm:py-4 space-y-3 sm:space-y-4 ${collapsed ? 'px-1' : ''}`}>
-              <div className={`p-2 sm:p-3 rounded-xl bg-gradient-to-r from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/20 border border-purple-200 dark:border-purple-800 hover:scale-105 transition-transform duration-200 cursor-pointer ${
+              <div className={`p-2 sm:p-3 rounded-xl bg-gradient-to-r from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/20 border border-blue-200 dark:border-blue-800 hover:scale-105 transition-transform duration-200 cursor-pointer ${
                 collapsed ? 'text-center' : ''
               }`}>
                 <div className={`flex ${collapsed ? 'flex-col items-center space-y-1' : 'justify-between items-center'}`}>
                   {collapsed ? (
                     <>
-                      <BarChart3 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                      <span className="text-xs font-bold text-purple-900 dark:text-purple-100 number-display">{totalCommodities}</span>
+                      <Newspaper className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      <span className="text-xs font-bold text-blue-900 dark:text-blue-100 number-display">Live</span>
                     </>
                   ) : (
                     <>
-                      <span className="text-2xs sm:text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Total Markets</span>
-                      <span className="text-xs sm:text-sm font-bold text-purple-900 dark:text-purple-100 number-display">{totalCommodities}</span>
+                      <span className="text-2xs sm:text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Market News</span>
+                      <div className="flex items-center gap-1">
+                        <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+                        <span className="text-xs sm:text-sm font-bold text-blue-900 dark:text-blue-100 number-display">Live Feed</span>
+                      </div>
                     </>
                   )}
                 </div>
