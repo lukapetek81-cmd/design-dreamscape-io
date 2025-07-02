@@ -20,11 +20,7 @@ const UpgradeBox = () => {
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-        },
-      });
+      const { data, error } = await supabase.functions.invoke('create-checkout');
 
       if (error) throw error;
 
@@ -54,11 +50,7 @@ const UpgradeBox = () => {
 
     setIsPortalLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('customer-portal', {
-        headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-        },
-      });
+      const { data, error } = await supabase.functions.invoke('customer-portal');
 
       if (error) throw error;
 
@@ -87,11 +79,7 @@ const UpgradeBox = () => {
     if (!user) return;
 
     try {
-      const { error } = await supabase.functions.invoke('check-subscription', {
-        headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-        },
-      });
+      const { error } = await supabase.functions.invoke('check-subscription');
 
       if (error) throw error;
 
