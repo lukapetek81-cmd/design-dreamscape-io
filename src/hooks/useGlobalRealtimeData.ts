@@ -110,7 +110,7 @@ export const useGlobalRealtimeData = (commodities: string[]): GlobalRealtimeData
       console.error('Error establishing global WebSocket connection:', connectError);
       setError('Failed to establish real-time connection');
     }
-  }, [user, isPremium, commodities]);
+  }, [user, isPremium, commodities.join(',')]); // Use string instead of array to prevent infinite re-renders
 
   useEffect(() => {
     if (isPremium && commodities.length > 0) {
