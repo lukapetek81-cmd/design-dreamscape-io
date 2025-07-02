@@ -6,7 +6,7 @@ import UserProfile from '@/components/UserProfile';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import CommoditySidebar from '@/components/CommoditySidebar';
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { BarChart3, Activity, Menu, TrendingUp, Loader } from 'lucide-react';
+import { BarChart3, Activity, Menu, TrendingUp, Loader, Zap, Coins, Wheat, Beef, Coffee, Package } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
 import ApiSettings from '@/components/ApiSettings';
@@ -59,17 +59,17 @@ const Index = () => {
   const getGroupIcon = () => {
     switch (activeGroup) {
       case "metals":
-        return <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6" />;
+        return <Coins className="w-5 h-5 sm:w-6 sm:h-6" />;
       case "grains":
-        return <Activity className="w-5 h-5 sm:w-6 sm:h-6" />;
+        return <Wheat className="w-5 h-5 sm:w-6 sm:h-6" />;
       case "livestock":
-        return <Activity className="w-5 h-5 sm:w-6 sm:h-6" />;
+        return <Beef className="w-5 h-5 sm:w-6 sm:h-6" />;
       case "softs":
-        return <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />;
+        return <Coffee className="w-5 h-5 sm:w-6 sm:h-6" />;
       case "other":
-        return <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />;
+        return <Package className="w-5 h-5 sm:w-6 sm:h-6" />;
       default:
-        return <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />;
+        return <Zap className="w-5 h-5 sm:w-6 sm:h-6" />;
     }
   };
 
