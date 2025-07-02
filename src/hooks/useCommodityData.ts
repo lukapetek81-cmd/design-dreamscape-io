@@ -147,7 +147,12 @@ export const useAvailableCommodities = () => {
         // Return fallback commodities for now
         const fallbackCommodities: CommodityInfo[] = [
           { symbol: 'GCUSD', name: 'Gold Futures', price: 2000, change: 5.5, changePercent: 0.28, category: 'metals' },
+          { symbol: 'MGCUSD', name: 'Micro Gold Futures', price: 2000, change: 3.2, changePercent: 0.16, category: 'metals' },
           { symbol: 'SIUSD', name: 'Silver Futures', price: 25, change: -0.5, changePercent: -1.96, category: 'metals' },
+          { symbol: 'MSIUSD', name: 'Micro Silver Futures', price: 25, change: -0.3, changePercent: -1.18, category: 'metals' },
+          { symbol: 'HGUSD', name: 'Copper', price: 4.2, change: 0.08, changePercent: 1.94, category: 'metals' },
+          { symbol: 'PLUSD', name: 'Platinum', price: 950, change: -12.5, changePercent: -1.30, category: 'metals' },
+          { symbol: 'PAUSD', name: 'Palladium', price: 1800, change: 25.0, changePercent: 1.41, category: 'metals' },
           { symbol: 'CLUSD', name: 'Crude Oil', price: 65, change: 2.1, changePercent: 3.34, category: 'energy' },
           { symbol: 'NGUSD', name: 'Natural Gas', price: 2.85, change: -0.15, changePercent: -5.0, category: 'energy' },
           { symbol: 'HOUSD', name: 'Heating Oil', price: 2.3, change: 0.05, changePercent: 2.22, category: 'energy' },
