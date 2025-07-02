@@ -6,6 +6,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import CommodityChart from './CommodityChart';
 import CommodityNews from './CommodityNews';
 import { useCommodityPrice } from '@/hooks/useCommodityData';
+import { useRealtimeData } from '@/hooks/useRealtimeData';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface CommodityCardProps {
@@ -22,13 +23,22 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
   const { price: apiPrice, loading: priceLoading } = useCommodityPrice(name);
   const { profile } = useAuth();
   
-  // Check if user has premium subscription
-  const isPremium = profile?.subscription_active && profile?.subscription_tier === 'premium';
+  // Check if user has premium subscription for real-time data
+  const isPremium = profile?.subscription_active && 
+    (profile?.subscription_tier === 'premium' || profile?.subscription_tier === 'pro');
   
-  // Use API data if available, otherwise fallback to props
-  const currentPrice = apiPrice?.price ?? fallbackPrice;
-  const currentChange = apiPrice?.changePercent ?? fallbackChange;
+  // Use real-time data for premium users
+  const { prices: realtimePrices, connected: realtimeConnected } = useRealtimeData({
+    commodities: [name],
+    enabled: isPremium
+  });
+  
+  // Determine data source priority: real-time > API > fallback
+  const realtimePrice = realtimePrices[name];
+  const currentPrice = realtimePrice?.price ?? apiPrice?.price ?? fallbackPrice;
+  const currentChange = realtimePrice?.changePercent ?? apiPrice?.changePercent ?? fallbackChange;
   const isPositive = currentChange >= 0;
+  const isRealTime = isPremium && realtimeConnected && realtimePrice;
 
   // Function to get the appropriate price units based on commodity name
   const getPriceUnits = (commodityName: string) => {
@@ -105,11 +115,14 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                         <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-medium bg-primary/10 text-primary rounded-full uppercase tracking-wider">
                           {venue}
                         </span>
-                        {priceLoading && (
+                        {priceLoading && !isRealTime && (
                           <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
                         )}
-                        {apiPrice && (
+                        {isRealTime && (
                           <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                        )}
+                        {!isRealTime && apiPrice && (
+                          <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full animate-pulse"></div>
                         )}
                       </div>
                     </div>
@@ -139,11 +152,13 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                         ${currentPrice.toFixed(2)}
                       </p>
                       <span className={`text-2xs sm:text-xs font-medium px-1.5 py-0.5 rounded ${
-                        isPremium 
-                          ? 'bg-green-100 dark:bg-green-950/20 text-green-700 dark:text-green-400' 
-                          : 'bg-muted/50 text-muted-foreground'
+                        isRealTime 
+                          ? 'bg-blue-100 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400' 
+                          : isPremium 
+                            ? 'bg-green-100 dark:bg-green-950/20 text-green-700 dark:text-green-400' 
+                            : 'bg-muted/50 text-muted-foreground'
                       }`}>
-                        {isPremium ? 'Real-time' : '15min delayed'}
+                        {isRealTime ? 'Live' : isPremium ? 'Real-time' : '15min delayed'}
                       </span>
                     </div>
                   </div>
