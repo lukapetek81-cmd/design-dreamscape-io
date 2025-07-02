@@ -25,7 +25,7 @@ serve(async (req) => {
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
     logStep("Stripe key verified");
 
-    // Initialize Supabase client with the anon key for user authentication
+    // Initialize Supabase client with the anon key
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? ""
@@ -34,13 +34,22 @@ serve(async (req) => {
     // Get the authorization header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
+      logStep("ERROR: No authorization header provided");
       throw new Error("No authorization provided. Please log in again.");
     }
     
     logStep("Authorization header found");
     
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    
+    // Use service role client for user lookup to bypass RLS
+    const serviceClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+    
+    const { data: userData, error: userError } = await serviceClient.auth.getUser(token);
     if (userError) {
       logStep("Authentication error", { error: userError.message });
       throw new Error(`Authentication failed: ${userError.message}`);
@@ -48,6 +57,7 @@ serve(async (req) => {
     
     const user = userData.user;
     if (!user?.email) {
+      logStep("ERROR: No user email found");
       throw new Error("User not authenticated or email not available");
     }
     
