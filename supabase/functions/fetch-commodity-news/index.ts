@@ -17,10 +17,31 @@ interface NewsItem {
 }
 
 const commodityKeywords = [
+  // Direct commodity terms
   'commodity', 'commodities', 'trading', 'futures', 'market', 'price',
   'gold', 'silver', 'oil', 'crude', 'natural gas', 'copper', 'platinum',
   'wheat', 'corn', 'soybeans', 'cattle', 'coffee', 'sugar', 'cotton',
-  'agriculture', 'metals', 'energy', 'livestock', 'grains'
+  'agriculture', 'metals', 'energy', 'livestock', 'grains',
+  
+  // Economic indicators affecting commodities
+  'inflation', 'deflation', 'GDP', 'economic growth', 'recession',
+  'interest rates', 'federal reserve', 'central bank', 'monetary policy',
+  'unemployment', 'employment data', 'consumer price index', 'CPI',
+  'producer price index', 'PPI', 'economic data', 'economic indicators',
+  
+  // International affairs affecting markets
+  'geopolitical', 'sanctions', 'trade war', 'trade deal', 'tariffs',
+  'supply chain', 'shipping', 'logistics', 'export', 'import',
+  'OPEC', 'cartel', 'production cut', 'mining', 'drilling',
+  
+  // Weather and climate (major commodity price drivers)
+  'drought', 'flooding', 'weather', 'climate', 'harvest', 'crop yield',
+  'natural disaster', 'hurricane', 'typhoon', 'frost',
+  
+  // Currency and global economics
+  'dollar', 'USD', 'currency', 'exchange rate', 'emerging markets',
+  'China economy', 'European economy', 'global economy', 'world bank',
+  'IMF', 'international monetary fund'
 ];
 
 serve(async (req) => {
@@ -73,26 +94,42 @@ serve(async (req) => {
       );
     }
 
-    // Build search query
-    const query = commodityKeywords.join(' OR ');
-    const searchParams = new URLSearchParams({
-      q: query,
-      sortBy: 'publishedAt',
-      pageSize: '50',
-      language: 'en',
-      apiKey: newsApiKey
-    });
-
-    const newsResponse = await fetch(`https://newsapi.org/v2/everything?${searchParams}`);
+    // Build search query with multiple searches for better coverage
+    const economicQuery = 'inflation OR "interest rates" OR "federal reserve" OR "economic data" OR GDP OR recession';
+    const geopoliticalQuery = 'geopolitical OR sanctions OR "trade war" OR OPEC OR "supply chain"';
+    const commodityQuery = commodityKeywords.slice(0, 15).join(' OR '); // Use first 15 to avoid URL length limits
     
-    if (!newsResponse.ok) {
-      throw new Error(`News API error: ${newsResponse.status}`);
-    }
+    const queries = [economicQuery, geopoliticalQuery, commodityQuery];
+    const allArticles = [];
+    
+    for (const query of queries) {
+      const searchParams = new URLSearchParams({
+        q: query,
+        sortBy: 'publishedAt',
+        pageSize: '20', // Reduced per query to stay within limits
+        language: 'en',
+        apiKey: newsApiKey
+      });
 
-    const newsData = await newsResponse.json();
+      try {
+        const newsResponse = await fetch(`https://newsapi.org/v2/everything?${searchParams}`);
+        
+        if (newsResponse.ok) {
+          const newsData = await newsResponse.json();
+          allArticles.push(...(newsData.articles || []));
+        }
+      } catch (queryError) {
+        console.error(`Error fetching news for query "${query}":`, queryError);
+      }
+    }
+    
+    // Remove duplicates based on URL
+    const uniqueArticles = allArticles.filter((article, index, self) => 
+      index === self.findIndex(a => a.url === article.url)
+    );
     
     // Filter and format articles
-    const articles: NewsItem[] = newsData.articles
+    const articles: NewsItem[] = uniqueArticles
       .filter((article: any) => {
         // Filter out articles without essential data
         return article.title && 
@@ -116,6 +153,10 @@ serve(async (req) => {
           category = 'livestock';
         } else if (content.includes('coffee') || content.includes('sugar') || content.includes('cotton') || content.includes('cocoa')) {
           category = 'softs';
+        } else if (content.includes('inflation') || content.includes('fed') || content.includes('interest rate') || content.includes('gdp')) {
+          category = 'economic';
+        } else if (content.includes('geopolitical') || content.includes('sanction') || content.includes('trade war') || content.includes('opec')) {
+          category = 'geopolitical';
         }
 
         return {
@@ -129,7 +170,8 @@ serve(async (req) => {
           category
         };
       })
-      .slice(0, 30); // Limit to 30 articles
+      .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()) // Sort by newest first
+      .slice(0, 40); // Increased limit to 40 articles for better coverage
 
     return new Response(
       JSON.stringify({ articles, source: 'api' }),
@@ -139,18 +181,27 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error fetching news:', error);
     
-    // Return fallback data on error
-    const fallbackNews: NewsItem[] = [
-      {
-        id: '1',
-        title: 'Market Update: Commodity Prices Mixed',
-        description: 'Various commodity markets showed mixed performance today with energy leading gains.',
-        url: '#',
-        source: 'Market Watch',
-        publishedAt: new Date().toISOString(),
-        category: 'general'
-      }
-    ];
+      // Return enhanced fallback data on error
+      const fallbackNews: NewsItem[] = [
+        {
+          id: '1',
+          title: 'Federal Reserve Signals Potential Rate Changes Amid Inflation Concerns',
+          description: 'Central bank officials hint at monetary policy adjustments as commodity markets react to inflation data.',
+          url: '#',
+          source: 'Economic Times',
+          publishedAt: new Date().toISOString(),
+          category: 'economic'
+        },
+        {
+          id: '2',
+          title: 'Global Supply Chain Disruptions Impact Commodity Prices',
+          description: 'International shipping delays and geopolitical tensions continue to affect raw material costs worldwide.',
+          url: '#',
+          source: 'Trade News',
+          publishedAt: new Date(Date.now() - 1800000).toISOString(),
+          category: 'geopolitical'
+        }
+      ];
     
     return new Response(
       JSON.stringify({ articles: fallbackNews, source: 'fallback', error: error.message }),
