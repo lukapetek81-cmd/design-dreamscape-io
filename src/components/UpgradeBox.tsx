@@ -6,12 +6,13 @@ import { Crown, Zap, Clock, CheckCircle, Loader2, Star, ArrowRight } from 'lucid
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 const UpgradeBox = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isPortalLoading, setIsPortalLoading] = useState(false);
   const { user, profile, refreshProfile } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const isPremium = profile?.subscription_active && profile?.subscription_tier === 'premium';
 
@@ -55,76 +56,9 @@ const UpgradeBox = () => {
     }
   };
 
-  const handleManageSubscription = async () => {
-    if (!user) return;
-
-    setIsPortalLoading(true);
-    try {
-      console.log('Starting customer portal request...');
-      
-      // First, check if user has an active subscription
-      console.log('Checking subscription status first...');
-      const { data: subscriptionData, error: subscriptionError } = await supabase.functions.invoke('check-subscription', {
-        headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-        },
-      });
-      
-      if (subscriptionError) {
-        console.error('Subscription check error:', subscriptionError);
-        throw new Error('Failed to verify subscription status');
-      }
-      
-      console.log('Subscription data:', subscriptionData);
-      
-      if (!subscriptionData?.subscribed) {
-        throw new Error('No active subscription found. Please subscribe first to access the customer portal.');
-      }
-      
-      // Get the current session and token
-      const { data: sessionData } = await supabase.auth.getSession();
-      console.log('Session data:', sessionData);
-      
-      if (!sessionData.session?.access_token) {
-        throw new Error("No valid session found. Please log in again.");
-      }
-
-      console.log('Calling customer-portal function...');
-      const { data, error } = await supabase.functions.invoke('customer-portal', {
-        headers: {
-          Authorization: `Bearer ${sessionData.session.access_token}`,
-        },
-      });
-
-      console.log('Function response:', { data, error });
-
-      if (error) {
-        console.error('Function error:', error);
-        throw error;
-      }
-
-      if (data?.url) {
-        console.log('Opening portal URL:', data.url);
-        // Open customer portal in a new tab
-        window.open(data.url, '_blank');
-        
-        toast({
-          title: "Redirecting to Customer Portal",
-          description: "Manage your subscription in the new tab.",
-        });
-      } else {
-        throw new Error("No portal URL received from server");
-      }
-    } catch (error) {
-      console.error('Portal error:', error);
-      toast({
-        title: "Portal Error",
-        description: error instanceof Error ? error.message : "Failed to open customer portal. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsPortalLoading(false);
-    }
+  const handleManageSubscription = () => {
+    // Navigate to the billing page instead of opening customer portal directly
+    navigate('/billing');
   };
 
   const checkSubscriptionStatus = async () => {
@@ -195,14 +129,9 @@ const UpgradeBox = () => {
               variant="outline"
               size="sm"
               onClick={handleManageSubscription}
-              disabled={isPortalLoading}
               className="text-xs border-yellow-300 hover:bg-yellow-100 dark:hover:bg-yellow-900/20"
             >
-              {isPortalLoading ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : (
-                'Manage'
-              )}
+              Manage
             </Button>
             <Button
               variant="ghost"
