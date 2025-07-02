@@ -13,6 +13,7 @@ import {
 import { Zap, Coins, Wheat, TrendingUp, Activity, BarChart3, Beef, Coffee, Package, Newspaper } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import UpgradeBox from "./UpgradeBox";
 
 interface CommodityCounts {
@@ -42,6 +43,7 @@ interface CommoditySidebarProps {
 const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: CommoditySidebarProps) => {
   const { state } = useSidebar();
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const collapsed = state === "collapsed";
 
   // Check if user has premium subscription (real-time access)
@@ -140,9 +142,12 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <div className={`px-2 sm:px-4 py-3 sm:py-4 space-y-3 sm:space-y-4 ${collapsed ? 'px-1' : ''}`}>
-              <div className={`p-2 sm:p-3 rounded-xl bg-gradient-to-r from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/20 border border-blue-200 dark:border-blue-800 hover:scale-105 transition-transform duration-200 cursor-pointer ${
-                collapsed ? 'text-center' : ''
-              }`}>
+              <div 
+                className={`p-2 sm:p-3 rounded-xl bg-gradient-to-r from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/20 border border-blue-200 dark:border-blue-800 hover:scale-105 transition-transform duration-200 cursor-pointer ${
+                  collapsed ? 'text-center' : ''
+                }`}
+                onClick={() => navigate('/live-feed')}
+              >
                 <div className={`flex ${collapsed ? 'flex-col items-center space-y-1' : 'justify-between items-center'}`}>
                   {collapsed ? (
                     <>

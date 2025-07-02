@@ -1,21 +1,124 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { MessageSquareText, Clock, ExternalLink, Loader } from 'lucide-react';
-import { useCommodityNews } from '@/hooks/useCommodityData';
+import { ExternalLink, Clock, Newspaper, Loader } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+
+interface NewsItem {
+  id: string;
+  title: string;
+  description: string;
+  url: string;
+  source: string;
+  publishedAt: string;
+  urlToImage?: string;
+  category?: string;
+}
 
 interface CommodityNewsProps {
   commodity: string;
 }
 
 const CommodityNews = ({ commodity }: CommodityNewsProps) => {
-  const { news, loading, error } = useCommodityNews(commodity);
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const { data, error: functionError } = await supabase.functions.invoke('fetch-commodity-news', {
+          body: { category: 'all', commodity }
+        });
+
+        if (functionError) {
+          throw new Error(functionError.message);
+        }
+
+        // Filter news relevant to the specific commodity
+        const commodityKeywords = [
+          commodity.toLowerCase(),
+          ...getRelevantKeywords(commodity)
+        ];
+
+        const relevantNews = (data.articles || []).filter((article: NewsItem) => {
+          const content = (article.title + ' ' + article.description).toLowerCase();
+          return commodityKeywords.some(keyword => content.includes(keyword));
+        }).slice(0, 3); // Show only top 3 relevant articles
+
+        setNews(relevantNews);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch news');
+        console.error('Error fetching commodity news:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNews();
+  }, [commodity]);
+
+  const getRelevantKeywords = (commodityName: string): string[] => {
+    const name = commodityName.toLowerCase();
+    
+    if (name.includes('oil') || name.includes('crude')) {
+      return ['oil', 'crude', 'petroleum', 'energy'];
+    }
+    if (name.includes('gold')) {
+      return ['gold', 'precious metals'];
+    }
+    if (name.includes('silver')) {
+      return ['silver', 'precious metals'];
+    }
+    if (name.includes('copper')) {
+      return ['copper', 'industrial metals'];
+    }
+    if (name.includes('wheat')) {
+      return ['wheat', 'grain', 'agriculture'];
+    }
+    if (name.includes('corn')) {
+      return ['corn', 'grain', 'agriculture'];
+    }
+    if (name.includes('gas')) {
+      return ['natural gas', 'gas', 'energy'];
+    }
+    if (name.includes('coffee')) {
+      return ['coffee', 'soft commodities'];
+    }
+    if (name.includes('sugar')) {
+      return ['sugar', 'soft commodities'];
+    }
+    if (name.includes('cattle')) {
+      return ['cattle', 'livestock', 'beef'];
+    }
+    
+    return [];
+  };
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffDays > 0) {
+      return `${diffDays}d ago`;
+    } else if (diffHours > 0) {
+      return `${diffHours}h ago`;
+    } else {
+      return 'Now';
+    }
+  };
 
   return (
     <Card className="p-4 sm:p-6 mt-4 sm:mt-6 bg-gradient-to-br from-card/80 to-muted/20 border border-border/50 shadow-soft hover:shadow-medium transition-all duration-300 animate-fade-in">
       <div className="flex items-center gap-3 mb-4 sm:mb-6">
         <div className="p-2 sm:p-3 rounded-xl bg-blue-100 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/30 transition-colors duration-300">
-          <MessageSquareText className="w-4 h-4 sm:w-5 sm:h-5" />
+          <Newspaper className="w-4 h-4 sm:w-5 sm:h-5" />
         </div>
         <div>
           <h4 className="text-sm sm:text-base font-bold text-foreground">Latest {commodity} News</h4>
@@ -40,7 +143,16 @@ const CommodityNews = ({ commodity }: CommodityNewsProps) => {
         </div>
       )}
 
-      {!loading && !error && (
+      {!loading && !error && news.length === 0 && (
+        <div className="text-center py-8">
+          <div className="text-muted-foreground mb-2">📰</div>
+          <p className="text-sm text-muted-foreground">
+            No recent news found for {commodity}
+          </p>
+        </div>
+      )}
+
+      {!loading && !error && news.length > 0 && (
         <div className="space-y-3 sm:space-y-4">
           {news.map((newsItem, index) => (
             <div 
@@ -71,7 +183,7 @@ const CommodityNews = ({ commodity }: CommodityNewsProps) => {
                     <span className="text-muted-foreground/60">•</span>
                     <div className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      <span>{new Date(newsItem.publishedAt).toLocaleDateString()}</span>
+                      <span>{formatTimeAgo(newsItem.publishedAt)}</span>
                     </div>
                   </div>
                 </div>
