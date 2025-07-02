@@ -153,7 +153,12 @@ export const useAvailableCommodities = () => {
           { symbol: 'HOUSD', name: 'Heating Oil', price: 2.3, change: 0.05, changePercent: 2.22, category: 'energy' },
           { symbol: 'ZCUSX', name: 'Corn Futures', price: 430, change: -8, changePercent: -1.83, category: 'grains' },
           { symbol: 'ZWUSX', name: 'Wheat Futures', price: 550, change: 12, changePercent: 2.23, category: 'grains' },
-          { symbol: 'ZSUSX', name: 'Soybean Futures', price: 1150, change: -25, changePercent: -2.13, category: 'grains' }
+          { symbol: 'ZSUSX', name: 'Soybean Futures', price: 1150, change: -25, changePercent: -2.13, category: 'grains' },
+          { symbol: 'KC', name: 'Coffee', price: 165.50, change: 3.25, changePercent: 2.00, category: 'softs' },
+          { symbol: 'CC', name: 'Cocoa', price: 2890, change: -45, changePercent: -1.53, category: 'softs' },
+          { symbol: 'SB', name: 'Sugar', price: 19.85, change: 0.32, changePercent: 1.64, category: 'softs' },
+          { symbol: 'CT', name: 'Cotton', price: 72.45, change: -1.12, changePercent: -1.52, category: 'softs' },
+          { symbol: 'OJ', name: 'Orange Juice', price: 315.80, change: 8.45, changePercent: 2.75, category: 'softs' }
         ];
         
         setCommodities(fallbackCommodities);
