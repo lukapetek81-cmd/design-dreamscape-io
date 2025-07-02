@@ -54,30 +54,59 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
     const range = maxPrice - minPrice;
+    const avgPrice = (minPrice + maxPrice) / 2;
     
-    // If the price range is very small (flat chart), artificially expand it
-    if (range < maxPrice * 0.005) { // Less than 0.5% variation
-      const center = (minPrice + maxPrice) / 2;
-      const artificialRange = Math.max(center * 0.02, 1); // 2% of center price or $1 minimum
-      return [center - artificialRange, center + artificialRange];
+    // Enhanced flat chart detection - check if the range is very small
+    const isFlat = range < avgPrice * 0.01; // Less than 1% variation is considered flat
+    
+    if (isFlat) {
+      // For flat charts, create a meaningful scale based on price level
+      let artificialRange;
+      
+      if (avgPrice < 10) {
+        // For low-priced commodities (under $10), use at least $0.50 range
+        artificialRange = Math.max(0.5, avgPrice * 0.05);
+      } else if (avgPrice < 100) {
+        // For medium-priced commodities ($10-$100), use 3% range
+        artificialRange = avgPrice * 0.03;
+      } else if (avgPrice < 1000) {
+        // For high-priced commodities ($100-$1000), use 2% range
+        artificialRange = avgPrice * 0.02;
+      } else {
+        // For very high-priced commodities (over $1000), use 1.5% range
+        artificialRange = avgPrice * 0.015;
+      }
+      
+      return [
+        Math.max(0, avgPrice - artificialRange),
+        avgPrice + artificialRange
+      ];
     }
     
-    // Different padding strategies based on timeframe and price level
-    let paddingPercentage;
+    // For non-flat charts, use adaptive padding based on volatility and timeframe
+    let paddingMultiplier;
+    
+    // Calculate volatility (standard deviation)
+    const mean = prices.reduce((sum, price) => sum + price, 0) / prices.length;
+    const variance = prices.reduce((sum, price) => sum + Math.pow(price - mean, 2), 0) / prices.length;
+    const volatility = Math.sqrt(variance) / mean; // Coefficient of variation
+    
     if (selectedTimeframe === '1d') {
-      // For daily charts, use more aggressive padding to show intraday movements
-      paddingPercentage = Math.max(0.15, 0.5 / maxPrice); // 15% padding or $0.50 minimum
+      // For daily charts, emphasize small movements
+      paddingMultiplier = Math.max(0.2, volatility * 2); // At least 20% padding
     } else if (selectedTimeframe === '1m') {
-      paddingPercentage = 0.1; // 10% padding for monthly
+      paddingMultiplier = Math.max(0.15, volatility * 1.5); // At least 15% padding
     } else {
-      paddingPercentage = 0.08; // 8% padding for longer timeframes
+      paddingMultiplier = Math.max(0.1, volatility); // At least 10% padding
     }
     
-    const padding = Math.max(range * paddingPercentage, maxPrice * 0.01); // At least 1% of max price
+    // Ensure minimum padding based on price level
+    const minPadding = avgPrice * 0.005; // At least 0.5% of average price
+    const calculatedPadding = Math.max(range * paddingMultiplier, minPadding);
     
     return [
-      Math.max(0, minPrice - padding), // Don't go below 0 for prices
-      maxPrice + padding
+      Math.max(0, minPrice - calculatedPadding),
+      maxPrice + calculatedPadding
     ];
   };
 
