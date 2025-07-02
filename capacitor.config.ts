@@ -43,13 +43,18 @@ const config: CapacitorConfig = {
       'android.dependencyResolutionAtConfigurationTime.disallow': 'false',
       'org.gradle.unsafe.configuration-cache': 'false',
       'android.suppressUnsupportedOptionWarnings': 'true',
-      // Force Java 17 compilation
-      'java.sourceCompatibility': '17',
-      'java.targetCompatibility': '17',
+      // Force Java 17 compilation and prevent Java 21
+      'java.sourceCompatibility': 'JavaVersion.VERSION_17',
+      'java.targetCompatibility': 'JavaVersion.VERSION_17',
       'kotlin.jvm.target.validation.mode': 'warning',
-      // Explicitly disable Java 21 features
       'java.vendor': 'openjdk',
-      'java.version': '17'
+      'java.version': '17',
+      'java.specification.version': '17',
+      'java.vm.specification.version': '17',
+      'java.class.version': '61.0',
+      // Gradle JVM version enforcement
+      'org.gradle.java.installations.auto-detect': 'false',
+      'org.gradle.java.installations.auto-download': 'false'
     }
   }
 };
