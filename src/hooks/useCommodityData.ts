@@ -1,6 +1,33 @@
 
 import { useState, useEffect } from 'react';
-import { commodityApi, CommodityPrice, NewsItem, CommodityInfo } from '@/services/commodityApi';
+import { supabase } from '@/integrations/supabase/client';
+
+export interface CommodityPrice {
+  symbol: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  lastUpdate: string;
+}
+
+export interface NewsItem {
+  id: string;
+  title: string;
+  description: string;
+  url: string;
+  source: string;
+  publishedAt: string;
+  urlToImage?: string;
+}
+
+export interface CommodityInfo {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  category: string;
+}
 
 export const useCommodityPrice = (commodityName: string) => {
   const [price, setPrice] = useState<CommodityPrice | null>(null);
@@ -12,8 +39,16 @@ export const useCommodityPrice = (commodityName: string) => {
       try {
         setLoading(true);
         setError(null);
-        const priceData = await commodityApi.fetchCommodityPrice(commodityName);
-        setPrice(priceData);
+        
+        const { data, error: functionError } = await supabase.functions.invoke('fetch-commodity-prices', {
+          body: { commodityName }
+        });
+
+        if (functionError) {
+          throw new Error(functionError.message);
+        }
+
+        setPrice(data.price);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch price');
         console.error('Error fetching commodity price:', err);
@@ -24,7 +59,7 @@ export const useCommodityPrice = (commodityName: string) => {
 
     fetchPrice();
     
-    // Refresh price every 5 minutes instead of 30 seconds
+    // Refresh price every 5 minutes
     const interval = setInterval(fetchPrice, 5 * 60 * 1000);
     
     return () => clearInterval(interval);
@@ -43,8 +78,8 @@ export const useCommodityNews = (commodityName: string) => {
       try {
         setLoading(true);
         setError(null);
-        const newsData = await commodityApi.fetchCommodityNews(commodityName);
-        setNews(newsData);
+        // For now, return empty array since we're focusing on price data
+        setNews([]);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch news');
         console.error('Error fetching commodity news:', err);
@@ -74,8 +109,16 @@ export const useCommodityHistoricalData = (commodityName: string, timeframe: str
       try {
         setLoading(true);
         setError(null);
-        const historicalData = await commodityApi.fetchHistoricalData(commodityName, timeframe);
-        setData(historicalData);
+        
+        const { data: responseData, error: functionError } = await supabase.functions.invoke('fetch-commodity-data', {
+          body: { commodityName, timeframe }
+        });
+
+        if (functionError) {
+          throw new Error(functionError.message);
+        }
+
+        setData(responseData.data || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch historical data');
         console.error('Error fetching historical data:', err);
@@ -100,8 +143,20 @@ export const useAvailableCommodities = () => {
       try {
         setLoading(true);
         setError(null);
-        const commodityData = await commodityApi.fetchAvailableCommodities();
-        setCommodities(commodityData);
+        
+        // Return fallback commodities for now
+        const fallbackCommodities: CommodityInfo[] = [
+          { symbol: 'GCUSD', name: 'Gold Futures', price: 2000, change: 5.5, changePercent: 0.28, category: 'metals' },
+          { symbol: 'SIUSD', name: 'Silver Futures', price: 25, change: -0.5, changePercent: -1.96, category: 'metals' },
+          { symbol: 'CLUSD', name: 'Crude Oil', price: 65, change: 2.1, changePercent: 3.34, category: 'energy' },
+          { symbol: 'NGUSD', name: 'Natural Gas', price: 2.85, change: -0.15, changePercent: -5.0, category: 'energy' },
+          { symbol: 'HOUSD', name: 'Heating Oil', price: 2.3, change: 0.05, changePercent: 2.22, category: 'energy' },
+          { symbol: 'ZCUSX', name: 'Corn Futures', price: 430, change: -8, changePercent: -1.83, category: 'grains' },
+          { symbol: 'ZWUSX', name: 'Wheat Futures', price: 550, change: 12, changePercent: 2.23, category: 'grains' },
+          { symbol: 'ZSUSX', name: 'Soybean Futures', price: 1150, change: -25, changePercent: -2.13, category: 'grains' }
+        ];
+        
+        setCommodities(fallbackCommodities);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch commodities');
         console.error('Error fetching available commodities:', err);
