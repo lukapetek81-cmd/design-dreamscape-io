@@ -151,6 +151,7 @@ export const useAvailableCommodities = () => {
           { symbol: 'CLUSD', name: 'Crude Oil', price: 65, change: 2.1, changePercent: 3.34, category: 'energy' },
           { symbol: 'NGUSD', name: 'Natural Gas', price: 2.85, change: -0.15, changePercent: -5.0, category: 'energy' },
           { symbol: 'HOUSD', name: 'Heating Oil', price: 2.3, change: 0.05, changePercent: 2.22, category: 'energy' },
+          { symbol: 'RBUSD', name: 'Gasoline RBOB', price: 2.1, change: 0.08, changePercent: 3.95, category: 'energy' },
           { symbol: 'ZCUSX', name: 'Corn Futures', price: 430, change: -8, changePercent: -1.83, category: 'grains' },
           { symbol: 'ZWUSX', name: 'Wheat Futures', price: 550, change: 12, changePercent: 2.23, category: 'grains' },
           { symbol: 'ZSUSX', name: 'Soybean Futures', price: 1150, change: -25, changePercent: -2.13, category: 'grains' },
