@@ -13,9 +13,10 @@ interface CommodityCardProps {
   price: number;
   change: number;
   symbol: string;
+  venue: string;
 }
 
-const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, symbol }: CommodityCardProps) => {
+const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, symbol, venue }: CommodityCardProps) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
   const { price: apiPrice, loading: priceLoading } = useCommodityPrice(name);
@@ -100,6 +101,9 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                       <div className="flex items-center gap-2">
                         <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-bold bg-muted/60 rounded-full text-muted-foreground uppercase tracking-wider">
                           {symbol}
+                        </span>
+                        <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-medium bg-primary/10 text-primary rounded-full uppercase tracking-wider">
+                          {venue}
                         </span>
                         {priceLoading && (
                           <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>

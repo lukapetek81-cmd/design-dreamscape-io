@@ -248,6 +248,7 @@ const Index = () => {
                         symbol={commodity.symbol}
                         price={commodity.price}
                         change={commodity.changePercent}
+                        venue={commodity.venue}
                       />
                     </div>
                   ))}
