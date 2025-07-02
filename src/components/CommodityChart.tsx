@@ -60,10 +60,19 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
     const isFlat = range < avgPrice * 0.005; // More sensitive detection at 0.5%
     
     if (isFlat) {
-      // For flat charts, create a meaningful scale based on price level
+      // For flat charts, create a meaningful scale based on commodity type and price level
       let artificialRange;
       
-      if (avgPrice < 10) {
+      if (name.includes('Wheat') || name.includes('Corn') || name.includes('Soybean')) {
+        // Agricultural commodities need larger scales to show meaningful movement
+        if (avgPrice < 100) {
+          artificialRange = Math.max(2.0, avgPrice * 0.08);
+        } else if (avgPrice < 500) {
+          artificialRange = avgPrice * 0.06;
+        } else {
+          artificialRange = avgPrice * 0.05;
+        }
+      } else if (avgPrice < 10) {
         artificialRange = Math.max(0.5, avgPrice * 0.05);
       } else if (avgPrice < 100) {
         artificialRange = avgPrice * 0.03;
@@ -79,17 +88,31 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
       ];
     }
     
-    // Use tighter y-axis bounds with strategic padding
+    // Use tighter y-axis bounds with strategic padding based on commodity type
     let paddingMultiplier;
     
-    if (selectedTimeframe === '1d') {
-      paddingMultiplier = 0.05; // 5% padding for daily
-    } else if (selectedTimeframe === '1m') {
-      paddingMultiplier = 0.03; // 3% padding for monthly
-    } else if (selectedTimeframe === '3m') {
-      paddingMultiplier = 0.02; // 2% padding for 3-month
-    } else { // 6-month
-      paddingMultiplier = 0.01; // 1% padding for 6-month to prevent flat tails
+    if (name.includes('Wheat') || name.includes('Corn') || name.includes('Soybean')) {
+      // Agricultural commodities get more padding to show volatility
+      if (selectedTimeframe === '1d') {
+        paddingMultiplier = 0.08; // 8% padding for daily
+      } else if (selectedTimeframe === '1m') {
+        paddingMultiplier = 0.06; // 6% padding for monthly  
+      } else if (selectedTimeframe === '3m') {
+        paddingMultiplier = 0.04; // 4% padding for 3-month
+      } else { // 6-month
+        paddingMultiplier = 0.03; // 3% padding for 6-month
+      }
+    } else {
+      // Other commodities use standard padding
+      if (selectedTimeframe === '1d') {
+        paddingMultiplier = 0.05; // 5% padding for daily
+      } else if (selectedTimeframe === '1m') {
+        paddingMultiplier = 0.03; // 3% padding for monthly
+      } else if (selectedTimeframe === '3m') {
+        paddingMultiplier = 0.02; // 2% padding for 3-month
+      } else { // 6-month
+        paddingMultiplier = 0.01; // 1% padding for 6-month to prevent flat tails
+      }
     }
     
     const padding = range * paddingMultiplier;
@@ -237,7 +260,12 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
                 }}
                 axisLine={{ stroke: 'hsl(var(--border))' }}
                 tickLine={{ stroke: 'hsl(var(--border))' }}
-                tickFormatter={(value) => `$${value.toFixed(selectedTimeframe === '1d' ? 2 : 0)}`}
+                tickFormatter={(value) => {
+                  if (name.includes('Wheat') || name.includes('Corn') || name.includes('Soybean')) {
+                    return `$${value.toFixed(selectedTimeframe === '1d' ? 2 : 1)}`;
+                  }
+                  return `$${value.toFixed(selectedTimeframe === '1d' ? 2 : 0)}`;
+                }}
                 domain={getYAxisDomain()}
               />
               <Tooltip 

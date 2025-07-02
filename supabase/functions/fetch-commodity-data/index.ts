@@ -31,9 +31,40 @@ const generateFallbackData = (commodityName: string, timeframe: string, basePric
   const now = new Date();
   
   let currentPrice = basePrice;
-  const volatility = basePrice * (timeframe === '1d' ? 0.015 : timeframe === '1m' ? 0.03 : 0.05);
+  
+  // Adjust volatility based on commodity type and timeframe
+  let volatility: number;
+  let trendStrength: number;
+  
+  if (commodityName === 'Wheat Futures') {
+    // Wheat is more volatile due to weather, crop conditions, etc.
+    volatility = basePrice * (timeframe === '1d' ? 0.025 : timeframe === '1m' ? 0.05 : timeframe === '3m' ? 0.08 : 0.12);
+    trendStrength = 0.001; // Stronger trends for wheat
+  } else if (commodityName.includes('Futures') || commodityName.includes('Corn') || commodityName.includes('Soybean')) {
+    // Agricultural commodities are generally more volatile
+    volatility = basePrice * (timeframe === '1d' ? 0.02 : timeframe === '1m' ? 0.04 : timeframe === '3m' ? 0.07 : 0.1);
+    trendStrength = 0.0008;
+  } else if (commodityName.includes('Oil') || commodityName.includes('Gas')) {
+    // Energy commodities
+    volatility = basePrice * (timeframe === '1d' ? 0.03 : timeframe === '1m' ? 0.05 : timeframe === '3m' ? 0.08 : 0.12);
+    trendStrength = 0.0007;
+  } else {
+    // Metals and other commodities
+    volatility = basePrice * (timeframe === '1d' ? 0.015 : timeframe === '1m' ? 0.03 : timeframe === '3m' ? 0.05 : 0.08);
+    trendStrength = 0.0005;
+  }
+  
   const trendDirection = Math.random() > 0.5 ? 1 : -1;
-  const trendStrength = 0.0005;
+  
+  // Add seasonal patterns for agricultural commodities
+  const addSeasonalPattern = (price: number, index: number) => {
+    if (commodityName === 'Wheat Futures') {
+      // Wheat typically has harvest lows in summer/fall and highs in spring
+      const seasonalFactor = Math.sin((index / dataPoints) * Math.PI * 2) * 0.05;
+      return price * (1 + seasonalFactor);
+    }
+    return price;
+  };
   
   for (let i = dataPoints - 1; i >= 0; i--) {
     let date: Date;
@@ -50,13 +81,32 @@ const generateFallbackData = (commodityName: string, timeframe: string, basePric
     
     currentPrice += randomChange + trendComponent + meanReversionComponent;
     
-    const minPrice = basePrice * 0.7;
-    const maxPrice = basePrice * 1.3;
+    // Apply seasonal patterns
+    currentPrice = addSeasonalPattern(currentPrice, i);
+    
+    // More realistic bounds for different commodities
+    let minPrice, maxPrice;
+    if (commodityName === 'Wheat Futures') {
+      minPrice = basePrice * 0.6; // Wheat can have larger swings
+      maxPrice = basePrice * 1.4;
+    } else if (commodityName.includes('Futures')) {
+      minPrice = basePrice * 0.7;
+      maxPrice = basePrice * 1.3;
+    } else {
+      minPrice = basePrice * 0.8;
+      maxPrice = basePrice * 1.2;
+    }
+    
     currentPrice = Math.max(minPrice, Math.min(maxPrice, currentPrice));
+    
+    // Use appropriate decimal places based on price level
+    let decimals = 2;
+    if (basePrice >= 1000) decimals = 0;
+    else if (basePrice >= 100) decimals = 1;
     
     data.push({
       date: date.toISOString(),
-      price: Math.round(currentPrice * 100) / 100
+      price: Math.round(currentPrice * Math.pow(10, decimals)) / Math.pow(10, decimals)
     });
   }
   
