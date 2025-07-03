@@ -66,7 +66,7 @@ const config: CapacitorConfig = {
       'android.defaults.buildfeatures.resvalues': 'false',
       'android.defaults.buildfeatures.shaders': 'false',
       // Override any Java version specifications
-      'org.gradle.java.home': '',
+      // 'org.gradle.java.home': '', // Removed - let Gradle auto-detect Java
       // Critical: Force ALL Android compilation to use Java 17
       'android.compileOptions.sourceCompatibility': 'JavaVersion.VERSION_17',
       'android.compileOptions.targetCompatibility': 'JavaVersion.VERSION_17',
@@ -76,7 +76,7 @@ const config: CapacitorConfig = {
       'capacitor.android.targetCompatibility': '17',
       'capacitor.android.compileSdkVersion': '35',
       // Force Gradle JVM and toolchain to use Java 17
-      'org.gradle.java.home': '',
+      // 'org.gradle.java.home': '', // Removed - let Gradle auto-detect Java
       'org.gradle.jvmargs': '-Xmx4096m -XX:MaxMetaspaceSize=1024m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8 -Djava.version=17',
       'org.gradle.java.installations.auto-detect': 'false',
       'org.gradle.java.installations.auto-download': 'false',
