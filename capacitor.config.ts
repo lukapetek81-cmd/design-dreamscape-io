@@ -18,7 +18,11 @@ const config: CapacitorConfig = {
       signingType: 'apksigner',
       sourceCompatibility: '17',
       targetCompatibility: '17',
-      javaVersion: '17'
+      javaVersion: '17',
+      releaseSourceCompatibility: '17',
+      releaseTargetCompatibility: '17',
+      debugSourceCompatibility: '17',
+      debugTargetCompatibility: '17'
     },
     compileSdkVersion: 34,
     minSdkVersion: 22,
@@ -54,7 +58,18 @@ const config: CapacitorConfig = {
       'java.class.version': '61.0',
       // Gradle JVM version enforcement
       'org.gradle.java.installations.auto-detect': 'false',
-      'org.gradle.java.installations.auto-download': 'false'
+      'org.gradle.java.installations.auto-download': 'false',
+      // Force Java 17 for ALL compilation tasks including Capacitor modules
+      'android.defaults.buildfeatures.buildconfig': 'false',
+      'android.defaults.buildfeatures.aidl': 'false',
+      'android.defaults.buildfeatures.renderscript': 'false',
+      'android.defaults.buildfeatures.resvalues': 'false',
+      'android.defaults.buildfeatures.shaders': 'false',
+      // Override any Java version specifications
+      'org.gradle.java.home': '',
+      'capacitor.android.sourceCompatibility': '17',
+      'capacitor.android.targetCompatibility': '17',
+      'capacitor.android.compileSdkVersion': '34'
     }
   }
 };
