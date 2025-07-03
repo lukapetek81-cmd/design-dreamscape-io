@@ -67,6 +67,11 @@ const config: CapacitorConfig = {
       'android.defaults.buildfeatures.shaders': 'false',
       // Override any Java version specifications
       'org.gradle.java.home': '',
+      // Critical: Force ALL Android compilation to use Java 17
+      'android.compileOptions.sourceCompatibility': 'JavaVersion.VERSION_17',
+      'android.compileOptions.targetCompatibility': 'JavaVersion.VERSION_17',
+      'android.compile.sourceCompatibility': '17',
+      'android.compile.targetCompatibility': '17',
       'capacitor.android.sourceCompatibility': '17',
       'capacitor.android.targetCompatibility': '17',
       'capacitor.android.compileSdkVersion': '34'
