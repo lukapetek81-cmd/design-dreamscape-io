@@ -31,7 +31,7 @@ const config: CapacitorConfig = {
       'org.gradle.parallel': 'false',
       'org.gradle.caching': 'false',
       'org.gradle.configureondemand': 'false',
-      'org.gradle.java.home': '/usr/lib/jvm/java-17-openjdk-amd64',
+      
       'android.enableR8.fullMode': 'false',
       'android.disableAutomaticComponentCreation': 'true',
       'android.nonTransitiveRClass': 'false',
