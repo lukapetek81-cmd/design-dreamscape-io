@@ -28,6 +28,7 @@ export interface CommodityInfo {
   changePercent: number;
   category: string;
   venue: string;
+  contractSize: string;
 }
 
 export const useCommodityPrice = (commodityName: string) => {
@@ -147,34 +148,34 @@ export const useAvailableCommodities = () => {
         
         // Return fallback commodities for now
         const fallbackCommodities: CommodityInfo[] = [
-          { symbol: 'GCUSD', name: 'Gold Futures', price: 2000, change: 5.5, changePercent: 0.28, category: 'metals', venue: 'COMEX' },
-          { symbol: 'MGCUSD', name: 'Micro Gold Futures', price: 2000, change: 3.2, changePercent: 0.16, category: 'metals', venue: 'COMEX' },
-          { symbol: 'SIUSD', name: 'Silver Futures', price: 25, change: -0.5, changePercent: -1.96, category: 'metals', venue: 'COMEX' },
-          { symbol: 'MSIUSD', name: 'Micro Silver Futures', price: 25, change: -0.3, changePercent: -1.18, category: 'metals', venue: 'COMEX' },
-          { symbol: 'HGUSD', name: 'Copper', price: 4.2, change: 0.08, changePercent: 1.94, category: 'metals', venue: 'COMEX' },
-          { symbol: 'PLUSD', name: 'Platinum', price: 950, change: -12.5, changePercent: -1.30, category: 'metals', venue: 'NYMEX' },
-          { symbol: 'PAUSD', name: 'Palladium', price: 1800, change: 25.0, changePercent: 1.41, category: 'metals', venue: 'NYMEX' },
-          { symbol: 'ALUSD', name: 'Aluminum', price: 2.2, change: 0.05, changePercent: 2.32, category: 'metals', venue: 'LME' },
-          { symbol: 'CLUSD', name: 'Crude Oil', price: 65, change: 2.1, changePercent: 3.34, category: 'energy', venue: 'NYMEX' },
-          { symbol: 'BZUSD', name: 'Brent Crude Oil', price: 67, change: 1.8, changePercent: 2.76, category: 'energy', venue: 'ICE' },
-          { symbol: 'NGUSD', name: 'Natural Gas', price: 2.85, change: -0.15, changePercent: -5.0, category: 'energy', venue: 'NYMEX' },
-          { symbol: 'HOUSD', name: 'Heating Oil', price: 2.3, change: 0.05, changePercent: 2.22, category: 'energy', venue: 'NYMEX' },
-          { symbol: 'RBUSD', name: 'Gasoline RBOB', price: 2.1, change: 0.08, changePercent: 3.95, category: 'energy', venue: 'NYMEX' },
-          { symbol: 'ZCUSX', name: 'Corn Futures', price: 430, change: -8, changePercent: -1.83, category: 'grains', venue: 'CBOT' },
-          { symbol: 'ZWUSX', name: 'Wheat Futures', price: 550, change: 12, changePercent: 2.23, category: 'grains', venue: 'CBOT' },
-          { symbol: 'ZSUSX', name: 'Soybean Futures', price: 1150, change: -25, changePercent: -2.13, category: 'grains', venue: 'CBOT' },
-          { symbol: 'LEUSX', name: 'Live Cattle Futures', price: 170, change: 2.5, changePercent: 1.49, category: 'livestock', venue: 'CME' },
-          { symbol: 'FCUSX', name: 'Feeder Cattle Futures', price: 240, change: -3.2, changePercent: -1.32, category: 'livestock', venue: 'CME' },
-          { symbol: 'HEUSX', name: 'Lean Hogs Futures', price: 75, change: 1.8, changePercent: 2.46, category: 'livestock', venue: 'CME' },
-          { symbol: 'DCUSD', name: 'Class III Milk Futures', price: 20.85, change: 0.32, changePercent: 1.56, category: 'livestock', venue: 'CME' },
-          { symbol: 'CCUSD', name: 'Cocoa', price: 2850, change: -45, changePercent: -1.55, category: 'softs', venue: 'ICE' },
-          { symbol: 'KCUSD', name: 'Coffee', price: 165, change: 3.50, changePercent: 2.17, category: 'softs', venue: 'ICE' },
-          { symbol: 'CTUSD', name: 'Cotton', price: 72.80, change: -1.25, changePercent: -1.69, category: 'softs', venue: 'ICE' },
-          { symbol: 'LBSUSD', name: 'Lumber Futures', price: 485, change: 12.30, changePercent: 2.60, category: 'softs', venue: 'CME' },
-          { symbol: 'OJUSD', name: 'Orange Juice', price: 315, change: -8.75, changePercent: -2.70, category: 'softs', venue: 'ICE' },
-          { symbol: 'ZOUSX', name: 'Oat Futures', price: 385, change: 8.50, changePercent: 2.26, category: 'softs', venue: 'CBOT' },
-          { symbol: 'ZRUSX', name: 'Rough Rice', price: 16.25, change: 0.18, changePercent: 1.12, category: 'softs', venue: 'CBOT' },
-          { symbol: 'SBUSD', name: 'Sugar', price: 19.75, change: 0.45, changePercent: 2.33, category: 'softs', venue: 'ICE' }
+          { symbol: 'GCUSD', name: 'Gold Futures', price: 2000, change: 5.5, changePercent: 0.28, category: 'metals', venue: 'COMEX', contractSize: '100 oz' },
+          { symbol: 'MGCUSD', name: 'Micro Gold Futures', price: 2000, change: 3.2, changePercent: 0.16, category: 'metals', venue: 'COMEX', contractSize: '10 oz' },
+          { symbol: 'SIUSD', name: 'Silver Futures', price: 25, change: -0.5, changePercent: -1.96, category: 'metals', venue: 'COMEX', contractSize: '5,000 oz' },
+          { symbol: 'MSIUSD', name: 'Micro Silver Futures', price: 25, change: -0.3, changePercent: -1.18, category: 'metals', venue: 'COMEX', contractSize: '1,000 oz' },
+          { symbol: 'HGUSD', name: 'Copper', price: 4.2, change: 0.08, changePercent: 1.94, category: 'metals', venue: 'COMEX', contractSize: '25,000 lbs' },
+          { symbol: 'PLUSD', name: 'Platinum', price: 950, change: -12.5, changePercent: -1.30, category: 'metals', venue: 'NYMEX', contractSize: '50 oz' },
+          { symbol: 'PAUSD', name: 'Palladium', price: 1800, change: 25.0, changePercent: 1.41, category: 'metals', venue: 'NYMEX', contractSize: '100 oz' },
+          { symbol: 'ALUSD', name: 'Aluminum', price: 2.2, change: 0.05, changePercent: 2.32, category: 'metals', venue: 'LME', contractSize: '25 MT' },
+          { symbol: 'CLUSD', name: 'Crude Oil', price: 65, change: 2.1, changePercent: 3.34, category: 'energy', venue: 'NYMEX', contractSize: '1,000 bbls' },
+          { symbol: 'BZUSD', name: 'Brent Crude Oil', price: 67, change: 1.8, changePercent: 2.76, category: 'energy', venue: 'ICE', contractSize: '1,000 bbls' },
+          { symbol: 'NGUSD', name: 'Natural Gas', price: 2.85, change: -0.15, changePercent: -5.0, category: 'energy', venue: 'NYMEX', contractSize: '10,000 MMBtu' },
+          { symbol: 'HOUSD', name: 'Heating Oil', price: 2.3, change: 0.05, changePercent: 2.22, category: 'energy', venue: 'NYMEX', contractSize: '42,000 gal' },
+          { symbol: 'RBUSD', name: 'Gasoline RBOB', price: 2.1, change: 0.08, changePercent: 3.95, category: 'energy', venue: 'NYMEX', contractSize: '42,000 gal' },
+          { symbol: 'ZCUSX', name: 'Corn Futures', price: 430, change: -8, changePercent: -1.83, category: 'grains', venue: 'CBOT', contractSize: '5,000 bu' },
+          { symbol: 'ZWUSX', name: 'Wheat Futures', price: 550, change: 12, changePercent: 2.23, category: 'grains', venue: 'CBOT', contractSize: '5,000 bu' },
+          { symbol: 'ZSUSX', name: 'Soybean Futures', price: 1150, change: -25, changePercent: -2.13, category: 'grains', venue: 'CBOT', contractSize: '5,000 bu' },
+          { symbol: 'LEUSX', name: 'Live Cattle Futures', price: 170, change: 2.5, changePercent: 1.49, category: 'livestock', venue: 'CME', contractSize: '40,000 lbs' },
+          { symbol: 'FCUSX', name: 'Feeder Cattle Futures', price: 240, change: -3.2, changePercent: -1.32, category: 'livestock', venue: 'CME', contractSize: '50,000 lbs' },
+          { symbol: 'HEUSX', name: 'Lean Hogs Futures', price: 75, change: 1.8, changePercent: 2.46, category: 'livestock', venue: 'CME', contractSize: '40,000 lbs' },
+          { symbol: 'DCUSD', name: 'Class III Milk Futures', price: 20.85, change: 0.32, changePercent: 1.56, category: 'livestock', venue: 'CME', contractSize: '200,000 lbs' },
+          { symbol: 'CCUSD', name: 'Cocoa', price: 2850, change: -45, changePercent: -1.55, category: 'softs', venue: 'ICE', contractSize: '10 MT' },
+          { symbol: 'KCUSD', name: 'Coffee', price: 165, change: 3.50, changePercent: 2.17, category: 'softs', venue: 'ICE', contractSize: '37,500 lbs' },
+          { symbol: 'CTUSD', name: 'Cotton', price: 72.80, change: -1.25, changePercent: -1.69, category: 'softs', venue: 'ICE', contractSize: '50,000 lbs' },
+          { symbol: 'LBSUSD', name: 'Lumber Futures', price: 485, change: 12.30, changePercent: 2.60, category: 'softs', venue: 'CME', contractSize: '110,000 bd ft' },
+          { symbol: 'OJUSD', name: 'Orange Juice', price: 315, change: -8.75, changePercent: -2.70, category: 'softs', venue: 'ICE', contractSize: '15,000 lbs' },
+          { symbol: 'ZOUSX', name: 'Oat Futures', price: 385, change: 8.50, changePercent: 2.26, category: 'softs', venue: 'CBOT', contractSize: '5,000 bu' },
+          { symbol: 'ZRUSX', name: 'Rough Rice', price: 16.25, change: 0.18, changePercent: 1.12, category: 'softs', venue: 'CBOT', contractSize: '2,000 cwt' },
+          { symbol: 'SBUSD', name: 'Sugar', price: 19.75, change: 0.45, changePercent: 2.33, category: 'softs', venue: 'ICE', contractSize: '112,000 lbs' }
           
         ];
         

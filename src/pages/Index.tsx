@@ -273,6 +273,7 @@ const Index = () => {
                         price={commodity.price}
                         change={commodity.changePercent}
                         venue={commodity.venue}
+                        contractSize={commodity.contractSize}
                       />
                     </div>
                   ))}

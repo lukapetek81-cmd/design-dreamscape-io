@@ -15,9 +15,10 @@ interface CommodityCardProps {
   change: number;
   symbol: string;
   venue: string;
+  contractSize?: string;
 }
 
-const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, symbol, venue }: CommodityCardProps) => {
+const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, symbol, venue, contractSize }: CommodityCardProps) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
   const { price: apiPrice, loading: priceLoading } = useCommodityPrice(name);
@@ -112,6 +113,11 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                         <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-medium bg-primary/10 text-primary rounded-full uppercase tracking-wider">
                           {venue}
                         </span>
+                        {contractSize && (
+                          <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-medium bg-secondary/10 text-secondary-foreground rounded-full tracking-wider">
+                            {contractSize}
+                          </span>
+                        )}
                         {priceLoading && !isRealTime && (
                           <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
                         )}
