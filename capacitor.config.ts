@@ -24,9 +24,9 @@ const config: CapacitorConfig = {
       debugSourceCompatibility: '17',
       debugTargetCompatibility: '17'
     },
-    compileSdkVersion: 34,
+    compileSdkVersion: 35,
     minSdkVersion: 22,
-    targetSdkVersion: 34,
+    targetSdkVersion: 35,
     javaVersion: '17',
     gradleProperties: {
       'android.useAndroidX': 'true',
@@ -74,7 +74,7 @@ const config: CapacitorConfig = {
       'android.compile.targetCompatibility': '17',
       'capacitor.android.sourceCompatibility': '17',
       'capacitor.android.targetCompatibility': '17',
-      'capacitor.android.compileSdkVersion': '34',
+      'capacitor.android.compileSdkVersion': '35',
       // Force Gradle JVM and toolchain to use Java 17
       'org.gradle.java.home': '',
       'org.gradle.jvmargs': '-Xmx4096m -XX:MaxMetaspaceSize=1024m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8 -Djava.version=17',
