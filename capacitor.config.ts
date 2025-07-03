@@ -74,7 +74,15 @@ const config: CapacitorConfig = {
       'android.compile.targetCompatibility': '17',
       'capacitor.android.sourceCompatibility': '17',
       'capacitor.android.targetCompatibility': '17',
-      'capacitor.android.compileSdkVersion': '34'
+      'capacitor.android.compileSdkVersion': '34',
+      // Force Gradle JVM and toolchain to use Java 17
+      'org.gradle.java.home': '',
+      'org.gradle.jvmargs': '-Xmx4096m -XX:MaxMetaspaceSize=1024m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8 -Djava.version=17',
+      'org.gradle.java.installations.auto-detect': 'false',
+      'org.gradle.java.installations.auto-download': 'false',
+      // Force Java toolchain version for ALL modules
+      'java.toolchain.languageVersion': '17',
+      'kotlin.jvm.toolchain.languageVersion': '17'
     }
   }
 };
