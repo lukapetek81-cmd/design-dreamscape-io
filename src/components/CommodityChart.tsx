@@ -366,7 +366,7 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
           }`}></div>
           <div>
             <p className="text-xs sm:text-sm font-semibold text-foreground">
-              {loading ? 'Loading Real Data...' : error ? 'Using Fallback Data' : isPositiveTrend ? 'Upward Trend' : 'Downward Trend'}
+              {loading ? 'Loading Real Data...' : error ? 'Using Fallback Data' : isPositiveTrend ? 'Market Open' : 'Market Closed'}
             </p>
             <p className="text-2xs sm:text-xs text-muted-foreground">
               {loading ? 'Fetching from FMP API...' : `Based on ${selectedTimeframe.toUpperCase()} data`}
