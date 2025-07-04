@@ -266,16 +266,27 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
         {!loading && !error && data.length > 0 && (
           <>
             {chartType === 'candlestick' ? (
-              <CandlestickChart
-                data={data.filter((item): item is typeof item & { open: number; high: number; low: number; close: number } => 
+              (() => {
+                const filteredData = data.filter((item): item is typeof item & { open: number; high: number; low: number; close: number } => 
                   typeof item.open === 'number' && 
                   typeof item.high === 'number' && 
                   typeof item.low === 'number' && 
                   typeof item.close === 'number'
-                )}
-                formatXAxisTick={formatXAxisTick}
-                formatTooltipLabel={formatTooltipLabel}
-              />
+                );
+                console.log('Filtering for candlestick:', { 
+                  totalData: data.length, 
+                  filteredData: filteredData.length,
+                  sampleData: data.slice(0, 2),
+                  sampleFiltered: filteredData.slice(0, 2)
+                });
+                return (
+                  <CandlestickChart
+                    data={filteredData}
+                    formatXAxisTick={formatXAxisTick}
+                    formatTooltipLabel={formatTooltipLabel}
+                  />
+                );
+              })()
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>

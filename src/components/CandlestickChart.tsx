@@ -24,6 +24,8 @@ const CandlestickChart = ({ data, formatXAxisTick, formatTooltipLabel }: Candles
     data: CandlestickData;
   } | null>(null);
 
+  console.log('CandlestickChart received data:', data.length, 'items:', data.slice(0, 2));
+
   const handleMouseMove = (event: React.MouseEvent<SVGElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
     const x = event.clientX - rect.left;
@@ -49,6 +51,17 @@ const CandlestickChart = ({ data, formatXAxisTick, formatTooltipLabel }: Candles
   const minPrice = Math.min(...data.map(d => d.low));
   const priceRange = maxPrice - minPrice;
   const padding = priceRange * 0.1;
+
+  // If no data, show message
+  if (data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <p className="text-sm text-muted-foreground">No OHLC data available for candlestick chart</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative">
