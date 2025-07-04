@@ -3,7 +3,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Eye, EyeOff, Lock, Loader2 } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Eye, EyeOff, Lock, Loader2, Mail } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -13,13 +14,14 @@ const PasswordChangeForm = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showResetOption, setShowResetOption] = useState(false);
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
 
-  const { user } = useAuth();
+  const { user, resetPassword } = useAuth();
   const { toast } = useToast();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -114,6 +116,45 @@ const PasswordChangeForm = () => {
     }
   };
 
+  const handlePasswordReset = async () => {
+    if (!user?.email) {
+      toast({
+        title: "Error",
+        description: "No email address found for your account",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      const { error } = await resetPassword(user.email);
+      
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Password Reset Email Sent",
+          description: "Check your email for password reset instructions",
+        });
+        setShowResetOption(false);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send password reset email",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Card className="p-6">
       <div className="flex items-center gap-3 mb-4">
@@ -149,6 +190,15 @@ const PasswordChangeForm = () => {
                 <Eye className="h-4 w-4 text-muted-foreground" />
               )}
             </Button>
+          </div>
+          <div className="text-right">
+            <button
+              type="button"
+              onClick={() => setShowResetOption(true)}
+              className="text-sm text-primary hover:underline"
+            >
+              Don't know your current password?
+            </button>
           </div>
         </div>
 
@@ -227,6 +277,63 @@ const PasswordChangeForm = () => {
           )}
         </Button>
       </form>
+
+      {/* Password Reset Modal */}
+      {showResetOption && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md p-6 bg-gradient-to-br from-card/90 to-muted/20 border border-border/50 shadow-soft">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Mail className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">Reset Password</h3>
+                  <p className="text-sm text-muted-foreground">
+                    We'll send a reset link to your email
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-lg bg-muted/20 border">
+                <p className="text-sm">
+                  <span className="font-medium">Email:</span> {user?.email}
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  A password reset link will be sent to this email address. Click the link in the email to set a new password.
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handlePasswordReset} 
+                  className="flex-1"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="mr-2 h-4 w-4" />
+                      Send Reset Email
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowResetOption(false)}
+                  disabled={isLoading}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
     </Card>
   );
 };
