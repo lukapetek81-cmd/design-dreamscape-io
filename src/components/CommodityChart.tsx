@@ -180,7 +180,7 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
 
         {/* Full-screen chart */}
         <div className="flex-1 p-3 sm:p-4">
-          <div className="w-full h-full bg-gradient-to-br from-background/50 to-muted/20 rounded-xl border border-border/30">
+          <div className="w-full h-full bg-card rounded-xl border shadow-lg">
             <ChartContainer
               data={data}
               name={name}
