@@ -8,6 +8,7 @@ import CommodityNews from './CommodityNews';
 import { useCommodityPrice } from '@/hooks/useCommodityData';
 import { useRealtimeDataContext } from '@/contexts/RealtimeDataContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { getMarketStatus } from '@/lib/marketHours';
 
 interface CommodityCardProps {
   name: string;
@@ -23,6 +24,9 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
   const [isHovered, setIsHovered] = React.useState(false);
   const { price: apiPrice, loading: priceLoading } = useCommodityPrice(name);
   const { profile } = useAuth();
+  
+  // Get market status for this commodity
+  const marketStatus = getMarketStatus(name);
   
   // Check if user has premium subscription for real-time data
   const isPremium = profile?.subscription_active && 
@@ -125,7 +129,9 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                           <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
                         )}
                         {!isRealTime && apiPrice && (
-                          <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full animate-pulse"></div>
+                          <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                            marketStatus.isOpen ? 'bg-green-500' : 'bg-red-500'
+                          }`}></div>
                         )}
                       </div>
                     </div>
