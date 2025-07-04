@@ -24,6 +24,10 @@ export const useGlobalRealtimeData = (commodities: string[]): GlobalRealtimeData
     (profile?.subscription_tier === 'premium' || profile?.subscription_tier === 'pro');
 
   const connect = React.useCallback(async () => {
+    // Temporarily disabled - WebSocket edge function not implemented yet
+    console.log('Real-time WebSocket connection disabled - missing realtime-commodity-stream edge function');
+    return;
+    
     if (!user || !isPremium || commodities.length === 0) {
       return;
     }
