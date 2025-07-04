@@ -217,18 +217,6 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
           priceChange={priceChange}
         />
 
-        {/* Full-screen toggle for mobile */}
-        {isMobile && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsFullScreen(true)}
-            className="mobile-touch-target w-full sm:w-auto"
-          >
-            <Maximize2 className="w-4 h-4 mr-2" />
-            Full Screen
-          </Button>
-        )}
       </div>
 
       <div className="h-[200px] sm:h-[250px] lg:h-[300px] w-full p-2 sm:p-4 bg-gradient-to-br from-background/50 to-muted/20 rounded-xl border border-border/30">

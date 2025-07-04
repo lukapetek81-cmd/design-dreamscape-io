@@ -74,9 +74,32 @@ const IndexContent = ({
   const { toggleSidebar, setOpenMobile } = useSidebar();
   const [touchStart, setTouchStart] = React.useState<number | null>(null);
   const [touchEnd, setTouchEnd] = React.useState<number | null>(null);
+  const [isLandscape, setIsLandscape] = React.useState(false);
 
   // Handle swipe detection
   const minSwipeDistance = 50;
+
+  // Detect orientation changes and hide sidebar in landscape
+  React.useEffect(() => {
+    const checkOrientation = () => {
+      const isLandscapeMode = window.innerWidth > window.innerHeight && isMobile;
+      setIsLandscape(isLandscapeMode);
+      
+      // Hide sidebar in landscape mode
+      if (isLandscapeMode && isMobile) {
+        setOpenMobile(false);
+      }
+    };
+
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+
+    return () => {
+      window.removeEventListener('resize', checkOrientation);
+      window.removeEventListener('orientationchange', checkOrientation);
+    };
+  }, [isMobile, setOpenMobile]);
 
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
@@ -163,10 +186,12 @@ const IndexContent = ({
         }}
       />
       
-      {/* Floating Sidebar Trigger Button */}
-      <SidebarTrigger className="fixed left-4 bottom-20 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl active:scale-95 touch-manipulation transition-all duration-200 flex items-center justify-center md:hidden">
-        <Menu className="w-6 h-6" />
-      </SidebarTrigger>
+      {/* Floating Sidebar Trigger Button - Hide in landscape */}
+      {!isLandscape && (
+        <SidebarTrigger className="fixed left-4 bottom-20 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl active:scale-95 touch-manipulation transition-all duration-200 flex items-center justify-center md:hidden">
+          <Menu className="w-6 h-6" />
+        </SidebarTrigger>
+      )}
       
       <div className="flex-1 flex flex-col min-w-0">
           {/* Enhanced Responsive Header */}
