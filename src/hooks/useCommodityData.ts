@@ -83,6 +83,16 @@ export interface CommodityHistoricalData {
   close?: number;
 }
 
+// Add a specific interface for candlestick data
+export interface CandlestickData {
+  date: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  price: number; // Keep for compatibility
+}
+
 export const useCommodityPrice = (commodityName: string) => {
   return useQuery({
     queryKey: ['commodity-price', commodityName],
@@ -131,8 +141,31 @@ export const useCommodityHistoricalData = (commodityName: string, timeframe: str
           return { data: [], loading: false, error: error.message };
         }
 
+        console.log(`Raw API response for ${commodityName} (${chartType}):`, data);
+
+        // Ensure OHLC data is properly structured for candlestick charts
+        const processedData = data.data?.map((item: any) => {
+          if (chartType === 'candlestick') {
+            return {
+              date: item.date,
+              price: item.close || item.price,
+              open: item.open,
+              high: item.high,
+              low: item.low,
+              close: item.close
+            };
+          } else {
+            return {
+              date: item.date,
+              price: item.price
+            };
+          }
+        }) || [];
+
+        console.log(`Processed data for ${commodityName} (${chartType}):`, processedData.slice(0, 2));
+
         return { 
-          data: data.data || [], 
+          data: processedData, 
           loading: false, 
           error: null 
         };

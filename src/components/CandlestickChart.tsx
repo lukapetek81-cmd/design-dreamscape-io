@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { ResponsiveContainer } from 'recharts';
+import { CommodityHistoricalData } from '@/hooks/useCommodityData';
 
 interface CandlestickData {
   date: string;

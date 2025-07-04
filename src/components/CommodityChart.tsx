@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Toggle } from '@/components/ui/toggle';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Calendar, Loader, AlertCircle, ChartCandlestick } from 'lucide-react';
-import { useCommodityHistoricalData, useCommodityPrice } from '@/hooks/useCommodityData';
+import { useCommodityHistoricalData, useCommodityPrice, CommodityHistoricalData } from '@/hooks/useCommodityData';
 import { useAuth } from '@/contexts/AuthContext';
 import CandlestickChart from './CandlestickChart';
 
@@ -267,7 +267,7 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
           <>
             {chartType === 'candlestick' ? (
               (() => {
-                const filteredData = data.filter((item): item is typeof item & { open: number; high: number; low: number; close: number } => 
+                const filteredData = data.filter((item): item is CommodityHistoricalData & { open: number; high: number; low: number; close: number } => 
                   typeof item.open === 'number' && 
                   typeof item.high === 'number' && 
                   typeof item.low === 'number' && 
