@@ -17,7 +17,7 @@ const COMMODITY_SYMBOLS: Record<string, string> = {
   'Silver Futures': 'SIUSD',
   'Micro Silver Futures': 'MSIUSD',
   'Copper': 'HGUSD',
-  'Aluminum': 'ALUSD',
+  'Aluminum': 'ALI=F',
   'Platinum': 'PLUSD',
   'Palladium': 'PAUSD',
   'Crude Oil': 'CLUSD',
