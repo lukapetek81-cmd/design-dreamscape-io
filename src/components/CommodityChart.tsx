@@ -51,7 +51,14 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
     currentPrice: displayPrice, 
     trend: isPositiveTrend ? 'positive' : 'negative',
     priceChange: priceChange.toFixed(2) + '%',
-    chartType
+    chartType,
+    sampleData: data.slice(0, 2), // Show sample data for debugging
+    hasOHLC: chartType === 'candlestick' ? data.some(item => 
+      typeof item.open === 'number' && 
+      typeof item.high === 'number' && 
+      typeof item.low === 'number' && 
+      typeof item.close === 'number'
+    ) : false
   });
 
   // Calculate dynamic y-axis domain to prevent flat-looking charts
@@ -261,7 +268,10 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
             {chartType === 'candlestick' ? (
               <CandlestickChart
                 data={data.filter((item): item is typeof item & { open: number; high: number; low: number; close: number } => 
-                  item.open !== undefined && item.high !== undefined && item.low !== undefined && item.close !== undefined
+                  typeof item.open === 'number' && 
+                  typeof item.high === 'number' && 
+                  typeof item.low === 'number' && 
+                  typeof item.close === 'number'
                 )}
                 formatXAxisTick={formatXAxisTick}
                 formatTooltipLabel={formatTooltipLabel}
