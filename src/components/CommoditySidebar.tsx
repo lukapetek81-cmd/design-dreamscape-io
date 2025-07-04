@@ -80,7 +80,7 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
           </div>
           {!collapsed && (
             <div>
-              <h2 className="font-bold text-base">Markets Hub</h2>
+              <h2 className="font-bold text-base">Commodity Hub</h2>
               <p className="text-xs text-muted-foreground">Trading Platform</p>
             </div>
           )}

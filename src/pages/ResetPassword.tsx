@@ -177,7 +177,7 @@ const ResetPassword = () => {
               <TrendingUp className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gradient">Markets Hub</h1>
+              <h1 className="text-2xl font-bold text-gradient">Commodity Hub</h1>
               <p className="text-sm text-muted-foreground">Set your new password</p>
             </div>
           </div>
