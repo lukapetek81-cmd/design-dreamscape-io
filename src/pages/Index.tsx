@@ -82,22 +82,47 @@ const IndexContent = ({
   // Detect orientation changes and hide sidebar in landscape
   React.useEffect(() => {
     const checkOrientation = () => {
-      const isLandscapeMode = window.innerWidth > window.innerHeight && isMobile;
-      setIsLandscape(isLandscapeMode);
-      
-      // Hide sidebar in landscape mode
-      if (isLandscapeMode && isMobile) {
-        setOpenMobile(false);
-      }
+      // Use a small timeout to ensure window dimensions are updated
+      setTimeout(() => {
+        const isLandscapeMode = window.innerWidth > window.innerHeight && isMobile;
+        console.log('Orientation check:', {
+          windowWidth: window.innerWidth,
+          windowHeight: window.innerHeight,
+          isMobile,
+          isLandscapeMode,
+          screenOrientation: screen.orientation?.angle || 'unknown'
+        });
+        
+        setIsLandscape(isLandscapeMode);
+        
+        // Hide sidebar in landscape mode
+        if (isLandscapeMode && isMobile) {
+          console.log('Hiding sidebar due to landscape mode');
+          setOpenMobile(false);
+        } else if (!isLandscapeMode && isMobile) {
+          console.log('Portrait mode detected');
+        }
+      }, 100); // Small delay to ensure dimensions are updated
     };
 
+    // Check immediately
     checkOrientation();
+    
+    // Add multiple event listeners for better compatibility
     window.addEventListener('resize', checkOrientation);
     window.addEventListener('orientationchange', checkOrientation);
+    
+    // Also listen for screen orientation changes if available
+    if (screen.orientation) {
+      screen.orientation.addEventListener('change', checkOrientation);
+    }
 
     return () => {
       window.removeEventListener('resize', checkOrientation);
       window.removeEventListener('orientationchange', checkOrientation);
+      if (screen.orientation) {
+        screen.orientation.removeEventListener('change', checkOrientation);
+      }
     };
   }, [isMobile, setOpenMobile]);
 
