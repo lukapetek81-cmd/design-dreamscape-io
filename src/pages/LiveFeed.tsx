@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface NewsItem {
   id: string;
@@ -24,6 +25,7 @@ const LiveFeed = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const isMobile = useIsMobile();
 
   // Redirect to auth if not logged in
   if (!authLoading && !user) {
@@ -90,44 +92,46 @@ const LiveFeed = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       {/* Header */}
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 shadow-soft">
-        <div className="container flex flex-col sm:flex-row h-auto sm:h-16 md:h-20 items-center justify-between px-3 sm:px-4 md:px-6 py-3 sm:py-0 gap-3 sm:gap-0">
-          <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
-            <Link to="/">
-              <Button variant="ghost" size="sm" className="hover:bg-muted/80 transition-colors mobile-touch-target">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Back to Markets</span>
-                <span className="sm:hidden">Back</span>
-              </Button>
-            </Link>
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="p-2 rounded-xl bg-primary/10 text-primary mobile-touch-target">
-                <Newspaper className="w-5 h-5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gradient truncate">
-                  Live Market News
-                </h1>
-                <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                  Real-time commodity market updates
-                </p>
+        <div className="container px-3 sm:px-4 md:px-6 py-3 sm:py-0">
+          <div className="flex flex-col sm:flex-row sm:h-16 md:h-20 sm:items-center justify-between gap-3 sm:gap-0">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+              <Link to="/">
+                <Button variant="ghost" size="sm" className="hover:bg-muted/80 transition-colors mobile-touch-target">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">Back to Markets</span>
+                  <span className="sm:hidden">Back</span>
+                </Button>
+              </Link>
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                <div className="p-2 rounded-xl bg-primary/10 text-primary mobile-touch-target shrink-0">
+                  <Newspaper className="w-4 h-4 sm:w-5 sm:h-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gradient truncate">
+                    {isMobile ? 'Market News' : 'Live Market News'}
+                  </h1>
+                  <p className="text-2xs sm:text-xs md:text-sm text-muted-foreground truncate">
+                    {isMobile ? 'Real-time updates' : 'Real-time commodity market updates'}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-          
-          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchNews}
-              disabled={loading}
-              className="hover:bg-muted/80 transition-colors mobile-button flex-1 sm:flex-initial"
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-            <div className="flex items-center gap-2 px-3 py-2 rounded-full border bg-muted/50 whitespace-nowrap">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-xs font-medium">Live</span>
+            
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchNews}
+                disabled={loading}
+                className="hover:bg-muted/80 transition-colors mobile-button flex-1 sm:flex-initial"
+              >
+                <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                <span className="text-xs sm:text-sm">Refresh</span>
+              </Button>
+              <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 rounded-full border bg-muted/50 whitespace-nowrap">
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-2xs sm:text-xs font-medium">Live</span>
+              </div>
             </div>
           </div>
         </div>
