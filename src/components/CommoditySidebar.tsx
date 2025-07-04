@@ -14,6 +14,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useEffect } from "react";
 import UpgradeBox from "./UpgradeBox";
 
 interface CommodityCounts {
@@ -26,12 +27,12 @@ interface CommodityCounts {
 }
 
 const COMMODITY_GROUPS = [
-  { id: "energy", label: "Energy", icon: Zap, color: "text-orange-500" },
-  { id: "metals", label: "Metals", icon: Coins, color: "text-yellow-500" },
-  { id: "grains", label: "Grains", icon: Wheat, color: "text-green-500" },
-  { id: "livestock", label: "Livestock", icon: Beef, color: "text-red-500" },
-  { id: "softs", label: "Softs", icon: Coffee, color: "text-amber-600" },
-  { id: "other", label: "Other", icon: Package, color: "text-gray-500" },
+  { id: "energy", label: "Energy", icon: Zap, color: "text-orange-500", shortcut: "1", description: "Oil, Gas & Power" },
+  { id: "metals", label: "Metals", icon: Coins, color: "text-yellow-500", shortcut: "2", description: "Gold, Silver & More" },
+  { id: "grains", label: "Grains", icon: Wheat, color: "text-green-500", shortcut: "3", description: "Wheat, Corn & Rice" },
+  { id: "livestock", label: "Livestock", icon: Beef, color: "text-red-500", shortcut: "4", description: "Cattle & Pork" },
+  { id: "softs", label: "Softs", icon: Coffee, color: "text-amber-600", shortcut: "5", description: "Coffee, Sugar & Cotton" },
+  { id: "other", label: "Other", icon: Package, color: "text-gray-500", shortcut: "6", description: "Misc Commodities" },
 ];
 
 interface CommoditySidebarProps {
@@ -71,6 +72,26 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
     }
   };
 
+  // Add keyboard shortcuts for mobile users to quickly switch between groups
+  useEffect(() => {
+    if (!isMobile) return; // Only enable shortcuts on mobile
+    
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Only trigger if Alt key is pressed and no input is focused
+      if (e.altKey && !e.ctrlKey && !e.metaKey && document.activeElement?.tagName !== 'INPUT') {
+        const shortcut = e.key;
+        const group = COMMODITY_GROUPS.find(g => g.shortcut === shortcut);
+        if (group && group.id !== activeGroup) {
+          e.preventDefault();
+          handleGroupSelect(group.id);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [activeGroup, isMobile, handleGroupSelect]);
+
   return (
     <Sidebar className="border-r">
       <SidebarHeader className="border-b">
@@ -89,8 +110,15 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
       
       <SidebarContent className="p-2">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-bold text-muted-foreground px-4 py-3 uppercase tracking-wider">
+          <SidebarGroupLabel className={`text-xs font-bold text-muted-foreground px-4 py-3 uppercase tracking-wider ${
+            isMobile ? 'flex items-center justify-between' : ''
+          }`}>
             Commodity Groups
+            {isMobile && !collapsed && (
+              <span className="text-xs font-normal normal-case text-muted-foreground/70">
+                Alt + 1-6
+              </span>
+            )}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-2">
@@ -110,17 +138,31 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
                           : 'px-3 py-2'
                       }`}
                     >
-                      <div className={`flex items-center justify-center w-8 h-8 rounded-lg ${group.color}`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      {!collapsed && (
-                        <>
-                          <span className="font-medium">{group.label}</span>
-                          <span className="ml-auto text-xs bg-muted px-2 py-1 rounded-full">
-                            {count}
-                          </span>
-                        </>
-                      )}
+                       <div className={`flex items-center justify-center w-8 h-8 rounded-lg ${group.color}`}>
+                         <Icon className="w-4 h-4" />
+                       </div>
+                       {!collapsed && (
+                         <>
+                           <div className="flex-1 min-w-0">
+                             <div className="flex items-center gap-2">
+                               <span className="font-medium">{group.label}</span>
+                               {isMobile && (
+                                 <span className="text-xs text-muted-foreground/60 font-mono bg-muted/30 px-1 py-0.5 rounded">
+                                   Alt+{group.shortcut}
+                                 </span>
+                               )}
+                             </div>
+                             {isMobile && (
+                               <p className="text-xs text-muted-foreground truncate">
+                                 {group.description}
+                               </p>
+                             )}
+                           </div>
+                           <span className="text-xs bg-muted px-2 py-1 rounded-full">
+                             {count}
+                           </span>
+                         </>
+                       )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
