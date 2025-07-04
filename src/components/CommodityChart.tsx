@@ -126,45 +126,33 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
   // Full-screen overlay component
   if (isFullScreen) {
     return (
-      <div className="fixed inset-0 z-50 bg-background flex flex-col">
-        {/* Full-screen header */}
-        <div className="flex items-center justify-between p-3 sm:p-4 border-b bg-background/95 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 bg-background flex flex-col overflow-hidden">
+        {/* Full-screen header - compact for mobile */}
+        <div className="flex items-center justify-between px-4 py-3 border-b bg-background shrink-0">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div className="p-2 rounded-lg bg-primary/10 text-primary mobile-touch-target">
-              <BarChart3 className="w-5 h-5" />
+            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+              <BarChart3 className="w-4 h-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="text-base sm:text-lg font-bold text-foreground truncate">{name} Chart</h2>
-              <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                {selectedTimeframe.toUpperCase()} • {chartType === 'line' ? 'Line Chart' : 'Candlestick Chart'}
+              <h2 className="text-sm font-bold text-foreground truncate">{name}</h2>
+              <p className="text-xs text-muted-foreground truncate">
+                {selectedTimeframe.toUpperCase()} • {chartType === 'line' ? 'Line' : 'Candlestick'}
               </p>
             </div>
           </div>
           
-          <div className="flex items-center gap-2 shrink-0">
-            {!isLandscape && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsFullScreen(false)}
-                className="mobile-touch-target"
-              >
-                <Maximize2 className="w-4 h-4" />
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsFullScreen(false)}
-              className="mobile-touch-target"
-            >
-              <X className="w-5 h-5" />
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsFullScreen(false)}
+            className="shrink-0"
+          >
+            <X className="w-4 h-4" />
+          </Button>
         </div>
 
-        {/* Full-screen chart header */}
-        <div className="px-3 sm:px-4 py-2 border-b bg-background/95">
+        {/* Full-screen chart controls - compact */}
+        <div className="px-4 py-2 border-b bg-background/95 shrink-0">
           <ChartHeader
             name={name}
             selectedTimeframe={selectedTimeframe}
@@ -178,10 +166,10 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
           />
         </div>
 
-        {/* Full-screen chart */}
-        <div className="flex-1 p-3 sm:p-4 min-h-0">
-          <div className="w-full h-full bg-card rounded-xl border shadow-lg p-4">
-            <div className="w-full h-full min-h-[300px]">
+        {/* Full-screen chart - takes remaining space */}
+        <div className="flex-1 p-4 overflow-hidden">
+          <div className="w-full h-full bg-card rounded-lg border shadow-sm">
+            <div className="w-full h-full p-4">
               <ChartContainer
                 data={data}
                 name={name}
@@ -195,8 +183,8 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
           </div>
         </div>
 
-        {/* Full-screen footer */}
-        <div className="px-3 sm:px-4 py-2 border-t bg-background/95">
+        {/* Full-screen footer - compact */}
+        <div className="px-4 py-2 border-t bg-background shrink-0">
           <ChartFooter
             name={name}
             selectedTimeframe={selectedTimeframe}
@@ -209,10 +197,10 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
           />
         </div>
 
-        {/* Full-screen instructions */}
-        <div className="px-3 sm:px-4 py-2 text-center bg-background/80">
-          <p className="text-2xs sm:text-xs text-muted-foreground">
-            {isLandscape ? 'Rotate to portrait to exit full screen' : 'Tap X to exit full screen'}
+        {/* Exit instruction */}
+        <div className="px-4 py-1 text-center bg-background/80 shrink-0">
+          <p className="text-xs text-muted-foreground">
+            {isLandscape ? 'Rotate to portrait to exit' : 'Tap X to exit'}
           </p>
         </div>
       </div>
