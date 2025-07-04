@@ -232,9 +232,7 @@ serve(async (req) => {
             ? (timeframe === '1d' ? 48 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : 365) // Premium gets more granular data
             : (timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180);
           
-          const historicalData = data.historical.slice(0, maxDataPoints);
-          
-          historicalData = historicalData.map((item: any) => ({
+          historicalData = data.historical.slice(0, maxDataPoints).map((item: any) => ({
             date: item.date,
             price: parseFloat(item.close)
           })).reverse(); // Reverse to get chronological order
