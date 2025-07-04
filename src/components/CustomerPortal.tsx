@@ -12,6 +12,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import PasswordChangeForm from '@/components/PasswordChangeForm';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -212,6 +213,9 @@ const CustomerPortal = () => {
           </div>
         </div>
       </Card>
+
+      {/* Password Change */}
+      <PasswordChangeForm />
 
       {/* Current Subscription */}
       {activeSubscription && (
