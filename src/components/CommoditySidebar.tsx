@@ -181,16 +181,16 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
                        <div className={`flex items-center justify-center w-8 h-8 rounded-lg ${group.color}`}>
                          <Icon className="w-4 h-4" />
                        </div>
-                       {!collapsed && (
-                         <>
-                           <div className="flex-1 min-w-0">
-                             <span className="font-medium">{group.label}</span>
-                           </div>
-                           <span className="text-xs bg-muted px-2 py-1 rounded-full">
-                             {count}
-                           </span>
-                         </>
-                       )}
+                           {!collapsed && (
+                             <>
+                               <div className="flex-1 min-w-0">
+                                 <span className="font-bold text-foreground">{group.label}</span>
+                               </div>
+                               <span className="text-xs bg-muted px-2 py-1 rounded-full font-semibold">
+                                 {count}
+                               </span>
+                             </>
+                           )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
