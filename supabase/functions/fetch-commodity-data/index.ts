@@ -43,7 +43,8 @@ const COMMODITY_SYMBOLS: Record<string, {
 };
 
 const generateFallbackData = (commodityName: string, timeframe: string, basePrice: number) => {
-  const dataPoints = timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180;
+  // Increase data points for longer timeframes to prevent flat tails
+  const dataPoints = timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180; // 6m = 180 days
   const data: any[] = [];
   const now = new Date();
   
@@ -55,32 +56,47 @@ const generateFallbackData = (commodityName: string, timeframe: string, basePric
   
   if (commodityName === 'Wheat Futures') {
     // Wheat is more volatile due to weather, crop conditions, etc.
-    volatility = basePrice * (timeframe === '1d' ? 0.025 : timeframe === '1m' ? 0.05 : timeframe === '3m' ? 0.08 : 0.12);
+    volatility = basePrice * (timeframe === '1d' ? 0.025 : timeframe === '1m' ? 0.05 : timeframe === '3m' ? 0.08 : 0.15);
     trendStrength = 0.001; // Stronger trends for wheat
   } else if (commodityName.includes('Futures') || commodityName.includes('Corn') || commodityName.includes('Soybean')) {
     // Agricultural commodities are generally more volatile
-    volatility = basePrice * (timeframe === '1d' ? 0.02 : timeframe === '1m' ? 0.04 : timeframe === '3m' ? 0.07 : 0.1);
+    volatility = basePrice * (timeframe === '1d' ? 0.02 : timeframe === '1m' ? 0.04 : timeframe === '3m' ? 0.07 : 0.12);
     trendStrength = 0.0008;
   } else if (commodityName.includes('Oil') || commodityName.includes('Gas')) {
-    // Energy commodities
-    volatility = basePrice * (timeframe === '1d' ? 0.03 : timeframe === '1m' ? 0.05 : timeframe === '3m' ? 0.08 : 0.12);
+    // Energy commodities - more volatile on longer timeframes
+    volatility = basePrice * (timeframe === '1d' ? 0.03 : timeframe === '1m' ? 0.05 : timeframe === '3m' ? 0.08 : 0.15);
     trendStrength = 0.0007;
   } else {
-    // Metals and other commodities
-    volatility = basePrice * (timeframe === '1d' ? 0.015 : timeframe === '1m' ? 0.03 : timeframe === '3m' ? 0.05 : 0.08);
+    // Metals and other commodities - increase volatility for longer timeframes
+    volatility = basePrice * (timeframe === '1d' ? 0.015 : timeframe === '1m' ? 0.03 : timeframe === '3m' ? 0.05 : 0.1);
     trendStrength = 0.0005;
   }
   
   const trendDirection = Math.random() > 0.5 ? 1 : -1;
   
-  // Add seasonal patterns for agricultural commodities
-  const addSeasonalPattern = (price: number, index: number) => {
+  // Add more complex patterns for longer timeframes
+  const addComplexPatterns = (price: number, index: number) => {
+    let adjustedPrice = price;
+    
+    // Add seasonal patterns for agricultural commodities
     if (commodityName === 'Wheat Futures') {
       // Wheat typically has harvest lows in summer/fall and highs in spring
       const seasonalFactor = Math.sin((index / dataPoints) * Math.PI * 2) * 0.05;
-      return price * (1 + seasonalFactor);
+      adjustedPrice *= (1 + seasonalFactor);
     }
-    return price;
+    
+    // Add cycles for longer timeframes to prevent flat tails
+    if (timeframe === '3m' || timeframe === '6m') {
+      // Add market cycles
+      const cycleFactor = Math.sin((index / dataPoints) * Math.PI * 4) * 0.02; // 2 cycles over the period
+      adjustedPrice *= (1 + cycleFactor);
+      
+      // Add trend variations to create more realistic longer-term patterns
+      const trendVariation = Math.sin((index / dataPoints) * Math.PI * 6) * 0.015; // 3 cycles
+      adjustedPrice *= (1 + trendVariation);
+    }
+    
+    return adjustedPrice;
   };
   
   for (let i = dataPoints - 1; i >= 0; i--) {
@@ -98,8 +114,8 @@ const generateFallbackData = (commodityName: string, timeframe: string, basePric
     
     currentPrice += randomChange + trendComponent + meanReversionComponent;
     
-    // Apply seasonal patterns
-    currentPrice = addSeasonalPattern(currentPrice, i);
+    // Apply complex patterns including seasonal and cyclical patterns
+    currentPrice = addComplexPatterns(currentPrice, i);
     
     // More realistic bounds for different commodities
     let minPrice, maxPrice;
@@ -165,7 +181,8 @@ const getBasePriceForCommodity = (commodityName: string): number => {
 };
 
 async function fetchFromFMP(symbol: string, timeframe: string, apiKey: string) {
-  const timeSeriesParam = timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180;
+  // Increase data points for longer timeframes to prevent flat tails
+  const timeSeriesParam = timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180; // 6m = 180 days
   
   const response = await fetch(
     `https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${apiKey}&timeseries=${timeSeriesParam}`
@@ -178,7 +195,11 @@ async function fetchFromFMP(symbol: string, timeframe: string, apiKey: string) {
   const data = await response.json();
   
   if (data.historical && Array.isArray(data.historical)) {
-    return data.historical.map((item: any) => ({
+    // For longer timeframes, ensure we get the right amount of data
+    const maxDataPoints = timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180;
+    const historicalData = data.historical.slice(0, maxDataPoints);
+    
+    return historicalData.map((item: any) => ({
       date: item.date,
       price: parseFloat(item.close)
     })).reverse(); // Reverse to get chronological order
