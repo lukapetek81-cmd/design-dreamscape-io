@@ -93,41 +93,57 @@ const LiveFeed = () => {
       {/* Header */}
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 shadow-soft">
         <div className="container px-3 sm:px-4 md:px-6 py-3 sm:py-0">
-          <div className="flex flex-col sm:flex-row sm:h-16 md:h-20 sm:items-center justify-between gap-3 sm:gap-0">
-            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+          <div className="flex h-16 sm:h-20 items-center justify-between gap-3">
+            {/* Left Section - Back Button */}
+            <div className="flex items-center shrink-0">
               <Link to="/">
                 <Button variant="ghost" size="sm" className="hover:bg-muted/80 transition-colors mobile-touch-target">
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  <span className="hidden sm:inline">Back to Markets</span>
-                  <span className="sm:hidden">Back</span>
+                  <span className="hidden sm:inline">Back</span>
+                  <span className="sm:hidden text-xs">Back</span>
                 </Button>
               </Link>
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                <div className="p-2 rounded-xl bg-primary/10 text-primary mobile-touch-target shrink-0">
-                  <Newspaper className="w-4 h-4 sm:w-5 sm:h-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gradient truncate">
-                    {isMobile ? 'Market News' : 'Live Market News'}
-                  </h1>
-                  <p className="text-2xs sm:text-xs md:text-sm text-muted-foreground truncate">
-                    {isMobile ? 'Real-time updates' : 'Real-time commodity market updates'}
-                  </p>
-                </div>
+            </div>
+
+            {/* Center Section - Title */}
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 justify-center">
+              <div className="p-2 rounded-xl bg-primary/10 text-primary mobile-touch-target shrink-0">
+                <Newspaper className="w-4 h-4 sm:w-5 sm:h-5" />
+              </div>
+              <div className="text-center min-w-0">
+                <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gradient truncate">
+                  {isMobile ? 'Market News' : 'Live Market News'}
+                </h1>
+                <p className="text-2xs sm:text-xs md:text-sm text-muted-foreground truncate">
+                  {isMobile ? 'Live updates' : 'Real-time updates'}
+                </p>
               </div>
             </div>
             
+            {/* Right Section - Controls */}
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={fetchNews}
                 disabled={loading}
-                className="hover:bg-muted/80 transition-colors mobile-button flex-1 sm:flex-initial"
+                className="hover:bg-muted/80 transition-colors mobile-button hidden sm:flex"
               >
                 <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 <span className="text-xs sm:text-sm">Refresh</span>
               </Button>
+              
+              {/* Mobile Refresh Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchNews}
+                disabled={loading}
+                className="hover:bg-muted/80 transition-colors mobile-touch-target sm:hidden p-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              </Button>
+              
               <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 rounded-full border bg-muted/50 whitespace-nowrap">
                 <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <span className="text-2xs sm:text-xs font-medium">Live</span>
