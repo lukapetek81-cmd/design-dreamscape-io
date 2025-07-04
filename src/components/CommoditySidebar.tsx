@@ -8,13 +8,16 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Zap, Coins, Wheat, TrendingUp, Beef, Coffee, Package, Newspaper } from "lucide-react";
+import { Zap, Coins, Wheat, TrendingUp, Beef, Coffee, Package, Newspaper, Moon, Sun, Monitor } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import UpgradeBox from "./UpgradeBox";
+import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 
 interface CommodityCounts {
   energy: number;
@@ -46,10 +49,75 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const collapsed = state === "collapsed";
+  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
 
   // Check if user has premium subscription (real-time access)
   const isPremiumUser = profile?.subscription_active && 
     (profile?.subscription_tier === 'premium' || profile?.subscription_tier === 'pro');
+
+  // Initialize theme from localStorage or system preference
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | 'system' | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+      applyTheme(savedTheme);
+    } else {
+      // Default to system preference
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      applyTheme('system');
+    }
+  }, []);
+
+  const applyTheme = (newTheme: 'light' | 'dark' | 'system') => {
+    const root = window.document.documentElement;
+    
+    if (newTheme === 'system') {
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      root.classList.remove('light', 'dark');
+      root.classList.add(systemTheme);
+    } else {
+      root.classList.remove('light', 'dark');
+      root.classList.add(newTheme);
+    }
+    
+    localStorage.setItem('theme', newTheme);
+  };
+
+  const toggleTheme = () => {
+    const themes: ('light' | 'dark' | 'system')[] = ['light', 'dark', 'system'];
+    const currentIndex = themes.indexOf(theme);
+    const nextTheme = themes[(currentIndex + 1) % themes.length];
+    
+    setTheme(nextTheme);
+    applyTheme(nextTheme);
+    
+    // Auto-close mobile sidebar after theme change
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
+  const getThemeIcon = () => {
+    switch (theme) {
+      case 'light':
+        return Sun;
+      case 'dark':
+        return Moon;
+      default:
+        return Monitor;
+    }
+  };
+
+  const getThemeLabel = () => {
+    switch (theme) {
+      case 'light':
+        return 'Light';
+      case 'dark':
+        return 'Dark';
+      default:
+        return 'System';
+    }
+  };
 
   const getGroupCount = (groupId: string) => {
     return commodityCounts[groupId as keyof CommodityCounts] || 0;
@@ -161,6 +229,40 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
           <UpgradeBox />
         </div>
       </SidebarContent>
+
+      <SidebarFooter className={`${isMobile ? 'p-4 bg-background' : 'p-2'}`}>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={toggleTheme}
+                  className={`flex items-center gap-3 rounded-lg transition-all duration-200 ${
+                    isMobile 
+                      ? 'px-6 py-6 min-h-[72px] active:scale-95 touch-manipulation text-base' 
+                      : 'px-3 py-2'
+                  }`}
+                >
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-muted/50 text-muted-foreground">
+                    {(() => {
+                      const ThemeIcon = getThemeIcon();
+                      return <ThemeIcon className="w-4 h-4" />;
+                    })()}
+                  </div>
+                  {!collapsed && (
+                    <div className="flex-1 min-w-0">
+                      <span className="font-medium">Theme: {getThemeLabel()}</span>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Tap to cycle themes
+                      </p>
+                    </div>
+                  )}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarFooter>
     </Sidebar>
   );
 };
