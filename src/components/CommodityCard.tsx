@@ -56,23 +56,23 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
     if (name.includes('gold') || name.includes('silver') || name.includes('platinum') || name.includes('palladium')) return 'USD/oz';
     if (name.includes('copper')) return 'USD/lb';
     
-    // Grains and Agricultural
-    if (name.includes('corn') || name.includes('wheat') || name.includes('oats') || name.includes('soybeans')) return 'USD/bu';
-    if (name.includes('rice')) return 'USD/cwt';
+    // Grains and Agricultural (priced in cents)
+    if (name.includes('corn') || name.includes('wheat') || name.includes('oats') || name.includes('soybeans')) return 'cents/bu';
+    if (name.includes('rice')) return 'cents/cwt';
     if (name.includes('soybean meal')) return 'USD/ton';
-    if (name.includes('soybean oil')) return 'USD/lb';
+    if (name.includes('soybean oil')) return 'cents/lb';
     
-    // Livestock
-    if (name.includes('cattle')) return 'USD/lb';
-    if (name.includes('hogs')) return 'USD/lb';
+    // Livestock (priced in cents)
+    if (name.includes('cattle')) return 'cents/lb';
+    if (name.includes('hogs')) return 'cents/lb';
     
-    // Softs
+    // Softs (priced in cents)
     if (name.includes('cocoa')) return 'USD/MT';
-    if (name.includes('coffee')) return 'USD/lb';
-    if (name.includes('cotton')) return 'USD/lb';
+    if (name.includes('coffee')) return 'cents/lb';
+    if (name.includes('cotton')) return 'cents/lb';
     if (name.includes('lumber')) return 'USD/1000ft';
-    if (name.includes('orange juice')) return 'USD/lb';
-    if (name.includes('sugar')) return 'USD/lb';
+    if (name.includes('orange juice')) return 'cents/lb';
+    if (name.includes('sugar')) return 'cents/lb';
     
     // Default fallback
     return 'USD';
