@@ -1,10 +1,12 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Toggle } from '@/components/ui/toggle';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Calendar, Loader, AlertCircle } from 'lucide-react';
+import { TrendingUp, Calendar, Loader, AlertCircle, ChartCandlestick } from 'lucide-react';
 import { useCommodityHistoricalData, useCommodityPrice } from '@/hooks/useCommodityData';
 import { useAuth } from '@/contexts/AuthContext';
+import CandlestickChart from './CandlestickChart';
 
 interface TimeframeOption {
   label: string;
@@ -25,7 +27,8 @@ interface CommodityChartProps {
 
 const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
   const [selectedTimeframe, setSelectedTimeframe] = React.useState<string>('1m');
-  const { data, loading, error } = useCommodityHistoricalData(name, selectedTimeframe);
+  const [chartType, setChartType] = React.useState<'line' | 'candlestick'>('line');
+  const { data, loading, error } = useCommodityHistoricalData(name, selectedTimeframe, chartType);
   const { price: currentPrice } = useCommodityPrice(name);
   const { profile } = useAuth();
 
@@ -43,7 +46,8 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
     dataPoints: data.length, 
     currentPrice: displayPrice, 
     trend: isPositiveTrend ? 'positive' : 'negative',
-    priceChange: priceChange.toFixed(2) + '%'
+    priceChange: priceChange.toFixed(2) + '%',
+    chartType
   });
 
   // Calculate dynamic y-axis domain to prevent flat-looking charts
@@ -180,7 +184,7 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
           <div>
             <h4 className="text-sm sm:text-base font-bold text-foreground">{name} Price History</h4>
             <p className="text-xs sm:text-sm text-muted-foreground font-medium">
-              {selectedTimeframe.toUpperCase()} • {loading ? 'Loading...' : `${data.length} data points`}
+              {selectedTimeframe.toUpperCase()} • {chartType === 'candlestick' ? 'Candlestick' : 'Line'} • {loading ? 'Loading...' : `${data.length} data points`}
               {data.length > 0 && (
                 <span className={`ml-2 font-semibold ${
                   isPositiveTrend ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
@@ -192,7 +196,19 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {/* Chart Type Toggle */}
+          <div className="flex items-center gap-2">
+            <Toggle
+              pressed={chartType === 'candlestick'}
+              onPressedChange={(pressed) => setChartType(pressed ? 'candlestick' : 'line')}
+              className="data-[state=on]:bg-primary/20 data-[state=on]:text-primary"
+              size="sm"
+            >
+              <ChartCandlestick className="w-4 h-4" />
+            </Toggle>
+          </div>
+
           <Calendar className="w-4 h-4 text-muted-foreground" />
           <div className="flex gap-1 sm:gap-2 p-1 bg-muted/50 rounded-lg">
             {timeframes.map((tf) => (
@@ -237,72 +253,82 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
         )}
 
         {!loading && !error && data.length > 0 && (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
-              <XAxis 
-                dataKey="date" 
-                tickFormatter={formatXAxisTick}
-                minTickGap={selectedTimeframe === '1d' ? 60 : 30}
-                tick={{ 
-                  fontSize: 12, 
-                  fill: 'hsl(var(--muted-foreground))',
-                  fontWeight: 500
-                }}
-                axisLine={{ stroke: 'hsl(var(--border))' }}
-                tickLine={{ stroke: 'hsl(var(--border))' }}
-                interval={selectedTimeframe === '1d' ? 'preserveStartEnd' : 'preserveStartEnd'}
+          <>
+            {chartType === 'candlestick' ? (
+              <CandlestickChart
+                data={data}
+                formatXAxisTick={formatXAxisTick}
+                formatTooltipLabel={formatTooltipLabel}
               />
-              <YAxis 
-                tick={{ 
-                  fontSize: 12, 
-                  fill: 'hsl(var(--muted-foreground))',
-                  fontWeight: 500
-                }}
-                axisLine={{ stroke: 'hsl(var(--border))' }}
-                tickLine={{ stroke: 'hsl(var(--border))' }}
-                tickFormatter={(value) => {
-                  if (name.includes('Wheat') || name.includes('Corn') || name.includes('Soybean')) {
-                    return `$${value.toFixed(selectedTimeframe === '1d' ? 2 : 1)}`;
-                  }
-                  return `$${value.toFixed(selectedTimeframe === '1d' ? 2 : 0)}`;
-                }}
-                domain={getYAxisDomain()}
-              />
-              <Tooltip 
-                labelFormatter={formatTooltipLabel}
-                formatter={(value: number) => [`$${value.toFixed(2)}`, 'Price']}
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--background))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  padding: '12px 16px'
-                }}
-                labelStyle={{
-                  color: 'hsl(var(--foreground))',
-                  fontWeight: 600,
-                  marginBottom: '4px'
-                }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="price" 
-                stroke={isPositiveTrend ? '#10b981' : '#ef4444'}
-                strokeWidth={3}
-                dot={false}
-                activeDot={{ 
-                  r: 6, 
-                  fill: isPositiveTrend ? '#10b981' : '#ef4444',
-                  stroke: 'hsl(var(--background))',
-                  strokeWidth: 2,
-                  className: 'animate-pulse'
-                }}
-                className="transition-all duration-300"
-              />
-            </LineChart>
-          </ResponsiveContainer>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                  <XAxis 
+                    dataKey="date" 
+                    tickFormatter={formatXAxisTick}
+                    minTickGap={selectedTimeframe === '1d' ? 60 : 30}
+                    tick={{ 
+                      fontSize: 12, 
+                      fill: 'hsl(var(--muted-foreground))',
+                      fontWeight: 500
+                    }}
+                    axisLine={{ stroke: 'hsl(var(--border))' }}
+                    tickLine={{ stroke: 'hsl(var(--border))' }}
+                    interval={selectedTimeframe === '1d' ? 'preserveStartEnd' : 'preserveStartEnd'}
+                  />
+                  <YAxis 
+                    tick={{ 
+                      fontSize: 12, 
+                      fill: 'hsl(var(--muted-foreground))',
+                      fontWeight: 500
+                    }}
+                    axisLine={{ stroke: 'hsl(var(--border))' }}
+                    tickLine={{ stroke: 'hsl(var(--border))' }}
+                    tickFormatter={(value) => {
+                      if (name.includes('Wheat') || name.includes('Corn') || name.includes('Soybean')) {
+                        return `$${value.toFixed(selectedTimeframe === '1d' ? 2 : 1)}`;
+                      }
+                      return `$${value.toFixed(selectedTimeframe === '1d' ? 2 : 0)}`;
+                    }}
+                    domain={getYAxisDomain()}
+                  />
+                  <Tooltip 
+                    labelFormatter={formatTooltipLabel}
+                    formatter={(value: number) => [`$${value.toFixed(2)}`, 'Price']}
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--background))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '12px',
+                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      padding: '12px 16px'
+                    }}
+                    labelStyle={{
+                      color: 'hsl(var(--foreground))',
+                      fontWeight: 600,
+                      marginBottom: '4px'
+                    }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="price" 
+                    stroke={isPositiveTrend ? '#10b981' : '#ef4444'}
+                    strokeWidth={3}
+                    dot={false}
+                    activeDot={{ 
+                      r: 6, 
+                      fill: isPositiveTrend ? '#10b981' : '#ef4444',
+                      stroke: 'hsl(var(--background))',
+                      strokeWidth: 2,
+                      className: 'animate-pulse'
+                    }}
+                    className="transition-all duration-300"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </>
         )}
       </div>
 

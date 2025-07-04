@@ -38,7 +38,7 @@ const COMMODITY_SYMBOLS: Record<string, string> = {
   'Cocoa': 'CC=F'
 };
 
-const generateFallbackData = (commodityName: string, timeframe: string, basePrice: number, isPremium: boolean = false) => {
+const generateFallbackData = (commodityName: string, timeframe: string, basePrice: number, isPremium: boolean = false, chartType: string = 'line') => {
   // Premium users get more data points for better granularity
   const dataPoints = isPremium 
     ? (timeframe === '1d' ? 48 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : 365) 
@@ -135,10 +135,30 @@ const generateFallbackData = (commodityName: string, timeframe: string, basePric
     if (basePrice >= 1000) decimals = 0;
     else if (basePrice >= 100) decimals = 1;
     
-    data.push({
-      date: date.toISOString(),
-      price: Math.round(currentPrice * Math.pow(10, decimals)) / Math.pow(10, decimals)
-    });
+    // Generate OHLC data for candlestick charts
+    if (chartType === 'candlestick') {
+      const dayVolatility = volatility * 0.3; // Intraday volatility
+      const open = currentPrice;
+      const high = open + (Math.random() * dayVolatility);
+      const low = open - (Math.random() * dayVolatility);
+      const close = low + (Math.random() * (high - low));
+      
+      data.push({
+        date: date.toISOString(),
+        open: Math.round(open * Math.pow(10, decimals)) / Math.pow(10, decimals),
+        high: Math.round(high * Math.pow(10, decimals)) / Math.pow(10, decimals),
+        low: Math.round(low * Math.pow(10, decimals)) / Math.pow(10, decimals),
+        close: Math.round(close * Math.pow(10, decimals)) / Math.pow(10, decimals),
+        price: Math.round(close * Math.pow(10, decimals)) / Math.pow(10, decimals) // For compatibility
+      });
+      
+      currentPrice = close; // Update current price for next iteration
+    } else {
+      data.push({
+        date: date.toISOString(),
+        price: Math.round(currentPrice * Math.pow(10, decimals)) / Math.pow(10, decimals)
+      });
+    }
   }
   
   return data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -178,17 +198,13 @@ const getBasePriceForCommodity = (commodityName: string): number => {
   return basePrices[commodityName] || 100;
 };
 
-// Removed fetchFromFMP function - handled directly in main function for better premium user support
-
-// Removed Alpha Vantage API - using FMP API only for consistency
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { commodityName, timeframe, isPremium } = await req.json()
+    const { commodityName, timeframe, isPremium, chartType } = await req.json()
     
     if (!commodityName || !timeframe) {
       return new Response(
@@ -197,7 +213,7 @@ serve(async (req) => {
       )
     }
 
-    console.log(`Fetching data for ${commodityName}, timeframe: ${timeframe} (Premium: ${isPremium || false})`)
+    console.log(`Fetching data for ${commodityName}, timeframe: ${timeframe}, chartType: ${chartType || 'line'} (Premium: ${isPremium || false})`)
 
     // Get FMP API key from Supabase secrets
     const fmpApiKey = Deno.env.get('FMP_API_KEY')
@@ -232,13 +248,24 @@ serve(async (req) => {
             ? (timeframe === '1d' ? 48 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : 365) // Premium gets more granular data
             : (timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180);
           
-          historicalData = data.historical.slice(0, maxDataPoints).map((item: any) => ({
-            date: item.date,
-            price: parseFloat(item.close)
-          })).reverse(); // Reverse to get chronological order
+          if (chartType === 'candlestick') {
+            historicalData = data.historical.slice(0, maxDataPoints).map((item: any) => ({
+              date: item.date,
+              open: parseFloat(item.open),
+              high: parseFloat(item.high),
+              low: parseFloat(item.low),
+              close: parseFloat(item.close),
+              price: parseFloat(item.close) // For compatibility
+            })).reverse(); // Reverse to get chronological order
+          } else {
+            historicalData = data.historical.slice(0, maxDataPoints).map((item: any) => ({
+              date: item.date,
+              price: parseFloat(item.close)
+            })).reverse(); // Reverse to get chronological order
+          }
         }
         
-        console.log(`Successfully fetched ${historicalData?.length || 0} ${isPremium ? 'premium' : 'standard'} data points from FMP for ${commodityName}`)
+        console.log(`Successfully fetched ${historicalData?.length || 0} ${isPremium ? 'premium' : 'standard'} ${chartType || 'line'} data points from FMP for ${commodityName}`)
       } catch (error) {
         console.warn(`FMP API failed for ${commodityName}:`, error)
       }
@@ -248,9 +275,9 @@ serve(async (req) => {
 
     // Use fallback data if FMP API failed
     if (!historicalData) {
-      console.log(`Using ${isPremium ? 'enhanced' : 'standard'} fallback data for ${commodityName}`)
+      console.log(`Using ${isPremium ? 'enhanced' : 'standard'} fallback ${chartType || 'line'} data for ${commodityName}`)
       const basePrice = getBasePriceForCommodity(commodityName)
-      historicalData = generateFallbackData(commodityName, timeframe, basePrice, isPremium)
+      historicalData = generateFallbackData(commodityName, timeframe, basePrice, isPremium, chartType)
     }
 
     return new Response(
@@ -260,7 +287,8 @@ serve(async (req) => {
         commodity: commodityName,
         symbol: symbol,
         realTime: isPremium || false,
-        dataPoints: historicalData?.length || 0
+        dataPoints: historicalData?.length || 0,
+        chartType: chartType || 'line'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

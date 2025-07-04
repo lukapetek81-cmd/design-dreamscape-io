@@ -1,0 +1,175 @@
+
+import React from 'react';
+import { ResponsiveContainer } from 'recharts';
+
+interface CandlestickData {
+  date: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+}
+
+interface CandlestickChartProps {
+  data: CandlestickData[];
+  formatXAxisTick: (date: string) => string;
+  formatTooltipLabel: (label: string) => string;
+}
+
+const CandlestickChart = ({ data, formatXAxisTick, formatTooltipLabel }: CandlestickChartProps) => {
+  const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
+  const [tooltipData, setTooltipData] = React.useState<{
+    x: number;
+    y: number;
+    data: CandlestickData;
+  } | null>(null);
+
+  const handleMouseMove = (event: React.MouseEvent<SVGElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const width = rect.width;
+    const dataIndex = Math.floor((x / width) * data.length);
+    
+    if (dataIndex >= 0 && dataIndex < data.length) {
+      setHoveredIndex(dataIndex);
+      setTooltipData({
+        x: event.clientX,
+        y: event.clientY,
+        data: data[dataIndex]
+      });
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredIndex(null);
+    setTooltipData(null);
+  };
+
+  const maxPrice = Math.max(...data.map(d => d.high));
+  const minPrice = Math.min(...data.map(d => d.low));
+  const priceRange = maxPrice - minPrice;
+  const padding = priceRange * 0.1;
+
+  return (
+    <div className="relative">
+      <ResponsiveContainer width="100%" height="100%">
+        <svg
+          width="100%"
+          height="100%"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+          className="cursor-crosshair"
+        >
+          {data.map((item, index) => {
+            const x = (index / (data.length - 1)) * 100;
+            const isGreen = item.close > item.open;
+            const bodyTop = Math.max(item.open, item.close);
+            const bodyBottom = Math.min(item.open, item.close);
+            
+            // Calculate positions as percentages
+            const highY = ((maxPrice + padding - item.high) / (priceRange + 2 * padding)) * 100;
+            const lowY = ((maxPrice + padding - item.low) / (priceRange + 2 * padding)) * 100;
+            const bodyTopY = ((maxPrice + padding - bodyTop) / (priceRange + 2 * padding)) * 100;
+            const bodyBottomY = ((maxPrice + padding - bodyBottom) / (priceRange + 2 * padding)) * 100;
+            
+            const isHovered = hoveredIndex === index;
+            const candleWidth = Math.max(1, 80 / data.length);
+
+            return (
+              <g key={index} className={`transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-80'}`}>
+                {/* Wick */}
+                <line
+                  x1={`${x}%`}
+                  y1={`${highY}%`}
+                  x2={`${x}%`}
+                  y2={`${lowY}%`}
+                  stroke={isGreen ? '#10b981' : '#ef4444'}
+                  strokeWidth={isHovered ? 2 : 1}
+                />
+                
+                {/* Body */}
+                <rect
+                  x={`${x - candleWidth/2}%`}
+                  y={`${bodyTopY}%`}
+                  width={`${candleWidth}%`}
+                  height={`${bodyBottomY - bodyTopY}%`}
+                  fill={isGreen ? '#10b981' : '#ef4444'}
+                  stroke={isGreen ? '#059669' : '#dc2626'}
+                  strokeWidth={isHovered ? 2 : 1}
+                  className="transition-all duration-200"
+                />
+                
+                {/* Hover highlight */}
+                {isHovered && (
+                  <rect
+                    x={`${x - candleWidth}%`}
+                    y="0%"
+                    width={`${candleWidth * 2}%`}
+                    height="100%"
+                    fill="rgba(59, 130, 246, 0.1)"
+                    stroke="rgba(59, 130, 246, 0.3)"
+                    strokeWidth={1}
+                  />
+                )}
+              </g>
+            );
+          })}
+          
+          {/* X-axis labels */}
+          {data.filter((_, index) => index % Math.ceil(data.length / 6) === 0).map((item, index) => {
+            const actualIndex = index * Math.ceil(data.length / 6);
+            const x = (actualIndex / (data.length - 1)) * 100;
+            
+            return (
+              <text
+                key={actualIndex}
+                x={`${x}%`}
+                y="95%"
+                textAnchor="middle"
+                className="text-xs fill-muted-foreground font-medium"
+              >
+                {formatXAxisTick(item.date)}
+              </text>
+            );
+          })}
+        </svg>
+      </ResponsiveContainer>
+      
+      {/* Custom Tooltip */}
+      {tooltipData && (
+        <div
+          className="fixed z-50 bg-background border border-border/50 rounded-lg p-3 shadow-xl pointer-events-none"
+          style={{
+            left: tooltipData.x + 10,
+            top: tooltipData.y - 10,
+            transform: 'translateY(-100%)'
+          }}
+        >
+          <div className="text-sm font-semibold text-foreground mb-2">
+            {formatTooltipLabel(tooltipData.data.date)}
+          </div>
+          <div className="space-y-1 text-xs">
+            <div className="flex justify-between gap-4">
+              <span className="text-muted-foreground">Open:</span>
+              <span className="font-medium">${tooltipData.data.open.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-muted-foreground">High:</span>
+              <span className="font-medium text-green-600">${tooltipData.data.high.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-muted-foreground">Low:</span>
+              <span className="font-medium text-red-600">${tooltipData.data.low.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-muted-foreground">Close:</span>
+              <span className="font-medium">${tooltipData.data.close.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default CandlestickChart;
