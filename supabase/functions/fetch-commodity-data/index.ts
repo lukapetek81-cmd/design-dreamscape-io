@@ -6,40 +6,36 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Commodity symbol mappings
-const COMMODITY_SYMBOLS: Record<string, {
-  fmp: string;
-  yahoo: string;
-  alphaVantage: string;
-}> = {
-  'Gold Futures': { fmp: 'GCUSD', yahoo: 'GC=F', alphaVantage: 'GOLD' },
-  'Micro Gold Futures': { fmp: 'MGCUSD', yahoo: 'MGC=F', alphaVantage: 'GOLD' },
-  'Silver Futures': { fmp: 'SIUSD', yahoo: 'SI=F', alphaVantage: 'SILVER' },
-  'Micro Silver Futures': { fmp: 'MSIUSD', yahoo: 'SIL=F', alphaVantage: 'SILVER' },
-  'Copper': { fmp: 'HGUSD', yahoo: 'HG=F', alphaVantage: 'COPPER' },
-  'Aluminum': { fmp: 'ALUSD', yahoo: 'ALI=F', alphaVantage: 'ALUMINUM' },
-  'Platinum': { fmp: 'PLUSD', yahoo: 'PL=F', alphaVantage: 'PLATINUM' },
-  'Palladium': { fmp: 'PAUSD', yahoo: 'PA=F', alphaVantage: 'PALLADIUM' },
-  'Crude Oil': { fmp: 'CLUSD', yahoo: 'CL=F', alphaVantage: 'WTI' },
-  'Brent Crude Oil': { fmp: 'BZUSD', yahoo: 'BZ=F', alphaVantage: 'BRENT' },
-  'Natural Gas': { fmp: 'NGUSD', yahoo: 'NG=F', alphaVantage: 'NATURAL_GAS' },
-  'Heating Oil': { fmp: 'HOUSD', yahoo: 'HO=F', alphaVantage: 'HEATING_OIL' },
-  'Gasoline RBOB': { fmp: 'RBUSD', yahoo: 'RB=F', alphaVantage: 'GASOLINE' },
-  'Corn Futures': { fmp: 'ZCUSX', yahoo: 'ZC=F', alphaVantage: 'CORN' },
-  'Wheat Futures': { fmp: 'ZWUSX', yahoo: 'ZW=F', alphaVantage: 'WHEAT' },
-  'Soybean Futures': { fmp: 'ZSUSX', yahoo: 'ZS=F', alphaVantage: 'SOYBEANS' },
-  'Live Cattle Futures': { fmp: 'LEUSX', yahoo: 'LE=F', alphaVantage: 'LIVE_CATTLE' },
-  'Feeder Cattle Futures': { fmp: 'FCUSX', yahoo: 'GF=F', alphaVantage: 'FEEDER_CATTLE' },
-  'Lean Hogs Futures': { fmp: 'HEUSX', yahoo: 'HE=F', alphaVantage: 'LEAN_HOGS' },
-  'Class III Milk Futures': { fmp: 'DCUSD', yahoo: 'DC=F', alphaVantage: 'MILK' },
-  'Oat Futures': { fmp: 'ZOUSX', yahoo: 'ZO=F', alphaVantage: 'OATS' },
-  'Sugar': { fmp: 'SBUSD', yahoo: 'SB=F', alphaVantage: 'SUGAR' },
-  'Cotton': { fmp: 'CTUSD', yahoo: 'CT=F', alphaVantage: 'COTTON' },
-  'Lumber Futures': { fmp: 'LBSUSD', yahoo: 'LBS=F', alphaVantage: 'LUMBER' },
-  'Orange Juice': { fmp: 'OJUSD', yahoo: 'OJ=F', alphaVantage: 'ORANGE_JUICE' },
-  'Coffee': { fmp: 'KCUSD', yahoo: 'KC=F', alphaVantage: 'COFFEE' },
-  'Rough Rice': { fmp: 'ZRUSX', yahoo: 'ZR=F', alphaVantage: 'RICE' },
-  'Cocoa': { fmp: 'CCUSD', yahoo: 'CC=F', alphaVantage: 'COCOA' }
+// Commodity symbol mappings - FMP only
+const COMMODITY_SYMBOLS: Record<string, string> = {
+  'Gold Futures': 'GCUSD',
+  'Micro Gold Futures': 'MGCUSD',
+  'Silver Futures': 'SIUSD',
+  'Micro Silver Futures': 'MSIUSD',
+  'Copper': 'HGUSD',
+  'Aluminum': 'ALUSD',
+  'Platinum': 'PLUSD',
+  'Palladium': 'PAUSD',
+  'Crude Oil': 'CLUSD',
+  'Brent Crude Oil': 'BZUSD',
+  'Natural Gas': 'NGUSD',
+  'Heating Oil': 'HOUSD',
+  'Gasoline RBOB': 'RBUSD',
+  'Corn Futures': 'ZCUSX',
+  'Wheat Futures': 'ZWUSX',
+  'Soybean Futures': 'ZSUSX',
+  'Live Cattle Futures': 'LEUSX',
+  'Feeder Cattle Futures': 'FCUSX',
+  'Lean Hogs Futures': 'HEUSX',
+  'Class III Milk Futures': 'DCUSD',
+  'Oat Futures': 'ZOUSX',
+  'Sugar': 'SBUSD',
+  'Cotton': 'CTUSD',
+  'Lumber Futures': 'LBSUSD',
+  'Orange Juice': 'OJUSD',
+  'Coffee': 'KCUSD',
+  'Rough Rice': 'ZRUSX',
+  'Cocoa': 'CCUSD'
 };
 
 const generateFallbackData = (commodityName: string, timeframe: string, basePrice: number) => {
@@ -208,38 +204,7 @@ async function fetchFromFMP(symbol: string, timeframe: string, apiKey: string) {
   return null;
 }
 
-async function fetchFromAlphaVantage(symbol: string, timeframe: string, apiKey: string) {
-  const functionName = timeframe === '1d' ? 'TIME_SERIES_INTRADAY' : 'TIME_SERIES_DAILY';
-  const interval = timeframe === '1d' ? '&interval=60min' : '';
-  
-  const response = await fetch(
-    `https://www.alphavantage.co/query?function=${functionName}&symbol=${symbol}&apikey=${apiKey}${interval}`
-  );
-  
-  if (!response.ok) {
-    throw new Error(`Alpha Vantage API error: ${response.status}`);
-  }
-  
-  const data = await response.json();
-  
-  const timeSeriesKey = timeframe === '1d' ? 'Time Series (60min)' : 'Time Series (Daily)';
-  const timeSeries = data[timeSeriesKey];
-  
-  if (timeSeries) {
-    const entries = Object.entries(timeSeries);
-    const maxEntries = timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180;
-    
-    return entries
-      .slice(0, maxEntries)
-      .map(([date, values]: [string, any]) => ({
-        date: date,
-        price: parseFloat(values['4. close'])
-      }))
-      .reverse();
-  }
-  
-  return null;
-}
+// Removed Alpha Vantage API - using FMP API only for consistency
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -258,40 +223,31 @@ serve(async (req) => {
 
     console.log(`Fetching data for ${commodityName}, timeframe: ${timeframe}`)
 
-    // Get API keys from Supabase secrets
+    // Get FMP API key from Supabase secrets
     const fmpApiKey = Deno.env.get('FMP_API_KEY')
-    const alphaVantageApiKey = Deno.env.get('ALPHA_VANTAGE_API_KEY')
     
-    const symbols = COMMODITY_SYMBOLS[commodityName]
-    if (!symbols) {
+    const symbol = COMMODITY_SYMBOLS[commodityName]
+    if (!symbol) {
       throw new Error(`Commodity ${commodityName} not found`)
     }
 
     let historicalData = null
 
-    // Try FMP first if we have an API key
+    // Try FMP API if we have an API key
     if (fmpApiKey && fmpApiKey !== 'demo') {
       try {
-        historicalData = await fetchFromFMP(symbols.fmp, timeframe, fmpApiKey)
-        console.log(`Successfully fetched ${historicalData?.length || 0} data points from FMP`)
+        historicalData = await fetchFromFMP(symbol, timeframe, fmpApiKey)
+        console.log(`Successfully fetched ${historicalData?.length || 0} data points from FMP for ${commodityName}`)
       } catch (error) {
-        console.warn('FMP API failed:', error)
+        console.warn(`FMP API failed for ${commodityName}:`, error)
       }
+    } else {
+      console.log('No FMP API key configured, using fallback data')
     }
 
-    // Try Alpha Vantage if FMP failed and we have an API key
-    if (!historicalData && alphaVantageApiKey && alphaVantageApiKey !== 'demo') {
-      try {
-        historicalData = await fetchFromAlphaVantage(symbols.alphaVantage, timeframe, alphaVantageApiKey)
-        console.log(`Successfully fetched ${historicalData?.length || 0} data points from Alpha Vantage`)
-      } catch (error) {
-        console.warn('Alpha Vantage API failed:', error)
-      }
-    }
-
-    // Use fallback data if all APIs failed
+    // Use fallback data if FMP API failed
     if (!historicalData) {
-      console.log('All APIs failed, using fallback data')
+      console.log(`Using fallback data for ${commodityName}`)
       const basePrice = getBasePriceForCommodity(commodityName)
       historicalData = generateFallbackData(commodityName, timeframe, basePrice)
     }
@@ -299,7 +255,9 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         data: historicalData,
-        source: historicalData.length > 0 ? 'api' : 'fallback'
+        source: historicalData && historicalData.length > 0 && fmpApiKey && fmpApiKey !== 'demo' ? 'fmp' : 'fallback',
+        commodity: commodityName,
+        symbol: symbol
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
