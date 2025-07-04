@@ -29,15 +29,18 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
   // Detect orientation changes
   React.useEffect(() => {
     const checkOrientation = () => {
-      const isLandscapeMode = window.innerWidth > window.innerHeight && isMobile;
-      setIsLandscape(isLandscapeMode);
-      
-      // Auto full-screen on landscape for mobile
-      if (isLandscapeMode && isMobile) {
-        setIsFullScreen(true);
-      } else if (!isLandscapeMode) {
-        setIsFullScreen(false);
-      }
+      // Add small delay to sync with sidebar logic and prevent lag
+      setTimeout(() => {
+        const isLandscapeMode = window.innerWidth > window.innerHeight && isMobile;
+        setIsLandscape(isLandscapeMode);
+        
+        // Auto full-screen on landscape for mobile
+        if (isLandscapeMode && isMobile) {
+          setIsFullScreen(true);
+        } else if (!isLandscapeMode) {
+          setIsFullScreen(false);
+        }
+      }, 150); // Slightly longer delay than sidebar to ensure proper sequencing
     };
 
     checkOrientation();
