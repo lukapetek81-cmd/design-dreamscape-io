@@ -169,7 +169,7 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
         {/* Full-screen chart - takes remaining space */}
         <div className="flex-1 p-4 overflow-hidden min-h-0">
           <div className="w-full h-full bg-card rounded-lg border shadow-sm p-4">
-            <div style={{ width: '100%', height: '100%' }}>
+            <div style={{ width: '100%', height: 'calc(100vh - 200px)' }}>
               <ChartContainer
                 data={data}
                 name={name}
