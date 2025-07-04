@@ -179,17 +179,19 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
         </div>
 
         {/* Full-screen chart */}
-        <div className="flex-1 p-3 sm:p-4">
-          <div className="w-full h-full bg-card rounded-xl border shadow-lg">
-            <ChartContainer
-              data={data}
-              name={name}
-              selectedTimeframe={selectedTimeframe}
-              chartType={chartType}
-              loading={loading}
-              error={error}
-              isPositiveTrend={isPositiveTrend}
-            />
+        <div className="flex-1 p-3 sm:p-4 min-h-0">
+          <div className="w-full h-full bg-card rounded-xl border shadow-lg p-4">
+            <div className="w-full h-full min-h-[300px]">
+              <ChartContainer
+                data={data}
+                name={name}
+                selectedTimeframe={selectedTimeframe}
+                chartType={chartType}
+                loading={loading}
+                error={error}
+                isPositiveTrend={isPositiveTrend}
+              />
+            </div>
           </div>
         </div>
 
