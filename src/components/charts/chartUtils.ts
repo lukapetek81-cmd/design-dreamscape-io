@@ -15,6 +15,60 @@ export const TIMEFRAMES: TimeframeOption[] = [
 ];
 
 /**
+ * Smooth out unrealistic price data (especially for grains)
+ */
+export const smoothPriceData = (data: Array<{ date: string; price: number }>, commodityName: string): Array<{ date: string; price: number }> => {
+  if (data.length < 3) return data;
+  
+  // Only apply smoothing to agricultural commodities that show problematic data patterns
+  const needsSmoothing = commodityName.includes('Wheat') || commodityName.includes('Corn') || commodityName.includes('Soybean');
+  if (!needsSmoothing) return data;
+  
+  const smoothed = [...data];
+  
+  // Detect and smooth obvious data anomalies
+  for (let i = 1; i < smoothed.length - 1; i++) {
+    const prev = smoothed[i - 1].price;
+    const curr = smoothed[i].price;
+    const next = smoothed[i + 1].price;
+    
+    // Detect sudden jumps (>30% change) followed by flat periods
+    const jumpUp = curr > prev * 1.3;
+    const jumpDown = curr < prev * 0.7;
+    const isFlat = Math.abs(curr - next) < 1; // Very flat next point
+    
+    if ((jumpUp || jumpDown) && isFlat) {
+      // Smooth this point using interpolation
+      smoothed[i].price = (prev + next) / 2;
+    }
+  }
+  
+  // Remove excessive consecutive identical values (more than 5 in a row)
+  const result = [];
+  let consecutiveCount = 0;
+  let lastPrice = null;
+  
+  for (let i = 0; i < smoothed.length; i++) {
+    const price = smoothed[i].price;
+    
+    if (price === lastPrice) {
+      consecutiveCount++;
+      // Skip this point if we have too many consecutive identical values
+      if (consecutiveCount > 5) {
+        continue;
+      }
+    } else {
+      consecutiveCount = 1;
+    }
+    
+    result.push(smoothed[i]);
+    lastPrice = price;
+  }
+  
+  return result;
+};
+
+/**
  * Calculate dynamic y-axis domain to prevent flat-looking charts
  */
 export const getYAxisDomain = (

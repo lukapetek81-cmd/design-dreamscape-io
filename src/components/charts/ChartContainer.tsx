@@ -3,7 +3,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 import { Loader, AlertCircle } from 'lucide-react';
 import { CommodityHistoricalData } from '@/hooks/useCommodityData';
 import { formatPrice, getCurrencySymbol, getDecimalPlaces } from '@/lib/commodityUtils';
-import { getYAxisDomain, formatXAxisTick, formatTooltipLabel } from './chartUtils';
+import { getYAxisDomain, formatXAxisTick, formatTooltipLabel, smoothPriceData } from './chartUtils';
 import CandlestickChart from '../CandlestickChart';
 
 interface ChartContainerProps {
@@ -25,7 +25,9 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
   error,
   isPositiveTrend
 }) => {
-  const yAxisDomain = getYAxisDomain(data, name, selectedTimeframe);
+  // Apply data smoothing only for line charts on problematic commodities
+  const smoothedData = chartType === 'line' ? smoothPriceData(data, name) : data;
+  const yAxisDomain = getYAxisDomain(smoothedData, name, selectedTimeframe);
 
   if (loading) {
     return (
@@ -83,7 +85,7 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
         })()
       ) : (
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+          <LineChart data={smoothedData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
             <XAxis 
               dataKey="date" 
               tickFormatter={(date) => formatXAxisTick(date, selectedTimeframe)}

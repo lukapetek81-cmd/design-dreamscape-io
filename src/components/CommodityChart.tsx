@@ -2,6 +2,7 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { useCommodityHistoricalData, useCommodityPrice } from '@/hooks/useCommodityData';
 import { useAuth } from '@/contexts/AuthContext';
+import { smoothPriceData } from './charts/chartUtils';
 import ChartHeader from './charts/ChartHeader';
 import ChartContainer from './charts/ChartContainer';
 import ChartFooter from './charts/ChartFooter';
@@ -25,13 +26,16 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
   const data = queryData?.data || [];
   const error = queryError?.message || queryData?.error || null;
   
+  // Use smoothed data for trend calculation to avoid spiky data issues
+  const trendData = chartType === 'line' ? smoothPriceData(data, name) : data;
+  
   // Use current price from API if available, otherwise use base price
   const displayPrice = currentPrice?.price || basePrice;
-  const isPositiveTrend = data.length > 1 && data[data.length - 1].price > data[0].price;
+  const isPositiveTrend = trendData.length > 1 && trendData[trendData.length - 1].price > trendData[0].price;
 
-  // Calculate price change
-  const priceChange = data.length > 1 ? 
-    ((data[data.length - 1].price - data[0].price) / data[0].price) * 100 : 0;
+  // Calculate price change using smoothed data
+  const priceChange = trendData.length > 1 ? 
+    ((trendData[trendData.length - 1].price - trendData[0].price) / trendData[0].price) * 100 : 0;
 
   console.log(`Chart data for ${name}:`, { 
     dataPoints: data.length, 
