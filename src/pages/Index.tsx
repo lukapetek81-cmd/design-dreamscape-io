@@ -10,7 +10,6 @@ import { BarChart3, Activity, Menu, TrendingUp, Loader, Zap, Coins, Wheat, Beef,
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRealtimeDataContext } from '@/contexts/RealtimeDataContext';
-import ApiSettings from '@/components/ApiSettings';
 import { useAvailableCommodities } from '@/hooks/useCommodityData';
 
 const Index = () => {
@@ -172,16 +171,14 @@ const IndexContent = ({
       <div className="flex-1 flex flex-col min-w-0">
           {/* Enhanced Responsive Header */}
           <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 shadow-soft">
-            <div className="container flex h-16 sm:h-20 items-center justify-between px-3 sm:px-4 md:px-6">
-              <div className="flex items-center gap-3 sm:gap-6 min-w-0 flex-1">
-                <div className="space-y-0.5 sm:space-y-1 min-w-0 flex-1">
-                  <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gradient animate-float truncate">
-                    {isMobile ? 'Markets' : 'Commodity Markets'}
-                  </h1>
-                  <p className="text-2xs sm:text-xs lg:text-sm text-muted-foreground font-medium tracking-wide truncate">
-                    {isMobile ? 'Live data' : 'Live market data & real-time analytics'}
-                  </p>
-                </div>
+            <div className="container flex h-16 sm:h-20 items-center justify-center px-3 sm:px-4 md:px-6">
+              <div className="text-center space-y-0.5 sm:space-y-1">
+                <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gradient animate-float">
+                  {isMobile ? 'Markets' : 'Commodity Markets'}
+                </h1>
+                <p className="text-2xs sm:text-xs lg:text-sm text-muted-foreground font-medium tracking-wide">
+                  {isMobile ? 'Live data' : 'Live market data & real-time analytics'}
+                </p>
               </div>
               <div className="flex items-center gap-2 sm:gap-4">
                 <div className={`flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-1 sm:py-2 rounded-full border hover:scale-105 transition-transform duration-200 ${
@@ -358,9 +355,6 @@ const IndexContent = ({
             </div>
           </main>
         </div>
-        
-        {/* API Settings Component */}
-        <ApiSettings />
       </div>
     );
   };
