@@ -154,23 +154,12 @@ const Index = () => {
                     <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-1 truncate">
                       {isMobile ? activeGroup.charAt(0).toUpperCase() + activeGroup.slice(1) : getGroupTitle()}
                     </h2>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-2xs sm:text-xs lg:text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-primary rounded-full"></span>
-                        {getCommodities().length} active commodities
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <span className={`w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full ${
-                          profile?.subscription_active && realtimeConnected 
-                            ? 'bg-green-500 animate-pulse' 
-                            : 'bg-yellow-500'
-                        }`}></span>
-                        {profile?.subscription_active && realtimeConnected 
-                          ? 'Live updates (5s)' 
-                          : 'Updated every 15min'
-                        }
-                      </span>
-                    </div>
+                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-2xs sm:text-xs lg:text-sm text-muted-foreground">
+                       <span className="flex items-center gap-1">
+                         <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-primary rounded-full"></span>
+                         {getCommodities().length} active commodities
+                       </span>
+                     </div>
                   </div>
                 </div>
                 <div className="text-center sm:text-right space-y-1 shrink-0">
