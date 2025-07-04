@@ -14,6 +14,7 @@ import { Zap, Coins, Wheat, TrendingUp, Activity, BarChart3, Beef, Coffee, Packa
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 import UpgradeBox from "./UpgradeBox";
 
 interface CommodityCounts {
@@ -41,9 +42,10 @@ interface CommoditySidebarProps {
 }
 
 const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: CommoditySidebarProps) => {
-  const { state } = useSidebar();
+  const { state, setOpenMobile } = useSidebar();
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const collapsed = state === "collapsed";
 
   // Check if user has premium subscription (real-time access)
@@ -92,25 +94,31 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
                   <SidebarMenuItem key={group.id}>
                     <SidebarMenuButton
                       isActive={isActive}
-                      onClick={() => onGroupSelect(group.id)}
-                      className={`relative group transition-all duration-300 rounded-xl mx-1 sm:mx-2 touch-manipulation active:scale-95 ${
+                      onClick={() => {
+                        onGroupSelect(group.id);
+                        // Close mobile sidebar after selection for better UX
+                        if (isMobile) {
+                          setOpenMobile(false);
+                        }
+                      }}
+                      className={`relative group transition-all duration-300 rounded-xl mx-1 sm:mx-2 touch-manipulation active:scale-95 min-h-[44px] flex items-center ${
                         isActive 
                           ? 'bg-gradient-to-r from-primary/15 to-accent/10 text-primary border-l-4 border-primary shadow-soft scale-105' 
                           : 'hover:bg-gradient-to-r hover:from-muted/50 hover:to-muted/30 hover:translate-x-1 hover:shadow-soft hover:scale-105'
                       } ${collapsed ? 'justify-center px-2' : ''}`}
                     >
-                      <div className={`flex items-center gap-2 sm:gap-3 ${collapsed ? 'flex-col' : ''}`}>
-                        <Icon className={`w-4 h-4 sm:w-5 sm:h-5 transition-all duration-300 ${
+                      <div className={`flex items-center gap-2 sm:gap-3 w-full ${collapsed ? 'flex-col' : ''}`}>
+                        <Icon className={`w-5 h-5 sm:w-6 sm:h-6 transition-all duration-300 ${
                           isActive ? 'text-primary' : group.color
                         } ${isActive ? 'animate-pulse' : ''}`} />
                         {!collapsed && (
                           <>
-                            <span className={`font-semibold text-xs sm:text-sm transition-colors ${
+                            <span className={`font-semibold text-sm sm:text-base transition-colors flex-1 ${
                               isActive ? 'text-primary' : 'text-foreground'
                             }`}>
                               {group.label}
                             </span>
-                            <span className={`ml-auto text-2xs sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full transition-colors ${
+                            <span className={`text-xs sm:text-sm px-2 py-1 rounded-full transition-colors ${
                               isActive 
                                 ? 'bg-primary/20 text-primary' 
                                 : 'bg-muted/50 text-muted-foreground'
@@ -120,7 +128,7 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
                           </>
                         )}
                         {collapsed && (
-                          <span className="text-2xs text-muted-foreground">{count}</span>
+                          <span className="text-xs text-muted-foreground">{count}</span>
                         )}
                       </div>
                       {isActive && !collapsed && (
@@ -146,7 +154,12 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
                 className={`p-2 sm:p-3 rounded-xl bg-gradient-to-r from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/20 border border-blue-200 dark:border-blue-800 hover:scale-105 transition-transform duration-200 cursor-pointer ${
                   collapsed ? 'text-center' : ''
                 }`}
-                onClick={() => navigate('/live-feed')}
+                onClick={() => {
+                  navigate('/live-feed');
+                  if (isMobile) {
+                    setOpenMobile(false);
+                  }
+                }}
               >
                 <div className={`flex ${collapsed ? 'flex-col items-center space-y-1' : 'justify-between items-center'}`}>
                   {collapsed ? (
