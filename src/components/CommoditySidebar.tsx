@@ -153,18 +153,6 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
                   </div>
                 </div>
               </div>
-              
-              {!isPremiumUser && (
-                <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wider">Update Interval</span>
-                    <div className="flex items-center gap-1">
-                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="text-sm font-bold text-green-900 dark:text-green-100">15 min</span>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </SidebarGroupContent>
         </SidebarGroup>
