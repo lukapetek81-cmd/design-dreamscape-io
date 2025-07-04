@@ -65,89 +65,90 @@ const CandlestickChart = ({ data, formatXAxisTick, formatTooltipLabel }: Candles
   }
 
   return (
-    <div className="relative">
-      <ResponsiveContainer width="100%" height="100%">
-        <svg
-          width="100%"
-          height="100%"
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          className="cursor-crosshair"
-        >
-          {data.map((item, index) => {
-            const x = (index / Math.max(data.length - 1, 1)) * 100;
-            const isGreen = item.close > item.open;
-            const bodyTop = Math.max(item.open, item.close);
-            const bodyBottom = Math.min(item.open, item.close);
-            
-            // Calculate positions as percentages
-            const highY = ((maxPrice + padding - item.high) / (priceRange + 2 * padding)) * 100;
-            const lowY = ((maxPrice + padding - item.low) / (priceRange + 2 * padding)) * 100;
-            const bodyTopY = ((maxPrice + padding - bodyTop) / (priceRange + 2 * padding)) * 100;
-            const bodyBottomY = ((maxPrice + padding - bodyBottom) / (priceRange + 2 * padding)) * 100;
-            
-            const isHovered = hoveredIndex === index;
-            const candleWidth = Math.max(2, Math.min(8, 80 / data.length));
-
-            return (
-              <g key={`candle-${index}`} className={`transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-80'}`}>
-                {/* Wick */}
-                <line
-                  x1={`${x}%`}
-                  y1={`${highY}%`}
-                  x2={`${x}%`}
-                  y2={`${lowY}%`}
-                  stroke={isGreen ? '#10b981' : '#ef4444'}
-                  strokeWidth={isHovered ? 2 : 1}
-                />
-                
-                {/* Body */}
-                <rect
-                  x={`${x - candleWidth/2}%`}
-                  y={`${Math.min(bodyTopY, bodyBottomY)}%`}
-                  width={`${candleWidth}%`}
-                  height={`${Math.abs(bodyBottomY - bodyTopY) || 0.1}%`}
-                  fill={isGreen ? '#10b981' : '#ef4444'}
-                  stroke={isGreen ? '#059669' : '#dc2626'}
-                  strokeWidth={isHovered ? 2 : 1}
-                  className="transition-all duration-200"
-                />
-                
-                {/* Hover highlight */}
-                {isHovered && (
-                  <rect
-                    x={`${Math.max(0, x - candleWidth)}%`}
-                    y="0%"
-                    width={`${candleWidth * 2}%`}
-                    height="100%"
-                    fill="rgba(59, 130, 246, 0.1)"
-                    stroke="rgba(59, 130, 246, 0.3)"
-                    strokeWidth={1}
-                  />
-                )}
-              </g>
-            );
-          })}
+    <div className="relative w-full h-full">
+      <svg
+        width="100%"
+        height="100%"
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        className="cursor-crosshair"
+        viewBox="0 0 800 400"
+        preserveAspectRatio="none"
+      >
+        {data.map((item, index) => {
+          const x = (index / Math.max(data.length - 1, 1)) * 740 + 30; // Leave margin
+          const isGreen = item.close > item.open;
+          const bodyTop = Math.max(item.open, item.close);
+          const bodyBottom = Math.min(item.open, item.close);
           
-          {/* X-axis labels */}
-          {data.filter((_, index) => index % Math.ceil(data.length / 6) === 0).map((item, index) => {
-            const actualIndex = index * Math.ceil(data.length / 6);
-            const x = (actualIndex / (data.length - 1)) * 100;
-            
-            return (
-              <text
-                key={actualIndex}
-                x={`${x}%`}
-                y="95%"
-                textAnchor="middle"
-                className="text-xs fill-muted-foreground font-medium"
-              >
-                {formatXAxisTick(item.date)}
-              </text>
-            );
-          })}
-        </svg>
-      </ResponsiveContainer>
+          // Calculate positions as absolute coordinates
+          const chartHeight = 340; // Leave space for labels
+          const highY = ((maxPrice + padding - item.high) / (priceRange + 2 * padding)) * chartHeight + 20;
+          const lowY = ((maxPrice + padding - item.low) / (priceRange + 2 * padding)) * chartHeight + 20;
+          const bodyTopY = ((maxPrice + padding - bodyTop) / (priceRange + 2 * padding)) * chartHeight + 20;
+          const bodyBottomY = ((maxPrice + padding - bodyBottom) / (priceRange + 2 * padding)) * chartHeight + 20;
+          
+          const isHovered = hoveredIndex === index;
+          const candleWidth = Math.max(3, Math.min(12, 740 / data.length * 0.8));
+
+          return (
+            <g key={`candle-${index}`} className={`transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-80'}`}>
+              {/* Wick */}
+              <line
+                x1={x}
+                y1={highY}
+                x2={x}
+                y2={lowY}
+                stroke={isGreen ? '#10b981' : '#ef4444'}
+                strokeWidth={isHovered ? 2 : 1}
+              />
+              
+              {/* Body */}
+              <rect
+                x={x - candleWidth/2}
+                y={Math.min(bodyTopY, bodyBottomY)}
+                width={candleWidth}
+                height={Math.max(Math.abs(bodyBottomY - bodyTopY), 2)}
+                fill={isGreen ? '#10b981' : '#ef4444'}
+                stroke={isGreen ? '#059669' : '#dc2626'}
+                strokeWidth={isHovered ? 2 : 1}
+                className="transition-all duration-200"
+              />
+              
+              {/* Hover highlight */}
+              {isHovered && (
+                <rect
+                  x={Math.max(0, x - candleWidth)}
+                  y={20}
+                  width={candleWidth * 2}
+                  height={chartHeight}
+                  fill="rgba(59, 130, 246, 0.1)"
+                  stroke="rgba(59, 130, 246, 0.3)"
+                  strokeWidth={1}
+                />
+              )}
+            </g>
+          );
+        })}
+        
+        {/* X-axis labels */}
+        {data.filter((_, index) => index % Math.ceil(data.length / 6) === 0).map((item, index) => {
+          const actualIndex = index * Math.ceil(data.length / 6);
+          const x = (actualIndex / Math.max(data.length - 1, 1)) * 740 + 30;
+          
+          return (
+            <text
+              key={actualIndex}
+              x={x}
+              y={380}
+              textAnchor="middle"
+              className="text-xs fill-muted-foreground font-medium"
+            >
+              {formatXAxisTick(item.date)}
+            </text>
+          );
+        })}
+      </svg>
       
       {/* Custom Tooltip */}
       {tooltipData && (
