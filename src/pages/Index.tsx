@@ -71,21 +71,10 @@ const IndexContent = ({
   error: string | null;
   realtimeConnected: boolean;
 }) => {
-  const { toggleSidebar, setOpenMobile, openMobile } = useSidebar();
+  const { toggleSidebar, setOpenMobile } = useSidebar();
   const [touchStart, setTouchStart] = React.useState<number | null>(null);
   const [touchEnd, setTouchEnd] = React.useState<number | null>(null);
   const [isLandscape, setIsLandscape] = React.useState(false);
-
-  // Debug mobile detection on component mount
-  React.useEffect(() => {
-    console.log('IndexContent mounted:', {
-      isMobile,
-      windowWidth: window.innerWidth,
-      windowHeight: window.innerHeight,
-      userAgent: navigator.userAgent,
-      openMobile
-    });
-  }, [isMobile, openMobile]);
 
   // Handle swipe detection
   const minSwipeDistance = 50;
@@ -93,55 +82,24 @@ const IndexContent = ({
   // Detect orientation changes and hide sidebar in landscape
   React.useEffect(() => {
     const checkOrientation = () => {
-      // Use a small timeout to ensure window dimensions are updated
-      setTimeout(() => {
-        const windowWidth = window.innerWidth;
-        const windowHeight = window.innerHeight;
-        const isLandscapeMode = windowWidth > windowHeight;
-        const isMobileDevice = isMobile || windowWidth <= 768; // More flexible mobile detection
-        
-        console.log('Orientation check:', {
-          windowWidth,
-          windowHeight,
-          isMobile,
-          isMobileDevice,
-          isLandscapeMode,
-          openMobile,
-          screenOrientation: screen.orientation?.angle || 'unknown'
-        });
-        
-        setIsLandscape(isLandscapeMode);
-        
-        // Hide sidebar in landscape mode for mobile devices
-        if (isLandscapeMode && isMobileDevice) {
-          console.log('Attempting to hide sidebar due to landscape mode');
-          setOpenMobile(false);
-        } else if (!isLandscapeMode && isMobileDevice) {
-          console.log('Portrait mode detected on mobile device');
-        }
-      }, 100); // Small delay to ensure dimensions are updated
+      const isLandscapeMode = window.innerWidth > window.innerHeight && isMobile;
+      setIsLandscape(isLandscapeMode);
+      
+      // Hide sidebar in landscape mode
+      if (isLandscapeMode && isMobile) {
+        setOpenMobile(false);
+      }
     };
 
-    // Check immediately
     checkOrientation();
-    
-    // Add multiple event listeners for better compatibility
     window.addEventListener('resize', checkOrientation);
     window.addEventListener('orientationchange', checkOrientation);
-    
-    // Also listen for screen orientation changes if available
-    if (screen.orientation) {
-      screen.orientation.addEventListener('change', checkOrientation);
-    }
 
     return () => {
       window.removeEventListener('resize', checkOrientation);
       window.removeEventListener('orientationchange', checkOrientation);
-      if (screen.orientation) {
-        screen.orientation.removeEventListener('change', checkOrientation);
-      }
     };
-  }, [isMobile, setOpenMobile, openMobile]);
+  }, [isMobile, setOpenMobile]);
 
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
