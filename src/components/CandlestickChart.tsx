@@ -2,6 +2,7 @@
 import React from 'react';
 import { ResponsiveContainer } from 'recharts';
 import { CommodityHistoricalData } from '@/hooks/useCommodityData';
+import { formatPrice } from '@/lib/commodityUtils';
 
 interface CandlestickData {
   date: string;
@@ -15,9 +16,10 @@ interface CandlestickChartProps {
   data: CandlestickData[];
   formatXAxisTick: (date: string) => string;
   formatTooltipLabel: (label: string) => string;
+  commodityName?: string;
 }
 
-const CandlestickChart = ({ data, formatXAxisTick, formatTooltipLabel }: CandlestickChartProps) => {
+const CandlestickChart = ({ data, formatXAxisTick, formatTooltipLabel, commodityName = '' }: CandlestickChartProps) => {
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
   const [tooltipData, setTooltipData] = React.useState<{
     x: number;
@@ -166,19 +168,19 @@ const CandlestickChart = ({ data, formatXAxisTick, formatTooltipLabel }: Candles
           <div className="space-y-1 text-xs">
             <div className="flex justify-between gap-4">
               <span className="text-muted-foreground">Open:</span>
-              <span className="font-medium">${tooltipData.data.open.toFixed(2)}</span>
+              <span className="font-medium">{formatPrice(tooltipData.data.open, commodityName)}</span>
             </div>
             <div className="flex justify-between gap-4">
               <span className="text-muted-foreground">High:</span>
-              <span className="font-medium text-green-600">${tooltipData.data.high.toFixed(2)}</span>
+              <span className="font-medium text-green-600">{formatPrice(tooltipData.data.high, commodityName)}</span>
             </div>
             <div className="flex justify-between gap-4">
               <span className="text-muted-foreground">Low:</span>
-              <span className="font-medium text-red-600">${tooltipData.data.low.toFixed(2)}</span>
+              <span className="font-medium text-red-600">{formatPrice(tooltipData.data.low, commodityName)}</span>
             </div>
             <div className="flex justify-between gap-4">
               <span className="text-muted-foreground">Close:</span>
-              <span className="font-medium">${tooltipData.data.close.toFixed(2)}</span>
+              <span className="font-medium">{formatPrice(tooltipData.data.close, commodityName)}</span>
             </div>
           </div>
         </div>

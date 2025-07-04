@@ -3,6 +3,7 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, ChevronDown, ChevronUp, DollarSign, Activity, BarChart3 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { formatPrice } from '@/lib/commodityUtils';
 import CommodityChart from './CommodityChart';
 import CommodityNews from './CommodityNews';
 import { useCommodityPrice } from '@/hooks/useCommodityData';
@@ -158,7 +159,7 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                     <p className="text-xs sm:text-sm font-medium text-muted-foreground">Current Price</p>
                     <div className="flex items-baseline gap-2">
                       <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground number-display transition-colors group-hover:text-primary">
-                        ${currentPrice.toFixed(2)}
+                        {formatPrice(currentPrice, name)}
                       </p>
                       <span className={`text-2xs sm:text-xs font-medium px-1.5 py-0.5 rounded ${
                         isRealTime 

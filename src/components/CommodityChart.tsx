@@ -6,6 +6,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 import { TrendingUp, Calendar, Loader, AlertCircle, ChartCandlestick } from 'lucide-react';
 import { useCommodityHistoricalData, useCommodityPrice, CommodityHistoricalData } from '@/hooks/useCommodityData';
 import { useAuth } from '@/contexts/AuthContext';
+import { formatPrice, getCurrencySymbol, getDecimalPlaces } from '@/lib/commodityUtils';
 import CandlestickChart from './CandlestickChart';
 
 interface TimeframeOption {
@@ -284,6 +285,7 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
                     data={filteredData}
                     formatXAxisTick={formatXAxisTick}
                     formatTooltipLabel={formatTooltipLabel}
+                    commodityName={name}
                   />
                 );
               })()
@@ -312,16 +314,15 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
                     axisLine={{ stroke: 'hsl(var(--border))' }}
                     tickLine={{ stroke: 'hsl(var(--border))' }}
                     tickFormatter={(value) => {
-                      if (name.includes('Wheat') || name.includes('Corn') || name.includes('Soybean')) {
-                        return `$${value.toFixed(selectedTimeframe === '1d' ? 2 : 1)}`;
-                      }
-                      return `$${value.toFixed(selectedTimeframe === '1d' ? 2 : 0)}`;
+                      const decimals = getDecimalPlaces(name, selectedTimeframe);
+                      const symbol = getCurrencySymbol(name);
+                      return `${symbol}${value.toFixed(decimals)}`;
                     }}
                     domain={getYAxisDomain()}
                   />
                   <Tooltip 
                     labelFormatter={formatTooltipLabel}
-                    formatter={(value: number) => [`$${value.toFixed(2)}`, 'Price']}
+                    formatter={(value: number) => [formatPrice(value, name), 'Price']}
                     contentStyle={{
                       backgroundColor: 'hsl(var(--background))',
                       border: '1px solid hsl(var(--border))',
@@ -378,7 +379,7 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
           <p className="text-xs sm:text-sm font-semibold text-muted-foreground">Current Price</p>
           <div className="flex items-baseline justify-end gap-2">
             <p className="text-lg sm:text-xl font-bold text-foreground number-display">
-              ${displayPrice.toFixed(2)}
+              {formatPrice(displayPrice, name)}
             </p>
             <span className={`text-2xs font-medium px-1.5 py-0.5 rounded ${
               isPremium 
