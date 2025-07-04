@@ -72,9 +72,9 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
   };
 
   return (
-    <Sidebar className="border-r">
-      <SidebarHeader className="border-b">
-        <div className="flex items-center gap-3 p-4">
+    <Sidebar className="border-r bg-background">
+      <SidebarHeader className="border-b bg-background">
+        <div className={`flex items-center gap-3 ${isMobile ? 'p-6' : 'p-4'}`}>
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
             <TrendingUp className="w-4 h-4 text-white" />
           </div>
@@ -87,13 +87,13 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
         </div>
       </SidebarHeader>
       
-      <SidebarContent className="p-2">
+      <SidebarContent className={`${isMobile ? 'p-4 bg-background' : 'p-2'}`}>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-bold text-muted-foreground px-4 py-3 uppercase tracking-wider">
+          <SidebarGroupLabel className={`font-bold text-muted-foreground uppercase tracking-wider ${isMobile ? 'text-sm px-6 py-4' : 'text-xs px-4 py-3'}`}>
             Commodity Groups
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-2">
+            <SidebarMenu className={`space-y-2 ${isMobile ? 'px-2' : ''}`}>
               {COMMODITY_GROUPS.map((group) => {
                 const Icon = group.icon;
                 const isActive = activeGroup === group.id;
@@ -132,15 +132,15 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
         </SidebarGroup>
         
         <SidebarGroup className="mt-8">
-          <SidebarGroupLabel className="text-xs font-bold text-muted-foreground px-4 py-3 uppercase tracking-wider">
+          <SidebarGroupLabel className={`font-bold text-muted-foreground uppercase tracking-wider ${isMobile ? 'text-sm px-6 py-4' : 'text-xs px-4 py-3'}`}>
             Market Statistics
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <div className="px-4 py-3 space-y-4">
+            <div className={`space-y-4 ${isMobile ? 'px-6 py-3' : 'px-4 py-3'}`}>
               <div 
                 className={`rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 cursor-pointer transition-all duration-200 ${
                   isMobile 
-                    ? 'p-6 min-h-[72px] active:scale-95 touch-manipulation' 
+                    ? 'p-6 min-h-[72px] active:scale-95 touch-manipulation mx-2' 
                     : 'p-3'
                 }`}
                 onClick={() => handleNavigate('/live-feed')}
