@@ -10,11 +10,12 @@ import {
   SidebarMenuItem,
   SidebarHeader,
 } from "@/components/ui/sidebar";
-import { Zap, Coins, Wheat, TrendingUp, Activity, BarChart3, Beef, Coffee, Package, Newspaper } from "lucide-react";
+import { Zap, Coins, Wheat, TrendingUp, Activity, BarChart3, Beef, Coffee, Package, Newspaper, ChevronRight, Grid } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useEffect } from "react";
 import UpgradeBox from "./UpgradeBox";
 
 interface CommodityCounts {
@@ -27,12 +28,12 @@ interface CommodityCounts {
 }
 
 const COMMODITY_GROUPS = [
-  { id: "energy", label: "Energy", icon: Zap, color: "text-orange-500" },
-  { id: "metals", label: "Metals", icon: Coins, color: "text-yellow-500" },
-  { id: "grains", label: "Grains", icon: Wheat, color: "text-green-500" },
-  { id: "livestock", label: "Livestock", icon: Beef, color: "text-red-500" },
-  { id: "softs", label: "Softs", icon: Coffee, color: "text-brown-500" },
-  { id: "other", label: "Other", icon: Package, color: "text-gray-500" },
+  { id: "energy", label: "Energy", icon: Zap, color: "text-orange-500", shortcut: "1", description: "Oil, Gas & Power" },
+  { id: "metals", label: "Metals", icon: Coins, color: "text-yellow-500", shortcut: "2", description: "Gold, Silver & More" },
+  { id: "grains", label: "Grains", icon: Wheat, color: "text-green-500", shortcut: "3", description: "Wheat, Corn & Rice" },
+  { id: "livestock", label: "Livestock", icon: Beef, color: "text-red-500", shortcut: "4", description: "Cattle & Pork" },
+  { id: "softs", label: "Softs", icon: Coffee, color: "text-amber-600", shortcut: "5", description: "Coffee, Sugar & Cotton" },
+  { id: "other", label: "Other", icon: Package, color: "text-gray-500", shortcut: "6", description: "Misc Commodities" },
 ];
 
 interface CommoditySidebarProps {
@@ -58,6 +59,24 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
 
   const totalCommodities = Object.values(commodityCounts).reduce((sum, count) => sum + count, 0);
 
+  // Add keyboard shortcuts for quick group switching
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Only trigger if no input is focused and Alt key is pressed
+      if (e.altKey && !e.ctrlKey && !e.metaKey && document.activeElement?.tagName !== 'INPUT') {
+        const shortcut = e.key;
+        const group = COMMODITY_GROUPS.find(g => g.shortcut === shortcut);
+        if (group && group.id !== activeGroup) {
+          e.preventDefault();
+          onGroupSelect(group.id);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [activeGroup, onGroupSelect]);
+
   return (
     <Sidebar className="border-r bg-gradient-to-b from-background to-muted/10 shadow-soft transition-all duration-300">
       <SidebarHeader className="border-b bg-gradient-to-r from-card/80 to-muted/20 backdrop-blur-sm">
@@ -78,13 +97,21 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
       
       <SidebarContent className="p-1 sm:p-2">
         <SidebarGroup>
-          <SidebarGroupLabel className={`text-2xs sm:text-xs font-bold text-muted-foreground px-3 sm:px-4 py-2 sm:py-3 uppercase tracking-widest transition-all duration-300 ${
-            collapsed ? 'text-center' : ''
+          <SidebarGroupLabel className={`text-2xs sm:text-xs font-bold text-muted-foreground px-3 sm:px-4 py-2 sm:py-3 uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${
+            collapsed ? 'justify-center' : ''
           }`}>
+            <Grid className="w-3 h-3" />
             {collapsed ? 'Groups' : 'Commodity Groups'}
+            {!collapsed && (
+              <span className="text-xs font-normal normal-case text-muted-foreground/70">
+                (Alt + 1-6)
+              </span>
+            )}
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-1 sm:space-y-2">
+            <SidebarMenu className="space-y-1 sm:space-y-2"
+              aria-label="Navigate between commodity groups using Alt + number keys"
+            >
               {COMMODITY_GROUPS.map((group) => {
                 const Icon = group.icon;
                 const isActive = activeGroup === group.id;
@@ -101,38 +128,71 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
                           setOpenMobile(false);
                         }
                       }}
-                      className={`relative group transition-all duration-300 rounded-xl mx-1 sm:mx-2 touch-manipulation active:scale-95 min-h-[44px] flex items-center ${
+                      className={`relative group transition-all duration-300 rounded-xl mx-1 sm:mx-2 touch-manipulation active:scale-95 min-h-[52px] flex items-center overflow-hidden ${
                         isActive 
-                          ? 'bg-gradient-to-r from-primary/15 to-accent/10 text-primary border-l-4 border-primary shadow-soft scale-105' 
-                          : 'hover:bg-gradient-to-r hover:from-muted/50 hover:to-muted/30 hover:translate-x-1 hover:shadow-soft hover:scale-105'
-                      } ${collapsed ? 'justify-center px-2' : ''}`}
+                          ? 'bg-gradient-to-r from-primary/20 to-accent/15 text-primary border-2 border-primary/30 shadow-lg scale-105 ring-2 ring-primary/20' 
+                          : 'hover:bg-gradient-to-r hover:from-muted/60 hover:to-muted/40 hover:translate-x-1 hover:shadow-lg hover:scale-105 border-2 border-transparent hover:border-border/50'
+                      } ${collapsed ? 'justify-center px-2' : 'px-3'}`}
+                      title={`${group.label} - ${group.description} (Alt+${group.shortcut})`}
+                      aria-label={`Switch to ${group.label} commodities. Keyboard shortcut: Alt+${group.shortcut}`}
                     >
                       <div className={`flex items-center gap-2 sm:gap-3 w-full ${collapsed ? 'flex-col' : ''}`}>
-                        <Icon className={`w-5 h-5 sm:w-6 sm:h-6 transition-all duration-300 ${
-                          isActive ? 'text-primary' : group.color
-                        } ${isActive ? 'animate-pulse' : ''}`} />
+                        <div className={`relative flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg transition-all duration-300 ${
+                          isActive 
+                            ? 'bg-primary/20 text-primary shadow-inner' 
+                            : `bg-gradient-to-br from-muted/40 to-muted/60 ${group.color} group-hover:scale-110`
+                        }`}>
+                          <Icon className={`w-4 h-4 sm:w-5 sm:h-5 transition-all duration-300 ${
+                            isActive ? 'text-primary drop-shadow-sm' : 'group-hover:scale-110'
+                          }`} />
+                          {!collapsed && !isActive && (
+                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-muted/80 text-muted-foreground rounded-full flex items-center justify-center text-xs font-bold">
+                              {group.shortcut}
+                            </div>
+                          )}
+                        </div>
                         {!collapsed && (
                           <>
-                            <span className={`font-semibold text-sm sm:text-base transition-colors flex-1 ${
-                              isActive ? 'text-primary' : 'text-foreground'
-                            }`}>
-                              {group.label}
-                            </span>
-                            <span className={`text-xs sm:text-sm px-2 py-1 rounded-full transition-colors ${
-                              isActive 
-                                ? 'bg-primary/20 text-primary' 
-                                : 'bg-muted/50 text-muted-foreground'
-                            }`}>
-                              {count}
-                            </span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className={`font-bold text-sm sm:text-base transition-colors truncate ${
+                                  isActive ? 'text-primary' : 'text-foreground'
+                                }`}>
+                                  {group.label}
+                                </span>
+                                {isActive && (
+                                  <ChevronRight className="w-3 h-3 text-primary/70 animate-pulse" />
+                                )}
+                              </div>
+                              <p className={`text-xs transition-colors truncate ${
+                                isActive ? 'text-primary/70' : 'text-muted-foreground'
+                              }`}>
+                                {group.description}
+                              </p>
+                            </div>
+                            <div className="flex flex-col items-center gap-1">
+                              <span className={`text-xs sm:text-sm px-2 py-1 rounded-full font-bold transition-all duration-300 ${
+                                isActive 
+                                  ? 'bg-primary/30 text-primary shadow-inner' 
+                                  : 'bg-muted/60 text-muted-foreground group-hover:bg-muted/80'
+                              }`}>
+                                {count}
+                              </span>
+                              <span className="text-xs text-muted-foreground/60 font-mono">
+                                Alt+{group.shortcut}
+                              </span>
+                            </div>
                           </>
                         )}
                         {collapsed && (
-                          <span className="text-xs text-muted-foreground">{count}</span>
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="text-xs text-muted-foreground font-bold">{count}</span>
+                            <span className="text-xs text-muted-foreground/60 font-mono">{group.shortcut}</span>
+                          </div>
                         )}
                       </div>
                       {isActive && !collapsed && (
-                        <div className="absolute right-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full animate-pulse" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-accent/5 rounded-xl" />
                       )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
