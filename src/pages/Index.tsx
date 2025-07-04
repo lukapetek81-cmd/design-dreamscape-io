@@ -89,10 +89,20 @@ const IndexContent = ({
         const isLandscapeMode = windowWidth > windowHeight;
         const isMobileDevice = isMobile || windowWidth <= 768; // More flexible mobile detection
         
+        console.log('Orientation check:', {
+          windowWidth,
+          windowHeight,
+          isMobile,
+          isMobileDevice,
+          isLandscapeMode,
+          currentIsLandscape: isLandscape
+        });
+        
         setIsLandscape(isLandscapeMode);
         
         // Hide sidebar in landscape mode for mobile devices
         if (isLandscapeMode && isMobileDevice) {
+          console.log('Hiding sidebar - landscape mode detected');
           setOpenMobile(false);
         }
       }, 100); // Small delay to ensure dimensions are updated
@@ -114,7 +124,7 @@ const IndexContent = ({
         screen.orientation.removeEventListener('change', checkOrientation);
       }
     };
-  }, [isMobile, setOpenMobile]);
+  }, [isMobile, setOpenMobile, isLandscape]);
 
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
