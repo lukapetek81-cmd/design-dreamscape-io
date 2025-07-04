@@ -13,6 +13,7 @@ import { Zap, Coins, Wheat, TrendingUp, Beef, Coffee, Package, Newspaper } from 
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 import UpgradeBox from "./UpgradeBox";
 
 interface CommodityCounts {
@@ -40,9 +41,10 @@ interface CommoditySidebarProps {
 }
 
 const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: CommoditySidebarProps) => {
-  const { state } = useSidebar();
+  const { state, setOpenMobile } = useSidebar();
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const collapsed = state === "collapsed";
 
   // Check if user has premium subscription (real-time access)
@@ -51,6 +53,22 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
 
   const getGroupCount = (groupId: string) => {
     return commodityCounts[groupId as keyof CommodityCounts] || 0;
+  };
+
+  const handleGroupSelect = (groupId: string) => {
+    onGroupSelect(groupId);
+    // Auto-close mobile sidebar after selection for better UX
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
+  const handleNavigate = (path: string) => {
+    navigate(path);
+    // Auto-close mobile sidebar after navigation
+    if (isMobile) {
+      setOpenMobile(false);
+    }
   };
 
   return (
@@ -85,8 +103,12 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
                   <SidebarMenuItem key={group.id}>
                     <SidebarMenuButton
                       isActive={isActive}
-                      onClick={() => onGroupSelect(group.id)}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg"
+                      onClick={() => handleGroupSelect(group.id)}
+                      className={`flex items-center gap-3 rounded-lg transition-all duration-200 ${
+                        isMobile 
+                          ? 'px-4 py-4 min-h-[56px] active:scale-95 touch-manipulation' 
+                          : 'px-3 py-2'
+                      }`}
                     >
                       <div className={`flex items-center justify-center w-8 h-8 rounded-lg ${group.color}`}>
                         <Icon className="w-4 h-4" />
@@ -114,8 +136,12 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
           <SidebarGroupContent>
             <div className="px-4 py-3 space-y-4">
               <div 
-                className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 cursor-pointer"
-                onClick={() => navigate('/live-feed')}
+                className={`rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 cursor-pointer transition-all duration-200 ${
+                  isMobile 
+                    ? 'p-4 min-h-[56px] active:scale-95 touch-manipulation' 
+                    : 'p-3'
+                }`}
+                onClick={() => handleNavigate('/live-feed')}
               >
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Market News</span>
