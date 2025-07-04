@@ -22,7 +22,7 @@ interface CommodityCardProps {
 const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, symbol, venue, contractSize }: CommodityCardProps) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
-  const { price: apiPrice, loading: priceLoading } = useCommodityPrice(name);
+  const { data: apiPrice, isLoading: priceLoading } = useCommodityPrice(name);
   const { profile } = useAuth();
   
   // Get market status for this commodity

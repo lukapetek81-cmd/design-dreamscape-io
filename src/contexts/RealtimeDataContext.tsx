@@ -1,7 +1,6 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useGlobalRealtimeData } from '@/hooks/useGlobalRealtimeData';
-import { CommodityPrice } from '@/hooks/useCommodityData';
-import { useAvailableCommodities } from '@/hooks/useCommodityData';
+import { CommodityPrice, useAvailableCommodities } from '@/hooks/useCommodityData';
 
 interface RealtimeDataContextType {
   prices: Record<string, CommodityPrice>;

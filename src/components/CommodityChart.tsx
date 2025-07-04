@@ -28,11 +28,15 @@ interface CommodityChartProps {
 const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
   const [selectedTimeframe, setSelectedTimeframe] = React.useState<string>('1m');
   const [chartType, setChartType] = React.useState<'line' | 'candlestick'>('line');
-  const { data, loading, error } = useCommodityHistoricalData(name, selectedTimeframe, chartType);
-  const { price: currentPrice } = useCommodityPrice(name);
+  const { data: queryData, isLoading: loading, error: queryError } = useCommodityHistoricalData(name, selectedTimeframe, chartType);
+  const { data: currentPrice } = useCommodityPrice(name);
   const { profile } = useAuth();
 
   const isPremium = profile?.subscription_active && profile?.subscription_tier === 'premium';
+  
+  // Extract data from query result
+  const data = queryData?.data || [];
+  const error = queryError?.message || queryData?.error || null;
   
   // Use current price from API if available, otherwise use base price
   const displayPrice = currentPrice?.price || basePrice;
@@ -256,7 +260,9 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
           <>
             {chartType === 'candlestick' ? (
               <CandlestickChart
-                data={data}
+                data={data.filter((item): item is typeof item & { open: number; high: number; low: number; close: number } => 
+                  item.open !== undefined && item.high !== undefined && item.low !== undefined && item.close !== undefined
+                )}
                 formatXAxisTick={formatXAxisTick}
                 formatTooltipLabel={formatTooltipLabel}
               />
