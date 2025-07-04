@@ -243,10 +243,30 @@ serve(async (req) => {
         
         const data = await response.json();
         
-        if (data.historical && Array.isArray(data.historical)) {
+        console.log(`FMP API response for ${commodityName}:`, JSON.stringify(data, null, 2));
+        
+        if (data.historical && Array.isArray(data.historical) && data.historical.length > 0) {
           const maxDataPoints = isPremium 
             ? (timeframe === '1d' ? 48 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : 365) // Premium gets more granular data
             : (timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180);
+          
+          console.log(`FMP returned ${data.historical.length} raw data points for ${commodityName}`);
+          
+          // Data quality check for agricultural commodities
+          if (commodityName.includes('Futures') || commodityName.includes('Corn') || commodityName.includes('Wheat') || commodityName.includes('Soybean')) {
+            const sampleData = data.historical.slice(0, 10);
+            const flatCount = sampleData.filter((item: any, idx: number, arr: any[]) => 
+              idx > 0 && item.close === arr[idx - 1].close
+            ).length;
+            
+            console.log(`Agricultural commodity ${commodityName} data quality check: ${flatCount}/10 consecutive flat prices detected`);
+            
+            // If more than 50% of sample data is flat, reject FMP data and use fallback
+            if (flatCount > 5) {
+              console.warn(`Poor data quality detected for ${commodityName} from FMP API. Using enhanced fallback data instead.`);
+              throw new Error('Poor data quality - too many flat prices');
+            }
+          }
           
           if (chartType === 'candlestick') {
             historicalData = data.historical.slice(0, maxDataPoints).map((item: any) => ({
@@ -263,11 +283,17 @@ serve(async (req) => {
               price: parseFloat(item.close)
             })).reverse(); // Reverse to get chronological order
           }
+          
+          console.log(`Processed ${historicalData.length} data points. Sample data:`, historicalData.slice(0, 3));
+        } else {
+          console.warn(`No historical data returned from FMP for ${commodityName}`);
+          throw new Error('No historical data available');
         }
         
         console.log(`Successfully fetched ${historicalData?.length || 0} ${isPremium ? 'premium' : 'standard'} ${chartType || 'line'} data points from FMP for ${commodityName}`)
       } catch (error) {
         console.warn(`FMP API failed for ${commodityName}:`, error)
+        historicalData = null; // Ensure we fall back to generated data
       }
     } else {
       console.log('No FMP API key configured, using fallback data')
