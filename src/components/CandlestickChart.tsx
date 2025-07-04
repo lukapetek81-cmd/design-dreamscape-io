@@ -61,7 +61,7 @@ const CandlestickChart = ({ data, formatXAxisTick, formatTooltipLabel }: Candles
           className="cursor-crosshair"
         >
           {data.map((item, index) => {
-            const x = (index / (data.length - 1)) * 100;
+            const x = (index / Math.max(data.length - 1, 1)) * 100;
             const isGreen = item.close > item.open;
             const bodyTop = Math.max(item.open, item.close);
             const bodyBottom = Math.min(item.open, item.close);
@@ -73,10 +73,10 @@ const CandlestickChart = ({ data, formatXAxisTick, formatTooltipLabel }: Candles
             const bodyBottomY = ((maxPrice + padding - bodyBottom) / (priceRange + 2 * padding)) * 100;
             
             const isHovered = hoveredIndex === index;
-            const candleWidth = Math.max(1, 80 / data.length);
+            const candleWidth = Math.max(2, Math.min(8, 80 / data.length));
 
             return (
-              <g key={index} className={`transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-80'}`}>
+              <g key={`candle-${index}`} className={`transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-80'}`}>
                 {/* Wick */}
                 <line
                   x1={`${x}%`}
@@ -90,9 +90,9 @@ const CandlestickChart = ({ data, formatXAxisTick, formatTooltipLabel }: Candles
                 {/* Body */}
                 <rect
                   x={`${x - candleWidth/2}%`}
-                  y={`${bodyTopY}%`}
+                  y={`${Math.min(bodyTopY, bodyBottomY)}%`}
                   width={`${candleWidth}%`}
-                  height={`${bodyBottomY - bodyTopY}%`}
+                  height={`${Math.abs(bodyBottomY - bodyTopY) || 0.1}%`}
                   fill={isGreen ? '#10b981' : '#ef4444'}
                   stroke={isGreen ? '#059669' : '#dc2626'}
                   strokeWidth={isHovered ? 2 : 1}
@@ -102,7 +102,7 @@ const CandlestickChart = ({ data, formatXAxisTick, formatTooltipLabel }: Candles
                 {/* Hover highlight */}
                 {isHovered && (
                   <rect
-                    x={`${x - candleWidth}%`}
+                    x={`${Math.max(0, x - candleWidth)}%`}
                     y="0%"
                     width={`${candleWidth * 2}%`}
                     height="100%"
