@@ -91,7 +91,7 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/20 to-background p-4">
-      <div className="w-full max-w-md space-y-6">
+      <div className="w-full max-w-md space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="text-center space-y-4">
           <Link 
@@ -113,11 +113,11 @@ const Auth = () => {
           </div>
         </div>
 
-        <Card className="p-6 bg-gradient-to-br from-card/80 to-muted/20 border border-border/50 shadow-soft">
-          <Tabs defaultValue="signin" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+        <Card className="p-4 sm:p-6 bg-gradient-to-br from-card/80 to-muted/20 border border-border/50 shadow-soft mobile-card">
+          <Tabs defaultValue="signin" className="space-y-4 sm:space-y-6">
+            <TabsList className="grid w-full grid-cols-2 h-12 mobile-touch-target">
+              <TabsTrigger value="signin" className="mobile-touch-target">Sign In</TabsTrigger>
+              <TabsTrigger value="signup" className="mobile-touch-target">Sign Up</TabsTrigger>
             </TabsList>
 
             {/* Sign In Tab */}
@@ -140,7 +140,7 @@ const Auth = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
-                    className="transition-all duration-200 focus:scale-[1.02]"
+                    className="mobile-input transition-all duration-200 focus:scale-[1.02]"
                   />
                 </div>
 
@@ -155,13 +155,13 @@ const Auth = () => {
                       value={formData.password}
                       onChange={handleInputChange}
                       required
-                      className="pr-10 transition-all duration-200 focus:scale-[1.02]"
+                      className="pr-12 mobile-input transition-all duration-200 focus:scale-[1.02]"
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent mobile-touch-target"
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? (
@@ -185,7 +185,7 @@ const Auth = () => {
 
                 <Button
                   type="submit" 
-                  className="w-full"
+                  className="w-full mobile-button-large"
                   disabled={isLoading || !formData.email || !formData.password}
                 >
                   {isLoading ? (
@@ -211,7 +211,7 @@ const Auth = () => {
               <Button 
                 type="button"
                 variant="outline" 
-                className="w-full"
+                className="w-full mobile-button-large"
                 onClick={handleGoogleSignIn}
                 disabled={isLoading}
               >

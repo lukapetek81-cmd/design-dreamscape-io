@@ -90,41 +90,42 @@ const LiveFeed = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       {/* Header */}
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 shadow-soft">
-        <div className="container flex h-16 sm:h-20 items-center justify-between px-3 sm:px-4 md:px-6">
-          <div className="flex items-center gap-3 sm:gap-4">
+        <div className="container flex flex-col sm:flex-row h-auto sm:h-16 md:h-20 items-center justify-between px-3 sm:px-4 md:px-6 py-3 sm:py-0 gap-3 sm:gap-0">
+          <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
             <Link to="/">
-              <Button variant="ghost" size="sm" className="hover:bg-muted/80 transition-colors">
+              <Button variant="ghost" size="sm" className="hover:bg-muted/80 transition-colors mobile-touch-target">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Markets
+                <span className="hidden sm:inline">Back to Markets</span>
+                <span className="sm:hidden">Back</span>
               </Button>
             </Link>
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-primary/10 text-primary">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="p-2 rounded-xl bg-primary/10 text-primary mobile-touch-target">
                 <Newspaper className="w-5 h-5" />
               </div>
-              <div>
-                <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gradient">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gradient truncate">
                   Live Market News
                 </h1>
-                <p className="text-xs sm:text-sm text-muted-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">
                   Real-time commodity market updates
                 </p>
               </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
             <Button
               variant="outline"
               size="sm"
               onClick={fetchNews}
               disabled={loading}
-              className="hover:bg-muted/80 transition-colors"
+              className="hover:bg-muted/80 transition-colors mobile-button flex-1 sm:flex-initial"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full border bg-muted/50">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-full border bg-muted/50 whitespace-nowrap">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
               <span className="text-xs font-medium">Live</span>
             </div>
@@ -133,8 +134,8 @@ const LiveFeed = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8">
-        <div className="max-w-4xl mx-auto space-y-6">
+      <main className="container mx-auto px-4 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
+        <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
           {/* Update Info */}
           <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-muted/50 to-muted/30 border">
             <div className="flex items-center gap-3">
@@ -182,10 +183,10 @@ const LiveFeed = () => {
           {!loading && news.length > 0 && (
             <div className="space-y-4">
               {news.map((article, index) => (
-                <Card key={article.id || index} className="p-6 hover:shadow-lg transition-shadow duration-200">
-                  <div className="flex gap-4">
+                <Card key={article.id || index} className="p-4 sm:p-6 hover:shadow-lg transition-shadow duration-200 mobile-card">
+                  <div className="flex flex-col sm:flex-row gap-4">
                     {article.urlToImage && (
-                      <div className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden bg-muted">
+                      <div className="flex-shrink-0 w-full h-48 sm:w-24 sm:h-24 rounded-lg overflow-hidden bg-muted">
                         <img
                           src={article.urlToImage}
                           alt={article.title}
@@ -196,27 +197,26 @@ const LiveFeed = () => {
                         />
                       </div>
                     )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-3 mb-2">
-                        <h3 className="font-semibold text-lg leading-tight line-clamp-2">
+                    <div className="flex-1 min-w-0 space-y-3">
+                      <div className="space-y-2">
+                        <h3 className="font-semibold text-base sm:text-lg leading-tight">
                           {article.title}
                         </h3>
-                        <div className="flex-shrink-0 text-right">
-                          <p className="text-xs text-muted-foreground">
-                            {formatTimeAgo(article.publishedAt)}
-                          </p>
-                          <p className="text-xs font-medium text-primary">
-                            {article.source}
-                          </p>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>{formatTimeAgo(article.publishedAt)}</span>
+                            <span>•</span>
+                            <span className="font-medium text-primary">{article.source}</span>
+                          </div>
                         </div>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                      <p className="text-sm text-muted-foreground leading-relaxed">
                         {article.description}
                       </p>
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div className="flex items-center gap-2">
                           {article.category && (
-                            <span className="px-2 py-1 text-xs font-medium bg-primary/10 text-primary rounded-full">
+                            <span className="px-3 py-1 text-xs font-medium bg-primary/10 text-primary rounded-full">
                               {article.category}
                             </span>
                           )}
@@ -225,7 +225,7 @@ const LiveFeed = () => {
                           href={article.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                          className="inline-flex items-center justify-center gap-1 text-sm font-medium text-primary hover:underline mobile-touch-target w-full sm:w-auto"
                         >
                           Read more
                           <ExternalLink className="w-3 h-3" />

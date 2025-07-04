@@ -75,12 +75,17 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
-    /* Enhanced mobile optimizations */
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
-    /* Better touch handling */
-    touch-action: manipulation;
+  /* Enhanced mobile optimizations */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  /* Better touch handling */
+  touch-action: manipulation;
+  /* Prevent zoom on input focus */
+  user-scalable: no;
+  /* Optimize scrolling performance */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   }
   
   /* Enhanced responsive typography */
@@ -187,6 +192,22 @@
            transition-all duration-200 touch-manipulation;
   }
   
+  .mobile-touch-target {
+    @apply min-h-[48px] min-w-[48px] flex items-center justify-center;
+  }
+  
+  .mobile-dialog {
+    @apply fixed inset-x-4 top-[10%] mx-auto max-w-md rounded-xl
+           bg-card/95 backdrop-blur-md border border-border/50 shadow-strong
+           max-h-[80vh] overflow-y-auto;
+  }
+  
+  .mobile-sheet {
+    @apply fixed inset-x-0 bottom-0 rounded-t-2xl
+           bg-card/95 backdrop-blur-md border-t border-border/50 shadow-strong
+           max-h-[90vh] overflow-hidden;
+  }
+  
   /* Loading states */
   .skeleton {
     @apply bg-muted animate-pulse rounded;
@@ -263,6 +284,31 @@
   
   .mobile-spacing {
     @apply px-4 py-3;
+  }
+  
+  /* Mobile-specific button sizing */
+  .mobile-button-large {
+    @apply min-h-[56px] px-6 py-4 text-base font-semibold;
+  }
+  
+  /* Better mobile card spacing */
+  .mobile-card-compact {
+    @apply p-3 space-y-3;
+  }
+  
+  /* Mobile-friendly form elements */
+  .mobile-input {
+    @apply h-12 px-4 text-base;
+  }
+  
+  /* Optimized mobile grid */
+  .mobile-grid {
+    @apply grid grid-cols-1 gap-4;
+  }
+  
+  /* Mobile-friendly modals */
+  .mobile-modal {
+    @apply fixed inset-4 rounded-2xl max-h-[85vh];
   }
 }
 
