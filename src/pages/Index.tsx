@@ -82,22 +82,37 @@ const IndexContent = ({
   // Detect orientation changes and hide sidebar in landscape
   React.useEffect(() => {
     const checkOrientation = () => {
-      const isLandscapeMode = window.innerWidth > window.innerHeight && isMobile;
-      setIsLandscape(isLandscapeMode);
-      
-      // Hide sidebar in landscape mode
-      if (isLandscapeMode && isMobile) {
-        setOpenMobile(false);
-      }
+      // Use a small timeout to ensure window dimensions are updated
+      setTimeout(() => {
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        const isLandscapeMode = windowWidth > windowHeight;
+        const isMobileDevice = isMobile || windowWidth <= 768; // More flexible mobile detection
+        
+        setIsLandscape(isLandscapeMode);
+        
+        // Hide sidebar in landscape mode for mobile devices
+        if (isLandscapeMode && isMobileDevice) {
+          setOpenMobile(false);
+        }
+      }, 100); // Small delay to ensure dimensions are updated
     };
 
     checkOrientation();
     window.addEventListener('resize', checkOrientation);
     window.addEventListener('orientationchange', checkOrientation);
+    
+    // Also listen for screen orientation changes if available
+    if (screen.orientation) {
+      screen.orientation.addEventListener('change', checkOrientation);
+    }
 
     return () => {
       window.removeEventListener('resize', checkOrientation);
       window.removeEventListener('orientationchange', checkOrientation);
+      if (screen.orientation) {
+        screen.orientation.removeEventListener('change', checkOrientation);
+      }
     };
   }, [isMobile, setOpenMobile]);
 
