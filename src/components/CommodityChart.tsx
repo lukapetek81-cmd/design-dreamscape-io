@@ -1,11 +1,14 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { useCommodityHistoricalData, useCommodityPrice } from '@/hooks/useCommodityData';
 import { useAuth } from '@/contexts/AuthContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { smoothPriceData } from './charts/chartUtils';
 import ChartHeader from './charts/ChartHeader';
 import ChartContainer from './charts/ChartContainer';
 import ChartFooter from './charts/ChartFooter';
+import { X, Maximize2, BarChart3 } from 'lucide-react';
 
 interface CommodityChartProps {
   name: string;
@@ -15,10 +18,62 @@ interface CommodityChartProps {
 const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
   const [selectedTimeframe, setSelectedTimeframe] = React.useState<string>('1m');
   const [chartType, setChartType] = React.useState<'line' | 'candlestick'>('line');
+  const [isFullScreen, setIsFullScreen] = React.useState(false);
+  const [isLandscape, setIsLandscape] = React.useState(false);
+  const isMobile = useIsMobile();
   
   const { data: queryData, isLoading: loading, error: queryError } = useCommodityHistoricalData(name, selectedTimeframe, chartType);
   const { data: currentPrice } = useCommodityPrice(name);
   const { profile } = useAuth();
+
+  // Detect orientation changes
+  React.useEffect(() => {
+    const checkOrientation = () => {
+      const isLandscapeMode = window.innerWidth > window.innerHeight && isMobile;
+      setIsLandscape(isLandscapeMode);
+      
+      // Auto full-screen on landscape for mobile
+      if (isLandscapeMode && isMobile) {
+        setIsFullScreen(true);
+      } else if (!isLandscapeMode) {
+        setIsFullScreen(false);
+      }
+    };
+
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+
+    return () => {
+      window.removeEventListener('resize', checkOrientation);
+      window.removeEventListener('orientationchange', checkOrientation);
+    };
+  }, [isMobile]);
+
+  // Handle escape key to exit full screen
+  React.useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullScreen) {
+        setIsFullScreen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [isFullScreen]);
+
+  // Prevent body scroll when full screen
+  React.useEffect(() => {
+    if (isFullScreen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isFullScreen]);
 
   const isPremium = profile?.subscription_active && profile?.subscription_tier === 'premium';
   
@@ -52,19 +107,129 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
     ) : false
   });
 
+  // Full-screen overlay component
+  if (isFullScreen) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background flex flex-col">
+        {/* Full-screen header */}
+        <div className="flex items-center justify-between p-3 sm:p-4 border-b bg-background/95 backdrop-blur-sm">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="p-2 rounded-lg bg-primary/10 text-primary mobile-touch-target">
+              <BarChart3 className="w-5 h-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-base sm:text-lg font-bold text-foreground truncate">{name} Chart</h2>
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                {selectedTimeframe.toUpperCase()} • {chartType === 'line' ? 'Line Chart' : 'Candlestick Chart'}
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2 shrink-0">
+            {!isLandscape && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsFullScreen(false)}
+                className="mobile-touch-target"
+              >
+                <Maximize2 className="w-4 h-4" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsFullScreen(false)}
+              className="mobile-touch-target"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Full-screen chart header */}
+        <div className="px-3 sm:px-4 py-2 border-b bg-background/95">
+          <ChartHeader
+            name={name}
+            selectedTimeframe={selectedTimeframe}
+            onTimeframeChange={setSelectedTimeframe}
+            chartType={chartType}
+            onChartTypeChange={setChartType}
+            dataPoints={data.length}
+            loading={loading}
+            isPositiveTrend={isPositiveTrend}
+            priceChange={priceChange}
+          />
+        </div>
+
+        {/* Full-screen chart */}
+        <div className="flex-1 p-3 sm:p-4">
+          <div className="w-full h-full bg-gradient-to-br from-background/50 to-muted/20 rounded-xl border border-border/30">
+            <ChartContainer
+              data={data}
+              name={name}
+              selectedTimeframe={selectedTimeframe}
+              chartType={chartType}
+              loading={loading}
+              error={error}
+              isPositiveTrend={isPositiveTrend}
+            />
+          </div>
+        </div>
+
+        {/* Full-screen footer */}
+        <div className="px-3 sm:px-4 py-2 border-t bg-background/95">
+          <ChartFooter
+            name={name}
+            selectedTimeframe={selectedTimeframe}
+            loading={loading}
+            error={error}
+            isPositiveTrend={isPositiveTrend}
+            displayPrice={displayPrice}
+            isPremium={isPremium}
+            currentPrice={currentPrice}
+          />
+        </div>
+
+        {/* Full-screen instructions */}
+        <div className="px-3 sm:px-4 py-2 text-center bg-background/80">
+          <p className="text-2xs sm:text-xs text-muted-foreground">
+            {isLandscape ? 'Rotate to portrait to exit full screen' : 'Tap X to exit full screen'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Regular chart component
   return (
     <Card className="p-4 sm:p-6 mt-4 sm:mt-6 bg-gradient-to-br from-card/80 to-muted/20 border border-border/50 shadow-soft hover:shadow-medium transition-all duration-300 animate-fade-in">
-      <ChartHeader
-        name={name}
-        selectedTimeframe={selectedTimeframe}
-        onTimeframeChange={setSelectedTimeframe}
-        chartType={chartType}
-        onChartTypeChange={setChartType}
-        dataPoints={data.length}
-        loading={loading}
-        isPositiveTrend={isPositiveTrend}
-        priceChange={priceChange}
-      />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <ChartHeader
+          name={name}
+          selectedTimeframe={selectedTimeframe}
+          onTimeframeChange={setSelectedTimeframe}
+          chartType={chartType}
+          onChartTypeChange={setChartType}
+          dataPoints={data.length}
+          loading={loading}
+          isPositiveTrend={isPositiveTrend}
+          priceChange={priceChange}
+        />
+
+        {/* Full-screen toggle for mobile */}
+        {isMobile && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsFullScreen(true)}
+            className="mobile-touch-target w-full sm:w-auto"
+          >
+            <Maximize2 className="w-4 h-4 mr-2" />
+            Full Screen
+          </Button>
+        )}
+      </div>
 
       <div className="h-[200px] sm:h-[250px] lg:h-[300px] w-full p-2 sm:p-4 bg-gradient-to-br from-background/50 to-muted/20 rounded-xl border border-border/30">
         <ChartContainer
