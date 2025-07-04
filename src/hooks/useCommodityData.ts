@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface CommodityPrice {
   symbol: string;
@@ -35,6 +36,11 @@ export const useCommodityPrice = (commodityName: string) => {
   const [price, setPrice] = useState<CommodityPrice | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { profile } = useAuth();
+
+  // Check if user has premium subscription (real-time access)
+  const isPremiumUser = profile?.subscription_active && 
+    (profile?.subscription_tier === 'premium' || profile?.subscription_tier === 'pro');
 
   useEffect(() => {
     const fetchPrice = async () => {
@@ -43,7 +49,7 @@ export const useCommodityPrice = (commodityName: string) => {
         setError(null);
         
         const { data, error: functionError } = await supabase.functions.invoke('fetch-commodity-prices', {
-          body: { commodityName }
+          body: { commodityName, isPremium: isPremiumUser }
         });
 
         if (functionError) {
@@ -61,11 +67,12 @@ export const useCommodityPrice = (commodityName: string) => {
 
     fetchPrice();
     
-    // Refresh price every 5 minutes
-    const interval = setInterval(fetchPrice, 5 * 60 * 1000);
+    // Premium users get real-time updates (every 30 seconds), regular users get 15-minute updates
+    const refreshInterval = isPremiumUser ? 30 * 1000 : 15 * 60 * 1000;
+    const interval = setInterval(fetchPrice, refreshInterval);
     
     return () => clearInterval(interval);
-  }, [commodityName]);
+  }, [commodityName, isPremiumUser]);
 
   return { price, loading, error };
 };
@@ -105,6 +112,11 @@ export const useCommodityHistoricalData = (commodityName: string, timeframe: str
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { profile } = useAuth();
+
+  // Check if user has premium subscription
+  const isPremiumUser = profile?.subscription_active && 
+    (profile?.subscription_tier === 'premium' || profile?.subscription_tier === 'pro');
 
   useEffect(() => {
     const fetchHistoricalData = async () => {
@@ -113,7 +125,7 @@ export const useCommodityHistoricalData = (commodityName: string, timeframe: str
         setError(null);
         
         const { data: responseData, error: functionError } = await supabase.functions.invoke('fetch-commodity-data', {
-          body: { commodityName, timeframe }
+          body: { commodityName, timeframe, isPremium: isPremiumUser }
         });
 
         if (functionError) {
@@ -130,7 +142,7 @@ export const useCommodityHistoricalData = (commodityName: string, timeframe: str
     };
 
     fetchHistoricalData();
-  }, [commodityName, timeframe]);
+  }, [commodityName, timeframe, isPremiumUser]);
 
   return { data, loading, error };
 };

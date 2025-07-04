@@ -71,27 +71,7 @@ const getBasePriceForCommodity = (commodityName: string): number => {
   return basePrices[commodityName] || 100;
 };
 
-async function fetchPriceFromFMP(symbol: string, apiKey: string) {
-  const response = await fetch(
-    `https://financialmodelingprep.com/api/v3/quote/${symbol}?apikey=${apiKey}`
-  );
-  
-  if (!response.ok) {
-    throw new Error(`FMP API error: ${response.status}`);
-  }
-  
-  const data = await response.json();
-  if (!Array.isArray(data) || data.length === 0) return null;
-  
-  const quote = data[0];
-  return {
-    symbol: symbol,
-    price: parseFloat(quote.price) || 0,
-    change: parseFloat(quote.change) || 0,
-    changePercent: parseFloat(quote.changesPercentage) || 0,
-    lastUpdate: new Date().toISOString()
-  };
-}
+// Removed fetchPriceFromFMP function - handled directly in main function for better premium user support
 
 // Removed Alpha Vantage API - using FMP API only for consistency
 
@@ -101,7 +81,7 @@ serve(async (req) => {
   }
 
   try {
-    const { commodityName } = await req.json()
+    const { commodityName, isPremium } = await req.json()
     
     if (!commodityName) {
       return new Response(
@@ -110,7 +90,7 @@ serve(async (req) => {
       )
     }
 
-    console.log(`Fetching current price for ${commodityName}`)
+    console.log(`Fetching current price for ${commodityName} (Premium: ${isPremium || false})`)
 
     // Get FMP API key from Supabase secrets
     const fmpApiKey = Deno.env.get('FMP_API_KEY')
@@ -125,8 +105,30 @@ serve(async (req) => {
     // Try FMP API if we have an API key
     if (fmpApiKey && fmpApiKey !== 'demo') {
       try {
-        priceData = await fetchPriceFromFMP(symbol, fmpApiKey)
-        console.log(`Successfully fetched price from FMP for ${commodityName}:`, priceData)
+        // For premium users, use real-time quotes endpoint for more accurate data
+        const endpoint = isPremium 
+          ? `https://financialmodelingprep.com/api/v3/quote/${symbol}?apikey=${fmpApiKey}`
+          : `https://financialmodelingprep.com/api/v3/quote/${symbol}?apikey=${fmpApiKey}`;
+        
+        const response = await fetch(endpoint);
+        
+        if (!response.ok) {
+          throw new Error(`FMP API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        if (!Array.isArray(data) || data.length === 0) throw new Error('No data returned');
+        
+        const quote = data[0];
+        priceData = {
+          symbol: symbol,
+          price: parseFloat(quote.price) || 0,
+          change: parseFloat(quote.change) || 0,
+          changePercent: parseFloat(quote.changesPercentage) || 0,
+          lastUpdate: new Date().toISOString()
+        };
+        
+        console.log(`Successfully fetched ${isPremium ? 'real-time' : 'standard'} price from FMP for ${commodityName}:`, priceData)
       } catch (error) {
         console.warn(`FMP API failed for ${commodityName}:`, error)
       }
@@ -152,7 +154,8 @@ serve(async (req) => {
         price: priceData,
         source: priceData && fmpApiKey && fmpApiKey !== 'demo' ? 'fmp' : 'fallback',
         commodity: commodityName,
-        symbol: symbol
+        symbol: symbol,
+        realTime: isPremium || false
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

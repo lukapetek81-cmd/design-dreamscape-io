@@ -38,9 +38,11 @@ const COMMODITY_SYMBOLS: Record<string, string> = {
   'Cocoa': 'CCUSD'
 };
 
-const generateFallbackData = (commodityName: string, timeframe: string, basePrice: number) => {
-  // Increase data points for longer timeframes to prevent flat tails
-  const dataPoints = timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180; // 6m = 180 days
+const generateFallbackData = (commodityName: string, timeframe: string, basePrice: number, isPremium: boolean = false) => {
+  // Premium users get more data points for better granularity
+  const dataPoints = isPremium 
+    ? (timeframe === '1d' ? 48 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : 365) 
+    : (timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180);
   const data: any[] = [];
   const now = new Date();
   
@@ -176,33 +178,7 @@ const getBasePriceForCommodity = (commodityName: string): number => {
   return basePrices[commodityName] || 100;
 };
 
-async function fetchFromFMP(symbol: string, timeframe: string, apiKey: string) {
-  // Increase data points for longer timeframes to prevent flat tails
-  const timeSeriesParam = timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180; // 6m = 180 days
-  
-  const response = await fetch(
-    `https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${apiKey}&timeseries=${timeSeriesParam}`
-  );
-  
-  if (!response.ok) {
-    throw new Error(`FMP API error: ${response.status}`);
-  }
-  
-  const data = await response.json();
-  
-  if (data.historical && Array.isArray(data.historical)) {
-    // For longer timeframes, ensure we get the right amount of data
-    const maxDataPoints = timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180;
-    const historicalData = data.historical.slice(0, maxDataPoints);
-    
-    return historicalData.map((item: any) => ({
-      date: item.date,
-      price: parseFloat(item.close)
-    })).reverse(); // Reverse to get chronological order
-  }
-  
-  return null;
-}
+// Removed fetchFromFMP function - handled directly in main function for better premium user support
 
 // Removed Alpha Vantage API - using FMP API only for consistency
 
@@ -212,7 +188,7 @@ serve(async (req) => {
   }
 
   try {
-    const { commodityName, timeframe } = await req.json()
+    const { commodityName, timeframe, isPremium } = await req.json()
     
     if (!commodityName || !timeframe) {
       return new Response(
@@ -221,7 +197,7 @@ serve(async (req) => {
       )
     }
 
-    console.log(`Fetching data for ${commodityName}, timeframe: ${timeframe}`)
+    console.log(`Fetching data for ${commodityName}, timeframe: ${timeframe} (Premium: ${isPremium || false})`)
 
     // Get FMP API key from Supabase secrets
     const fmpApiKey = Deno.env.get('FMP_API_KEY')
@@ -236,8 +212,35 @@ serve(async (req) => {
     // Try FMP API if we have an API key
     if (fmpApiKey && fmpApiKey !== 'demo') {
       try {
-        historicalData = await fetchFromFMP(symbol, timeframe, fmpApiKey)
-        console.log(`Successfully fetched ${historicalData?.length || 0} data points from FMP for ${commodityName}`)
+        // For premium users, use more comprehensive data points
+        const dataPoints = isPremium 
+          ? (timeframe === '1d' ? 48 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : 365) // Premium gets more data
+          : (timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180); // Standard users
+        
+        const response = await fetch(
+          `https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${fmpApiKey}&timeseries=${dataPoints}`
+        );
+        
+        if (!response.ok) {
+          throw new Error(`FMP API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.historical && Array.isArray(data.historical)) {
+          const maxDataPoints = isPremium 
+            ? (timeframe === '1d' ? 48 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : 365) // Premium gets more granular data
+            : (timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180);
+          
+          const historicalData = data.historical.slice(0, maxDataPoints);
+          
+          historicalData = historicalData.map((item: any) => ({
+            date: item.date,
+            price: parseFloat(item.close)
+          })).reverse(); // Reverse to get chronological order
+        }
+        
+        console.log(`Successfully fetched ${historicalData?.length || 0} ${isPremium ? 'premium' : 'standard'} data points from FMP for ${commodityName}`)
       } catch (error) {
         console.warn(`FMP API failed for ${commodityName}:`, error)
       }
@@ -247,9 +250,9 @@ serve(async (req) => {
 
     // Use fallback data if FMP API failed
     if (!historicalData) {
-      console.log(`Using fallback data for ${commodityName}`)
+      console.log(`Using ${isPremium ? 'enhanced' : 'standard'} fallback data for ${commodityName}`)
       const basePrice = getBasePriceForCommodity(commodityName)
-      historicalData = generateFallbackData(commodityName, timeframe, basePrice)
+      historicalData = generateFallbackData(commodityName, timeframe, basePrice, isPremium)
     }
 
     return new Response(
@@ -257,7 +260,9 @@ serve(async (req) => {
         data: historicalData,
         source: historicalData && historicalData.length > 0 && fmpApiKey && fmpApiKey !== 'demo' ? 'fmp' : 'fallback',
         commodity: commodityName,
-        symbol: symbol
+        symbol: symbol,
+        realTime: isPremium || false,
+        dataPoints: historicalData?.length || 0
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
