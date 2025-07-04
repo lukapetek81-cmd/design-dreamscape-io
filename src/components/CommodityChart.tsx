@@ -29,27 +29,40 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
   // Detect orientation changes
   React.useEffect(() => {
     const checkOrientation = () => {
-      // Add small delay to sync with sidebar logic and prevent lag
-      setTimeout(() => {
-        const isLandscapeMode = window.innerWidth > window.innerHeight && isMobile;
-        setIsLandscape(isLandscapeMode);
-        
-        // Auto full-screen on landscape for mobile
-        if (isLandscapeMode && isMobile) {
-          setIsFullScreen(true);
-        } else if (!isLandscapeMode) {
-          setIsFullScreen(false);
-        }
-      }, 150); // Slightly longer delay than sidebar to ensure proper sequencing
+      const isLandscapeMode = window.innerWidth > window.innerHeight && isMobile;
+      setIsLandscape(isLandscapeMode);
+      
+      // Auto full-screen on landscape for mobile - immediate response
+      if (isLandscapeMode && isMobile) {
+        setIsFullScreen(true);
+      } else if (!isLandscapeMode) {
+        setIsFullScreen(false);
+      }
     };
 
+    // Immediate check on mount
     checkOrientation();
-    window.addEventListener('resize', checkOrientation);
-    window.addEventListener('orientationchange', checkOrientation);
+    
+    // Use screen.orientation for immediate response
+    const handleOrientationChange = () => {
+      // Small delay only for resize to prevent layout thrashing
+      setTimeout(checkOrientation, 50);
+    };
+
+    window.addEventListener('resize', handleOrientationChange);
+    window.addEventListener('orientationchange', checkOrientation); // Immediate for orientation change
+    
+    // Also listen for screen orientation changes if available - immediate response
+    if (screen.orientation) {
+      screen.orientation.addEventListener('change', checkOrientation);
+    }
 
     return () => {
-      window.removeEventListener('resize', checkOrientation);
+      window.removeEventListener('resize', handleOrientationChange);
       window.removeEventListener('orientationchange', checkOrientation);
+      if (screen.orientation) {
+        screen.orientation.removeEventListener('change', checkOrientation);
+      }
     };
   }, [isMobile]);
 
