@@ -101,12 +101,12 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
                 
                 return (
                   <SidebarMenuItem key={group.id}>
-                    <SidebarMenuButton
+                     <SidebarMenuButton
                       isActive={isActive}
                       onClick={() => handleGroupSelect(group.id)}
                       className={`flex items-center gap-3 rounded-lg transition-all duration-200 ${
                         isMobile 
-                          ? 'px-4 py-4 min-h-[56px] active:scale-95 touch-manipulation' 
+                          ? 'px-6 py-6 min-h-[72px] active:scale-95 touch-manipulation text-base' 
                           : 'px-3 py-2'
                       }`}
                     >
@@ -140,16 +140,16 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
               <div 
                 className={`rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 cursor-pointer transition-all duration-200 ${
                   isMobile 
-                    ? 'p-4 min-h-[56px] active:scale-95 touch-manipulation' 
+                    ? 'p-6 min-h-[72px] active:scale-95 touch-manipulation' 
                     : 'p-3'
                 }`}
                 onClick={() => handleNavigate('/live-feed')}
               >
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Market News</span>
+                  <span className={`font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider ${isMobile ? 'text-sm' : 'text-xs'}`}>Market News</span>
                   <div className="flex items-center gap-1">
                     <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm font-bold text-blue-900 dark:text-blue-100">Live Feed</span>
+                    <span className={`font-bold text-blue-900 dark:text-blue-100 ${isMobile ? 'text-base' : 'text-sm'}`}>Live Feed</span>
                   </div>
                 </div>
               </div>
