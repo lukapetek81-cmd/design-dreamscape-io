@@ -340,10 +340,10 @@ const MarketScreener = () => {
                          <th 
                            className="text-right p-3 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
                            onClick={() => handleSort('volume')}
-                           title="Daily trading volume in thousands"
+                           title="Daily contract volume traded (in thousands of contracts)"
                          >
                            <div className="flex items-center justify-end gap-2">
-                             Volume (K)
+                             Volume (K contracts)
                              {getSortIcon('volume')}
                            </div>
                          </th>
