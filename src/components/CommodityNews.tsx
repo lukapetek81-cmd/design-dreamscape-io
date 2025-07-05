@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Settings } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { EnhancedNewsItem, fetchNewsFromFMP } from '@/services/newsHelpers';
+import { EnhancedNewsItem, fetchNewsFromFMP, fetchNewsFromMarketaux } from '@/services/newsHelpers';
 import EnhancedNewsCard from './EnhancedNewsCard';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -36,11 +36,16 @@ const CommodityNews = ({ commodity }: CommodityNewsProps) => {
         setLoading(true);
         setError(null);
         
-        // Use enhanced news fetching
-        const enhancedNews = await fetchNewsFromFMP(commodity);
+        // Use both enhanced news APIs
+        const [fmpNews, marketauxNews] = await Promise.all([
+          fetchNewsFromFMP(commodity),
+          fetchNewsFromMarketaux(commodity)
+        ]);
+        
+        const combinedNews = [...marketauxNews, ...fmpNews];
         
         // If no enhanced news, try edge function as fallback
-        if (enhancedNews.length === 0) {
+        if (combinedNews.length === 0) {
           const { data, error: functionError } = await supabase.functions.invoke('fetch-commodity-news', {
             body: { category: 'all', commodity }
           });
@@ -57,11 +62,11 @@ const CommodityNews = ({ commodity }: CommodityNewsProps) => {
           const relevantNews = (data.articles || []).filter((article: any) => {
             const content = (article.title + ' ' + article.description).toLowerCase();
             return commodityKeywords.some(keyword => content.includes(keyword));
-          }).slice(0, 5);
+          }).slice(0, 15); // Increased limit for fallback
 
           setNews(relevantNews);
         } else {
-          setNews(enhancedNews);
+          setNews(combinedNews);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch news');

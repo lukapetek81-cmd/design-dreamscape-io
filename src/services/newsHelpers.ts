@@ -18,8 +18,8 @@ export interface EnhancedNewsItem extends NewsItem {
 }
 
 const NEWS_SOURCES: Record<string, NewsSourceConfig> = {
-  marketaux: { name: 'Marketaux', priority: 1, maxArticles: 8, enabled: true },
-  fmp: { name: 'FMP', priority: 2, maxArticles: 7, enabled: true }
+  marketaux: { name: 'Marketaux', priority: 1, maxArticles: 12, enabled: true },
+  fmp: { name: 'FMP', priority: 2, maxArticles: 10, enabled: true }
 };
 
 // Utility functions first
@@ -132,7 +132,7 @@ export const fetchNewsFromMarketaux = async (commodityName: string): Promise<Enh
     const query = buildEnhancedNewsQuery(commodityName);
     
     const response = await fetch(
-      `https://api.marketaux.com/v1/news/all?symbols=${symbols}&filter_entities=true&language=en&api_token=${apiKey}&limit=5`
+      `https://api.marketaux.com/v1/news/all?symbols=${symbols}&filter_entities=true&language=en&api_token=${apiKey}&limit=12`
     );
     
     if (!response.ok) throw new Error(`Marketaux API error: ${response.status}`);
@@ -176,7 +176,7 @@ export const fetchNewsFromFMP = async (commodityName: string): Promise<EnhancedN
     
     return data
       .filter(article => isRelevantToCommodity(article.title, article.text, commodityName))
-      .slice(0, 4)
+      .slice(0, 10)
       .map((article: any, index: number) => ({
         id: `fmp_${commodityName}_${index}_${Date.now()}`,
         title: article.title || `${commodityName} Market Update`,
