@@ -155,6 +155,9 @@ const MarketScreener = () => {
             <ArrowLeft className="w-4 h-4" />
             Back
           </Button>
+          <div className="text-sm text-muted-foreground">
+            Real-time data • Last updated: {new Date().toLocaleString()}
+          </div>
         </div>
         
         <div>
@@ -280,12 +283,12 @@ const MarketScreener = () => {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg">Screening Results</CardTitle>
-                  <CardDescription>
-                    {filteredCommodities.length} commodities match your criteria
-                  </CardDescription>
-                </div>
+                 <div>
+                   <CardTitle className="text-lg">Screening Results</CardTitle>
+                   <CardDescription>
+                     {filteredCommodities.length} commodities match your criteria • Data updated: {new Date().toLocaleTimeString()}
+                   </CardDescription>
+                 </div>
                  <Badge variant="secondary">
                    {filteredCommodities.length} / {(commodities || []).length}
                  </Badge>
@@ -337,15 +340,17 @@ const MarketScreener = () => {
                          <th 
                            className="text-right p-3 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
                            onClick={() => handleSort('volume')}
+                           title="Daily trading volume in thousands"
                          >
                            <div className="flex items-center justify-end gap-2">
-                             Volume
+                             Volume (K)
                              {getSortIcon('volume')}
                            </div>
                          </th>
                          <th 
                            className="text-right p-3 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
                            onClick={() => handleSort('weekHigh')}
+                           title="52-week high price"
                          >
                            <div className="flex items-center justify-end gap-2">
                              52W High
@@ -355,6 +360,7 @@ const MarketScreener = () => {
                          <th 
                            className="text-right p-3 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
                            onClick={() => handleSort('weekLow')}
+                           title="52-week low price"
                          >
                            <div className="flex items-center justify-end gap-2">
                              52W Low
@@ -364,9 +370,10 @@ const MarketScreener = () => {
                          <th 
                            className="text-right p-3 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
                            onClick={() => handleSort('volatility')}
+                           title="Annualized volatility percentage"
                          >
                            <div className="flex items-center justify-end gap-2">
-                             Volatility
+                             Volatility (%)
                              {getSortIcon('volatility')}
                            </div>
                          </th>
@@ -400,8 +407,8 @@ const MarketScreener = () => {
                           </td>
                           <td className="p-3 text-right font-medium">{commodity.volumeDisplay}</td>
                           <td className="p-3 text-right">${commodity.weekHigh.toFixed(2)}</td>
-                          <td className="p-3 text-right">${commodity.weekLow.toFixed(2)}</td>
-                          <td className="p-3 text-right">{commodity.volatility}%</td>
+                           <td className="p-3 text-right">${commodity.weekLow.toFixed(2)}</td>
+                           <td className="p-3 text-right">{commodity.volatility}%</td>
                           <td className="p-3 text-center">
                             <Button variant="ghost" size="sm">
                               <BarChart3 className="w-4 h-4" />
