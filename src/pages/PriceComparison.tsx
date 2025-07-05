@@ -8,10 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart, Plus, X, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { BarChart, Plus, X, TrendingUp, TrendingDown, Minus, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface Commodity {
   name: string;
@@ -49,6 +50,7 @@ const PriceComparison = () => {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const commodityCounts = {
     energy: 0, metals: 0, grains: 0, livestock: 0, softs: 0, other: 0
@@ -220,6 +222,14 @@ const PriceComparison = () => {
           <header className="flex h-16 shrink-0 items-center border-b px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(-1)}
+              className="mr-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
             <div className="flex items-center gap-2">
               <BarChart className="h-6 w-6 text-primary" />
               <h1 className="text-xl font-semibold">Price Comparison</h1>

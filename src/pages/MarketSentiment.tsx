@@ -9,10 +9,11 @@ import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TrendingUp, TrendingDown, BarChart3, Users, Star, MessageCircle } from "lucide-react";
+import { TrendingUp, TrendingDown, BarChart3, Users, Star, MessageCircle, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface SentimentAggregate {
   id: string;
@@ -48,6 +49,7 @@ const MarketSentiment = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const commodityCounts = {
     energy: 0, metals: 0, grains: 0, livestock: 0, softs: 0, other: 0
@@ -173,6 +175,14 @@ const MarketSentiment = () => {
           <header className="flex h-16 shrink-0 items-center border-b px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(-1)}
+              className="mr-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
             <div className="flex items-center gap-2">
               <BarChart3 className="h-6 w-6 text-primary" />
               <h1 className="text-xl font-semibold">Market Sentiment</h1>
