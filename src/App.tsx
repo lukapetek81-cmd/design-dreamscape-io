@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import LiveFeed from "./pages/LiveFeed";
+import Portfolio from "./pages/Portfolio";
 import Billing from "./pages/Billing";
 import NotFound from "./pages/NotFound";
 
@@ -27,6 +28,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/live-feed" element={<LiveFeed />} />
+              <Route path="/portfolio" element={<Portfolio />} />
               <Route path="/billing" element={<Billing />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

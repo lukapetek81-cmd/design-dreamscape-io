@@ -10,7 +10,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Zap, Coins, Wheat, TrendingUp, Beef, Coffee, Package, Newspaper, Moon, Sun, Monitor } from "lucide-react";
+import { Zap, Coins, Wheat, TrendingUp, Beef, Coffee, Package, Newspaper, Moon, Sun, Monitor, Briefcase } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -201,10 +201,27 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
         
         <SidebarGroup className="mt-8">
           <SidebarGroupLabel className={`font-bold text-muted-foreground uppercase tracking-wider ${isMobile ? 'text-sm px-6 py-4' : 'text-xs px-4 py-3'}`}>
-            Market Statistics
+            Market Tools
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <div className={`space-y-4 ${isMobile ? 'px-6 py-3' : 'px-4 py-3'}`}>
+              <div 
+                className={`rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 cursor-pointer transition-all duration-200 ${
+                  isMobile 
+                    ? 'p-6 min-h-[72px] active:scale-95 touch-manipulation mx-2' 
+                    : 'p-3'
+                }`}
+                onClick={() => handleNavigate('/portfolio')}
+              >
+                <div className="flex justify-between items-center">
+                  <span className={`font-semibold text-green-600 dark:text-green-400 uppercase tracking-wider ${isMobile ? 'text-sm' : 'text-xs'}`}>Portfolio</span>
+                  <div className="flex items-center gap-1">
+                    <Briefcase className="w-4 h-4 text-green-500" />
+                    <span className={`font-bold text-green-900 dark:text-green-100 ${isMobile ? 'text-base' : 'text-sm'}`}>Track</span>
+                  </div>
+                </div>
+              </div>
+              
               <div 
                 className={`rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 cursor-pointer transition-all duration-200 ${
                   isMobile 
