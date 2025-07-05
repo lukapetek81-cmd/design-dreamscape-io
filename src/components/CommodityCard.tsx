@@ -56,10 +56,9 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
     if (name.includes('gold') || name.includes('silver') || name.includes('platinum') || name.includes('palladium')) return 'USD/oz';
     if (name.includes('copper')) return 'USD/lb';
     
-    // Grains and Agricultural 
-    if (name.includes('corn') || name.includes('wheat') || name.includes('soybeans')) return 'cents/bu';
-    if (name.includes('oats')) return 'USD/bu'; // Oats are priced in dollars per bushel
-    if (name.includes('rice')) return 'USD/cwt'; // Rice is priced in dollars per cwt
+    // Grains and Agricultural (priced in cents)
+    if (name.includes('corn') || name.includes('wheat') || name.includes('soybean') || name.includes('oat')) return 'cents/bu';
+    if (name.includes('rice')) return 'USD/cwt';
     if (name.includes('soybean meal')) return 'USD/ton';
     if (name.includes('soybean oil')) return 'cents/lb';
     
