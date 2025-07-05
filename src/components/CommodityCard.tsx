@@ -48,29 +48,37 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
     const name = commodityName.toLowerCase();
     
     // Energy commodities
-    if (name.includes('crude') || name.includes('oil')) return 'USD/bbl';
+    if (name.includes('crude') || (name.includes('oil') && !name.includes('heating'))) return 'USD/bbl';
     if (name.includes('natural gas')) return 'USD/MMBtu';
-    if (name.includes('gasoline') || name.includes('heating oil')) return 'USD/gal';
+    if (name.includes('gasoline') || name.includes('rbob')) return 'USD/gal';
+    if (name.includes('heating oil')) return 'USD/gal';
+    if (name.includes('brent')) return 'USD/bbl';
     
     // Metals
-    if (name.includes('gold') || name.includes('silver') || name.includes('platinum') || name.includes('palladium')) return 'USD/oz';
+    if (name.includes('gold')) return 'USD/oz';
+    if (name.includes('silver')) return 'USD/oz';
+    if (name.includes('platinum')) return 'USD/oz';
+    if (name.includes('palladium')) return 'USD/oz';
     if (name.includes('copper')) return 'USD/lb';
     
     // Grains and Agricultural (priced in cents)
-    if (name.includes('corn') || name.includes('wheat') || name.includes('oats') || name.includes('soybeans')) return 'cents/bu';
+    if (name.includes('corn')) return 'cents/bu';
+    if (name.includes('wheat')) return 'cents/bu';
+    if (name.includes('oat')) return 'cents/bu';
+    if (name.includes('soybean') && !name.includes('meal') && !name.includes('oil')) return 'cents/bu';
     if (name.includes('rice')) return 'cents/cwt';
     if (name.includes('soybean meal')) return 'USD/ton';
     if (name.includes('soybean oil')) return 'cents/lb';
     
     // Livestock (priced in cents)
     if (name.includes('cattle')) return 'cents/lb';
-    if (name.includes('hogs')) return 'cents/lb';
+    if (name.includes('hog')) return 'cents/lb';
     
-    // Softs (priced in cents)
+    // Softs
     if (name.includes('cocoa')) return 'USD/MT';
     if (name.includes('coffee')) return 'cents/lb';
     if (name.includes('cotton')) return 'cents/lb';
-    if (name.includes('lumber')) return 'USD/1000ft';
+    if (name.includes('lumber')) return 'USD/1000 bd ft';
     if (name.includes('orange juice')) return 'cents/lb';
     if (name.includes('sugar')) return 'cents/lb';
     
@@ -161,6 +169,11 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                       <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground number-display transition-colors group-hover:text-primary">
                         {formatPrice(currentPrice, name)}
                       </p>
+                      <span className="text-xs sm:text-sm font-medium text-muted-foreground">
+                        {getPriceUnits(name)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
                       <span className={`text-2xs sm:text-xs font-medium px-1.5 py-0.5 rounded ${
                         isRealTime 
                           ? 'bg-blue-100 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400' 
