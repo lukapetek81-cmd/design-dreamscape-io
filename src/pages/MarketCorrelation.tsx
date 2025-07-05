@@ -11,14 +11,14 @@ import { useNavigate } from 'react-router-dom';
 const MarketCorrelation = () => {
   const [timeframe, setTimeframe] = useState('30d');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const { commodities } = useAvailableCommodities();
+  const { data: commodities } = useAvailableCommodities();
   const { profile } = useAuth();
   const navigate = useNavigate();
 
   // Filter commodities by category
   const filteredCommodities = selectedCategory === 'all' 
-    ? commodities 
-    : commodities.filter(c => c.category === selectedCategory);
+    ? (commodities || [])
+    : (commodities || []).filter(c => c.category === selectedCategory);
 
   // Mock correlation data - in a real app, this would be calculated from historical price data
   const generateCorrelationMatrix = () => {
@@ -62,7 +62,7 @@ const MarketCorrelation = () => {
     return 'Very Weak';
   };
 
-  const categories = ['all', ...Array.from(new Set(commodities.map(c => c.category)))];
+  const categories = ['all', ...Array.from(new Set((commodities || []).map((c: any) => c.category)))];
 
   return (
     <div className="container mx-auto p-4 space-y-6">
@@ -108,7 +108,7 @@ const MarketCorrelation = () => {
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
-              {categories.map(category => (
+              {categories.map((category: any) => (
                 <SelectItem key={category} value={category}>
                   {category === 'all' ? 'All Categories' : category.charAt(0).toUpperCase() + category.slice(1)}
                 </SelectItem>

@@ -22,7 +22,7 @@ interface RiskCalculation {
 const RiskCalculator = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
-  const { commodities } = useAvailableCommodities();
+  const { data: commodities } = useAvailableCommodities();
 
   const [accountBalance, setAccountBalance] = useState('10000');
   const [riskPercentage, setRiskPercentage] = useState([2]);

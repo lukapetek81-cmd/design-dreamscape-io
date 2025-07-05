@@ -21,57 +21,45 @@ export interface Commodity {
   name: string;
   symbol: string;
   price: number;
+  change: number;
   changePercent: number;
   venue: string;
   contractSize?: string;
   category: string;
+  // Enhanced fields for Market Screener
+  volume: number;
+  volumeDisplay: string;
+  weekHigh: number;
+  weekLow: number;
+  volatility: number;
+  beta: string;
+  avgVolume: number;
+  marketCap: string;
 }
 
 export const useAvailableCommodities = () => {
-  // Mock commodity data - replace with actual API call if needed
-  const commodities: Commodity[] = [
-    // Energy
-    { name: 'Crude Oil', symbol: 'CL=F', price: 65.50, changePercent: 1.2, venue: 'NYMEX', contractSize: '1,000 bbl', category: 'energy' },
-    { name: 'Natural Gas', symbol: 'NG=F', price: 2.85, changePercent: -0.5, venue: 'NYMEX', contractSize: '10,000 MMBtu', category: 'energy' },
-    { name: 'Gasoline RBOB', symbol: 'RB=F', price: 2.1, changePercent: 0.8, venue: 'NYMEX', contractSize: '42,000 gal', category: 'energy' },
-    { name: 'Heating Oil', symbol: 'HO=F', price: 2.3, changePercent: 1.1, venue: 'NYMEX', contractSize: '42,000 gal', category: 'energy' },
-    { name: 'Brent Crude Oil', symbol: 'BZ=F', price: 67.20, changePercent: 1.4, venue: 'ICE', contractSize: '1,000 bbl', category: 'energy' },
-    
-    // Metals
-    { name: 'Gold Futures', symbol: 'GC=F', price: 2000.50, changePercent: 0.3, venue: 'COMEX', contractSize: '100 oz', category: 'metals' },
-    { name: 'Silver Futures', symbol: 'SI=F', price: 25.75, changePercent: -0.2, venue: 'COMEX', contractSize: '5,000 oz', category: 'metals' },
-    { name: 'Copper', symbol: 'HG=F', price: 4.20, changePercent: 1.5, venue: 'COMEX', contractSize: '25,000 lbs', category: 'metals' },
-    { name: 'Platinum', symbol: 'PL=F', price: 1050.00, changePercent: 0.7, venue: 'NYMEX', contractSize: '50 oz', category: 'metals' },
-    { name: 'Palladium', symbol: 'PA=F', price: 1200.00, changePercent: -1.2, venue: 'NYMEX', contractSize: '100 oz', category: 'metals' },
-    
-    // Grains
-    { name: 'Corn Futures', symbol: 'ZC=F', price: 430.25, changePercent: 2.1, venue: 'CBOT', contractSize: '5,000 bu', category: 'grains' },
-    { name: 'Wheat Futures', symbol: 'ZW=F', price: 550.75, changePercent: 1.8, venue: 'CBOT', contractSize: '5,000 bu', category: 'grains' },
-    { name: 'Soybean Futures', symbol: 'ZS=F', price: 1150.50, changePercent: 1.3, venue: 'CBOT', contractSize: '5,000 bu', category: 'grains' },
-    { name: 'Oat Futures', symbol: 'ZO=F', price: 385.00, changePercent: 0.9, venue: 'CBOT', contractSize: '5,000 bu', category: 'grains' },
-    { name: 'Rough Rice', symbol: 'ZR=F', price: 16.25, changePercent: 0.4, venue: 'CBOT', contractSize: '2,000 cwt', category: 'grains' },
-    
-    // Livestock
-    { name: 'Live Cattle Futures', symbol: 'LE=F', price: 170.50, changePercent: 0.6, venue: 'CME', contractSize: '40,000 lbs', category: 'livestock' },
-    { name: 'Feeder Cattle Futures', symbol: 'GF=F', price: 240.25, changePercent: 0.8, venue: 'CME', contractSize: '50,000 lbs', category: 'livestock' },
-    { name: 'Lean Hogs Futures', symbol: 'HE=F', price: 75.40, changePercent: -0.3, venue: 'CME', contractSize: '40,000 lbs', category: 'livestock' },
-    
-    // Softs
-    { name: 'Coffee', symbol: 'KC=F', price: 165.25, changePercent: 1.2, venue: 'ICE', contractSize: '37,500 lbs', category: 'softs' },
-    { name: 'Sugar', symbol: 'SB=F', price: 19.75, changePercent: 0.5, venue: 'ICE', contractSize: '112,000 lbs', category: 'softs' },
-    { name: 'Cotton', symbol: 'CT=F', price: 72.80, changePercent: 1.1, venue: 'ICE', contractSize: '50,000 lbs', category: 'softs' },
-    { name: 'Cocoa', symbol: 'CC=F', price: 2850.00, changePercent: -0.7, venue: 'ICE', contractSize: '10 MT', category: 'softs' },
-    { name: 'Orange Juice', symbol: 'OJ=F', price: 315.50, changePercent: 0.9, venue: 'ICE', contractSize: '15,000 lbs', category: 'softs' },
-    
-    // Other
-    { name: 'Lumber Futures', symbol: 'LBS=F', price: 485.75, changePercent: 2.3, venue: 'CME', contractSize: '110,000 bd ft', category: 'other' },
-  ];
+  return useQuery({
+    queryKey: ['available-commodities'],
+    queryFn: async (): Promise<Commodity[]> => {
+      try {
+        const { data, error } = await supabase.functions.invoke('fetch-all-commodities');
 
-  return {
-    commodities,
-    loading: false,
-    error: null
-  };
+        if (error) {
+          console.warn('Failed to fetch commodities:', error);
+          throw new Error(error.message);
+        }
+
+        console.log('Raw commodities API response:', data);
+
+        return data?.commodities || [];
+      } catch (error) {
+        console.warn('Error fetching commodities:', error);
+        throw error;
+      }
+    },
+    refetchInterval: 300000, // Refetch every 5 minutes
+    staleTime: 240000, // Consider data stale after 4 minutes
+  });
 };
 
 export interface CommodityHistoricalData {

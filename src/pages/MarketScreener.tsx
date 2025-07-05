@@ -22,7 +22,7 @@ interface ScreenerFilters {
 
 const MarketScreener = () => {
   const navigate = useNavigate();
-  const { commodities } = useAvailableCommodities();
+  const { data: commodities, isLoading, error } = useAvailableCommodities();
   const { profile } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,18 +36,9 @@ const MarketScreener = () => {
     sortOrder: 'desc'
   });
 
-  // Enhanced commodity data with mock additional fields
+  // Commodities now come with enhanced data from API
   const enhancedCommodities = useMemo(() => {
-    return commodities.map(commodity => ({
-      ...commodity,
-      volume: Math.floor(Math.random() * 100) + 'M',
-      marketCap: Math.floor(Math.random() * 1000) + 'B',
-      weekHigh: commodity.price * (1 + Math.random() * 0.2),
-      weekLow: commodity.price * (1 - Math.random() * 0.2),
-      volatility: Math.floor(Math.random() * 50) + 10,
-      beta: (Math.random() * 2).toFixed(2),
-      dividend: Math.random() > 0.5 ? (Math.random() * 5).toFixed(2) + '%' : 'N/A'
-    }));
+    return commodities || [];
   }, [commodities]);
 
   const filteredCommodities = useMemo(() => {
@@ -96,8 +87,8 @@ const MarketScreener = () => {
           valueB = b.changePercent;
           break;
         case 'volume':
-          valueA = parseFloat(a.volume);
-          valueB = parseFloat(b.volume);
+          valueA = a.volume;
+          valueB = b.volume;
           break;
         default:
           valueA = a.changePercent;
@@ -123,7 +114,7 @@ const MarketScreener = () => {
     setSearchTerm('');
   };
 
-  const categories = ['all', ...Array.from(new Set(commodities.map(c => c.category)))];
+  const categories = ['all', ...Array.from(new Set((commodities || []).map(c => c.category)))];
 
   return (
     <div className="container mx-auto p-4 space-y-6">
@@ -270,13 +261,23 @@ const MarketScreener = () => {
                     {filteredCommodities.length} commodities match your criteria
                   </CardDescription>
                 </div>
-                <Badge variant="secondary">
-                  {filteredCommodities.length} / {commodities.length}
-                </Badge>
+                 <Badge variant="secondary">
+                   {filteredCommodities.length} / {(commodities || []).length}
+                 </Badge>
               </div>
             </CardHeader>
             <CardContent>
-              {filteredCommodities.length > 0 ? (
+              {isLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Loading commodities...</p>
+                </div>
+               ) : error ? (
+                 <div className="text-center py-8">
+                   <p className="text-red-500 mb-4">Error loading commodities: {error.message}</p>
+                   <Button onClick={() => window.location.reload()}>Retry</Button>
+                 </div>
+              ) : filteredCommodities.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
@@ -316,7 +317,7 @@ const MarketScreener = () => {
                               </span>
                             </div>
                           </td>
-                          <td className="p-3 text-right font-medium">{commodity.volume}</td>
+                          <td className="p-3 text-right font-medium">{commodity.volumeDisplay}</td>
                           <td className="p-3 text-right">${commodity.weekHigh.toFixed(2)}</td>
                           <td className="p-3 text-right">${commodity.weekLow.toFixed(2)}</td>
                           <td className="p-3 text-right">{commodity.volatility}%</td>

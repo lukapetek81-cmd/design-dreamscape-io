@@ -30,7 +30,7 @@ interface WatchlistItem {
 
 const Watchlists = () => {
   const navigate = useNavigate();
-  const { commodities } = useAvailableCommodities();
+  const { data: commodities } = useAvailableCommodities();
   const { profile } = useAuth();
   const [selectedWatchlist, setSelectedWatchlist] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);

@@ -26,8 +26,8 @@ interface RealtimeDataProviderProps {
 }
 
 export const RealtimeDataProvider: React.FC<RealtimeDataProviderProps> = ({ children }) => {
-  const { commodities } = useAvailableCommodities();
-  const commodityNames = commodities.map(c => c.name);
+  const { data: commodities } = useAvailableCommodities();
+  const commodityNames = (commodities || []).map(c => c.name);
   
   const { prices, connected, error, lastUpdate } = useGlobalRealtimeData(commodityNames);
 

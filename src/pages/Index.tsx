@@ -16,7 +16,7 @@ const Index = () => {
   const [activeGroup, setActiveGroup] = React.useState("energy");
   const isMobile = useIsMobile();
   const { user, profile, loading: authLoading } = useAuth();
-  const { commodities, loading, error } = useAvailableCommodities();
+  const { data: commodities, isLoading: commoditiesLoading, error: commoditiesError } = useAvailableCommodities();
   const { connected: realtimeConnected, lastUpdate, error: realtimeError } = useRealtimeDataContext();
 
   // Redirect to auth if not logged in (after loading is complete)
@@ -43,9 +43,9 @@ const Index = () => {
         setActiveGroup={setActiveGroup}
         isMobile={isMobile}
         profile={profile}
-        commodities={commodities}
-        loading={loading}
-        error={error}
+        commodities={commodities || []}
+        loading={commoditiesLoading}
+        error={commoditiesError?.message || null}
         realtimeConnected={realtimeConnected}
       />
     </SidebarProvider>
