@@ -1,31 +1,237 @@
-
 import { NewsItem } from './commodityApi';
 
-export const fetchNewsFromFMP = async (commodityName: string): Promise<NewsItem[]> => {
+// Enhanced news source interfaces
+interface NewsSourceConfig {
+  name: string;
+  priority: number;
+  maxArticles: number;
+  enabled: boolean;
+}
+
+// Enhanced news item with sentiment and category
+export interface EnhancedNewsItem extends NewsItem {
+  sentiment?: 'positive' | 'negative' | 'neutral';
+  category?: 'market_analysis' | 'regulatory' | 'supply_demand' | 'economic' | 'general';
+  relevanceScore?: number;
+  tags?: string[];
+  author?: string;
+}
+
+const NEWS_SOURCES: Record<string, NewsSourceConfig> = {
+  marketaux: { name: 'Marketaux', priority: 1, maxArticles: 5, enabled: true },
+  fmp: { name: 'FMP', priority: 2, maxArticles: 4, enabled: true },
+  newsapi: { name: 'NewsAPI', priority: 3, maxArticles: 3, enabled: true },
+  alphavantage: { name: 'Alpha Vantage', priority: 4, maxArticles: 3, enabled: true },
+  polygon: { name: 'Polygon', priority: 5, maxArticles: 2, enabled: true }
+};
+
+// Utility functions first
+const getCommoditySymbols = (commodityName: string): string => {
+  const symbolMap: Record<string, string> = {
+    'Gold Futures': 'GOLD,GLD,IAU',
+    'Silver Futures': 'SILVER,SLV',
+    'Copper': 'COPPER,FCX',
+    'Crude Oil': 'OIL,USO,UCO',
+    'Natural Gas': 'NATGAS,UNG',
+    'Corn Futures': 'CORN',
+    'Wheat Futures': 'WHEAT',
+    'Soybean Futures': 'SOYB'
+  };
+  return symbolMap[commodityName] || commodityName.replace(/\s+/g, '').toUpperCase();
+};
+
+const buildEnhancedNewsQuery = (commodityName: string): string => {
+  return buildNewsQuery(commodityName);
+};
+
+const getCommodityTicker = (commodityName: string): string => {
+  const tickerMap: Record<string, string> = {
+    'Gold Futures': 'GLD',
+    'Silver Futures': 'SLV', 
+    'Crude Oil': 'USO',
+    'Natural Gas': 'UNG'
+  };
+  return tickerMap[commodityName] || 'SPY'; // fallback
+};
+
+// Enhanced analysis functions
+const analyzeSentiment = (title: string, content: string): 'positive' | 'negative' | 'neutral' => {
+  const text = `${title} ${content}`.toLowerCase();
+  
+  const positiveWords = ['rise', 'rising', 'increase', 'bull', 'bullish', 'up', 'gain', 'gains', 'surge', 'soar'];
+  const negativeWords = ['fall', 'falling', 'decline', 'bear', 'bearish', 'down', 'loss', 'losses', 'plunge', 'drop'];
+  
+  let positiveScore = 0;
+  let negativeScore = 0;
+  
+  positiveWords.forEach(word => {
+    if (text.includes(word)) positiveScore++;
+  });
+  
+  negativeWords.forEach(word => {
+    if (text.includes(word)) negativeScore++;
+  });
+  
+  if (positiveScore > negativeScore + 1) return 'positive';
+  if (negativeScore > positiveScore + 1) return 'negative';
+  return 'neutral';
+};
+
+const categorizeNews = (title: string, content: string, commodityName: string): 'market_analysis' | 'regulatory' | 'supply_demand' | 'economic' | 'general' => {
+  const text = `${title} ${content}`.toLowerCase();
+  
+  if (text.includes('regulation') || text.includes('policy') || text.includes('government')) {
+    return 'regulatory';
+  }
+  if (text.includes('supply') || text.includes('demand') || text.includes('production')) {
+    return 'supply_demand';
+  }
+  if (text.includes('analysis') || text.includes('forecast') || text.includes('outlook')) {
+    return 'market_analysis';
+  }
+  if (text.includes('economy') || text.includes('gdp') || text.includes('inflation')) {
+    return 'economic';
+  }
+  return 'general';
+};
+
+const extractTags = (title: string, content: string, commodityName: string): string[] => {
+  const text = `${title} ${content}`.toLowerCase();
+  const tags: string[] = [];
+  
+  if (text.includes('bullish')) tags.push('bullish');
+  if (text.includes('bearish')) tags.push('bearish');
+  if (text.includes('breaking')) tags.push('breaking');
+  if (text.includes('volatility')) tags.push('volatility');
+  
+  return tags;
+};
+
+const calculateEnhancedRelevanceScore = (article: any, commodityName: string): number => {
+  let score = 0;
+  const title = (article.title || '').toLowerCase();
+  const content = (article.description || article.text || '').toLowerCase();
+  const commodity = commodityName.toLowerCase();
+  
+  if (title.includes(commodity)) score += 20;
+  if (content.includes(commodity)) score += 15;
+  
+  // Time relevance
+  const publishedTime = new Date(article.published_at || article.publishedAt || Date.now()).getTime();
+  const hoursAgo = (Date.now() - publishedTime) / (1000 * 60 * 60);
+  
+  if (hoursAgo <= 1) score += 10;
+  else if (hoursAgo <= 24) score += 5;
+  
+  return score;
+};
+
+// New: Marketaux API integration (financial news aggregator)
+export const fetchNewsFromMarketaux = async (commodityName: string): Promise<EnhancedNewsItem[]> => {
+  const apiKey = localStorage.getItem('marketauxApiKey') || 'demo';
+  
+  try {
+    const symbols = getCommoditySymbols(commodityName);
+    const query = buildEnhancedNewsQuery(commodityName);
+    
+    const response = await fetch(
+      `https://api.marketaux.com/v1/news/all?symbols=${symbols}&filter_entities=true&language=en&api_token=${apiKey}&limit=5`
+    );
+    
+    if (!response.ok) throw new Error(`Marketaux API error: ${response.status}`);
+    
+    const data = await response.json();
+    if (!data.data || !Array.isArray(data.data)) return [];
+    
+    return data.data.map((article: any, index: number) => ({
+      id: `marketaux_${commodityName}_${index}_${Date.now()}`,
+      title: article.title || `${commodityName} Market Update`,
+      description: article.description || article.snippet || `Latest market analysis for ${commodityName}`,
+      url: article.url || '#',
+      source: article.source || 'Marketaux',
+      publishedAt: article.published_at || new Date().toISOString(),
+      urlToImage: article.image_url,
+      sentiment: analyzeSentiment(article.title, article.description),
+      category: categorizeNews(article.title, article.description, commodityName),
+      relevanceScore: calculateEnhancedRelevanceScore(article, commodityName),
+      tags: extractTags(article.title, article.description, commodityName),
+      author: article.author
+    }));
+  } catch (error) {
+    console.warn('Marketaux API failed:', error);
+    return [];
+  }
+};
+
+// New: Polygon.io integration for financial news
+export const fetchNewsFromPolygon = async (commodityName: string): Promise<EnhancedNewsItem[]> => {
+  const apiKey = localStorage.getItem('polygonApiKey') || 'demo';
+  
+  try {
+    const ticker = getCommodityTicker(commodityName);
+    const response = await fetch(
+      `https://api.polygon.io/v2/reference/news?ticker=${ticker}&limit=3&apikey=${apiKey}`
+    );
+    
+    if (!response.ok) throw new Error(`Polygon API error: ${response.status}`);
+    
+    const data = await response.json();
+    if (!data.results || !Array.isArray(data.results)) return [];
+    
+    return data.results.map((article: any, index: number) => ({
+      id: `polygon_${commodityName}_${index}_${Date.now()}`,
+      title: article.title || `${commodityName} News`,
+      description: article.description || `Market update for ${commodityName}`,
+      url: article.article_url || '#',
+      source: article.publisher?.name || 'Polygon',
+      publishedAt: article.published_utc || new Date().toISOString(),
+      urlToImage: article.image_url,
+      sentiment: analyzeSentiment(article.title, article.description),
+      category: categorizeNews(article.title, article.description, commodityName),
+      relevanceScore: calculateEnhancedRelevanceScore(article, commodityName),
+      tags: extractTags(article.title, article.description, commodityName),
+      author: article.author
+    }));
+  } catch (error) {
+    console.warn('Polygon API failed:', error);
+    return [];
+  }
+};
+
+export const fetchNewsFromFMP = async (commodityName: string): Promise<EnhancedNewsItem[]> => {
   const getFmpApiKey = () => localStorage.getItem('fmpApiKey') || 'demo';
   const apiKey = getFmpApiKey();
   
-  const response = await fetch(
-    `https://financialmodelingprep.com/api/v3/general_news?page=0&apikey=${apiKey}`
-  );
-  
-  if (!response.ok) throw new Error(`FMP API error: ${response.status}`);
-  
-  const data = await response.json();
-  if (!Array.isArray(data)) return [];
-  
-  return data
-    .filter(article => isRelevantToCommodity(article.title, article.text, commodityName))
-    .slice(0, 3)
-    .map((article: any, index: number) => ({
-      id: `fmp_${commodityName}_${index}_${Date.now()}`,
-      title: article.title || `${commodityName} Market Update`,
-      description: article.text ? article.text.substring(0, 200) + '...' : `Latest market news about ${commodityName}`,
-      url: article.url || '#',
-      source: article.site || 'Financial News',
-      publishedAt: article.publishedDate || new Date().toISOString(),
-      urlToImage: article.image
-    }));
+  try {
+    const response = await fetch(
+      `https://financialmodelingprep.com/api/v3/general_news?page=0&apikey=${apiKey}`
+    );
+    
+    if (!response.ok) throw new Error(`FMP API error: ${response.status}`);
+    
+    const data = await response.json();
+    if (!Array.isArray(data)) return [];
+    
+    return data
+      .filter(article => isRelevantToCommodity(article.title, article.text, commodityName))
+      .slice(0, 4)
+      .map((article: any, index: number) => ({
+        id: `fmp_${commodityName}_${index}_${Date.now()}`,
+        title: article.title || `${commodityName} Market Update`,
+        description: article.text ? article.text.substring(0, 200) + '...' : `Latest market news about ${commodityName}`,
+        url: article.url || '#',
+        source: article.site || 'Financial News',
+        publishedAt: article.publishedDate || new Date().toISOString(),
+        urlToImage: article.image,
+        sentiment: analyzeSentiment(article.title, article.text),
+        category: categorizeNews(article.title, article.text, commodityName),
+        relevanceScore: calculateEnhancedRelevanceScore(article, commodityName),
+        tags: extractTags(article.title, article.text, commodityName)
+      }));
+  } catch (error) {
+    console.warn('FMP API failed:', error);
+    return [];
+  }
 };
 
 export const fetchNewsFromNewsAPI = async (commodityName: string): Promise<NewsItem[]> => {
