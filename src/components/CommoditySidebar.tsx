@@ -217,7 +217,6 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
                   <span className={`font-semibold text-green-600 dark:text-green-400 uppercase tracking-wider ${isMobile ? 'text-sm' : 'text-xs'}`}>Portfolio</span>
                   <div className="flex items-center gap-1">
                     <Briefcase className="w-4 h-4 text-green-500" />
-                    <span className={`font-bold text-green-900 dark:text-green-100 ${isMobile ? 'text-base' : 'text-sm'}`}>Track</span>
                   </div>
                 </div>
               </div>
@@ -234,7 +233,6 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
                   <span className={`font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider ${isMobile ? 'text-sm' : 'text-xs'}`}>Correlation</span>
                   <div className="flex items-center gap-2 ml-4">
                     <BarChart3 className="w-4 h-4 text-blue-500" />
-                    <span className={`font-bold text-blue-900 dark:text-blue-100 ${isMobile ? 'text-base' : 'text-sm'}`}>Analyze</span>
                   </div>
                 </div>
               </div>
@@ -251,7 +249,6 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
                   <span className={`font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider ${isMobile ? 'text-sm' : 'text-xs'}`}>Watchlists</span>
                   <div className="flex items-center gap-2 ml-4">
                     <Star className="w-4 h-4 text-purple-500" />
-                    <span className={`font-bold text-purple-900 dark:text-purple-100 ${isMobile ? 'text-base' : 'text-sm'}`}>Watch</span>
                   </div>
                 </div>
               </div>
@@ -268,7 +265,6 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
                   <span className={`font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wider ${isMobile ? 'text-sm' : 'text-xs'}`}>Screener</span>
                   <div className="flex items-center gap-2 ml-4">
                     <Filter className="w-4 h-4 text-orange-500" />
-                    <span className={`font-bold text-orange-900 dark:text-orange-100 ${isMobile ? 'text-base' : 'text-sm'}`}>Filter</span>
                   </div>
                 </div>
               </div>
@@ -285,7 +281,6 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
                   <span className={`font-semibold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider ${isMobile ? 'text-sm' : 'text-xs'}`}>Calendar</span>
                   <div className="flex items-center gap-2 ml-4">
                     <Calendar className="w-4 h-4 text-cyan-500" />
-                    <span className={`font-bold text-cyan-900 dark:text-cyan-100 ${isMobile ? 'text-base' : 'text-sm'}`}>Events</span>
                   </div>
                 </div>
               </div>
@@ -299,10 +294,9 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
                 onClick={() => handleNavigate('/risk-calculator')}
               >
                 <div className="flex justify-between items-center w-full">
-                  <span className={`font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider ${isMobile ? 'text-sm' : 'text-xs'}`}>Risk Calc</span>
+                  <span className={`font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider ${isMobile ? 'text-sm' : 'text-xs'}`}>Risk Calculator</span>
                   <div className="flex items-center gap-2 ml-4">
                     <Calculator className="w-4 h-4 text-red-500" />
-                    <span className={`font-bold text-red-900 dark:text-red-100 ${isMobile ? 'text-base' : 'text-sm'}`}>Calculate</span>
                   </div>
                 </div>
               </div>
