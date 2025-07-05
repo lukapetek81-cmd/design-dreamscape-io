@@ -200,13 +200,6 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
               
               {/* Stats Section - Hidden on Mobile, Responsive on Desktop */}
               <div className="hidden sm:flex sm:items-center sm:gap-4 lg:gap-6">
-                <div className="text-right space-y-2 lg:space-y-3">
-                  <div className="space-y-1">
-                    <p className="text-2xs lg:text-xs font-semibold text-muted-foreground uppercase tracking-wider">Price Units</p>
-                    <p className="text-xs lg:text-sm font-semibold text-muted-foreground number-display">{getPriceUnits(name)}</p>
-                  </div>
-                </div>
-                
                 <div className={`flex items-center p-2 rounded-full transition-all duration-300 ${
                   isOpen ? 'bg-primary/20 text-primary' : 'bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary'
                 }`}>
@@ -223,11 +216,7 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
             <div className={`sm:hidden transition-all duration-300 ${
               isOpen ? 'opacity-100 max-h-20 mt-4' : 'opacity-0 max-h-0 overflow-hidden'
             }`}>
-              <div className="flex justify-around py-3 border-t border-border/50">
-                <div className="text-center">
-                  <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">Units</p>
-                  <p className="text-sm font-bold number-display">{getPriceUnits(name)}</p>
-                </div>
+              <div className="flex justify-center py-3 border-t border-border/50">
                 <div className="text-center">
                   <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">Status</p>
                   <div className="flex items-center justify-center gap-1">
