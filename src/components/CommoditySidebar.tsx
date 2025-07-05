@@ -10,7 +10,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Zap, Coins, Wheat, TrendingUp, Beef, Coffee, Package, Newspaper, Moon, Sun, Monitor, Briefcase, Settings } from "lucide-react";
+import { Zap, Coins, Wheat, TrendingUp, Beef, Coffee, Package, Newspaper, Moon, Sun, Monitor, Briefcase, Settings, BarChart3 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -218,6 +218,23 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
                   <div className="flex items-center gap-1">
                     <Briefcase className="w-4 h-4 text-green-500" />
                     <span className={`font-bold text-green-900 dark:text-green-100 ${isMobile ? 'text-base' : 'text-sm'}`}>Track</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div 
+                className={`rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 cursor-pointer transition-all duration-200 ${
+                  isMobile 
+                    ? 'p-6 min-h-[72px] active:scale-95 touch-manipulation mx-2' 
+                    : 'p-3'
+                }`}
+                onClick={() => handleNavigate('/correlation')}
+              >
+                <div className="flex justify-between items-center">
+                  <span className={`font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider ${isMobile ? 'text-sm' : 'text-xs'}`}>Correlation</span>
+                  <div className="flex items-center gap-1">
+                    <BarChart3 className="w-4 h-4 text-blue-500" />
+                    <span className={`font-bold text-blue-900 dark:text-blue-100 ${isMobile ? 'text-base' : 'text-sm'}`}>Analyze</span>
                   </div>
                 </div>
               </div>

@@ -12,6 +12,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Portfolio from "./pages/Portfolio";
 import NewsSettingsPage from "./pages/NewsSettings";
 import Billing from "./pages/Billing";
+import MarketCorrelation from "./pages/MarketCorrelation";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
               <Route path="/portfolio" element={<Portfolio />} />
               <Route path="/news-settings" element={<NewsSettingsPage />} />
               <Route path="/billing" element={<Billing />} />
+              <Route path="/correlation" element={<MarketCorrelation />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
