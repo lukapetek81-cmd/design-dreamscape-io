@@ -222,22 +222,6 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
                 </div>
               </div>
               
-              <div 
-                className={`rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 cursor-pointer transition-all duration-200 ${
-                  isMobile 
-                    ? 'p-6 min-h-[72px] active:scale-95 touch-manipulation mx-2' 
-                    : 'p-3'
-                }`}
-                onClick={() => handleNavigate('/live-feed')}
-              >
-                <div className="flex justify-between items-center">
-                  <span className={`font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider ${isMobile ? 'text-sm' : 'text-xs'}`}>Market News</span>
-                  <div className="flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
-                    <span className={`font-bold text-blue-900 dark:text-blue-100 ${isMobile ? 'text-base' : 'text-sm'}`}>Live Feed</span>
-                  </div>
-                </div>
-              </div>
             </div>
           </SidebarGroupContent>
         </SidebarGroup>

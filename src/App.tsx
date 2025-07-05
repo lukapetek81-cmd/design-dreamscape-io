@@ -8,7 +8,7 @@ import { RealtimeDataProvider } from "@/contexts/RealtimeDataContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
-import LiveFeed from "./pages/LiveFeed";
+
 import Portfolio from "./pages/Portfolio";
 import NewsSettingsPage from "./pages/NewsSettings";
 import Billing from "./pages/Billing";
@@ -28,7 +28,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/live-feed" element={<LiveFeed />} />
+              
               <Route path="/portfolio" element={<Portfolio />} />
               <Route path="/news-settings" element={<NewsSettingsPage />} />
               <Route path="/billing" element={<Billing />} />
