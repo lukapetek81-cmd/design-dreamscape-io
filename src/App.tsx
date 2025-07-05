@@ -8,6 +8,10 @@ import { RealtimeDataProvider } from "@/contexts/RealtimeDataContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
+import RecentActivity from "./pages/RecentActivity";
+import Favorites from "./pages/Favorites";
+import PriceComparison from "./pages/PriceComparison";
+import MarketStatus from "./pages/MarketStatus";
 
 import Portfolio from "./pages/Portfolio";
 import NewsSettingsPage from "./pages/NewsSettings";
@@ -50,6 +54,10 @@ const App = () => (
               <Route path="/insights" element={<ExpertInsights />} />
               <Route path="/learning" element={<LearningHub />} />
               <Route path="/sentiment" element={<MarketSentiment />} />
+              <Route path="/recent-activity" element={<RecentActivity />} />
+              <Route path="/favorites" element={<Favorites />} />
+              <Route path="/price-comparison" element={<PriceComparison />} />
+              <Route path="/market-status" element={<MarketStatus />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

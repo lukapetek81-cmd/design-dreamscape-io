@@ -190,6 +190,42 @@ export type Database = {
         }
         Relationships: []
       }
+      market_status_config: {
+        Row: {
+          close_time: string
+          created_at: string
+          holidays: Json | null
+          id: string
+          market_name: string
+          open_time: string
+          timezone: string
+          trading_days: number[]
+          updated_at: string
+        }
+        Insert: {
+          close_time: string
+          created_at?: string
+          holidays?: Json | null
+          id?: string
+          market_name: string
+          open_time: string
+          timezone: string
+          trading_days: number[]
+          updated_at?: string
+        }
+        Update: {
+          close_time?: string
+          created_at?: string
+          holidays?: Json | null
+          id?: string
+          market_name?: string
+          open_time?: string
+          timezone?: string
+          trading_days?: number[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       portfolio_positions: {
         Row: {
           commodity_name: string
@@ -221,6 +257,33 @@ export type Database = {
           id?: string
           notes?: string | null
           quantity?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      price_comparisons: {
+        Row: {
+          commodities: Json
+          comparison_name: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          commodities: Json
+          comparison_name: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          commodities?: Json
+          comparison_name?: string
+          created_at?: string
+          id?: string
           updated_at?: string
           user_id?: string
         }
@@ -259,6 +322,36 @@ export type Database = {
           subscription_end?: string | null
           subscription_tier?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      recent_activities: {
+        Row: {
+          activity_type: string
+          commodity_name: string
+          commodity_symbol: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          activity_type?: string
+          commodity_name: string
+          commodity_symbol?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          commodity_name?: string
+          commodity_symbol?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -428,6 +521,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_favorites: {
+        Row: {
+          added_at: string
+          commodity_group: string | null
+          commodity_name: string
+          commodity_symbol: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          commodity_group?: string | null
+          commodity_name: string
+          commodity_symbol?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          commodity_group?: string | null
+          commodity_name?: string
+          commodity_symbol?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {

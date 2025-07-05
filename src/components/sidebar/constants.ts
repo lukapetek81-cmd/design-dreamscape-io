@@ -1,4 +1,4 @@
-import { Zap, Coins, Wheat, Beef, Coffee, Package, Briefcase, BarChart3, Star, Filter, Calendar, Calculator, MessageSquare, Lightbulb, GraduationCap, Users } from "lucide-react";
+import { Zap, Coins, Wheat, TrendingUp, Beef, Coffee, Package, Newspaper, Moon, Sun, Monitor, Briefcase, Settings, BarChart3, Star, Filter, Calendar, Calculator, MessageSquare, Lightbulb, GraduationCap, Users, Clock, Heart, GitCompare, Activity } from "lucide-react";
 import { CommodityGroup, MarketTool } from "./types";
 
 export const COMMODITY_GROUPS: CommodityGroup[] = [
@@ -24,4 +24,11 @@ export const COMMUNITY_TOOLS: MarketTool[] = [
   { id: "insights", label: "Expert Insights", icon: Lightbulb, color: "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800 text-yellow-600 dark:text-yellow-400", path: "/insights" },
   { id: "learning", label: "Learning Hub", icon: GraduationCap, color: "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400", path: "/learning" },
   { id: "sentiment", label: "Market Sentiment", icon: Users, color: "bg-violet-50 dark:bg-violet-950/20 border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400", path: "/sentiment" },
+];
+
+export const ACTIVITY_TOOLS: MarketTool[] = [
+  { id: "recent-activity", label: "Recent Activity", icon: Clock, color: "bg-indigo-50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400", path: "/recent-activity" },
+  { id: "favorites", label: "Favorites", icon: Heart, color: "bg-pink-50 dark:bg-pink-950/20 border-pink-200 dark:border-pink-800 text-pink-600 dark:text-pink-400", path: "/favorites" },
+  { id: "price-comparison", label: "Price Comparison", icon: GitCompare, color: "bg-teal-50 dark:bg-teal-950/20 border-teal-200 dark:border-teal-800 text-teal-600 dark:text-teal-400", path: "/price-comparison" },
+  { id: "market-status", label: "Market Status", icon: Activity, color: "bg-slate-50 dark:bg-slate-950/20 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400", path: "/market-status" },
 ];
