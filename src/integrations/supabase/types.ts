@@ -9,6 +9,187 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      expert_insights: {
+        Row: {
+          bullish_bearish: string | null
+          commodity_focus: string
+          confidence_level: number | null
+          content: string
+          created_at: string
+          expert_name: string
+          expert_title: string | null
+          id: string
+          prediction_timeframe: string | null
+          published_at: string
+          title: string
+        }
+        Insert: {
+          bullish_bearish?: string | null
+          commodity_focus: string
+          confidence_level?: number | null
+          content: string
+          created_at?: string
+          expert_name: string
+          expert_title?: string | null
+          id?: string
+          prediction_timeframe?: string | null
+          published_at?: string
+          title: string
+        }
+        Update: {
+          bullish_bearish?: string | null
+          commodity_focus?: string
+          confidence_level?: number | null
+          content?: string
+          created_at?: string
+          expert_name?: string
+          expert_title?: string | null
+          id?: string
+          prediction_timeframe?: string | null
+          published_at?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      forum_posts: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          topic_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          topic_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          topic_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_posts_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "forum_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_topics: {
+        Row: {
+          content: string
+          created_at: string
+          forum_id: string
+          id: string
+          locked: boolean
+          pinned: boolean
+          title: string
+          updated_at: string
+          user_id: string
+          views: number
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          forum_id: string
+          id?: string
+          locked?: boolean
+          pinned?: boolean
+          title: string
+          updated_at?: string
+          user_id: string
+          views?: number
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          forum_id?: string
+          id?: string
+          locked?: boolean
+          pinned?: boolean
+          title?: string
+          updated_at?: string
+          user_id?: string
+          views?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_topics_forum_id_fkey"
+            columns: ["forum_id"]
+            isOneToOne: false
+            referencedRelation: "forums"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forums: {
+        Row: {
+          commodity_group: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          commodity_group: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          commodity_group?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      glossary_terms: {
+        Row: {
+          category: string | null
+          created_at: string
+          definition: string
+          examples: string | null
+          id: string
+          term: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          definition: string
+          examples?: string | null
+          id?: string
+          term: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          definition?: string
+          examples?: string | null
+          id?: string
+          term?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       portfolio_positions: {
         Row: {
           commodity_name: string
@@ -81,6 +262,66 @@ export type Database = {
         }
         Relationships: []
       }
+      sentiment_aggregates: {
+        Row: {
+          average_confidence: number | null
+          bearish_votes: number
+          bullish_votes: number
+          commodity_name: string
+          id: string
+          last_updated: string
+          total_votes: number
+        }
+        Insert: {
+          average_confidence?: number | null
+          bearish_votes?: number
+          bullish_votes?: number
+          commodity_name: string
+          id?: string
+          last_updated?: string
+          total_votes?: number
+        }
+        Update: {
+          average_confidence?: number | null
+          bearish_votes?: number
+          bullish_votes?: number
+          commodity_name?: string
+          id?: string
+          last_updated?: string
+          total_votes?: number
+        }
+        Relationships: []
+      }
+      sentiment_votes: {
+        Row: {
+          commodity_name: string
+          confidence: number
+          created_at: string
+          id: string
+          reasoning: string | null
+          sentiment: string
+          user_id: string
+        }
+        Insert: {
+          commodity_name: string
+          confidence: number
+          created_at?: string
+          id?: string
+          reasoning?: string | null
+          sentiment: string
+          user_id: string
+        }
+        Update: {
+          commodity_name?: string
+          confidence?: number
+          created_at?: string
+          id?: string
+          reasoning?: string | null
+          sentiment?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           created_at: string
@@ -116,6 +357,77 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      tutorial_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      tutorials: {
+        Row: {
+          category_id: string
+          content: string
+          created_at: string
+          description: string | null
+          difficulty_level: string
+          estimated_time_minutes: number | null
+          id: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          content: string
+          created_at?: string
+          description?: string | null
+          difficulty_level: string
+          estimated_time_minutes?: number | null
+          id?: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          content?: string
+          created_at?: string
+          description?: string | null
+          difficulty_level?: string
+          estimated_time_minutes?: number | null
+          id?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tutorials_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "tutorial_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

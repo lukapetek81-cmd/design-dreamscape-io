@@ -17,6 +17,10 @@ import MarketScreener from "./pages/MarketScreener";
 import EconomicCalendar from "./pages/EconomicCalendar";
 import RiskCalculator from "./pages/RiskCalculator";
 import MarketCorrelation from "./pages/MarketCorrelation";
+import TradingCommunity from "./pages/TradingCommunity";
+import ExpertInsights from "./pages/ExpertInsights";
+import LearningHub from "./pages/LearningHub";
+import MarketSentiment from "./pages/MarketSentiment";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +46,10 @@ const App = () => (
               <Route path="/screener" element={<MarketScreener />} />
               <Route path="/calendar" element={<EconomicCalendar />} />
               <Route path="/risk-calculator" element={<RiskCalculator />} />
+              <Route path="/community" element={<TradingCommunity />} />
+              <Route path="/insights" element={<ExpertInsights />} />
+              <Route path="/learning" element={<LearningHub />} />
+              <Route path="/sentiment" element={<MarketSentiment />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

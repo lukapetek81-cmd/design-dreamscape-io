@@ -10,7 +10,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Zap, Coins, Wheat, TrendingUp, Beef, Coffee, Package, Newspaper, Moon, Sun, Monitor, Briefcase, Settings, BarChart3, Star, Filter, Calendar, Calculator } from "lucide-react";
+import { Zap, Coins, Wheat, TrendingUp, Beef, Coffee, Package, Newspaper, Moon, Sun, Monitor, Briefcase, Settings, BarChart3, Star, Filter, Calendar, Calculator, MessageSquare, Lightbulb, GraduationCap, Users } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -297,6 +297,80 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
                   <span className={`font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider ${isMobile ? 'text-sm' : 'text-xs'}`}>Risk Calculator</span>
                   <div className="flex items-center gap-2 ml-4">
                     <Calculator className="w-4 h-4 text-red-500" />
+                  </div>
+                </div>
+              </div>
+              
+            </div>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        
+        <SidebarGroup className="mt-8">
+          <SidebarGroupLabel className={`font-bold text-muted-foreground uppercase tracking-wider ${isMobile ? 'text-sm px-6 py-4' : 'text-xs px-4 py-3'}`}>
+            Community & Learning
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <div className={`space-y-4 ${isMobile ? 'px-6 py-3' : 'px-4 py-3'}`}>
+              <div 
+                className={`rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 cursor-pointer transition-all duration-200 ${
+                  isMobile 
+                    ? 'p-6 min-h-[72px] active:scale-95 touch-manipulation mx-2' 
+                    : 'p-4'
+                }`}
+                onClick={() => handleNavigate('/community')}
+              >
+                <div className="flex justify-between items-center w-full">
+                  <span className={`font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider ${isMobile ? 'text-sm' : 'text-xs'}`}>Community</span>
+                  <div className="flex items-center gap-2 ml-4">
+                    <MessageSquare className="w-4 h-4 text-blue-500" />
+                  </div>
+                </div>
+              </div>
+
+              <div 
+                className={`rounded-lg bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 cursor-pointer transition-all duration-200 ${
+                  isMobile 
+                    ? 'p-6 min-h-[72px] active:scale-95 touch-manipulation mx-2' 
+                    : 'p-4'
+                }`}
+                onClick={() => handleNavigate('/insights')}
+              >
+                <div className="flex justify-between items-center w-full">
+                  <span className={`font-semibold text-yellow-600 dark:text-yellow-400 uppercase tracking-wider ${isMobile ? 'text-sm' : 'text-xs'}`}>Expert Insights</span>
+                  <div className="flex items-center gap-2 ml-4">
+                    <Lightbulb className="w-4 h-4 text-yellow-500" />
+                  </div>
+                </div>
+              </div>
+
+              <div 
+                className={`rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 cursor-pointer transition-all duration-200 ${
+                  isMobile 
+                    ? 'p-6 min-h-[72px] active:scale-95 touch-manipulation mx-2' 
+                    : 'p-4'
+                }`}
+                onClick={() => handleNavigate('/learning')}
+              >
+                <div className="flex justify-between items-center w-full">
+                  <span className={`font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider ${isMobile ? 'text-sm' : 'text-xs'}`}>Learning Hub</span>
+                  <div className="flex items-center gap-2 ml-4">
+                    <GraduationCap className="w-4 h-4 text-emerald-500" />
+                  </div>
+                </div>
+              </div>
+
+              <div 
+                className={`rounded-lg bg-violet-50 dark:bg-violet-950/20 border border-violet-200 dark:border-violet-800 cursor-pointer transition-all duration-200 ${
+                  isMobile 
+                    ? 'p-6 min-h-[72px] active:scale-95 touch-manipulation mx-2' 
+                    : 'p-4'
+                }`}
+                onClick={() => handleNavigate('/sentiment')}
+              >
+                <div className="flex justify-between items-center w-full">
+                  <span className={`font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wider ${isMobile ? 'text-sm' : 'text-xs'}`}>Market Sentiment</span>
+                  <div className="flex items-center gap-2 ml-4">
+                    <Users className="w-4 h-4 text-violet-500" />
                   </div>
                 </div>
               </div>
