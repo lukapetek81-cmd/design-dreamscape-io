@@ -1,16 +1,13 @@
 // Commodity price API service
 import { 
   fetchNewsFromFMP, 
-  fetchNewsFromNewsAPI, 
-  fetchNewsFromAlphaVantage,
+  fetchNewsFromMarketaux,
   removeDuplicateNews,
   sortNewsByRelevance,
   getFallbackNews
 } from './newsHelpers';
 
 const getFmpApiKey = () => localStorage.getItem('fmpApiKey') || 'demo';
-const getNewsApiKey = () => localStorage.getItem('newsApiKey') || '';
-const getAlphaVantageApiKey = () => localStorage.getItem('alphaVantageApiKey') || 'demo';
 
 export interface CommodityPrice {
   symbol: string;
@@ -323,8 +320,7 @@ export class CommodityApiService {
     // Try multiple APIs in sequence
     const apis = [
       () => this.fetchPriceFromFMP(commodityName),
-      () => this.fetchPriceFromYahoo(commodityName),
-      () => this.fetchPriceFromAlphaVantage(commodityName)
+      () => this.fetchPriceFromYahoo(commodityName)
     ];
 
     for (const fetchApi of apis) {
@@ -414,38 +410,6 @@ export class CommodityApiService {
     };
   }
 
-  private async fetchPriceFromAlphaVantage(commodityName: string): Promise<CommodityPrice | null> {
-    const symbols = COMMODITY_SYMBOLS[commodityName];
-    if (!symbols) return null;
-
-    const apiKey = getAlphaVantageApiKey();
-    
-    // For commodities, use COMMODITY_INTRADAY function
-    const response = await fetch(
-      `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbols.alphaVantage}&apikey=${apiKey}`
-    );
-    
-    if (!response.ok) throw new Error(`Alpha Vantage API error: ${response.status}`);
-    
-    const data = await response.json();
-    if (!data['Global Quote']) return null;
-    
-    const quote = data['Global Quote'];
-    const price = parseFloat(quote['05. price']);
-    const change = parseFloat(quote['09. change']);
-    const changePercent = parseFloat(quote['10. change percent'].replace('%', ''));
-    
-    if (isNaN(price)) return null;
-    
-    return {
-      symbol: symbols.alphaVantage,
-      price: price,
-      change: change || 0,
-      changePercent: changePercent || 0,
-      lastUpdate: new Date().toISOString()
-    };
-  }
-
   async fetchCommodityNews(commodityName: string, limit: number = 5): Promise<NewsItem[]> {
     const cacheKey = `news_${commodityName}`;
     const cached = this.cache.get(cacheKey);
@@ -455,11 +419,10 @@ export class CommodityApiService {
     }
 
     try {
-      // Fetch news from multiple sources in parallel
+      // Fetch news from 2 primary sources in parallel
       const newsPromises = [
         fetchNewsFromFMP(commodityName),
-        fetchNewsFromNewsAPI(commodityName),
-        fetchNewsFromAlphaVantage(commodityName)
+        fetchNewsFromMarketaux(commodityName)
       ];
 
       const newsResults = await Promise.allSettled(newsPromises);
@@ -508,8 +471,7 @@ export class CommodityApiService {
     // Try multiple APIs in sequence for historical data
     const apis = [
       () => this.fetchHistoricalFromFMP(commodityName, timeframe),
-      () => this.fetchHistoricalFromYahoo(commodityName, timeframe),
-      () => this.fetchHistoricalFromAlphaVantage(commodityName, timeframe)
+      () => this.fetchHistoricalFromYahoo(commodityName, timeframe)
     ];
 
     for (const fetchApi of apis) {
@@ -635,43 +597,6 @@ export class CommodityApiService {
       date: new Date(timestamp * 1000).toISOString(),
       price: prices[index] || 0
     })).filter((item: any) => item.price > 0);
-    
-    return historicalData;
-  }
-
-  private async fetchHistoricalFromAlphaVantage(commodityName: string, timeframe: string): Promise<any[]> {
-    const symbols = COMMODITY_SYMBOLS[commodityName];
-    if (!symbols) return [];
-
-    const apiKey = getAlphaVantageApiKey();
-    let functionName = 'TIME_SERIES_DAILY';
-    let seriesKey = 'Time Series (Daily)';
-    
-    if (timeframe === '1d') {
-      functionName = 'TIME_SERIES_INTRADAY';
-      seriesKey = 'Time Series (15min)';
-    }
-    
-    let url = `https://www.alphavantage.co/query?function=${functionName}&symbol=${symbols.alphaVantage}&apikey=${apiKey}`;
-    
-    if (timeframe === '1d') {
-      url += '&interval=15min';
-    }
-    
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`Alpha Vantage API error: ${response.status}`);
-    
-    const data = await response.json();
-    if (!data[seriesKey]) return [];
-    
-    const timeSeries = data[seriesKey];
-    const historicalData = Object.entries(timeSeries)
-      .map(([date, values]: [string, any]) => ({
-        date: timeframe === '1d' ? new Date(date).toISOString() : date,
-        price: parseFloat(values['4. close']) || 0
-      }))
-      .filter((item: any) => item.price > 0)
-      .reverse();
     
     return historicalData;
   }

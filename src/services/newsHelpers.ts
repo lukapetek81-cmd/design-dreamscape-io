@@ -18,11 +18,8 @@ export interface EnhancedNewsItem extends NewsItem {
 }
 
 const NEWS_SOURCES: Record<string, NewsSourceConfig> = {
-  marketaux: { name: 'Marketaux', priority: 1, maxArticles: 5, enabled: true },
-  fmp: { name: 'FMP', priority: 2, maxArticles: 4, enabled: true },
-  newsapi: { name: 'NewsAPI', priority: 3, maxArticles: 3, enabled: true },
-  alphavantage: { name: 'Alpha Vantage', priority: 4, maxArticles: 3, enabled: true },
-  polygon: { name: 'Polygon', priority: 5, maxArticles: 2, enabled: true }
+  marketaux: { name: 'Marketaux', priority: 1, maxArticles: 8, enabled: true },
+  fmp: { name: 'FMP', priority: 2, maxArticles: 7, enabled: true }
 };
 
 // Utility functions first
@@ -163,41 +160,6 @@ export const fetchNewsFromMarketaux = async (commodityName: string): Promise<Enh
   }
 };
 
-// New: Polygon.io integration for financial news
-export const fetchNewsFromPolygon = async (commodityName: string): Promise<EnhancedNewsItem[]> => {
-  const apiKey = localStorage.getItem('polygonApiKey') || 'demo';
-  
-  try {
-    const ticker = getCommodityTicker(commodityName);
-    const response = await fetch(
-      `https://api.polygon.io/v2/reference/news?ticker=${ticker}&limit=3&apikey=${apiKey}`
-    );
-    
-    if (!response.ok) throw new Error(`Polygon API error: ${response.status}`);
-    
-    const data = await response.json();
-    if (!data.results || !Array.isArray(data.results)) return [];
-    
-    return data.results.map((article: any, index: number) => ({
-      id: `polygon_${commodityName}_${index}_${Date.now()}`,
-      title: article.title || `${commodityName} News`,
-      description: article.description || `Market update for ${commodityName}`,
-      url: article.article_url || '#',
-      source: article.publisher?.name || 'Polygon',
-      publishedAt: article.published_utc || new Date().toISOString(),
-      urlToImage: article.image_url,
-      sentiment: analyzeSentiment(article.title, article.description),
-      category: categorizeNews(article.title, article.description, commodityName),
-      relevanceScore: calculateEnhancedRelevanceScore(article, commodityName),
-      tags: extractTags(article.title, article.description, commodityName),
-      author: article.author
-    }));
-  } catch (error) {
-    console.warn('Polygon API failed:', error);
-    return [];
-  }
-};
-
 export const fetchNewsFromFMP = async (commodityName: string): Promise<EnhancedNewsItem[]> => {
   const getFmpApiKey = () => localStorage.getItem('fmpApiKey') || 'demo';
   const apiKey = getFmpApiKey();
@@ -234,63 +196,6 @@ export const fetchNewsFromFMP = async (commodityName: string): Promise<EnhancedN
   }
 };
 
-export const fetchNewsFromNewsAPI = async (commodityName: string): Promise<NewsItem[]> => {
-  const getNewsApiKey = () => localStorage.getItem('newsApiKey') || '';
-  const apiKey = getNewsApiKey();
-  if (!apiKey) return [];
-
-  const query = buildNewsQuery(commodityName);
-  const response = await fetch(
-    `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&language=en&apiKey=${apiKey}`
-  );
-  
-  if (!response.ok) throw new Error(`NewsAPI error: ${response.status}`);
-  
-  const data = await response.json();
-  if (!data.articles || !Array.isArray(data.articles)) return [];
-  
-  return data.articles
-    .slice(0, 3)
-    .map((article: any, index: number) => ({
-      id: `newsapi_${commodityName}_${index}_${Date.now()}`,
-      title: article.title || `${commodityName} News`,
-      description: article.description || `Latest ${commodityName} market developments`,
-      url: article.url || '#',
-      source: article.source?.name || 'News API',
-      publishedAt: article.publishedAt || new Date().toISOString(),
-      urlToImage: article.urlToImage
-    }));
-};
-
-export const fetchNewsFromAlphaVantage = async (commodityName: string): Promise<NewsItem[]> => {
-  const getAlphaVantageApiKey = () => localStorage.getItem('alphaVantageApiKey') || '';
-  const apiKey = getAlphaVantageApiKey();
-  if (!apiKey) return [];
-
-  const topics = getCommodityTopics(commodityName);
-  const response = await fetch(
-    `https://www.alphavantage.co/query?function=NEWS_SENTIMENT&topics=${topics}&apikey=${apiKey}`
-  );
-  
-  if (!response.ok) throw new Error(`Alpha Vantage error: ${response.status}`);
-  
-  const data = await response.json();
-  if (!data.feed || !Array.isArray(data.feed)) return [];
-  
-  return data.feed
-    .filter((article: any) => isRelevantToCommodity(article.title, article.summary, commodityName))
-    .slice(0, 3)
-    .map((article: any, index: number) => ({
-      id: `av_${commodityName}_${index}_${Date.now()}`,
-      title: article.title || `${commodityName} Analysis`,
-      description: article.summary ? article.summary.substring(0, 200) + '...' : `Market analysis for ${commodityName}`,
-      url: article.url || '#',
-      source: article.source || 'Alpha Vantage',
-      publishedAt: article.time_published || new Date().toISOString(),
-      urlToImage: article.banner_image
-    }));
-};
-
 const buildNewsQuery = (commodityName: string): string => {
   const baseQuery = commodityName.toLowerCase();
   const additionalTerms = {
@@ -306,22 +211,6 @@ const buildNewsQuery = (commodityName: string): string => {
   };
   
   return additionalTerms[commodityName as keyof typeof additionalTerms] || `${baseQuery} commodity market`;
-};
-
-const getCommodityTopics = (commodityName: string): string => {
-  const topicMap: Record<string, string> = {
-    'Gold': 'economy_macro,energy_transportation',
-    'Silver': 'economy_macro,manufacturing',
-    'Copper': 'manufacturing,economy_macro',
-    'WTI Crude': 'energy_transportation,economy_macro',
-    'Brent Crude': 'energy_transportation,economy_macro',
-    'Natural Gas': 'energy_transportation,economy_macro',
-    'Corn': 'economy_macro',
-    'Wheat': 'economy_macro',
-    'Soybeans': 'economy_macro'
-  };
-  
-  return topicMap[commodityName] || 'economy_macro';
 };
 
 const isRelevantToCommodity = (title: string, content: string, commodityName: string): boolean => {

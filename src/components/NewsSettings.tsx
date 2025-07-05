@@ -12,11 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 const NewsSettings: React.FC = () => {
   const { toast } = useToast();
   const [apiKeys, setApiKeys] = useState({
-    fmpApiKey: '',
-    newsApiKey: '',
-    alphaVantageApiKey: '',
     marketauxApiKey: '',
-    polygonApiKey: ''
+    fmpApiKey: ''
   });
   
   const [testResults, setTestResults] = useState<Record<string, boolean>>({});
@@ -25,11 +22,8 @@ const NewsSettings: React.FC = () => {
   useEffect(() => {
     // Load existing API keys from localStorage
     setApiKeys({
-      fmpApiKey: localStorage.getItem('fmpApiKey') || '',
-      newsApiKey: localStorage.getItem('newsApiKey') || '',
-      alphaVantageApiKey: localStorage.getItem('alphaVantageApiKey') || '',
       marketauxApiKey: localStorage.getItem('marketauxApiKey') || '',
-      polygonApiKey: localStorage.getItem('polygonApiKey') || ''
+      fmpApiKey: localStorage.getItem('fmpApiKey') || ''
     });
   }, []);
 
@@ -56,21 +50,9 @@ const NewsSettings: React.FC = () => {
           const fmpResponse = await fetch(`https://financialmodelingprep.com/api/v3/profile/AAPL?apikey=${apiKey}`);
           isValid = fmpResponse.ok;
           break;
-        case 'newsApiKey':
-          const newsResponse = await fetch(`https://newsapi.org/v2/top-headlines?country=us&pageSize=1&apiKey=${apiKey}`);
-          isValid = newsResponse.ok;
-          break;
-        case 'alphaVantageApiKey':
-          const avResponse = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=MSFT&apikey=${apiKey}`);
-          isValid = avResponse.ok;
-          break;
         case 'marketauxApiKey':
           const marketauxResponse = await fetch(`https://api.marketaux.com/v1/news/all?api_token=${apiKey}&limit=1`);
           isValid = marketauxResponse.ok;
-          break;
-        case 'polygonApiKey':
-          const polygonResponse = await fetch(`https://api.polygon.io/v2/aggs/ticker/AAPL/range/1/day/2023-01-09/2023-01-09?apikey=${apiKey}`);
-          isValid = polygonResponse.ok;
           break;
       }
       
@@ -96,51 +78,26 @@ const NewsSettings: React.FC = () => {
 
   const apiSources = [
     {
-      key: 'fmpApiKey',
-      name: 'Financial Modeling Prep',
-      description: 'General financial news and company data',
-      placeholder: 'Your FMP API key',
-      website: 'https://financialmodelingprep.com/',
-      priority: 'High'
-    },
-    {
-      key: 'newsApiKey',
-      name: 'NewsAPI',
-      description: 'Global news aggregation service',
-      placeholder: 'Your NewsAPI key',
-      website: 'https://newsapi.org/',
-      priority: 'Medium'
-    },
-    {
-      key: 'alphaVantageApiKey',
-      name: 'Alpha Vantage',
-      description: 'Financial data and news sentiment',
-      placeholder: 'Your Alpha Vantage key',
-      website: 'https://www.alphavantage.co/',
-      priority: 'Medium'
-    },
-    {
       key: 'marketauxApiKey',
       name: 'Marketaux',
-      description: 'Real-time financial news aggregator',
+      description: 'Real-time financial news aggregator with market sentiment',
       placeholder: 'Your Marketaux API token',
       website: 'https://www.marketaux.com/',
-      priority: 'High'
+      priority: 'Primary'
     },
     {
-      key: 'polygonApiKey',
-      name: 'Polygon.io',
-      description: 'Financial market data and news',
-      placeholder: 'Your Polygon API key',
-      website: 'https://polygon.io/',
-      priority: 'Medium'
+      key: 'fmpApiKey',
+      name: 'Financial Modeling Prep',
+      description: 'Comprehensive financial news and company analysis',
+      placeholder: 'Your FMP API key',
+      website: 'https://financialmodelingprep.com/',
+      priority: 'Primary'
     }
   ];
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'High': return 'bg-red-100 dark:bg-red-950/20 text-red-800 dark:text-red-300';
-      case 'Medium': return 'bg-yellow-100 dark:bg-yellow-950/20 text-yellow-800 dark:text-yellow-300';
+      case 'Primary': return 'bg-green-100 dark:bg-green-950/20 text-green-800 dark:text-green-300';
       default: return 'bg-gray-100 dark:bg-gray-950/20 text-gray-800 dark:text-gray-300';
     }
   };
@@ -230,10 +187,10 @@ const NewsSettings: React.FC = () => {
             💡 Pro Tips for Better News
           </h4>
           <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-            <li>• Configure at least 2-3 API keys for comprehensive coverage</li>
-            <li>• High priority sources provide the most relevant financial news</li>
+            <li>• Configure both API keys for comprehensive news coverage</li>
+            <li>• Primary sources provide the most relevant financial news</li>
             <li>• Test your API keys regularly to ensure they're working</li>
-            <li>• Some APIs have rate limits - the app will handle this automatically</li>
+            <li>• APIs have rate limits - the app will handle this automatically</li>
           </ul>
         </div>
       </CardContent>
