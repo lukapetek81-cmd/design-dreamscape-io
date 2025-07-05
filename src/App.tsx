@@ -12,6 +12,10 @@ import ResetPassword from "./pages/ResetPassword";
 import Portfolio from "./pages/Portfolio";
 import NewsSettingsPage from "./pages/NewsSettings";
 import Billing from "./pages/Billing";
+import Watchlists from "./pages/Watchlists";
+import MarketScreener from "./pages/MarketScreener";
+import EconomicCalendar from "./pages/EconomicCalendar";
+import RiskCalculator from "./pages/RiskCalculator";
 import MarketCorrelation from "./pages/MarketCorrelation";
 import NotFound from "./pages/NotFound";
 
@@ -34,6 +38,10 @@ const App = () => (
               <Route path="/news-settings" element={<NewsSettingsPage />} />
               <Route path="/billing" element={<Billing />} />
               <Route path="/correlation" element={<MarketCorrelation />} />
+              <Route path="/watchlists" element={<Watchlists />} />
+              <Route path="/screener" element={<MarketScreener />} />
+              <Route path="/calendar" element={<EconomicCalendar />} />
+              <Route path="/risk-calculator" element={<RiskCalculator />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
