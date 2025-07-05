@@ -47,13 +47,16 @@ const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; cont
 // Generate realistic mock data for fields FMP doesn't provide
 const generateEnhancedData = (commodity: any, name: string) => {
   const basePrice = commodity.price || 100;
+  const realVolume = commodity.volume || 0;
   
   return {
     ...commodity,
     name,
-    // Volume (realistic ranges based on commodity type)
-    volume: Math.floor(Math.random() * 100000) + 10000,
-    volumeDisplay: (Math.floor(Math.random() * 100) + 10).toString() + 'K',
+    // Use real volume from FMP API when available, otherwise generate fallback
+    volume: realVolume > 0 ? realVolume : (Math.floor(Math.random() * 100000) + 10000),
+    volumeDisplay: realVolume > 0 ? 
+      (realVolume >= 1000 ? Math.floor(realVolume / 1000) + 'K' : realVolume.toString()) :
+      (Math.floor(Math.random() * 100) + 10).toString() + 'K',
     
     // 52-week ranges (±15-30% from current price)
     weekHigh: basePrice * (1.15 + Math.random() * 0.15),
@@ -147,6 +150,7 @@ serve(async (req) => {
                 price: parseFloat(fmpData.price) || 0,
                 change: parseFloat(fmpData.change) || 0,
                 changePercent: parseFloat(fmpData.changesPercentage) || 0,
+                volume: parseInt(fmpData.volume) || 0, // Use real FMP volume data
               }, name);
             } else {
               // Use fallback data for commodities not found in FMP
