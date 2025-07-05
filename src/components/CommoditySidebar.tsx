@@ -10,7 +10,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Zap, Coins, Wheat, TrendingUp, Beef, Coffee, Package, Newspaper, Moon, Sun, Monitor, Briefcase, Settings, BarChart3 } from "lucide-react";
+import { Zap, Coins, Wheat, TrendingUp, Beef, Coffee, Package, Newspaper, Moon, Sun, Monitor, Briefcase, Settings, BarChart3, Star, Filter, Calendar, Calculator } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -235,6 +235,74 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
                   <div className="flex items-center gap-2 ml-4">
                     <BarChart3 className="w-4 h-4 text-blue-500" />
                     <span className={`font-bold text-blue-900 dark:text-blue-100 ${isMobile ? 'text-base' : 'text-sm'}`}>Analyze</span>
+                  </div>
+                </div>
+              </div>
+
+              <div 
+                className={`rounded-lg bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 cursor-pointer transition-all duration-200 ${
+                  isMobile 
+                    ? 'p-6 min-h-[72px] active:scale-95 touch-manipulation mx-2' 
+                    : 'p-4'
+                }`}
+                onClick={() => handleNavigate('/watchlists')}
+              >
+                <div className="flex justify-between items-center w-full">
+                  <span className={`font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider ${isMobile ? 'text-sm' : 'text-xs'}`}>Watchlists</span>
+                  <div className="flex items-center gap-2 ml-4">
+                    <Star className="w-4 h-4 text-purple-500" />
+                    <span className={`font-bold text-purple-900 dark:text-purple-100 ${isMobile ? 'text-base' : 'text-sm'}`}>Watch</span>
+                  </div>
+                </div>
+              </div>
+
+              <div 
+                className={`rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 cursor-pointer transition-all duration-200 ${
+                  isMobile 
+                    ? 'p-6 min-h-[72px] active:scale-95 touch-manipulation mx-2' 
+                    : 'p-4'
+                }`}
+                onClick={() => handleNavigate('/screener')}
+              >
+                <div className="flex justify-between items-center w-full">
+                  <span className={`font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wider ${isMobile ? 'text-sm' : 'text-xs'}`}>Screener</span>
+                  <div className="flex items-center gap-2 ml-4">
+                    <Filter className="w-4 h-4 text-orange-500" />
+                    <span className={`font-bold text-orange-900 dark:text-orange-100 ${isMobile ? 'text-base' : 'text-sm'}`}>Filter</span>
+                  </div>
+                </div>
+              </div>
+
+              <div 
+                className={`rounded-lg bg-cyan-50 dark:bg-cyan-950/20 border border-cyan-200 dark:border-cyan-800 cursor-pointer transition-all duration-200 ${
+                  isMobile 
+                    ? 'p-6 min-h-[72px] active:scale-95 touch-manipulation mx-2' 
+                    : 'p-4'
+                }`}
+                onClick={() => handleNavigate('/calendar')}
+              >
+                <div className="flex justify-between items-center w-full">
+                  <span className={`font-semibold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider ${isMobile ? 'text-sm' : 'text-xs'}`}>Calendar</span>
+                  <div className="flex items-center gap-2 ml-4">
+                    <Calendar className="w-4 h-4 text-cyan-500" />
+                    <span className={`font-bold text-cyan-900 dark:text-cyan-100 ${isMobile ? 'text-base' : 'text-sm'}`}>Events</span>
+                  </div>
+                </div>
+              </div>
+
+              <div 
+                className={`rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 cursor-pointer transition-all duration-200 ${
+                  isMobile 
+                    ? 'p-6 min-h-[72px] active:scale-95 touch-manipulation mx-2' 
+                    : 'p-4'
+                }`}
+                onClick={() => handleNavigate('/risk-calculator')}
+              >
+                <div className="flex justify-between items-center w-full">
+                  <span className={`font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider ${isMobile ? 'text-sm' : 'text-xs'}`}>Risk Calc</span>
+                  <div className="flex items-center gap-2 ml-4">
+                    <Calculator className="w-4 h-4 text-red-500" />
+                    <span className={`font-bold text-red-900 dark:text-red-100 ${isMobile ? 'text-base' : 'text-sm'}`}>Calculate</span>
                   </div>
                 </div>
               </div>
