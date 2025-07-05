@@ -31,18 +31,18 @@ export const useAvailableCommodities = () => {
   // Mock commodity data - replace with actual API call if needed
   const commodities: Commodity[] = [
     // Energy
-    { name: 'Crude Oil', symbol: 'CL=F', price: 65.50, changePercent: 1.2, venue: 'NYMEX', category: 'energy' },
-    { name: 'Natural Gas', symbol: 'NG=F', price: 2.85, changePercent: -0.5, venue: 'NYMEX', category: 'energy' },
-    { name: 'Gasoline RBOB', symbol: 'RB=F', price: 2.1, changePercent: 0.8, venue: 'NYMEX', category: 'energy' },
-    { name: 'Heating Oil', symbol: 'HO=F', price: 2.3, changePercent: 1.1, venue: 'NYMEX', category: 'energy' },
-    { name: 'Brent Crude Oil', symbol: 'BZ=F', price: 67.20, changePercent: 1.4, venue: 'ICE', category: 'energy' },
+    { name: 'Crude Oil', symbol: 'CL=F', price: 65.50, changePercent: 1.2, venue: 'NYMEX', contractSize: '1,000 bbl', category: 'energy' },
+    { name: 'Natural Gas', symbol: 'NG=F', price: 2.85, changePercent: -0.5, venue: 'NYMEX', contractSize: '10,000 MMBtu', category: 'energy' },
+    { name: 'Gasoline RBOB', symbol: 'RB=F', price: 2.1, changePercent: 0.8, venue: 'NYMEX', contractSize: '42,000 gal', category: 'energy' },
+    { name: 'Heating Oil', symbol: 'HO=F', price: 2.3, changePercent: 1.1, venue: 'NYMEX', contractSize: '42,000 gal', category: 'energy' },
+    { name: 'Brent Crude Oil', symbol: 'BZ=F', price: 67.20, changePercent: 1.4, venue: 'ICE', contractSize: '1,000 bbl', category: 'energy' },
     
     // Metals
-    { name: 'Gold Futures', symbol: 'GC=F', price: 2000.50, changePercent: 0.3, venue: 'COMEX', category: 'metals' },
-    { name: 'Silver Futures', symbol: 'SI=F', price: 25.75, changePercent: -0.2, venue: 'COMEX', category: 'metals' },
-    { name: 'Copper', symbol: 'HG=F', price: 4.20, changePercent: 1.5, venue: 'COMEX', category: 'metals' },
-    { name: 'Platinum', symbol: 'PL=F', price: 1050.00, changePercent: 0.7, venue: 'NYMEX', category: 'metals' },
-    { name: 'Palladium', symbol: 'PA=F', price: 1200.00, changePercent: -1.2, venue: 'NYMEX', category: 'metals' },
+    { name: 'Gold Futures', symbol: 'GC=F', price: 2000.50, changePercent: 0.3, venue: 'COMEX', contractSize: '100 oz', category: 'metals' },
+    { name: 'Silver Futures', symbol: 'SI=F', price: 25.75, changePercent: -0.2, venue: 'COMEX', contractSize: '5,000 oz', category: 'metals' },
+    { name: 'Copper', symbol: 'HG=F', price: 4.20, changePercent: 1.5, venue: 'COMEX', contractSize: '25,000 lbs', category: 'metals' },
+    { name: 'Platinum', symbol: 'PL=F', price: 1050.00, changePercent: 0.7, venue: 'NYMEX', contractSize: '50 oz', category: 'metals' },
+    { name: 'Palladium', symbol: 'PA=F', price: 1200.00, changePercent: -1.2, venue: 'NYMEX', contractSize: '100 oz', category: 'metals' },
     
     // Grains
     { name: 'Corn Futures', symbol: 'ZC=F', price: 430.25, changePercent: 2.1, venue: 'CBOT', contractSize: '5,000 bu', category: 'grains' },
@@ -57,11 +57,11 @@ export const useAvailableCommodities = () => {
     { name: 'Lean Hogs Futures', symbol: 'HE=F', price: 75.40, changePercent: -0.3, venue: 'CME', contractSize: '40,000 lbs', category: 'livestock' },
     
     // Softs
-    { name: 'Coffee', symbol: 'KC=F', price: 165.25, changePercent: 1.2, venue: 'ICE', category: 'softs' },
-    { name: 'Sugar', symbol: 'SB=F', price: 19.75, changePercent: 0.5, venue: 'ICE', category: 'softs' },
-    { name: 'Cotton', symbol: 'CT=F', price: 72.80, changePercent: 1.1, venue: 'ICE', category: 'softs' },
-    { name: 'Cocoa', symbol: 'CC=F', price: 2850.00, changePercent: -0.7, venue: 'ICE', category: 'softs' },
-    { name: 'Orange Juice', symbol: 'OJ=F', price: 315.50, changePercent: 0.9, venue: 'ICE', category: 'softs' },
+    { name: 'Coffee', symbol: 'KC=F', price: 165.25, changePercent: 1.2, venue: 'ICE', contractSize: '37,500 lbs', category: 'softs' },
+    { name: 'Sugar', symbol: 'SB=F', price: 19.75, changePercent: 0.5, venue: 'ICE', contractSize: '112,000 lbs', category: 'softs' },
+    { name: 'Cotton', symbol: 'CT=F', price: 72.80, changePercent: 1.1, venue: 'ICE', contractSize: '50,000 lbs', category: 'softs' },
+    { name: 'Cocoa', symbol: 'CC=F', price: 2850.00, changePercent: -0.7, venue: 'ICE', contractSize: '10 MT', category: 'softs' },
+    { name: 'Orange Juice', symbol: 'OJ=F', price: 315.50, changePercent: 0.9, venue: 'ICE', contractSize: '15,000 lbs', category: 'softs' },
     
     // Other
     { name: 'Lumber Futures', symbol: 'LBS=F', price: 485.75, changePercent: 2.3, venue: 'CME', contractSize: '110,000 bd ft', category: 'other' },
