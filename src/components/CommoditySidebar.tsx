@@ -226,13 +226,13 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
                 className={`rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 cursor-pointer transition-all duration-200 ${
                   isMobile 
                     ? 'p-6 min-h-[72px] active:scale-95 touch-manipulation mx-2' 
-                    : 'p-3'
+                    : 'p-4'
                 }`}
                 onClick={() => handleNavigate('/correlation')}
               >
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center w-full">
                   <span className={`font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider ${isMobile ? 'text-sm' : 'text-xs'}`}>Correlation</span>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2 ml-4">
                     <BarChart3 className="w-4 h-4 text-blue-500" />
                     <span className={`font-bold text-blue-900 dark:text-blue-100 ${isMobile ? 'text-base' : 'text-sm'}`}>Analyze</span>
                   </div>
