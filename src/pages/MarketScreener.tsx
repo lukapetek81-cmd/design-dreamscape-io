@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
-import { ArrowLeft, Filter, Search, TrendingUp, TrendingDown, BarChart3, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Filter, Search, TrendingUp, TrendingDown, BarChart3, RefreshCw, ArrowUp, ArrowDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAvailableCommodities } from '@/hooks/useCommodityData';
 import { useAuth } from '@/contexts/AuthContext';
@@ -90,6 +90,18 @@ const MarketScreener = () => {
           valueA = a.volume;
           valueB = b.volume;
           break;
+        case 'weekHigh':
+          valueA = a.weekHigh;
+          valueB = b.weekHigh;
+          break;
+        case 'weekLow':
+          valueA = a.weekLow;
+          valueB = b.weekLow;
+          break;
+        case 'volatility':
+          valueA = a.volatility;
+          valueB = b.volatility;
+          break;
         default:
           valueA = a.changePercent;
           valueB = b.changePercent;
@@ -100,6 +112,19 @@ const MarketScreener = () => {
 
     return result;
   }, [enhancedCommodities, searchTerm, filters]);
+
+  const handleSort = (column: string) => {
+    setFilters(prev => ({
+      ...prev,
+      sortBy: column,
+      sortOrder: prev.sortBy === column && prev.sortOrder === 'desc' ? 'asc' : 'desc'
+    }));
+  };
+
+  const getSortIcon = (column: string) => {
+    if (filters.sortBy !== column) return null;
+    return filters.sortOrder === 'desc' ? <ArrowDown className="w-4 h-4" /> : <ArrowUp className="w-4 h-4" />;
+  };
 
   const resetFilters = () => {
     setFilters({
@@ -279,19 +304,75 @@ const MarketScreener = () => {
                  </div>
               ) : filteredCommodities.length > 0 ? (
                 <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-3 font-semibold">Name</th>
-                        <th className="text-right p-3 font-semibold">Price</th>
-                        <th className="text-right p-3 font-semibold">Change</th>
-                        <th className="text-right p-3 font-semibold">Volume</th>
-                        <th className="text-right p-3 font-semibold">52W High</th>
-                        <th className="text-right p-3 font-semibold">52W Low</th>
-                        <th className="text-right p-3 font-semibold">Volatility</th>
-                        <th className="text-center p-3 font-semibold">Action</th>
-                      </tr>
-                    </thead>
+                   <table className="w-full">
+                     <thead>
+                       <tr className="border-b">
+                         <th 
+                           className="text-left p-3 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                           onClick={() => handleSort('name')}
+                         >
+                           <div className="flex items-center gap-2">
+                             Name
+                             {getSortIcon('name')}
+                           </div>
+                         </th>
+                         <th 
+                           className="text-right p-3 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                           onClick={() => handleSort('price')}
+                         >
+                           <div className="flex items-center justify-end gap-2">
+                             Price
+                             {getSortIcon('price')}
+                           </div>
+                         </th>
+                         <th 
+                           className="text-right p-3 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                           onClick={() => handleSort('change')}
+                         >
+                           <div className="flex items-center justify-end gap-2">
+                             Change
+                             {getSortIcon('change')}
+                           </div>
+                         </th>
+                         <th 
+                           className="text-right p-3 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                           onClick={() => handleSort('volume')}
+                         >
+                           <div className="flex items-center justify-end gap-2">
+                             Volume
+                             {getSortIcon('volume')}
+                           </div>
+                         </th>
+                         <th 
+                           className="text-right p-3 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                           onClick={() => handleSort('weekHigh')}
+                         >
+                           <div className="flex items-center justify-end gap-2">
+                             52W High
+                             {getSortIcon('weekHigh')}
+                           </div>
+                         </th>
+                         <th 
+                           className="text-right p-3 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                           onClick={() => handleSort('weekLow')}
+                         >
+                           <div className="flex items-center justify-end gap-2">
+                             52W Low
+                             {getSortIcon('weekLow')}
+                           </div>
+                         </th>
+                         <th 
+                           className="text-right p-3 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                           onClick={() => handleSort('volatility')}
+                         >
+                           <div className="flex items-center justify-end gap-2">
+                             Volatility
+                             {getSortIcon('volatility')}
+                           </div>
+                         </th>
+                         <th className="text-center p-3 font-semibold">Action</th>
+                       </tr>
+                     </thead>
                     <tbody>
                       {filteredCommodities.map((commodity, index) => (
                         <tr key={commodity.symbol} className="border-b hover:bg-muted/50">
