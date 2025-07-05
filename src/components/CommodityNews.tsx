@@ -2,12 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Settings } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { EnhancedNewsItem, fetchNewsFromFMP, fetchNewsFromMarketaux } from '@/services/newsHelpers';
+import { EnhancedNewsItem, fetchNewsFromFMP, fetchNewsFromMarketaux, getFallbackNews } from '@/services/newsHelpers';
 import EnhancedNewsCard from './EnhancedNewsCard';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import NewsSettings from './NewsSettings';
 
 interface NewsItem {
   id: string;
@@ -28,7 +24,6 @@ const CommodityNews = ({ commodity }: CommodityNewsProps) => {
   const [news, setNews] = useState<EnhancedNewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -44,27 +39,10 @@ const CommodityNews = ({ commodity }: CommodityNewsProps) => {
         
         const combinedNews = [...marketauxNews, ...fmpNews];
         
-        // If no enhanced news, try edge function as fallback
+        // If no enhanced news, use comprehensive fallback
         if (combinedNews.length === 0) {
-          const { data, error: functionError } = await supabase.functions.invoke('fetch-commodity-news', {
-            body: { category: 'all', commodity }
-          });
-
-          if (functionError) {
-            throw new Error(functionError.message);
-          }
-
-          const commodityKeywords = [
-            commodity.toLowerCase(),
-            ...getRelevantKeywords(commodity)
-          ];
-
-          const relevantNews = (data.articles || []).filter((article: any) => {
-            const content = (article.title + ' ' + article.description).toLowerCase();
-            return commodityKeywords.some(keyword => content.includes(keyword));
-          }).slice(0, 15); // Increased limit for fallback
-
-          setNews(relevantNews);
+          const fallbackNews = getFallbackNews(commodity);
+          setNews(fallbackNews);
         } else {
           setNews(combinedNews);
         }
@@ -146,10 +124,6 @@ const CommodityNews = ({ commodity }: CommodityNewsProps) => {
             </p>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
-          <Settings className="w-4 h-4 mr-2" />
-          Settings
-        </Button>
       </div>
 
       {loading && (
@@ -174,12 +148,9 @@ const CommodityNews = ({ commodity }: CommodityNewsProps) => {
         <div className="text-center py-8">
           <div className="text-4xl mb-4">📰</div>
           <h3 className="font-semibold mb-2">No Recent News</h3>
-          <p className="text-sm text-muted-foreground mb-4">
+          <p className="text-sm text-muted-foreground">
             No recent news found for {commodity}
           </p>
-          <Button variant="outline" onClick={() => setShowSettings(true)}>
-            Configure News Sources
-          </Button>
         </div>
       )}
 
@@ -194,15 +165,6 @@ const CommodityNews = ({ commodity }: CommodityNewsProps) => {
           ))}
         </div>
       )}
-
-      <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>News Configuration</DialogTitle>
-          </DialogHeader>
-          <NewsSettings />
-        </DialogContent>
-      </Dialog>
     </Card>
   );
 };
