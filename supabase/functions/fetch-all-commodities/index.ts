@@ -46,63 +46,29 @@ const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; cont
 
 // Generate realistic mock data for fields FMP doesn't provide
 const generateEnhancedData = (commodity: any, name: string) => {
-  const basePrice = commodity.price || 100;
+  const basePrice = commodity.price || 0;
   const realVolume = commodity.volume || 0;
   
   return {
     ...commodity,
     name,
-    // Use real volume from FMP API when available, otherwise generate fallback
-    volume: realVolume > 0 ? realVolume : (Math.floor(Math.random() * 100000) + 10000),
+    // Use real volume from FMP API when available, otherwise null
+    volume: realVolume > 0 ? realVolume : null,
     volumeDisplay: realVolume > 0 ? 
       (realVolume >= 1000 ? Math.floor(realVolume / 1000) + 'K' : realVolume.toString()) :
-      (Math.floor(Math.random() * 100) + 10).toString() + 'K',
+      null,
     
-    // 52-week ranges (±15-30% from current price)
-    weekHigh: basePrice * (1.15 + Math.random() * 0.15),
-    weekLow: basePrice * (0.85 - Math.random() * 0.15),
+    // Only use real data, no mock generation
+    weekHigh: null, // FMP doesn't provide this in quotes endpoint
+    weekLow: null,  // FMP doesn't provide this in quotes endpoint  
+    volatility: null, // Would need separate API call
+    beta: null, // Would need separate API call
+    avgVolume: null, // Would need separate API call
+    marketCap: null, // Would need separate API call
     
-    // Volatility (realistic ranges by category)
-    volatility: getVolatilityForCategory(COMMODITY_SYMBOLS[name]?.category || 'other'),
-    
-    // Beta (correlation to broader market)
-    beta: (0.5 + Math.random() * 1.5).toFixed(2),
-    
-    // Average volume
-    avgVolume: Math.floor(Math.random() * 50000) + 20000,
-    
-    // Market cap equivalent (for futures, this is open interest value)
-    marketCap: generateMarketCap(basePrice),
-    
-    // Additional metadata
+    // Additional metadata from our mappings
     ...COMMODITY_SYMBOLS[name]
   };
-};
-
-const getVolatilityForCategory = (category: string): number => {
-  const volatilityRanges: Record<string, [number, number]> = {
-    'energy': [20, 50],
-    'metals': [15, 35],
-    'grains': [25, 45],
-    'livestock': [18, 40],
-    'softs': [22, 48],
-    'other': [20, 35]
-  };
-  
-  const [min, max] = volatilityRanges[category] || [15, 35];
-  return Math.floor(Math.random() * (max - min)) + min;
-};
-
-const generateMarketCap = (price: number): string => {
-  // Generate market cap based on price level
-  const baseValue = price < 10 ? 500 : price < 100 ? 2000 : price < 1000 ? 5000 : 10000;
-  const marketCapMillions = baseValue + Math.floor(Math.random() * baseValue);
-  
-  if (marketCapMillions >= 1000) {
-    return (marketCapMillions / 1000).toFixed(1) + 'B';
-  } else {
-    return marketCapMillions.toString() + 'M';
-  }
 };
 
 serve(async (req) => {
@@ -111,7 +77,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Fetching all commodities with enhanced data')
+    console.log('Fetching all commodities with real data only (no mock values)')
 
     // Get FMP API key from Supabase secrets
     const fmpApiKey = Deno.env.get('FMP_API_KEY')
@@ -153,12 +119,13 @@ serve(async (req) => {
                 volume: parseInt(fmpData.volume) || 0, // Use real FMP volume data
               }, name);
             } else {
-              // Use fallback data for commodities not found in FMP
+              // Use fallback data for commodities not found in FMP - but no mock values
               return generateEnhancedData({
                 symbol: symbolInfo.symbol,
-                price: getFallbackPrice(name),
-                change: (Math.random() - 0.5) * 10,
-                changePercent: (Math.random() - 0.5) * 4,
+                price: 0, // Will show as missing
+                change: 0,
+                changePercent: 0,
+                volume: 0, // Will show as missing
               }, name);
             }
           });
@@ -175,15 +142,16 @@ serve(async (req) => {
       console.log('No FMP API key configured, using fallback data');
     }
 
-    // Use fallback data if FMP API failed
+    // Use fallback data if FMP API failed - but no mock values
     if (commoditiesData.length === 0) {
-      console.log('Generating fallback commodity data');
+      console.log('Generating minimal fallback commodity data (no mock values)');
       commoditiesData = Object.keys(COMMODITY_SYMBOLS).map(name => {
         return generateEnhancedData({
           symbol: COMMODITY_SYMBOLS[name].symbol,
-          price: getFallbackPrice(name),
-          change: (Math.random() - 0.5) * 10,
-          changePercent: (Math.random() - 0.5) * 4,
+          price: 0, // Will show as missing
+          change: 0,
+          changePercent: 0,
+          volume: 0, // Will show as missing
         }, name);
       });
     }
@@ -206,33 +174,3 @@ serve(async (req) => {
     )
   }
 })
-
-const getFallbackPrice = (commodityName: string): number => {
-  const basePrices: Record<string, number> = {
-    'Gold Futures': 2000,
-    'Silver Futures': 25,
-    'Copper': 4.2,
-    'Platinum': 1050,
-    'Palladium': 1200,
-    'Crude Oil': 65,
-    'Brent Crude Oil': 67,
-    'Natural Gas': 2.85,
-    'Gasoline RBOB': 2.1,
-    'Heating Oil': 2.3,
-    'Corn Futures': 430,
-    'Wheat Futures': 550,
-    'Soybean Futures': 1150,
-    'Live Cattle Futures': 170,
-    'Feeder Cattle Futures': 240,
-    'Lean Hogs Futures': 75,
-    'Oat Futures': 385,
-    'Sugar': 19.75,
-    'Cotton': 72.80,
-    'Lumber Futures': 485,
-    'Orange Juice': 315,
-    'Coffee': 165,
-    'Rough Rice': 16.25,
-    'Cocoa': 2850
-  };
-  return basePrices[commodityName] || 100;
-};

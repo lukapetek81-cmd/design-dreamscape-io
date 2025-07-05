@@ -26,15 +26,15 @@ export interface Commodity {
   venue: string;
   contractSize?: string;
   category: string;
-  // Enhanced fields for Market Screener
-  volume: number;
-  volumeDisplay: string;
-  weekHigh: number;
-  weekLow: number;
-  volatility: number;
-  beta: string;
-  avgVolume: number;
-  marketCap: string;
+  // Enhanced fields for Market Screener - can be null if not available
+  volume: number | null;
+  volumeDisplay: string | null;
+  weekHigh: number | null;
+  weekLow: number | null;
+  volatility: number | null;
+  beta: string | null;
+  avgVolume: number | null;
+  marketCap: string | null;
 }
 
 export const useAvailableCommodities = () => {

@@ -79,32 +79,32 @@ const MarketScreener = () => {
             ? a.name.localeCompare(b.name)
             : b.name.localeCompare(a.name);
         case 'price':
-          valueA = a.price;
-          valueB = b.price;
+          valueA = a.price || 0;
+          valueB = b.price || 0;
           break;
         case 'change':
-          valueA = a.changePercent;
-          valueB = b.changePercent;
+          valueA = a.changePercent || 0;
+          valueB = b.changePercent || 0;
           break;
         case 'volume':
-          valueA = a.volume;
-          valueB = b.volume;
+          valueA = a.volume || 0;
+          valueB = b.volume || 0;
           break;
         case 'weekHigh':
-          valueA = a.weekHigh;
-          valueB = b.weekHigh;
+          valueA = a.weekHigh || 0;
+          valueB = b.weekHigh || 0;
           break;
         case 'weekLow':
-          valueA = a.weekLow;
-          valueB = b.weekLow;
+          valueA = a.weekLow || 0;
+          valueB = b.weekLow || 0;
           break;
         case 'volatility':
-          valueA = a.volatility;
-          valueB = b.volatility;
+          valueA = a.volatility || 0;
+          valueB = b.volatility || 0;
           break;
         default:
-          valueA = a.changePercent;
-          valueB = b.changePercent;
+          valueA = a.changePercent || 0;
+          valueB = b.changePercent || 0;
       }
 
       return filters.sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
@@ -389,26 +389,38 @@ const MarketScreener = () => {
                               <p className="text-sm text-muted-foreground">{commodity.symbol}</p>
                             </div>
                           </td>
-                          <td className="p-3 text-right font-bold">
-                            ${commodity.price.toFixed(2)}
-                          </td>
-                          <td className="p-3 text-right">
-                            <div className={`flex items-center justify-end gap-1 ${
-                              commodity.changePercent >= 0 ? 'text-green-600' : 'text-red-600'
-                            }`}>
-                              {commodity.changePercent >= 0 ? 
-                                <TrendingUp className="w-4 h-4" /> : 
-                                <TrendingDown className="w-4 h-4" />
-                              }
-                              <span className="font-bold">
-                                {commodity.changePercent.toFixed(2)}%
-                              </span>
-                            </div>
-                          </td>
-                          <td className="p-3 text-right font-medium">{commodity.volumeDisplay}</td>
-                          <td className="p-3 text-right">${commodity.weekHigh.toFixed(2)}</td>
-                           <td className="p-3 text-right">${commodity.weekLow.toFixed(2)}</td>
-                           <td className="p-3 text-right">{commodity.volatility}%</td>
+                           <td className="p-3 text-right font-bold">
+                             {commodity.price > 0 ? `$${commodity.price.toFixed(2)}` : '/'}
+                           </td>
+                           <td className="p-3 text-right">
+                             {commodity.changePercent !== 0 ? (
+                               <div className={`flex items-center justify-end gap-1 ${
+                                 commodity.changePercent >= 0 ? 'text-green-600' : 'text-red-600'
+                               }`}>
+                                 {commodity.changePercent >= 0 ? 
+                                   <TrendingUp className="w-4 h-4" /> : 
+                                   <TrendingDown className="w-4 h-4" />
+                                 }
+                                 <span className="font-bold">
+                                   {commodity.changePercent.toFixed(2)}%
+                                 </span>
+                               </div>
+                             ) : (
+                               <span className="text-muted-foreground">/</span>
+                             )}
+                           </td>
+                           <td className="p-3 text-right font-medium">
+                             {commodity.volumeDisplay || '/'}
+                           </td>
+                           <td className="p-3 text-right">
+                             {commodity.weekHigh ? `$${commodity.weekHigh.toFixed(2)}` : '/'}
+                           </td>
+                           <td className="p-3 text-right">
+                             {commodity.weekLow ? `$${commodity.weekLow.toFixed(2)}` : '/'}
+                           </td>
+                           <td className="p-3 text-right">
+                             {commodity.volatility ? `${commodity.volatility}%` : '/'}
+                           </td>
                           <td className="p-3 text-center">
                             <Button variant="ghost" size="sm">
                               <BarChart3 className="w-4 h-4" />
