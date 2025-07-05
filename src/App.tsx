@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import LiveFeed from "./pages/LiveFeed";
 import Portfolio from "./pages/Portfolio";
+import NewsSettingsPage from "./pages/NewsSettings";
 import Billing from "./pages/Billing";
 import NotFound from "./pages/NotFound";
 
@@ -29,6 +30,7 @@ const App = () => (
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/live-feed" element={<LiveFeed />} />
               <Route path="/portfolio" element={<Portfolio />} />
+              <Route path="/news-settings" element={<NewsSettingsPage />} />
               <Route path="/billing" element={<Billing />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

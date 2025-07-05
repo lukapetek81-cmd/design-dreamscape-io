@@ -10,7 +10,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Zap, Coins, Wheat, TrendingUp, Beef, Coffee, Package, Newspaper, Moon, Sun, Monitor, Briefcase } from "lucide-react";
+import { Zap, Coins, Wheat, TrendingUp, Beef, Coffee, Package, Newspaper, Moon, Sun, Monitor, Briefcase, Settings } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -235,6 +235,23 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
                   <div className="flex items-center gap-1">
                     <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
                     <span className={`font-bold text-blue-900 dark:text-blue-100 ${isMobile ? 'text-base' : 'text-sm'}`}>Live Feed</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div 
+                className={`rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 cursor-pointer transition-all duration-200 ${
+                  isMobile 
+                    ? 'p-6 min-h-[72px] active:scale-95 touch-manipulation mx-2' 
+                    : 'p-3'
+                }`}
+                onClick={() => handleNavigate('/news-settings')}
+              >
+                <div className="flex justify-between items-center">
+                  <span className={`font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wider ${isMobile ? 'text-sm' : 'text-xs'}`}>News Settings</span>
+                  <div className="flex items-center gap-1">
+                    <Settings className="w-4 h-4 text-orange-500" />
+                    <span className={`font-bold text-orange-900 dark:text-orange-100 ${isMobile ? 'text-base' : 'text-sm'}`}>Configure</span>
                   </div>
                 </div>
               </div>

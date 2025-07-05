@@ -1,8 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { ExternalLink, Clock, Newspaper, Loader } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { EnhancedNewsItem, fetchNewsFromFMP } from '@/services/newsHelpers';
+import EnhancedNewsCard from './EnhancedNewsCard';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import NewsSettings from './NewsSettings';
 
 interface NewsItem {
   id: string;
@@ -20,9 +25,10 @@ interface CommodityNewsProps {
 }
 
 const CommodityNews = ({ commodity }: CommodityNewsProps) => {
-  const [news, setNews] = useState<NewsItem[]>([]);
+  const [news, setNews] = useState<EnhancedNewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -30,26 +36,33 @@ const CommodityNews = ({ commodity }: CommodityNewsProps) => {
         setLoading(true);
         setError(null);
         
-        const { data, error: functionError } = await supabase.functions.invoke('fetch-commodity-news', {
-          body: { category: 'all', commodity }
-        });
+        // Use enhanced news fetching
+        const enhancedNews = await fetchNewsFromFMP(commodity);
+        
+        // If no enhanced news, try edge function as fallback
+        if (enhancedNews.length === 0) {
+          const { data, error: functionError } = await supabase.functions.invoke('fetch-commodity-news', {
+            body: { category: 'all', commodity }
+          });
 
-        if (functionError) {
-          throw new Error(functionError.message);
+          if (functionError) {
+            throw new Error(functionError.message);
+          }
+
+          const commodityKeywords = [
+            commodity.toLowerCase(),
+            ...getRelevantKeywords(commodity)
+          ];
+
+          const relevantNews = (data.articles || []).filter((article: any) => {
+            const content = (article.title + ' ' + article.description).toLowerCase();
+            return commodityKeywords.some(keyword => content.includes(keyword));
+          }).slice(0, 5);
+
+          setNews(relevantNews);
+        } else {
+          setNews(enhancedNews);
         }
-
-        // Filter news relevant to the specific commodity
-        const commodityKeywords = [
-          commodity.toLowerCase(),
-          ...getRelevantKeywords(commodity)
-        ];
-
-        const relevantNews = (data.articles || []).filter((article: NewsItem) => {
-          const content = (article.title + ' ' + article.description).toLowerCase();
-          return commodityKeywords.some(keyword => content.includes(keyword));
-        }).slice(0, 3); // Show only top 3 relevant articles
-
-        setNews(relevantNews);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch news');
         console.error('Error fetching commodity news:', err);
@@ -116,101 +129,75 @@ const CommodityNews = ({ commodity }: CommodityNewsProps) => {
 
   return (
     <Card className="p-4 sm:p-6 mt-4 sm:mt-6 bg-gradient-to-br from-card/80 to-muted/20 border border-border/50 shadow-soft hover:shadow-medium transition-all duration-300 animate-fade-in">
-      <div className="flex items-center gap-3 mb-4 sm:mb-6">
-        <div className="p-2 sm:p-3 rounded-xl bg-blue-100 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/30 transition-colors duration-300">
-          <Newspaper className="w-4 h-4 sm:w-5 sm:h-5" />
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
+        <div className="flex items-center gap-3">
+          <div className="p-2 sm:p-3 rounded-xl bg-blue-100 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400">
+            <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
+          </div>
+          <div>
+            <h4 className="text-sm sm:text-base font-bold text-foreground">Enhanced {commodity} News</h4>
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+              {loading ? 'Loading with sentiment analysis...' : `${news.length} articles with smart insights`}
+            </p>
+          </div>
         </div>
-        <div>
-          <h4 className="text-sm sm:text-base font-bold text-foreground">Latest {commodity} News</h4>
-          <p className="text-xs sm:text-sm text-muted-foreground font-medium">
-            {loading ? 'Loading latest updates...' : 'Recent market updates & insights'}
-          </p>
-        </div>
+        <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
+          <Settings className="w-4 h-4 mr-2" />
+          Settings
+        </Button>
       </div>
 
       {loading && (
         <div className="flex items-center justify-center py-8">
-          <Loader className="w-6 h-6 animate-spin text-primary" />
-          <span className="ml-2 text-sm text-muted-foreground">Loading news...</span>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <span className="ml-3 text-sm text-muted-foreground">Analyzing news...</span>
         </div>
       )}
 
       {error && (
         <div className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-xl">
-          <p className="text-sm text-red-600 dark:text-red-400">
-            Unable to load news: {error}
+          <p className="text-sm text-red-600 dark:text-red-400 mb-2">
+            Unable to load enhanced news: {error}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            💡 Tip: Configure API keys in settings for better news coverage
           </p>
         </div>
       )}
 
       {!loading && !error && news.length === 0 && (
         <div className="text-center py-8">
-          <div className="text-muted-foreground mb-2">📰</div>
-          <p className="text-sm text-muted-foreground">
+          <div className="text-4xl mb-4">📰</div>
+          <h3 className="font-semibold mb-2">No Recent News</h3>
+          <p className="text-sm text-muted-foreground mb-4">
             No recent news found for {commodity}
           </p>
+          <Button variant="outline" onClick={() => setShowSettings(true)}>
+            Configure News Sources
+          </Button>
         </div>
       )}
 
       {!loading && !error && news.length > 0 && (
-        <div className="space-y-3 sm:space-y-4">
+        <div className="space-y-4">
           {news.map((newsItem, index) => (
-            <div 
+            <EnhancedNewsCard
               key={newsItem.id}
-              className="group p-3 sm:p-4 rounded-xl bg-gradient-to-r from-background/50 to-muted/20 border border-border/30 hover:border-border/60 hover:shadow-soft transition-all duration-300 cursor-pointer animate-slide-up"
-              style={{ animationDelay: `${index * 100}ms` }}
-              onClick={() => {
-                if (newsItem.url && newsItem.url !== '#') {
-                  window.open(newsItem.url, '_blank', 'noopener,noreferrer');
-                }
-              }}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <h5 className="text-sm sm:text-base font-semibold text-foreground mb-2 group-hover:text-primary transition-colors duration-200 line-clamp-2">
-                    {newsItem.title}
-                  </h5>
-                  {newsItem.description && (
-                    <p className="text-xs sm:text-sm text-muted-foreground mb-2 line-clamp-2">
-                      {newsItem.description}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <div className="w-1 h-1 bg-primary rounded-full"></div>
-                      <span className="font-medium">{newsItem.source}</span>
-                    </div>
-                    <span className="text-muted-foreground/60">•</span>
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      <span>{formatTimeAgo(newsItem.publishedAt)}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors duration-200" />
-                </div>
-              </div>
-            </div>
+              news={newsItem}
+              commodityName={commodity}
+            />
           ))}
         </div>
       )}
 
-      <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-gradient-to-r from-muted/30 to-muted/20 rounded-xl border border-border/30">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full animate-pulse ${
-              loading ? 'bg-blue-500' : error ? 'bg-red-500' : 'bg-green-500'
-            }`}></div>
-            <span className="text-xs sm:text-sm font-semibold text-foreground">
-              {loading ? 'Loading...' : error ? 'Error' : 'Live Updates'}
-            </span>
-          </div>
-          <span className="text-xs sm:text-sm text-muted-foreground font-medium">
-            {loading ? 'Fetching data...' : 'Updated just now'}
-          </span>
-        </div>
-      </div>
+      <Dialog open={showSettings} onOpenChange={setShowSettings}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>News Configuration</DialogTitle>
+          </DialogHeader>
+          <NewsSettings />
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
