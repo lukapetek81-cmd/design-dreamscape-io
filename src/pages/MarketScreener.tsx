@@ -343,7 +343,7 @@ const MarketScreener = () => {
                            title="Daily contract volume traded (in thousands of contracts)"
                          >
                            <div className="flex items-center justify-end gap-2">
-                             Volume (K contracts)
+                             Volume (contracts)
                              {getSortIcon('volume')}
                            </div>
                          </th>
