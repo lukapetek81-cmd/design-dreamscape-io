@@ -3,15 +3,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TrendingUp, TrendingDown, Activity, BarChart3 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Activity, BarChart3, ArrowLeft } from 'lucide-react';
 import { useAvailableCommodities } from '@/hooks/useCommodityData';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const MarketCorrelation = () => {
   const [timeframe, setTimeframe] = useState('30d');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const { commodities } = useAvailableCommodities();
   const { profile } = useAuth();
+  const navigate = useNavigate();
 
   // Filter commodities by category
   const filteredCommodities = selectedCategory === 'all' 
@@ -67,6 +69,17 @@ const MarketCorrelation = () => {
       {/* Header */}
       <div className="space-y-4">
         <div>
+          <div className="flex items-center gap-4 mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </Button>
+          </div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
             <BarChart3 className="w-8 h-8 text-primary" />
             Market Correlation
