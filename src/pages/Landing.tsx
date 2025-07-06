@@ -206,25 +206,6 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto text-center max-w-3xl">
-          <h2 className="text-4xl font-bold mb-6">Ready to Start Trading?</h2>
-          <p className="text-xl text-muted-foreground mb-8">
-            Join thousands of traders who trust Commodity Hub for their market intelligence.
-            Start your free trial today.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/auth">
-              <Button size="lg" className="w-full sm:w-auto">
-                Create Free Account
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
       {/* Footer */}
       <footer className="border-t bg-muted/20 py-8 px-4">
         <div className="container mx-auto text-center">
