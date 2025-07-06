@@ -12,7 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRealtimeDataContext } from '@/contexts/RealtimeDataContext';
 import { useAvailableCommodities } from '@/hooks/useCommodityData';
 
-const Index = () => {
+const Dashboard = () => {
   const [activeGroup, setActiveGroup] = React.useState("energy");
   const isMobile = useIsMobile();
   const { user, profile, loading: authLoading } = useAuth();
@@ -38,7 +38,7 @@ const Index = () => {
 
   return (
     <SidebarProvider>
-      <IndexContent 
+      <DashboardContent 
         activeGroup={activeGroup}
         setActiveGroup={setActiveGroup}
         isMobile={isMobile}
@@ -52,7 +52,7 @@ const Index = () => {
   );
 };
 
-const IndexContent = ({ 
+const DashboardContent = ({ 
   activeGroup, 
   setActiveGroup, 
   isMobile, 
@@ -418,4 +418,4 @@ const IndexContent = ({
     );
   };
 
-export default Index;
+export default Dashboard;

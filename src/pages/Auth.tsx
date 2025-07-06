@@ -25,7 +25,7 @@ const Auth = () => {
 
   // Redirect if already authenticated
   if (user && !authLoading) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,7 +99,7 @@ const Auth = () => {
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
+            Back to Home
           </Link>
           
           <div className="flex items-center justify-center gap-3">
