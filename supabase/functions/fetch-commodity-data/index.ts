@@ -8,8 +8,10 @@ const corsHeaders = {
 
 // Commodity symbol mappings - FMP only
 const COMMODITY_SYMBOLS: Record<string, string> = {
+  'Gold': 'GC=F', // Add simple "Gold" mapping
   'Gold Futures': 'GC=F',
   'Micro Gold Futures': 'MGC=F',
+  'Silver': 'SI=F', // Add simple "Silver" mapping
   'Silver Futures': 'SI=F',
   'Micro Silver Futures': 'MSI=F',
   'Copper': 'HG=F',
@@ -21,7 +23,9 @@ const COMMODITY_SYMBOLS: Record<string, string> = {
   'Natural Gas': 'NG=F',
   'Heating Oil': 'HO=F',
   'Gasoline RBOB': 'RB=F',
+  'Corn': 'ZC=F', // Add simple "Corn" mapping
   'Corn Futures': 'ZC=F',
+  'Wheat': 'ZW=F', // Add simple "Wheat" mapping
   'Wheat Futures': 'ZW=F',
   'Soybean Futures': 'ZS=F',
   'Live Cattle Futures': 'LE=F',
@@ -166,8 +170,10 @@ const generateFallbackData = (commodityName: string, timeframe: string, basePric
 
 const getBasePriceForCommodity = (commodityName: string): number => {
   const basePrices: Record<string, number> = {
+    'Gold': 2000, // Add simple "Gold" mapping
     'Gold Futures': 2000,
     'Micro Gold Futures': 2000,
+    'Silver': 25, // Add simple "Silver" mapping  
     'Silver Futures': 25,
     'Micro Silver Futures': 25,
     'Copper': 4.2,
@@ -179,7 +185,9 @@ const getBasePriceForCommodity = (commodityName: string): number => {
     'Natural Gas': 2.85,
     'Gasoline RBOB': 2.1,
     'Heating Oil': 2.3,
+    'Corn': 430, // Add simple "Corn" mapping
     'Corn Futures': 430,
+    'Wheat': 550, // Add simple "Wheat" mapping
     'Wheat Futures': 550,
     'Soybean Futures': 1150,
     'Live Cattle Futures': 170,
