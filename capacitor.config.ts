@@ -12,7 +12,7 @@ const config: CapacitorConfig = {
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
-      backgroundColor: "#1a202c",
+      backgroundColor: "#663399",
       showSpinner: false
     }
   },
@@ -20,8 +20,7 @@ const config: CapacitorConfig = {
     compileSdkVersion: 35,
     minSdkVersion: 22,
     targetSdkVersion: 35,
-    iconBackgroundColor: '#1a202c',
-    iconForegroundColor: '#ffffff'
+    icon: 'public/icon.png'
   }
 };
 
