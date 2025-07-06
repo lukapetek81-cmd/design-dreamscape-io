@@ -45,6 +45,7 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
   const [timeframe, setTimeframe] = useState('1D');
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [failedCommodities, setFailedCommodities] = useState<string[]>([]);
   const { prices, connected, lastUpdate, isLiveData } = useRealtimeDataContext();
 
   // Get historical data for each commodity
@@ -61,12 +62,13 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
 
     setIsLoading(true);
     
-    // Check if all queries have data
-    const allQueriesHaveData = historicalQueries.every(query => 
-      query.data && query.data.data && query.data.data.length > 0
+    // Check which queries have data (allow partial data)
+    const queriesWithData = historicalQueries.filter((query, index) => 
+      query.data && query.data.data && query.data.data.length > 0 && !query.data.error
     );
 
-    if (!allQueriesHaveData) {
+    if (queriesWithData.length === 0) {
+      console.warn('No commodity data available for chart');
       setIsLoading(false);
       return;
     }
@@ -74,10 +76,19 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
     try {
       // Create a map of dates to price data
       const dateMap = new Map<string, ChartDataPoint>();
+      const failed: string[] = [];
 
       historicalQueries.forEach((query, index) => {
         const commodity = commodities[index];
-        const data = query.data?.data || [];
+        
+        // Only process successful queries
+        if (!query.data || !query.data.data || query.data.error) {
+          console.warn(`Skipping ${commodity.name} due to data fetch error:`, query.data?.error);
+          failed.push(commodity.name);
+          return;
+        }
+
+        const data = query.data.data;
 
         data.forEach((point) => {
           const dateKey = point.date;
@@ -95,6 +106,8 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
         });
       });
 
+      setFailedCommodities(failed);
+
       // Convert map to array and sort by timestamp
       const combinedData = Array.from(dateMap.values())
         .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
@@ -103,6 +116,7 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
           return rest;
         });
 
+      console.log('Chart data processed:', combinedData.length, 'data points');
       setChartData(combinedData);
     } catch (error) {
       console.error('Error processing chart data:', error);
@@ -263,6 +277,20 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
             </ResponsiveContainer>
           )}
         </div>
+        
+        {/* Show warning for failed commodities */}
+        {failedCommodities.length > 0 && (
+          <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-yellow-600 border-yellow-300">
+                Warning
+              </Badge>
+              <span className="text-sm text-yellow-700 dark:text-yellow-300">
+                Failed to load data for: {failedCommodities.join(', ')}
+              </span>
+            </div>
+          </div>
+        )}
         
         {connected && lastUpdate && (
           <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
