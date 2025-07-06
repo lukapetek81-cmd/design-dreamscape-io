@@ -20,12 +20,6 @@ const config: CapacitorConfig = {
     minSdkVersion: 22,
     targetSdkVersion: 35,
     iconDensity: 'mdpi'
-  },
-  // Configure custom app icon
-  appIcon: {
-    source: 'assets/icon-only.png',
-    foreground: 'assets/icon-only.png',
-    background: '#663399'
   }
 };
 
