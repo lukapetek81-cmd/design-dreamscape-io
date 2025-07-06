@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { BookOpen, GraduationCap, Clock, Search, Filter, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +29,7 @@ interface Tutorial {
   difficulty_level: 'beginner' | 'intermediate' | 'advanced';
   estimated_time_minutes: number;
   sort_order: number;
+  content?: string;
 }
 
 interface GlossaryTerm {
@@ -46,6 +48,8 @@ const LearningHub = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [loading, setLoading] = useState(true);
+  const [selectedTutorial, setSelectedTutorial] = useState<Tutorial | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -108,6 +112,33 @@ const LearningHub = () => {
     term.term.toLowerCase().includes(searchTerm.toLowerCase()) ||
     term.definition.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleStartLearning = async (tutorial: Tutorial) => {
+    if (!tutorial.content) {
+      // Fetch full tutorial content if not already loaded
+      try {
+        const { data, error } = await supabase
+          .from('tutorials')
+          .select('content')
+          .eq('id', tutorial.id)
+          .single();
+        
+        if (error) throw error;
+        
+        tutorial.content = data.content;
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load tutorial content",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
+    setSelectedTutorial(tutorial);
+    setDialogOpen(true);
+  };
 
   return (
     <SidebarProvider>
@@ -223,7 +254,11 @@ const LearningHub = () => {
                             </CardDescription>
                           </CardHeader>
                           <CardContent className="pt-0">
-                            <Button variant="outline" className="w-full">
+                            <Button 
+                              variant="outline" 
+                              className="w-full"
+                              onClick={() => handleStartLearning(tutorial)}
+                            >
                               Start Learning
                             </Button>
                           </CardContent>
@@ -297,6 +332,47 @@ const LearningHub = () => {
             </div>
           </main>
         </SidebarInset>
+
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                {selectedTutorial?.title}
+              </DialogTitle>
+              <DialogDescription>
+                {selectedTutorial?.description}
+              </DialogDescription>
+            </DialogHeader>
+            
+            {selectedTutorial && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <Badge 
+                    variant="outline" 
+                    className={getDifficultyColor(selectedTutorial.difficulty_level)}
+                  >
+                    {selectedTutorial.difficulty_level}
+                  </Badge>
+                  {selectedTutorial.estimated_time_minutes && (
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      <span>{selectedTutorial.estimated_time_minutes} minutes</span>
+                    </div>
+                  )}
+                </div>
+                
+                <Separator />
+                
+                <div className="prose prose-sm max-w-none">
+                  <div className="whitespace-pre-wrap text-foreground leading-relaxed">
+                    {selectedTutorial.content}
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </SidebarProvider>
   );
