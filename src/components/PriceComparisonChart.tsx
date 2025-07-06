@@ -46,6 +46,7 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [failedCommodities, setFailedCommodities] = useState<string[]>([]);
+  const [useLogScale, setUseLogScale] = useState(false);
   const { prices, connected, lastUpdate, isLiveData } = useRealtimeDataContext();
 
   // Get historical data for each commodity
@@ -203,6 +204,14 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
           </div>
           <div className="flex items-center gap-2">
             {getConnectionStatus()}
+            <Button
+              variant={useLogScale ? "default" : "outline"}
+              size="sm"
+              onClick={() => setUseLogScale(!useLogScale)}
+              className="whitespace-nowrap"
+            >
+              Log Scale
+            </Button>
             <Select value={timeframe} onValueChange={setTimeframe}>
               <SelectTrigger className="w-[120px]">
                 <SelectValue />
@@ -245,6 +254,8 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
                   interval="preserveStartEnd"
                 />
                 <YAxis 
+                  scale={useLogScale ? "log" : "linear"}
+                  domain={useLogScale ? ['dataMin', 'dataMax'] : ['auto', 'auto']}
                   tick={{ fontSize: 12 }}
                   tickFormatter={(value) => `$${value.toFixed(0)}`}
                 />
