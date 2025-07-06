@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { PriceComparisonChart } from "@/components/PriceComparisonChart";
 
 interface Commodity {
   name: string;
@@ -248,7 +249,7 @@ const PriceComparison = () => {
               </div>
 
               <div className="grid gap-6 lg:grid-cols-4">
-                <div className="lg:col-span-3">
+                <div className="lg:col-span-3 space-y-6">
                   <Card>
                     <CardHeader>
                       <CardTitle>Current Comparison</CardTitle>
@@ -319,6 +320,11 @@ const PriceComparison = () => {
                       )}
                     </CardContent>
                   </Card>
+
+                  {/* Real-time Price Chart */}
+                  {selectedCommodities.length >= 2 && (
+                    <PriceComparisonChart commodities={selectedCommodities} />
+                  )}
                 </div>
 
                 <div className="space-y-6">
