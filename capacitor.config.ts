@@ -1,4 +1,3 @@
-
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
@@ -19,7 +18,14 @@ const config: CapacitorConfig = {
   android: {
     compileSdkVersion: 35,
     minSdkVersion: 22,
-    targetSdkVersion: 35
+    targetSdkVersion: 35,
+    iconDensity: 'mdpi'
+  },
+  // Configure custom app icon
+  appIcon: {
+    source: 'assets/icon-only.png',
+    foreground: 'assets/icon-only.png',
+    background: '#663399'
   }
 };
 
