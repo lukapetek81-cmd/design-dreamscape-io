@@ -19,8 +19,7 @@ const config: CapacitorConfig = {
   android: {
     compileSdkVersion: 35,
     minSdkVersion: 22,
-    targetSdkVersion: 35,
-    icon: 'public/icon.png'
+    targetSdkVersion: 35
   }
 };
 
