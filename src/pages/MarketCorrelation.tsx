@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TrendingUp, TrendingDown, Activity, BarChart3, ArrowLeft } from 'lucide-react';
+import { TrendingUp, TrendingDown, Activity, BarChart3, ArrowLeft, Smartphone, Monitor } from 'lucide-react';
 import { useAvailableCommodities } from '@/hooks/useCommodityData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 const MarketCorrelation = () => {
   const [timeframe, setTimeframe] = useState('30d');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [mobileView, setMobileView] = useState(false);
   const { data: commodities } = useAvailableCommodities();
   const { profile } = useAuth();
   const navigate = useNavigate();
@@ -92,7 +93,7 @@ const MarketCorrelation = () => {
         {/* Controls */}
         <div className="flex flex-col sm:flex-row gap-4">
           <Select value={timeframe} onValueChange={setTimeframe}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Select timeframe" />
             </SelectTrigger>
             <SelectContent>
@@ -104,7 +105,7 @@ const MarketCorrelation = () => {
           </Select>
 
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
@@ -115,6 +116,28 @@ const MarketCorrelation = () => {
               ))}
             </SelectContent>
           </Select>
+
+          {/* View Toggle */}
+          <div className="flex items-center gap-2 sm:ml-auto">
+            <Button
+              variant={mobileView ? "outline" : "default"}
+              size="sm"
+              onClick={() => setMobileView(false)}
+              className="flex items-center gap-1"
+            >
+              <Monitor className="w-4 h-4" />
+              <span className="hidden sm:inline">Desktop</span>
+            </Button>
+            <Button
+              variant={mobileView ? "default" : "outline"}
+              size="sm"
+              onClick={() => setMobileView(true)}
+              className="flex items-center gap-1"
+            >
+              <Smartphone className="w-4 h-4" />
+              <span className="hidden sm:inline">Mobile</span>
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -166,42 +189,88 @@ const MarketCorrelation = () => {
         </CardHeader>
         <CardContent>
           {filteredCommodities.length > 0 ? (
-            <div className="overflow-x-auto">
-              <div className="min-w-max">
-                {/* Header row */}
-                <div className="grid gap-1 mb-1" style={{ gridTemplateColumns: `200px repeat(${filteredCommodities.length}, 80px)` }}>
-                  <div></div> {/* Empty corner */}
-                  {filteredCommodities.map(commodity => (
-                    <div key={commodity.name} className="p-2 text-xs font-medium text-center transform -rotate-45 origin-center">
-                      <div className="truncate w-16">{commodity.symbol}</div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Matrix rows */}
+            mobileView ? (
+              /* Mobile View - List Format */
+              <div className="space-y-4">
                 {filteredCommodities.map(commodity1 => (
-                  <div key={commodity1.name} className="grid gap-1 mb-1" style={{ gridTemplateColumns: `200px repeat(${filteredCommodities.length}, 80px)` }}>
-                    <div className="p-2 text-sm font-medium truncate">
-                      {commodity1.name}
+                  <div key={commodity1.name} className="space-y-2">
+                    <h4 className="font-semibold text-sm border-b pb-1">{commodity1.name}</h4>
+                    <div className="grid grid-cols-1 gap-2">
+                      {filteredCommodities
+                        .filter(c => c.name !== commodity1.name)
+                        .sort((a, b) => {
+                          const corrA = Math.abs(correlationMatrix[commodity1.name]?.[a.name] || 0);
+                          const corrB = Math.abs(correlationMatrix[commodity1.name]?.[b.name] || 0);
+                          return corrB - corrA;
+                        })
+                        .slice(0, 5) // Show top 5 correlations
+                        .map(commodity2 => {
+                          const correlation = correlationMatrix[commodity1.name]?.[commodity2.name] || 0;
+                          return (
+                            <div key={commodity2.name} className="flex items-center justify-between p-3 rounded-lg border">
+                              <div className="flex-1">
+                                <div className="font-medium text-sm">{commodity2.name}</div>
+                                <div className="text-xs text-muted-foreground">{commodity2.symbol}</div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Badge 
+                                  variant="outline"
+                                  className={`${getCorrelationColor(correlation)} border-0 text-white font-bold`}
+                                >
+                                  {correlation.toFixed(2)}
+                                </Badge>
+                                <div className="text-xs text-muted-foreground">
+                                  {getCorrelationIntensity(correlation)}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
                     </div>
-                    {filteredCommodities.map(commodity2 => {
-                      const correlation = correlationMatrix[commodity1.name]?.[commodity2.name] || 0;
-                      return (
-                        <div 
-                          key={commodity2.name}
-                          className={`p-2 text-xs font-bold text-center rounded transition-all hover:scale-110 cursor-pointer ${getCorrelationColor(correlation)} ${
-                            correlation > 0 ? 'text-white' : correlation < -0.5 ? 'text-white' : 'text-gray-800'
-                          }`}
-                          title={`${commodity1.name} vs ${commodity2.name}: ${correlation.toFixed(3)} (${getCorrelationIntensity(correlation)})`}
-                        >
-                          {correlation.toFixed(2)}
-                        </div>
-                      );
-                    })}
                   </div>
                 ))}
               </div>
-            </div>
+            ) : (
+              /* Desktop View - Matrix Format */
+              <div className="overflow-x-auto">
+                <div className="min-w-max">
+                  {/* Header row */}
+                  <div className="grid gap-1 mb-1" style={{ gridTemplateColumns: `200px repeat(${filteredCommodities.length}, 80px)` }}>
+                    <div></div> {/* Empty corner */}
+                    {filteredCommodities.map(commodity => (
+                      <div key={commodity.name} className="p-2 text-xs font-medium text-center">
+                        <div className="transform -rotate-45 origin-center">
+                          <div className="truncate w-16">{commodity.symbol}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Matrix rows */}
+                  {filteredCommodities.map(commodity1 => (
+                    <div key={commodity1.name} className="grid gap-1 mb-1" style={{ gridTemplateColumns: `200px repeat(${filteredCommodities.length}, 80px)` }}>
+                      <div className="p-2 text-sm font-medium truncate">
+                        {commodity1.name}
+                      </div>
+                      {filteredCommodities.map(commodity2 => {
+                        const correlation = correlationMatrix[commodity1.name]?.[commodity2.name] || 0;
+                        return (
+                          <div 
+                            key={commodity2.name}
+                            className={`p-2 text-xs font-bold text-center rounded transition-all hover:scale-110 cursor-pointer ${getCorrelationColor(correlation)} ${
+                              correlation > 0 ? 'text-white' : correlation < -0.5 ? 'text-white' : 'text-gray-800'
+                            }`}
+                            title={`${commodity1.name} vs ${commodity2.name}: ${correlation.toFixed(3)} (${getCorrelationIntensity(correlation)})`}
+                          >
+                            {correlation.toFixed(2)}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               No commodities available for the selected category
