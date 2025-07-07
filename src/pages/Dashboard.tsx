@@ -228,9 +228,6 @@ const DashboardContent = ({
               {/* Mobile Layout - Better spacing to prevent overlap */}
               <div className="flex sm:hidden w-full items-center justify-between gap-2">
                 <div className="text-left space-y-0.5 min-w-0 flex-1">
-                  <h1 className="text-lg font-bold text-gradient animate-float truncate">
-                    Markets
-                  </h1>
                   <p className="text-2xs text-muted-foreground font-medium tracking-wide truncate">
                     {delayStatus.delayText} data
                   </p>
@@ -271,9 +268,6 @@ const DashboardContent = ({
               {/* Desktop Layout - Original */}
               <div className="hidden sm:flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                 <div className="text-left space-y-0.5 sm:space-y-1 min-w-0 flex-1">
-                  <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gradient animate-float truncate">
-                    Commodity Markets
-                  </h1>
                   <p className="text-2xs sm:text-xs lg:text-sm text-muted-foreground font-medium tracking-wide truncate">
                     {delayStatus.statusText}
                   </p>
