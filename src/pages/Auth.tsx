@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -85,6 +85,11 @@ const Auth = () => {
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
+  }
+
+  // Redirect authenticated users back to the app
+  if (user) {
+    return <Navigate to="/" replace />;
   }
 
   return (
