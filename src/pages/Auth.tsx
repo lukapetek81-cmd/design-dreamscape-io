@@ -23,10 +23,8 @@ const Auth = () => {
 
   const { user, signIn, signUp, signInWithGoogle, resetPassword, loading: authLoading } = useAuth();
 
-  // Redirect if already authenticated
-  if (user && !authLoading) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  // Only redirect if user is authenticated and specifically came to auth page
+  // Allow users to browse the app without authentication
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

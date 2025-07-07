@@ -15,14 +15,9 @@ import { useAvailableCommodities } from '@/hooks/useCommodityData';
 const Dashboard = () => {
   const [activeGroup, setActiveGroup] = React.useState("energy");
   const isMobile = useIsMobile();
-  const { user, profile, loading: authLoading } = useAuth();
+  const { isGuest, profile, loading: authLoading } = useAuth();
   const { data: commodities, isLoading: commoditiesLoading, error: commoditiesError } = useAvailableCommodities();
   const { connected: realtimeConnected, lastUpdate, error: realtimeError } = useRealtimeDataContext();
-
-  // Redirect to auth if not logged in (after loading is complete)
-  if (!authLoading && !user) {
-    return <Navigate to="/auth" replace />;
-  }
 
   // Show loading screen while auth is checking
   if (authLoading) {

@@ -9,32 +9,14 @@ import { usePortfolio, PositionWithCurrentPrice } from '@/hooks/usePortfolio';
 import AddPositionForm from '@/components/AddPositionForm';
 import PositionCard from '@/components/PositionCard';
 
+import { PremiumGate } from '@/components/PremiumGate';
+
 const Portfolio: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { positions, loading, portfolioSummary, deletePosition } = usePortfolio();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingPosition, setEditingPosition] = useState<PositionWithCurrentPrice | null>(null);
-
-  // Redirect to auth if not logged in
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6 text-center">
-            <Wallet className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <h2 className="text-xl font-semibold mb-2">Portfolio Access Required</h2>
-            <p className="text-muted-foreground mb-4">
-              Please sign in to access your commodity portfolio and track your positions.
-            </p>
-            <Button onClick={() => window.location.href = '/auth'}>
-              Sign In
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -61,7 +43,8 @@ const Portfolio: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl">
+    <PremiumGate feature="your investment portfolio">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
       {/* Back Button */}
       <Button 
         variant="ghost" 
@@ -238,6 +221,7 @@ const Portfolio: React.FC = () => {
         </DialogContent>
       </Dialog>
     </div>
+    </PremiumGate>
   );
 };
 

@@ -20,6 +20,9 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
+  isGuest: boolean;
+  isPremium: boolean;
+  requiresAuth: () => boolean;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<{ error: any }>;
@@ -292,11 +295,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const isGuest = !user;
+  const isPremium = profile?.subscription_active && profile?.subscription_tier !== 'free';
+  
+  const requiresAuth = () => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please sign in to access premium features.",
+      });
+      return true;
+    }
+    return false;
+  };
+
   const value = {
     user,
     session,
     profile,
     loading,
+    isGuest,
+    isPremium,
+    requiresAuth,
     signUp,
     signIn,
     signInWithGoogle,

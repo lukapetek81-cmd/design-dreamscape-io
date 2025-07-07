@@ -15,16 +15,23 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 
 const UserProfile = () => {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, isGuest } = useAuth();
 
-  if (!user || !profile) {
+  if (isGuest) {
     return (
-      <Link to="/auth">
-        <Button variant="outline" size="sm" className="gap-2">
-          <User className="w-4 h-4" />
-          Sign In
-        </Button>
-      </Link>
+      <div className="flex items-center gap-2">
+        <Link to="/auth">
+          <Button variant="outline" size="sm" className="gap-2">
+            <User className="w-4 h-4" />
+            Sign In
+          </Button>
+        </Link>
+        <Link to="/auth">
+          <Button size="sm" className="gap-2">
+            Get Premium
+          </Button>
+        </Link>
+      </div>
     );
   }
 
