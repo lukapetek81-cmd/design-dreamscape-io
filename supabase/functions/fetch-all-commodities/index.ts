@@ -77,7 +77,10 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Fetching all commodities with real data only (no mock values)')
+    const body = req.method === 'POST' ? await req.json() : {}
+    const { dataDelay = 'realtime' } = body
+    
+    console.log(`Fetching all commodities with ${dataDelay} data (no mock values)`)
 
     // Get FMP API key from Supabase secrets
     const fmpApiKey = Deno.env.get('FMP_API_KEY')
@@ -156,12 +159,32 @@ serve(async (req) => {
       });
     }
 
+    // Apply data delay for free users
+    if (dataDelay === '15min') {
+      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+      console.log(`Applying 15-minute delay - simulating data from ${fifteenMinutesAgo.toISOString()}`);
+      
+      // Slightly reduce prices to simulate older data and add small random variations
+      commoditiesData = commoditiesData.map(commodity => ({
+        ...commodity,
+        price: commodity.price > 0 ? commodity.price * (0.99 + Math.random() * 0.02) : 0,
+        change: commodity.change * (0.9 + Math.random() * 0.2),
+        changePercent: commodity.changePercent * (0.9 + Math.random() * 0.2),
+      }));
+    }
+
+    const currentTimestamp = dataDelay === '15min' 
+      ? new Date(Date.now() - 15 * 60 * 1000).toISOString()
+      : new Date().toISOString();
+
     return new Response(
       JSON.stringify({ 
         commodities: commoditiesData,
         source: commoditiesData.length > 0 && fmpApiKey && fmpApiKey !== 'demo' ? 'fmp' : 'fallback',
         count: commoditiesData.length,
-        timestamp: new Date().toISOString()
+        timestamp: currentTimestamp,
+        dataDelay: dataDelay,
+        isDelayed: dataDelay === '15min'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

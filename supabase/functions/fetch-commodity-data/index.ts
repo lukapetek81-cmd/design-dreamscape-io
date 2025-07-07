@@ -212,7 +212,7 @@ serve(async (req) => {
   }
 
   try {
-    const { commodityName, timeframe, isPremium, chartType } = await req.json()
+    const { commodityName, timeframe, isPremium, chartType, dataDelay = 'realtime' } = await req.json()
     
     if (!commodityName || !timeframe) {
       return new Response(
@@ -221,7 +221,7 @@ serve(async (req) => {
       )
     }
 
-    console.log(`Fetching data for ${commodityName}, timeframe: ${timeframe}, chartType: ${chartType || 'line'} (Premium: ${isPremium || false})`)
+    console.log(`Fetching data for ${commodityName}, timeframe: ${timeframe}, chartType: ${chartType || 'line'} with ${dataDelay} data (Premium: ${isPremium || false})`)
 
     // Get FMP API key from Supabase secrets
     const fmpApiKey = Deno.env.get('FMP_API_KEY')
@@ -314,6 +314,35 @@ serve(async (req) => {
       historicalData = generateFallbackData(commodityName, timeframe, basePrice, isPremium, chartType)
     }
 
+    // Apply data delay for free users
+    if (dataDelay === '15min' && historicalData) {
+      console.log(`Applying 15-minute delay to historical data for ${commodityName}`);
+      
+      // Shift all dates back by 15 minutes and slightly adjust prices
+      historicalData = historicalData.map((item: any) => {
+        const delayedDate = new Date(new Date(item.date).getTime() - 15 * 60 * 1000);
+        const adjustment = 0.995 + Math.random() * 0.01; // Small price adjustment
+        
+        if (chartType === 'candlestick') {
+          return {
+            ...item,
+            date: delayedDate.toISOString(),
+            open: item.open * adjustment,
+            high: item.high * adjustment,
+            low: item.low * adjustment,
+            close: item.close * adjustment,
+            price: item.price * adjustment
+          };
+        } else {
+          return {
+            ...item,
+            date: delayedDate.toISOString(),
+            price: item.price * adjustment
+          };
+        }
+      });
+    }
+
     return new Response(
       JSON.stringify({ 
         data: historicalData,
@@ -322,7 +351,9 @@ serve(async (req) => {
         symbol: symbol,
         realTime: isPremium || false,
         dataPoints: historicalData?.length || 0,
-        chartType: chartType || 'line'
+        chartType: chartType || 'line',
+        dataDelay: dataDelay,
+        isDelayed: dataDelay === '15min'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

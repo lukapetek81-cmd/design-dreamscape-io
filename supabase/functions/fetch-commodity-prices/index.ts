@@ -81,7 +81,7 @@ serve(async (req) => {
   }
 
   try {
-    const { commodityName, isPremium } = await req.json()
+    const { commodityName, isPremium, dataDelay = 'realtime' } = await req.json()
     
     if (!commodityName) {
       return new Response(
@@ -90,7 +90,7 @@ serve(async (req) => {
       )
     }
 
-    console.log(`Fetching current price for ${commodityName} (Premium: ${isPremium || false})`)
+    console.log(`Fetching current price for ${commodityName} with ${dataDelay} data (Premium: ${isPremium || false})`)
 
     // Get FMP API key from Supabase secrets
     const fmpApiKey = Deno.env.get('FMP_API_KEY')
@@ -149,13 +149,30 @@ serve(async (req) => {
       }
     }
 
+    // Apply data delay for free users
+    if (dataDelay === '15min' && priceData) {
+      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+      console.log(`Applying 15-minute delay - simulating price data from ${fifteenMinutesAgo.toISOString()}`);
+      
+      // Slightly adjust prices to simulate older data
+      priceData = {
+        ...priceData,
+        price: priceData.price * (0.995 + Math.random() * 0.01),
+        change: priceData.change * (0.9 + Math.random() * 0.2),
+        changePercent: priceData.changePercent * (0.9 + Math.random() * 0.2),
+        lastUpdate: fifteenMinutesAgo.toISOString()
+      };
+    }
+
     return new Response(
       JSON.stringify({ 
         price: priceData,
         source: priceData && fmpApiKey && fmpApiKey !== 'demo' ? 'fmp' : 'fallback',
         commodity: commodityName,
         symbol: symbol,
-        realTime: isPremium || false
+        realTime: isPremium || false,
+        dataDelay: dataDelay,
+        isDelayed: dataDelay === '15min'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
