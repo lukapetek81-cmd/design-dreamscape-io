@@ -2,6 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDelayedData } from './useDelayedData';
 
 export interface CommodityPriceData {
   price: number;
@@ -38,11 +39,15 @@ export interface Commodity {
 }
 
 export const useAvailableCommodities = () => {
+  const { getDataDelay, shouldDelayData } = useDelayedData();
+  
   return useQuery({
-    queryKey: ['available-commodities'],
+    queryKey: ['available-commodities', getDataDelay()],
     queryFn: async (): Promise<Commodity[]> => {
       try {
-        const { data, error } = await supabase.functions.invoke('fetch-all-commodities');
+        const { data, error } = await supabase.functions.invoke('fetch-all-commodities', {
+          body: { dataDelay: getDataDelay() }
+        });
 
         if (error) {
           console.warn('Failed to fetch commodities:', error);
@@ -57,8 +62,8 @@ export const useAvailableCommodities = () => {
         throw error;
       }
     },
-    refetchInterval: 300000, // Refetch every 5 minutes
-    staleTime: 240000, // Consider data stale after 4 minutes
+    refetchInterval: shouldDelayData ? 900000 : 300000, // 15 min for delayed, 5 min for real-time
+    staleTime: shouldDelayData ? 840000 : 240000, // 14 min for delayed, 4 min for real-time
   });
 };
 
@@ -82,12 +87,14 @@ export interface CandlestickData {
 }
 
 export const useCommodityPrice = (commodityName: string) => {
+  const { getDataDelay, shouldDelayData } = useDelayedData();
+  
   return useQuery({
-    queryKey: ['commodity-price', commodityName],
+    queryKey: ['commodity-price', commodityName, getDataDelay()],
     queryFn: async (): Promise<CommodityPriceData | null> => {
       try {
         const { data, error } = await supabase.functions.invoke('fetch-commodity-prices', {
-          body: { commodityName }
+          body: { commodityName, dataDelay: getDataDelay() }
         });
 
         if (error) {
@@ -101,16 +108,17 @@ export const useCommodityPrice = (commodityName: string) => {
         return null;
       }
     },
-    refetchInterval: 30000, // Refetch every 30 seconds
-    staleTime: 25000, // Consider data stale after 25 seconds
+    refetchInterval: shouldDelayData ? 900000 : 30000, // 15 min for delayed, 30 sec for real-time
+    staleTime: shouldDelayData ? 840000 : 25000, // 14 min for delayed, 25 sec for real-time
   });
 };
 
 export const useCommodityHistoricalData = (commodityName: string, timeframe: string, chartType: string = 'line') => {
   const { profile } = useAuth();
+  const { getDataDelay, shouldDelayData } = useDelayedData();
   
   return useQuery({
-    queryKey: ['commodity-historical', commodityName, timeframe, chartType],
+    queryKey: ['commodity-historical', commodityName, timeframe, chartType, getDataDelay()],
     queryFn: async (): Promise<{ data: CommodityHistoricalData[], loading: boolean, error: string | null }> => {
       try {
         const isPremium = profile?.subscription_active && profile?.subscription_tier === 'premium';
@@ -120,7 +128,8 @@ export const useCommodityHistoricalData = (commodityName: string, timeframe: str
             commodityName, 
             timeframe, 
             isPremium,
-            chartType 
+            chartType,
+            dataDelay: getDataDelay()
           }
         });
 
@@ -166,7 +175,7 @@ export const useCommodityHistoricalData = (commodityName: string, timeframe: str
         };
       }
     },
-    refetchInterval: 60000, // Refetch every minute
-    staleTime: 50000, // Consider data stale after 50 seconds
+    refetchInterval: shouldDelayData ? 900000 : 60000, // 15 min for delayed, 1 min for real-time
+    staleTime: shouldDelayData ? 840000 : 50000, // 14 min for delayed, 50 sec for real-time
   });
 };

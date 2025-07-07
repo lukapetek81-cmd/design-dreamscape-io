@@ -11,13 +11,14 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRealtimeDataContext } from '@/contexts/RealtimeDataContext';
 import { useAvailableCommodities } from '@/hooks/useCommodityData';
+import { useDelayedData } from '@/hooks/useDelayedData';
 
 const Dashboard = () => {
   const [activeGroup, setActiveGroup] = React.useState("energy");
   const isMobile = useIsMobile();
   const { isGuest, profile, loading: authLoading } = useAuth();
   const { data: commodities, isLoading: commoditiesLoading, error: commoditiesError } = useAvailableCommodities();
-  const { connected: realtimeConnected, lastUpdate, error: realtimeError } = useRealtimeDataContext();
+  const { connected: realtimeConnected, lastUpdate, error: realtimeError, delayStatus } = useRealtimeDataContext();
 
   // Show loading screen while auth is checking
   if (authLoading) {
@@ -42,6 +43,7 @@ const Dashboard = () => {
         loading={commoditiesLoading}
         error={commoditiesError?.message || null}
         realtimeConnected={realtimeConnected}
+        delayStatus={delayStatus}
       />
     </SidebarProvider>
   );
@@ -55,7 +57,8 @@ const DashboardContent = ({
   commodities, 
   loading, 
   error, 
-  realtimeConnected 
+  realtimeConnected,
+  delayStatus
 }: {
   activeGroup: string;
   setActiveGroup: (group: string) => void;
@@ -65,6 +68,11 @@ const DashboardContent = ({
   loading: boolean;
   error: string | null;
   realtimeConnected: boolean;
+  delayStatus: {
+    isDelayed: boolean;
+    delayText: string;
+    statusText: string;
+  };
 }) => {
   const { toggleSidebar, setOpenMobile } = useSidebar();
   const [touchStart, setTouchStart] = React.useState<number | null>(null);
@@ -224,7 +232,7 @@ const DashboardContent = ({
                     Markets
                   </h1>
                   <p className="text-2xs text-muted-foreground font-medium tracking-wide truncate">
-                    Live data
+                    {delayStatus.delayText} data
                   </p>
                 </div>
                 
@@ -244,15 +252,17 @@ const DashboardContent = ({
                     ) : (
                       <div className="h-1.5 w-1.5 bg-green-500 rounded-full animate-pulse shadow-sm shadow-green-500/50"></div>
                     )}
-                    <span className={`text-2xs font-semibold whitespace-nowrap ${
-                      loading
-                        ? 'text-blue-700 dark:text-blue-400'
-                        : error
-                          ? 'text-red-700 dark:text-red-400'
-                          : 'text-green-700 dark:text-green-400'
-                    }`}>
-                      {loading ? 'Loading' : error ? 'Error' : 'Live'}
-                    </span>
+                     <span className={`text-2xs font-semibold whitespace-nowrap ${
+                       loading
+                         ? 'text-blue-700 dark:text-blue-400'
+                         : error
+                           ? 'text-red-700 dark:text-red-400'
+                           : delayStatus.isDelayed
+                             ? 'text-orange-700 dark:text-orange-400'
+                             : 'text-green-700 dark:text-green-400'
+                     }`}>
+                       {loading ? 'Loading' : error ? 'Error' : delayStatus.delayText}
+                     </span>
                   </div>
                   <UserProfile />
                 </div>
@@ -265,7 +275,7 @@ const DashboardContent = ({
                     Commodity Markets
                   </h1>
                   <p className="text-2xs sm:text-xs lg:text-sm text-muted-foreground font-medium tracking-wide truncate">
-                    Live market data & real-time analytics
+                    {delayStatus.statusText}
                   </p>
                 </div>
               </div>
@@ -285,15 +295,17 @@ const DashboardContent = ({
                   ) : (
                     <div className="h-1.5 w-1.5 sm:h-2.5 sm:w-2.5 bg-green-500 rounded-full animate-pulse shadow-sm shadow-green-500/50"></div>
                   )}
-                  <span className={`text-2xs sm:text-xs lg:text-sm font-semibold whitespace-nowrap ${
-                    loading
-                      ? 'text-blue-700 dark:text-blue-400'
-                      : error
-                        ? 'text-red-700 dark:text-red-400'
-                        : 'text-green-700 dark:text-green-400'
-                  }`}>
-                    {loading ? 'Loading Markets' : error ? 'Error' : 'Live Market'}
-                  </span>
+                   <span className={`text-2xs sm:text-xs lg:text-sm font-semibold whitespace-nowrap ${
+                     loading
+                       ? 'text-blue-700 dark:text-blue-400'
+                       : error
+                         ? 'text-red-700 dark:text-red-400'
+                         : delayStatus.isDelayed
+                           ? 'text-orange-700 dark:text-orange-400'
+                           : 'text-green-700 dark:text-green-400'
+                   }`}>
+                     {loading ? 'Loading Markets' : error ? 'Error' : delayStatus.delayText}
+                   </span>
                 </div>
                 <UserProfile />
               </div>

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useGlobalRealtimeData } from '@/hooks/useGlobalRealtimeData';
 import { CommodityPrice, useAvailableCommodities } from '@/hooks/useCommodityData';
+import { useDelayedData } from '@/hooks/useDelayedData';
 
 interface RealtimeDataContextType {
   prices: Record<string, CommodityPrice>;
@@ -9,6 +10,12 @@ interface RealtimeDataContextType {
   lastUpdate: Date | null;
   getPriceForCommodity: (commodityName: string) => CommodityPrice | null;
   isLiveData: (commodityName: string) => boolean;
+  isDelayedData: boolean;
+  delayStatus: {
+    isDelayed: boolean;
+    delayText: string;
+    statusText: string;
+  };
 }
 
 const RealtimeDataContext = createContext<RealtimeDataContextType | undefined>(undefined);
@@ -28,24 +35,31 @@ interface RealtimeDataProviderProps {
 export const RealtimeDataProvider: React.FC<RealtimeDataProviderProps> = ({ children }) => {
   const { data: commodities } = useAvailableCommodities();
   const commodityNames = (commodities || []).map(c => c.name);
+  const { shouldDelayData, isPremium, getDelayStatus } = useDelayedData();
+  const delayStatus = getDelayStatus();
   
-  const { prices, connected, error, lastUpdate } = useGlobalRealtimeData(commodityNames);
+  // Only connect to real-time data for premium users
+  const { prices, connected, error, lastUpdate } = useGlobalRealtimeData(
+    shouldDelayData ? [] : commodityNames
+  );
 
   const getPriceForCommodity = (commodityName: string): CommodityPrice | null => {
     return prices[commodityName] || null;
   };
 
   const isLiveData = (commodityName: string): boolean => {
-    return connected && prices[commodityName] !== undefined;
+    return !shouldDelayData && connected && prices[commodityName] !== undefined;
   };
 
   const value = {
     prices,
-    connected,
+    connected: !shouldDelayData && connected,
     error,
     lastUpdate,
     getPriceForCommodity,
-    isLiveData
+    isLiveData,
+    isDelayedData: shouldDelayData,
+    delayStatus
   };
 
   return (

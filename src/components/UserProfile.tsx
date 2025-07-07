@@ -46,16 +46,16 @@ const UserProfile = () => {
       .slice(0, 2);
   };
 
-  const isPremium = profile.subscription_active && profile.subscription_tier !== 'free';
+  const isPremium = profile?.subscription_active && profile?.subscription_tier !== 'free';
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 sm:h-8 sm:w-8 rounded-full mobile-touch-target">
           <Avatar className="h-10 w-10 sm:h-8 sm:w-8">
-            <AvatarImage src={profile.avatar_url || undefined} alt={profile.full_name || 'User'} />
+            <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || 'User'} />
             <AvatarFallback className="bg-primary/10 text-primary font-medium">
-              {getInitials(profile.full_name || profile.email)}
+              {getInitials(profile?.full_name || profile?.email || 'User')}
             </AvatarFallback>
           </Avatar>
           {isPremium && (
@@ -69,16 +69,16 @@ const UserProfile = () => {
         <DropdownMenuLabel className="font-normal p-4">
           <div className="flex flex-col space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <p className="text-sm font-medium leading-none truncate">{profile.full_name}</p>
+              <p className="text-sm font-medium leading-none truncate">{profile?.full_name}</p>
               {isPremium && (
                 <Badge variant="secondary" className="text-xs bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-800 border-yellow-200 w-fit">
                   <Crown className="w-3 h-3 mr-1" />
-                  {profile.subscription_tier}
+                  {profile?.subscription_tier}
                 </Badge>
               )}
             </div>
             <p className="text-xs leading-none text-muted-foreground break-words">
-              {profile.email}
+              {profile?.email}
             </p>
             {!isPremium && (
               <Badge variant="outline" className="text-xs w-fit">
