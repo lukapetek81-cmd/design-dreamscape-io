@@ -23,7 +23,6 @@ export const COMMUNITY_TOOLS: MarketTool[] = [
   { id: "community", label: "Community", icon: MessageSquare, color: "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400", path: "/community" },
   { id: "insights", label: "Expert Insights", icon: Lightbulb, color: "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800 text-yellow-600 dark:text-yellow-400", path: "/insights" },
   { id: "learning", label: "Learning Hub", icon: GraduationCap, color: "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400", path: "/learning" },
-  { id: "sentiment", label: "Market Sentiment", icon: Users, color: "bg-violet-50 dark:bg-violet-950/20 border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400", path: "/sentiment" },
 ];
 
 export const ACTIVITY_TOOLS: MarketTool[] = [
