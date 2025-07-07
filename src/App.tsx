@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { RealtimeDataProvider } from "@/contexts/RealtimeDataContext";
+import { useAndroidBackButton } from "@/hooks/useAndroidBackButton";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
@@ -29,6 +30,38 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+const AppRoutes = () => {
+  useAndroidBackButton();
+  
+  return (
+    <Routes>
+      <Route path="/" element={<Dashboard />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/auth" element={<Auth />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      
+      <Route path="/portfolio" element={<Portfolio />} />
+      <Route path="/news-settings" element={<NewsSettingsPage />} />
+      <Route path="/billing" element={<Billing />} />
+      <Route path="/correlation" element={<MarketCorrelation />} />
+      <Route path="/watchlists" element={<Watchlists />} />
+      <Route path="/screener" element={<MarketScreener />} />
+      <Route path="/calendar" element={<EconomicCalendar />} />
+      <Route path="/risk-calculator" element={<RiskCalculator />} />
+      <Route path="/community" element={<TradingCommunity />} />
+      <Route path="/insights" element={<ExpertInsights />} />
+      <Route path="/learning" element={<LearningHub />} />
+      <Route path="/sentiment" element={<MarketSentiment />} />
+      <Route path="/recent-activity" element={<RecentActivity />} />
+      <Route path="/favorites" element={<Favorites />} />
+      <Route path="/price-comparison" element={<PriceComparison />} />
+      <Route path="/market-status" element={<MarketStatus />} />
+      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -37,31 +70,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              
-              <Route path="/portfolio" element={<Portfolio />} />
-              <Route path="/news-settings" element={<NewsSettingsPage />} />
-              <Route path="/billing" element={<Billing />} />
-              <Route path="/correlation" element={<MarketCorrelation />} />
-              <Route path="/watchlists" element={<Watchlists />} />
-              <Route path="/screener" element={<MarketScreener />} />
-              <Route path="/calendar" element={<EconomicCalendar />} />
-              <Route path="/risk-calculator" element={<RiskCalculator />} />
-              <Route path="/community" element={<TradingCommunity />} />
-              <Route path="/insights" element={<ExpertInsights />} />
-              <Route path="/learning" element={<LearningHub />} />
-              <Route path="/sentiment" element={<MarketSentiment />} />
-              <Route path="/recent-activity" element={<RecentActivity />} />
-              <Route path="/favorites" element={<Favorites />} />
-              <Route path="/price-comparison" element={<PriceComparison />} />
-              <Route path="/market-status" element={<MarketStatus />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <AppRoutes />
           </BrowserRouter>
         </TooltipProvider>
       </RealtimeDataProvider>
