@@ -100,8 +100,8 @@ const UpgradeBox = () => {
     }
   };
 
-  // Show for guests and non-premium users
-  if (!isGuest && isPremium) {
+  // Show for guests and non-premium users - always show unless premium
+  if (!isGuest && user && profile && isPremium) {
     return (
       <Card className="mx-2 mb-4 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20 border-yellow-200 dark:border-yellow-800 shadow-soft">
         <div className="space-y-3">
@@ -149,23 +149,25 @@ const UpgradeBox = () => {
     );
   }
 
-  // Show upgrade box for guests and free users
+  // Show upgrade box for guests, non-authenticated users, and free users
+  const isGuestUser = isGuest || !user;
+  
   return (
     <Card className="mx-2 mb-4 p-4 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 border-orange-200 dark:border-orange-800 shadow-soft hover:shadow-medium transition-all duration-300 hover:scale-[1.02]">
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400" />
           <Badge variant="outline" className="text-orange-700 border-orange-300 bg-orange-50">
-            15-min Delayed
+            {isGuestUser ? 'Limited Access' : '15-min Delayed'}
           </Badge>
         </div>
         
         <div className="space-y-2">
           <h3 className="text-sm font-bold text-orange-900 dark:text-orange-100">
-            {isGuest ? 'Get Real-Time Data' : 'Upgrade to Real-Time'}
+            {isGuestUser ? 'Get Real-Time Data' : 'Upgrade to Real-Time'}
           </h3>
           <p className="text-xs text-orange-700 dark:text-orange-300">
-            {isGuest 
+            {isGuestUser 
               ? 'Sign up and upgrade to get live market data instead of delays'
               : 'Your data is delayed by 15 minutes. Upgrade for instant updates!'
             }
@@ -212,7 +214,7 @@ const UpgradeBox = () => {
               </>
             ) : (
               <>
-                {isGuest ? 'Sign Up & Upgrade' : 'Upgrade Now'}
+                {isGuestUser ? 'Sign Up & Upgrade' : 'Upgrade Now'}
                 <ArrowRight className="w-3 h-3 ml-2" />
               </>
             )}
