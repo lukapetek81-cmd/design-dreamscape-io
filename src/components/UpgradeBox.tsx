@@ -10,14 +10,18 @@ import { useNavigate } from 'react-router-dom';
 
 const UpgradeBox = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile, isGuest } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const isPremium = profile?.subscription_active && profile?.subscription_tier === 'premium';
 
   const handleUpgrade = async () => {
-    if (!user) return;
+    if (!user) {
+      // If guest, redirect to auth page first
+      navigate('/auth');
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -96,10 +100,8 @@ const UpgradeBox = () => {
     }
   };
 
-  // Don't show anything if user is not authenticated
-  if (!user || !profile) return null;
-
-  if (isPremium) {
+  // Show for guests and non-premium users
+  if (!isGuest && isPremium) {
     return (
       <Card className="mx-2 mb-4 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20 border-yellow-200 dark:border-yellow-800 shadow-soft">
         <div className="space-y-3">
@@ -147,45 +149,49 @@ const UpgradeBox = () => {
     );
   }
 
+  // Show upgrade box for guests and free users
   return (
-    <Card className="mx-2 mb-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 border-blue-200 dark:border-blue-800 shadow-soft hover:shadow-medium transition-all duration-300 hover:scale-[1.02]">
+    <Card className="mx-2 mb-4 p-4 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 border-orange-200 dark:border-orange-800 shadow-soft hover:shadow-medium transition-all duration-300 hover:scale-[1.02]">
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <Star className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-          <Badge variant="outline" className="text-blue-700 border-blue-300">
-            Upgrade Available
+          <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+          <Badge variant="outline" className="text-orange-700 border-orange-300 bg-orange-50">
+            15-min Delayed
           </Badge>
         </div>
         
         <div className="space-y-2">
-          <h3 className="text-sm font-bold text-blue-900 dark:text-blue-100">
-            Real-Time Data Access
+          <h3 className="text-sm font-bold text-orange-900 dark:text-orange-100">
+            {isGuest ? 'Get Real-Time Data' : 'Upgrade to Real-Time'}
           </h3>
-          <p className="text-xs text-blue-700 dark:text-blue-300">
-            Get live market data instead of 15-minute delays
+          <p className="text-xs text-orange-700 dark:text-orange-300">
+            {isGuest 
+              ? 'Sign up and upgrade to get live market data instead of delays'
+              : 'Your data is delayed by 15 minutes. Upgrade for instant updates!'
+            }
           </p>
         </div>
 
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
+          <div className="flex items-center gap-2 text-xs text-orange-600 dark:text-orange-400">
             <Zap className="w-3 h-3" />
             <span>Instant price updates</span>
           </div>
-          <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
-            <Clock className="w-3 h-3" />
+          <div className="flex items-center gap-2 text-xs text-orange-600 dark:text-orange-400">
+            <CheckCircle className="w-3 h-3" />
             <span>No 15-minute delays</span>
           </div>
-          <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
-            <CheckCircle className="w-3 h-3" />
-            <span>Professional trading data</span>
+          <div className="flex items-center gap-2 text-xs text-orange-600 dark:text-orange-400">
+            <Star className="w-3 h-3" />
+            <span>Professional trading edge</span>
           </div>
         </div>
 
-        <div className="pt-2 border-t border-blue-200 dark:border-blue-800">
+        <div className="pt-2 border-t border-orange-200 dark:border-orange-800">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="text-lg font-bold text-blue-900 dark:text-blue-100">$5</p>
-              <p className="text-xs text-blue-600 dark:text-blue-400">per month</p>
+              <p className="text-lg font-bold text-orange-900 dark:text-orange-100">$5</p>
+              <p className="text-xs text-orange-600 dark:text-orange-400">per month</p>
             </div>
             <div className="text-right">
               <p className="text-xs text-muted-foreground line-through">$25/mo</p>
@@ -196,7 +202,7 @@ const UpgradeBox = () => {
           <Button
             onClick={handleUpgrade}
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-soft hover:shadow-medium transition-all duration-200"
+            className="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-soft hover:shadow-medium transition-all duration-200"
             size="sm"
           >
             {isLoading ? (
@@ -206,7 +212,7 @@ const UpgradeBox = () => {
               </>
             ) : (
               <>
-                Upgrade Now
+                {isGuest ? 'Sign Up & Upgrade' : 'Upgrade Now'}
                 <ArrowRight className="w-3 h-3 ml-2" />
               </>
             )}
