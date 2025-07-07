@@ -19,16 +19,18 @@ const UserProfile = () => {
 
   if (isGuest) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         <Link to="/auth">
-          <Button variant="outline" size="sm" className="gap-2">
-            <User className="w-4 h-4" />
-            Sign In
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8 px-2">
+            <User className="w-3 h-3" />
+            <span className="hidden sm:inline">Sign In</span>
+            <span className="sm:hidden">Sign</span>
           </Button>
         </Link>
         <Link to="/auth">
-          <Button size="sm" className="gap-2">
-            Get Premium
+          <Button size="sm" className="gap-1.5 text-xs h-8 px-2">
+            <span className="hidden sm:inline">Get Premium</span>
+            <span className="sm:hidden">Pro</span>
           </Button>
         </Link>
       </div>

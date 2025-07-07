@@ -217,20 +217,20 @@ const DashboardContent = ({
           {/* Enhanced Responsive Header */}
           <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 shadow-soft">
             <div className="container flex h-16 sm:h-20 items-center justify-between px-3 sm:px-4 md:px-6">
-              {/* Mobile Layout - Centered Title */}
-              <div className="flex sm:hidden w-full items-center justify-center relative">
-                <div className="text-center space-y-0.5">
-                  <h1 className="text-lg font-bold text-gradient animate-float">
+              {/* Mobile Layout - Better spacing to prevent overlap */}
+              <div className="flex sm:hidden w-full items-center justify-between gap-2">
+                <div className="text-left space-y-0.5 min-w-0 flex-1">
+                  <h1 className="text-lg font-bold text-gradient animate-float truncate">
                     Markets
                   </h1>
-                  <p className="text-2xs text-muted-foreground font-medium tracking-wide">
+                  <p className="text-2xs text-muted-foreground font-medium tracking-wide truncate">
                     Live data
                   </p>
                 </div>
                 
-                {/* Mobile Status and Profile - Absolute positioned */}
-                <div className="absolute right-0 flex items-center gap-2">
-                  <div className={`flex items-center gap-2 px-2 py-1 rounded-full border hover:scale-105 transition-transform duration-200 ${
+                {/* Mobile Status and Profile - Right aligned with proper spacing */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full border hover:scale-105 transition-transform duration-200 ${
                     loading 
                       ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800'
                       : error 
