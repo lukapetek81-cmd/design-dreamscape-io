@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   appName: 'Commodity Hub',
   webDir: 'dist',
   server: {
-    url: 'https://c8fabd7a-96c7-4aff-8d7b-001690ec23c7.lovableproject.com?forceHideBadge=true',
+    url: 'https://commodity-n4goa1j8z-lukas-projects-619a6efc.vercel.app',
     cleartext: true
   },
   plugins: {
