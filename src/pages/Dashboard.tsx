@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import CommodityCard from '@/components/CommodityCard';
@@ -12,13 +11,23 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRealtimeDataContext } from '@/contexts/RealtimeDataContext';
 import { useAvailableCommodities } from '@/hooks/useCommodityData';
 import { useDelayedData } from '@/hooks/useDelayedData';
+import { IBKRConnectionManager } from '@/components/IBKRConnectionManager';
 
 const Dashboard = () => {
   const [activeGroup, setActiveGroup] = React.useState("energy");
+  const [ibkrPrices, setIbkrPrices] = React.useState<Record<string, any>>({});
   const isMobile = useIsMobile();
   const { isGuest, profile, loading: authLoading } = useAuth();
   const { data: commodities, isLoading: commoditiesLoading, error: commoditiesError } = useAvailableCommodities();
   const { connected: realtimeConnected, lastUpdate, error: realtimeError, delayStatus } = useRealtimeDataContext();
+
+  const watchedCommodities = React.useMemo(() => {
+    if (!commodities) return [];
+    return commodities
+      .filter(c => c.category === activeGroup)
+      .map(c => c.name)
+      .slice(0, 10);
+  }, [commodities, activeGroup]);
 
   // Show loading screen while auth is checking
   if (authLoading) {
@@ -44,6 +53,9 @@ const Dashboard = () => {
         error={commoditiesError?.message || null}
         realtimeConnected={realtimeConnected}
         delayStatus={delayStatus}
+        watchedCommodities={watchedCommodities}
+        ibkrPrices={ibkrPrices}
+        setIbkrPrices={setIbkrPrices}
       />
     </SidebarProvider>
   );
@@ -58,7 +70,10 @@ const DashboardContent = ({
   loading, 
   error, 
   realtimeConnected,
-  delayStatus
+  delayStatus,
+  watchedCommodities,
+  ibkrPrices,
+  setIbkrPrices
 }: {
   activeGroup: string;
   setActiveGroup: (group: string) => void;
@@ -73,6 +88,9 @@ const DashboardContent = ({
     delayText: string;
     statusText: string;
   };
+  watchedCommodities: string[];
+  ibkrPrices: Record<string, any>;
+  setIbkrPrices: (prices: Record<string, any>) => void;
 }) => {
   const { toggleSidebar, setOpenMobile } = useSidebar();
   const [touchStart, setTouchStart] = React.useState<number | null>(null);
@@ -351,6 +369,13 @@ const DashboardContent = ({
                 </div>
               </div>
 
+              {/* IBKR Connection Manager */}
+              {profile?.subscription_active && (
+                <IBKRConnectionManager 
+                  commodities={watchedCommodities}
+                  onPricesUpdate={setIbkrPrices}
+                />
+              )}
 
               {/* Loading State */}
               {loading && (
@@ -406,17 +431,15 @@ const DashboardContent = ({
                   </div>
                   <div className="space-y-2">
                     <p className="text-lg font-semibold text-foreground">No Commodities Found</p>
-                    <p className="text-sm text-muted-foreground">
-                      No commodities available in the {activeGroup} category
-                    </p>
+                    <p className="text-sm text-muted-foreground">No commodities available in this category.</p>
                   </div>
                 </div>
               )}
             </div>
           </main>
-        </div>
       </div>
-    );
-  };
+    </div>
+  );
+};
 
 export default Dashboard;

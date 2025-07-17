@@ -37,3 +37,6 @@ verify_jwt = false
 
 [functions.fetch-commodity-data]
 verify_jwt = false
+
+[functions.ibkr-fix-bridge]
+verify_jwt = false
