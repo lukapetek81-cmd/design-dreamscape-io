@@ -18,9 +18,17 @@ interface CommodityCardProps {
   symbol: string;
   venue: string;
   contractSize?: string;
+  ibkrPrice?: {
+    price: number;
+    bid?: number;
+    ask?: number;
+    volume?: number;
+    lastUpdate: string;
+    source: string;
+  };
 }
 
-const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, symbol, venue, contractSize }: CommodityCardProps) => {
+const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, symbol, venue, contractSize, ibkrPrice }: CommodityCardProps) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
   const { data: apiPrice, isLoading: priceLoading } = useCommodityPrice(name);
@@ -36,12 +44,15 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
   // Use real-time data context
   const { getPriceForCommodity, isLiveData, connected: realtimeConnected } = useRealtimeDataContext();
   
-  // Determine data source priority: real-time > API > fallback
+  // Determine data source priority: IBKR > real-time > API > fallback
   const realtimePrice = getPriceForCommodity(name);
-  const currentPrice = realtimePrice?.price ?? apiPrice?.price ?? fallbackPrice;
+  
+  // Use IBKR price if available, otherwise fall back to other sources
+  const currentPrice = ibkrPrice?.price ?? realtimePrice?.price ?? apiPrice?.price ?? fallbackPrice;
   const currentChange = realtimePrice?.changePercent ?? apiPrice?.changePercent ?? fallbackChange;
   const isPositive = currentChange >= 0;
   const isRealTime = isPremium && isLiveData(name);
+  const isIBKRLive = !!ibkrPrice;
 
   // Function to get the appropriate price units based on commodity name
   const getPriceUnits = (commodityName: string) => {
@@ -162,13 +173,15 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                         {formatPrice(currentPrice, name)}
                       </p>
                       <span className={`text-2xs sm:text-xs font-medium px-1.5 py-0.5 rounded ${
-                        isRealTime 
-                          ? 'bg-blue-100 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400' 
-                          : isPremium 
-                            ? 'bg-green-100 dark:bg-green-950/20 text-green-700 dark:text-green-400' 
-                            : 'bg-muted/50 text-muted-foreground'
+                        isIBKRLive 
+                          ? 'bg-purple-100 dark:bg-purple-950/20 text-purple-700 dark:text-purple-400' 
+                          : isRealTime 
+                            ? 'bg-blue-100 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400' 
+                            : isPremium 
+                              ? 'bg-green-100 dark:bg-green-950/20 text-green-700 dark:text-green-400' 
+                              : 'bg-muted/50 text-muted-foreground'
                       }`}>
-                        {isRealTime ? 'Live' : isPremium ? 'Real-time' : '15min delayed'}
+                        {isIBKRLive ? 'IBKR Live' : isRealTime ? 'Live' : isPremium ? 'Real-time' : '15min delayed'}
                       </span>
                     </div>
                   </div>

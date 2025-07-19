@@ -415,6 +415,7 @@ const DashboardContent = ({
                         change={commodity.changePercent}
                         venue={commodity.venue}
                         contractSize={commodity.contractSize}
+                        ibkrPrice={ibkrPrices[commodity.name]}
                       />
                     </div>
                   ))}
