@@ -21,13 +21,11 @@ const Dashboard = () => {
   const { data: commodities, isLoading: commoditiesLoading, error: commoditiesError } = useAvailableCommodities();
   const { connected: realtimeConnected, lastUpdate, error: realtimeError, delayStatus } = useRealtimeDataContext();
 
-  const watchedCommodities = React.useMemo(() => {
+  // Get all available commodities for IBKR
+  const allCommodityNames = React.useMemo(() => {
     if (!commodities) return [];
-    return commodities
-      .filter(c => c.category === activeGroup)
-      .map(c => c.name)
-      .slice(0, 10);
-  }, [commodities, activeGroup]);
+    return commodities.map(c => c.name);
+  }, [commodities]);
 
   // Show loading screen while auth is checking
   if (authLoading) {
@@ -53,7 +51,7 @@ const Dashboard = () => {
         error={commoditiesError?.message || null}
         realtimeConnected={realtimeConnected}
         delayStatus={delayStatus}
-        watchedCommodities={watchedCommodities}
+        allCommodityNames={allCommodityNames}
         ibkrPrices={ibkrPrices}
         setIbkrPrices={setIbkrPrices}
       />
@@ -71,7 +69,7 @@ const DashboardContent = ({
   error, 
   realtimeConnected,
   delayStatus,
-  watchedCommodities,
+  allCommodityNames,
   ibkrPrices,
   setIbkrPrices
 }: {
@@ -88,7 +86,7 @@ const DashboardContent = ({
     delayText: string;
     statusText: string;
   };
-  watchedCommodities: string[];
+  allCommodityNames: string[];
   ibkrPrices: Record<string, any>;
   setIbkrPrices: (prices: Record<string, any>) => void;
 }) => {
@@ -372,7 +370,7 @@ const DashboardContent = ({
               {/* IBKR Connection Manager */}
               {profile?.subscription_active && (
                 <IBKRConnectionManager 
-                  commodities={watchedCommodities}
+                  commodities={allCommodityNames}
                   onPricesUpdate={setIbkrPrices}
                 />
               )}
