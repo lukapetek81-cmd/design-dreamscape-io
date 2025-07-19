@@ -367,13 +367,6 @@ const DashboardContent = ({
                 </div>
               </div>
 
-              {/* IBKR Connection Manager */}
-              {profile?.subscription_active && (
-                <IBKRConnectionManager 
-                  commodities={allCommodityNames}
-                  onPricesUpdate={setIbkrPrices}
-                />
-              )}
 
               {/* Loading State */}
               {loading && (
