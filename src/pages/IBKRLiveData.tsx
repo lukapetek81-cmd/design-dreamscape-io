@@ -91,6 +91,38 @@ const IBKRLiveData = () => {
     return commodities?.filter(commodity => commodity.category === category).length || 0;
   };
 
+  const getGroupTitle = () => {
+    switch (activeGroup) {
+      case "metals":
+        return "Metal Commodities";
+      case "grains":
+        return "Agricultural Commodities";
+      case "livestock":
+        return "Livestock Commodities";
+      case "softs":
+        return "Soft Commodities";
+      case "other":
+        return "Other Commodities";
+      default:
+        return "Energy Commodities";
+    }
+  };
+
+  const getGroupCommodities = () => {
+    return commodities?.filter(commodity => commodity.category === activeGroup) || [];
+  };
+
+  const handleGroupSubscribe = async () => {
+    const groupCommodityNames = getGroupCommodities().map(c => c.name);
+    if (groupCommodityNames.length === 0) return;
+    
+    try {
+      await subscribe(groupCommodityNames);
+    } catch (error) {
+      console.error(`Failed to subscribe to ${activeGroup} commodities:`, error);
+    }
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-background to-muted/20">
@@ -129,7 +161,7 @@ const IBKRLiveData = () => {
 
           {/* Main Content */}
           <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 xl:p-10 overflow-x-hidden">
-            <div className="max-w-4xl mx-auto space-y-6">
+            <div className="max-w-6xl mx-auto space-y-6">
               
               {/* IBKR Connection Card */}
               {!isPremium ? (
@@ -180,7 +212,7 @@ const IBKRLiveData = () => {
 
                     {!connected && (
                       <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label htmlFor="username">IBKR Username</Label>
                             <Input
@@ -246,7 +278,7 @@ const IBKRLiveData = () => {
 
                     {connected && (
                       <div className="space-y-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                           <div className="space-y-1">
                             <p className="text-sm font-medium">Connection Status</p>
                             <div className="flex items-center gap-2">
@@ -270,7 +302,7 @@ const IBKRLiveData = () => {
                         )}
 
                         <div className="space-y-2">
-                          <div className="flex items-center justify-between">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                             <p className="text-sm font-medium">Market Data Subscriptions</p>
                             <Button size="sm" onClick={handleSubscribe}>
                               Subscribe to All Commodities
@@ -285,6 +317,103 @@ const IBKRLiveData = () => {
                       <p>• CBOT and COMEX L1/L2 data available with proper permissions</p>
                       <p>• Paper trading gateway recommended for testing</p>
                     </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Commodity Group Content */}
+              {isPremium && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Activity className="h-5 w-5" />
+                      {getGroupTitle()} - IBKR Data Status
+                    </CardTitle>
+                    <CardDescription>
+                      Monitor IBKR connection status for {getGroupTitle().toLowerCase()}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {commoditiesLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader className="w-6 h-6 animate-spin text-primary" />
+                        <span className="ml-2 text-sm text-muted-foreground">Loading commodities...</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {getGroupCommodities().length === 0 ? (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <p>No commodities available in this group</p>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {getGroupCommodities().map((commodity) => (
+                              <div key={commodity.symbol} className="p-4 border rounded-lg space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="font-semibold text-foreground">{commodity.name}</h4>
+                                  <Badge variant="outline" className="text-xs">
+                                    {commodity.symbol}
+                                  </Badge>
+                                </div>
+                                
+                                <div className="space-y-2">
+                                  <div className="flex items-center justify-between text-sm">
+                                    <span className="text-muted-foreground">IBKR Status:</span>
+                                    <Badge variant={ibkrPrices[commodity.name] ? "default" : "secondary"} className="text-xs">
+                                      {ibkrPrices[commodity.name] ? (
+                                        <><Activity className="h-3 w-3 mr-1" /> Live</>
+                                      ) : (
+                                        <><WifiOff className="h-3 w-3 mr-1" /> No Data</>
+                                      )}
+                                    </Badge>
+                                  </div>
+                                  
+                                  <div className="flex items-center justify-between text-sm">
+                                    <span className="text-muted-foreground">Exchange:</span>
+                                    <span className="font-medium">{commodity.venue}</span>
+                                  </div>
+                                  
+                                  {commodity.contractSize && (
+                                    <div className="flex items-center justify-between text-sm">
+                                      <span className="text-muted-foreground">Contract:</span>
+                                      <span className="font-medium">{commodity.contractSize}</span>
+                                    </div>
+                                  )}
+                                  
+                                  {ibkrPrices[commodity.name] && (
+                                    <div className="pt-2 border-t border-border/50">
+                                      <div className="text-xs text-muted-foreground">
+                                        Last IBKR update: {new Date(ibkrPrices[commodity.name].lastUpdate).toLocaleTimeString()}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {connected && getGroupCommodities().length > 0 && (
+                          <div className="pt-4 border-t border-border/50">
+                            <div className="flex items-center justify-between">
+                              <div className="space-y-1">
+                                <p className="text-sm font-medium">Group Subscription</p>
+                                <p className="text-xs text-muted-foreground">
+                                  Subscribe to {getGroupTitle().toLowerCase()} commodities for live IBKR data
+                                </p>
+                              </div>
+                              <Button 
+                                size="sm" 
+                                onClick={() => handleGroupSubscribe()}
+                                disabled={isConnecting}
+                              >
+                                Subscribe to {activeGroup.charAt(0).toUpperCase() + activeGroup.slice(1)}
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )}
