@@ -289,51 +289,6 @@ const IBKRLiveData = () => {
                 </Card>
               )}
 
-              {/* Live Prices Display */}
-              {Object.keys(ibkrPrices).length > 0 && (
-                <div className="space-y-4">
-                  <h2 className="text-xl font-semibold text-foreground">Live Price Feed</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {Object.entries(ibkrPrices).map(([symbol, data]) => (
-                      <div key={symbol} className="p-4 bg-card rounded-lg border shadow-sm">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-semibold text-foreground">{symbol}</h3>
-                          <span className="text-xs bg-purple-100 dark:bg-purple-950/20 text-purple-700 dark:text-purple-400 px-2 py-1 rounded">
-                            IBKR Live
-                          </span>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Price:</span>
-                            <span className="font-mono text-sm">${data.price}</span>
-                          </div>
-                          {data.bid && data.ask && (
-                            <>
-                              <div className="flex justify-between">
-                                <span className="text-sm text-muted-foreground">Bid:</span>
-                                <span className="font-mono text-sm text-green-600">${data.bid}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-sm text-muted-foreground">Ask:</span>
-                                <span className="font-mono text-sm text-red-600">${data.ask}</span>
-                              </div>
-                            </>
-                          )}
-                          {data.volume && (
-                            <div className="flex justify-between">
-                              <span className="text-sm text-muted-foreground">Volume:</span>
-                              <span className="font-mono text-sm">{data.volume.toLocaleString()}</span>
-                            </div>
-                          )}
-                          <div className="text-xs text-muted-foreground">
-                            Updated: {new Date(data.lastUpdate).toLocaleTimeString()}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </main>
         </div>
