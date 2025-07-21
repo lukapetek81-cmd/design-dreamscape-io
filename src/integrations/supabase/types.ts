@@ -195,6 +195,39 @@ export type Database = {
         }
         Relationships: []
       }
+      ibkr_credentials: {
+        Row: {
+          created_at: string
+          gateway: string
+          id: string
+          is_active: boolean
+          password_encrypted: string
+          updated_at: string
+          user_id: string
+          username_encrypted: string
+        }
+        Insert: {
+          created_at?: string
+          gateway?: string
+          id?: string
+          is_active?: boolean
+          password_encrypted: string
+          updated_at?: string
+          user_id: string
+          username_encrypted: string
+        }
+        Update: {
+          created_at?: string
+          gateway?: string
+          id?: string
+          is_active?: boolean
+          password_encrypted?: string
+          updated_at?: string
+          user_id?: string
+          username_encrypted?: string
+        }
+        Relationships: []
+      }
       market_status_config: {
         Row: {
           close_time: string

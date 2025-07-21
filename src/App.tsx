@@ -27,6 +27,7 @@ import TradingCommunity from "./pages/TradingCommunity";
 import ExpertInsights from "./pages/ExpertInsights";
 import LearningHub from "./pages/LearningHub";
 import MarketSentiment from "./pages/MarketSentiment";
+import IBKRSettings from "./pages/IBKRSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const AppRoutes = () => {
       <Route path="/reset-password" element={<ResetPassword />} />
       
       <Route path="/portfolio" element={<Portfolio />} />
+      <Route path="/ibkr-settings" element={<IBKRSettings />} />
       <Route path="/news-settings" element={<NewsSettingsPage />} />
       <Route path="/billing" element={<Billing />} />
       <Route path="/correlation" element={<MarketCorrelation />} />

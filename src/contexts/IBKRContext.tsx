@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAvailableCommodities } from '@/hooks/useCommodityData';
 import { useIBKRRealtimeData } from '@/hooks/useIBKRRealtimeData';
+import { useIBKRCredentials } from '@/hooks/useIBKRCredentials';
 
 interface IBKRCredentials {
   username: string;
@@ -49,6 +50,7 @@ export const IBKRProvider: React.FC<IBKRProviderProps> = ({ children }) => {
   const { profile } = useAuth();
   const { data: commodities } = useAvailableCommodities();
   const [isConnecting, setIsConnecting] = useState(false);
+  const { storedCredentials, getDecryptedCredentials } = useIBKRCredentials();
 
   // Get all available commodities for IBKR
   const allCommodityNames = React.useMemo(() => {
@@ -71,6 +73,27 @@ export const IBKRProvider: React.FC<IBKRProviderProps> = ({ children }) => {
     commodities: allCommodityNames,
     enabled: true
   });
+
+  // Auto-connect when stored credentials are available
+  useEffect(() => {
+    const autoConnect = async () => {
+      if (isPremium && storedCredentials && !connected && !isConnecting) {
+        const credentials = await getDecryptedCredentials();
+        if (credentials) {
+          setIsConnecting(true);
+          try {
+            await connectToIBKR(credentials);
+          } catch (error) {
+            console.error('Auto-connect failed:', error);
+          } finally {
+            setIsConnecting(false);
+          }
+        }
+      }
+    };
+
+    autoConnect();
+  }, [isPremium, storedCredentials, connected, isConnecting, getDecryptedCredentials, connectToIBKR]);
 
   const connect = useCallback(async (credentials: IBKRCredentials) => {
     setIsConnecting(true);
