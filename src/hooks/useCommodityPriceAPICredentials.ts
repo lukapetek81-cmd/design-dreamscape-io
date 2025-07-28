@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { encrypt, decrypt } from '@/lib/encryption';
+import { encryptCredential, decryptCredential } from '@/lib/encryption';
 import { supabase } from '@/integrations/supabase/client';
 
 interface CommodityPriceAPICredentials {
@@ -22,9 +22,9 @@ export const useCommodityPriceAPICredentials = () => {
 
     try {
       const { data, error } = await supabase
-        .from('user_settings')
+        .from('profiles')
         .select('commodity_price_api_credentials')
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .single();
 
       if (error && error.code !== 'PGRST116') {
@@ -46,14 +46,14 @@ export const useCommodityPriceAPICredentials = () => {
     if (!user) throw new Error('User not authenticated');
 
     try {
-      const encryptedCredentials = encrypt(JSON.stringify(credentials));
+      const encryptedCredentials = encryptCredential(JSON.stringify(credentials));
       
       const { error } = await supabase
-        .from('user_settings')
-        .upsert({
-          user_id: user.id,
+        .from('profiles')
+        .update({
           commodity_price_api_credentials: encryptedCredentials
-        });
+        })
+        .eq('id', user.id);
 
       if (error) throw error;
       
@@ -70,14 +70,14 @@ export const useCommodityPriceAPICredentials = () => {
 
     try {
       const { data, error } = await supabase
-        .from('user_settings')
+        .from('profiles')
         .select('commodity_price_api_credentials')
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .single();
 
       if (error || !data?.commodity_price_api_credentials) return null;
 
-      const decryptedData = decrypt(data.commodity_price_api_credentials);
+      const decryptedData = decryptCredential(data.commodity_price_api_credentials);
       return JSON.parse(decryptedData) as CommodityPriceAPICredentials;
     } catch (error) {
       console.error('Error decrypting credentials:', error);
@@ -91,9 +91,9 @@ export const useCommodityPriceAPICredentials = () => {
 
     try {
       const { error } = await supabase
-        .from('user_settings')
+        .from('profiles')
         .update({ commodity_price_api_credentials: null })
-        .eq('user_id', user.id);
+        .eq('id', user.id);
 
       if (error) throw error;
       
