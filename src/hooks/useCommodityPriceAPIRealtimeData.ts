@@ -122,12 +122,20 @@ export const useCommodityPriceAPIRealtimeData = (
       });
 
       if (response.error) {
-        // Check if this is a limit reached error
-        if (response.error.message?.includes('LIMIT_REACHED') || 
-            response.error.message?.includes('usage limit reached')) {
-          throw new Error('API usage limit reached. Please upgrade your plan or wait for the next billing cycle.');
+        // Handle different types of API errors
+        const errorMessage = response.error.message || '';
+        
+        if (errorMessage.includes('LIMIT_REACHED') || 
+            errorMessage.includes('usage limit reached') ||
+            errorMessage.includes('maximum request count')) {
+          throw new Error('API usage limit reached. Please upgrade your CommodityPriceAPI plan or wait for the next billing cycle.');
         }
-        throw new Error(response.error.message || 'Failed to fetch prices');
+        
+        if (errorMessage.includes('Edge Function returned a non-2xx status code')) {
+          throw new Error('API request failed. Your API key may have reached its limit or expired.');
+        }
+        
+        throw new Error(errorMessage || 'Failed to fetch prices');
       }
 
       const { rates, metadata, timestamp } = response.data;
@@ -178,13 +186,19 @@ export const useCommodityPriceAPIRealtimeData = (
 
       if (!response.error && response.data) {
         setUsage(response.data);
-      } else if (response.error?.message?.includes('LIMIT_REACHED')) {
-        // Still set usage data if available in error response
-        setUsage({
-          plan: 'Free',
-          quota: 1000,
-          used: 1000
-        });
+      } else if (response.error) {
+        const errorMessage = response.error.message || '';
+        
+        // Handle limit reached scenarios
+        if (errorMessage.includes('LIMIT_REACHED') || 
+            errorMessage.includes('usage limit reached') ||
+            errorMessage.includes('maximum request count')) {
+          setUsage({
+            plan: 'Free',
+            quota: 1000,
+            used: 1000
+          });
+        }
       }
     } catch (err) {
       console.error('Error fetching usage data:', err);
