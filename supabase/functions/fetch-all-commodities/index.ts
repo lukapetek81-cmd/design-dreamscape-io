@@ -466,11 +466,7 @@ serve(async (req) => {
         console.log('Fetching symbols from CommodityPriceAPI');
         
         // First, get all available symbols from CommodityPriceAPI
-        const symbolsResponse = await fetch('https://api.commoditypriceapi.com/v2/symbols', {
-          headers: {
-            'x-api-key': decryptedKey.key
-          }
-        });
+        const symbolsResponse = await fetch(`https://api.commoditypriceapi.com/v2/symbols?api_key=${decryptedKey.key}`);
         
         if (!symbolsResponse.ok) {
           throw new Error(`CommodityPriceAPI symbols error: ${symbolsResponse.status}`);
@@ -483,11 +479,7 @@ serve(async (req) => {
           // Get latest prices for all symbols
           const symbolsList = symbolsData.data.join(',');
           
-          const pricesResponse = await fetch(`https://api.commoditypriceapi.com/v2/latest?symbols=${symbolsList}`, {
-            headers: {
-              'x-api-key': decryptedKey.key
-            }
-          });
+          const pricesResponse = await fetch(`https://api.commoditypriceapi.com/v2/latest?symbols=${symbolsList}&api_key=${decryptedKey.key}`);
           
           if (!pricesResponse.ok) {
             throw new Error(`CommodityPriceAPI prices error: ${pricesResponse.status}`);
