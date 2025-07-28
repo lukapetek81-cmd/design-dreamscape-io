@@ -17,6 +17,7 @@ interface UseCommodityPriceAPIRealtimeDataProps {
   commodities: string[];
   enabled: boolean;
   credentials?: CommodityPriceAPICredentials;
+  isPremium?: boolean; // Add isPremium prop
 }
 
 interface CommodityPriceAPIRealtimeDataHook {
@@ -329,18 +330,22 @@ export const useCommodityPriceAPIRealtimeData = (
       
       setConnected(true);
 
-      // Set up polling for real-time updates (every minute for premium users)
+      // Set up polling for real-time updates with different frequencies
+      // Premium users: 30 seconds, Free users: 15 minutes
       // Only start polling if we haven't reached the limit
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
 
       if (!isLimitReached) {
+        const updateInterval = props.isPremium ? 30000 : 900000; // 30 seconds vs 15 minutes
+        console.log(`Setting update interval to ${updateInterval/1000} seconds for ${props.isPremium ? 'premium' : 'free'} user`);
+        
         intervalRef.current = setInterval(() => {
           if (apiKeyRef.current && !isLimitReached) {
             fetchPrices(apiKeyRef.current);
           }
-        }, 30000); // Update every 30 seconds for real-time data
+        }, updateInterval);
       }
 
     } catch (err) {

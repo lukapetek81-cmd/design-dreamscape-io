@@ -90,7 +90,8 @@ export const CommodityPriceAPIProvider: React.FC<CommodityPriceAPIProviderProps>
   } = useCommodityPriceAPIRealtimeData({
     commodities: allCommodityNames,
     enabled: isPremium && !!storedCredentials,
-    credentials: storedCredentials
+    credentials: storedCredentials,
+    isPremium: isPremium // Pass isPremium to the hook
   });
 
   const connect = useCallback(async (credentials: CommodityPriceAPICredentials) => {
