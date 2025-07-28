@@ -145,7 +145,7 @@ const getBasePriceForCommodity = (commodityName: string): number => {
   const basePrices: Record<string, number> = {
     // Energy
     'Crude Oil': 65,
-    'Brent Crude Oil': 67,
+    'Brent Crude Oil': 70,
     'Natural Gas': 2.85,
     'Gasoline RBOB': 2.1,
     'Heating Oil': 2.3,
