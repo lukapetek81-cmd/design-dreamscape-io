@@ -1,20 +1,32 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import CommodityCard from '@/components/CommodityCard';
+import CommodityGroupSection from '@/components/CommodityGroupSection';
+import CommodityOverview from '@/components/CommodityOverview';
 import UserProfile from '@/components/UserProfile';
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import CommoditySidebar from '@/components/CommoditySidebar';
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { BarChart3, Activity, Menu, TrendingUp, Loader, Zap, Coins, Wheat, Beef, Coffee, Package } from 'lucide-react';
+import { BarChart3, Activity, Menu, TrendingUp, Loader, Zap, Coins, Wheat, Beef, Coffee, Package, Eye, EyeOff } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRealtimeDataContext } from '@/contexts/RealtimeDataContext';
-import { useAvailableCommodities } from '@/hooks/useCommodityData';
+import { useAvailableCommodities, Commodity } from '@/hooks/useCommodityData';
 import { useDelayedData } from '@/hooks/useDelayedData';
+import { Button } from '@/components/ui/button';
 
 
 const Dashboard = () => {
   const [activeGroup, setActiveGroup] = React.useState("energy");
+  const [showOverview, setShowOverview] = React.useState(true);
+  const [expandedGroups, setExpandedGroups] = React.useState<Record<string, boolean>>({
+    energy: true,
+    metals: true,
+    grains: true,
+    livestock: true,
+    softs: true,
+    other: true
+  });
   const isMobile = useIsMobile();
   const { isGuest, profile, loading: authLoading } = useAuth();
   const { data: commodities, isLoading: commoditiesLoading, error: commoditiesError } = useAvailableCommodities();
@@ -37,6 +49,10 @@ const Dashboard = () => {
       <DashboardContent 
         activeGroup={activeGroup}
         setActiveGroup={setActiveGroup}
+        showOverview={showOverview}
+        setShowOverview={setShowOverview}
+        expandedGroups={expandedGroups}
+        setExpandedGroups={setExpandedGroups}
         isMobile={isMobile}
         profile={profile}
         commodities={commodities || []}
@@ -51,7 +67,11 @@ const Dashboard = () => {
 
 const DashboardContent = ({ 
   activeGroup, 
-  setActiveGroup, 
+  setActiveGroup,
+  showOverview,
+  setShowOverview,
+  expandedGroups,
+  setExpandedGroups,
   isMobile, 
   profile, 
   commodities, 
@@ -62,9 +82,13 @@ const DashboardContent = ({
 }: {
   activeGroup: string;
   setActiveGroup: (group: string) => void;
+  showOverview: boolean;
+  setShowOverview: (show: boolean) => void;
+  expandedGroups: Record<string, boolean>;
+  setExpandedGroups: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   isMobile: boolean;
   profile: any;
-  commodities: any[];
+  commodities: Commodity[];
   loading: boolean;
   error: string | null;
   realtimeConnected: boolean;
@@ -156,6 +180,10 @@ const DashboardContent = ({
     return commodities.filter(commodity => commodity.category === activeGroup);
   };
 
+  const getCommoditiesByCategory = (category: string) => {
+    return commodities.filter(commodity => commodity.category === category);
+  };
+
   const getGroupTitle = () => {
     switch (activeGroup) {
       case "metals":
@@ -172,6 +200,18 @@ const DashboardContent = ({
         return "Energy Commodities";
     }
   };
+
+  const handleGroupToggle = (category: string) => {
+    setExpandedGroups((prev) => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
+  };
+
+  const allCategories = ['energy', 'metals', 'grains', 'livestock', 'softs', 'other'];
+  const categoriesWithData = allCategories.filter(category => 
+    getCommoditiesByCategory(category).length > 0
+  );
 
   const getGroupIcon = () => {
     switch (activeGroup) {
@@ -309,44 +349,55 @@ const DashboardContent = ({
           {/* Enhanced Responsive Main Content */}
           <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 xl:p-10 overflow-x-hidden">
             <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 lg:space-y-8">
-              {/* Enhanced Responsive Section Header */}
+              {/* View Toggle Header */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 rounded-2xl bg-gradient-to-r from-card/50 to-muted/30 border border-border/50 shadow-soft hover:shadow-medium transition-shadow duration-300 space-y-3 sm:space-y-0">
                 <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                   <div className="p-2 sm:p-3 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 hover:scale-110 transition-all duration-300">
-                    {getGroupIcon()}
+                    <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-1 truncate">
-                      {isMobile ? activeGroup.charAt(0).toUpperCase() + activeGroup.slice(1) : getGroupTitle()}
+                      Commodity Markets
                     </h2>
                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-2xs sm:text-xs lg:text-sm text-muted-foreground">
                        <span className="flex items-center gap-1">
                          <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-primary rounded-full"></span>
-                         {getCommodities().length} active commodities
+                         {commodities.length} active commodities across {categoriesWithData.length} categories
                        </span>
                      </div>
                   </div>
                 </div>
-                <div className="text-center sm:text-right space-y-1 shrink-0">
-                  <p className="text-2xs sm:text-xs lg:text-sm font-medium text-muted-foreground">
-                    {profile?.subscription_active ? 'Real-time Status' : 'Market Status'}
-                  </p>
-                  <div className="flex items-center justify-center sm:justify-end gap-2">
-                    <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${
-                      profile?.subscription_active && realtimeConnected 
-                        ? 'bg-blue-500 animate-pulse' 
-                        : 'bg-green-500 animate-pulse'
-                    }`}></div>
-                    <span className={`text-sm sm:text-base lg:text-lg font-bold ${
-                      profile?.subscription_active && realtimeConnected 
-                        ? 'text-blue-600 dark:text-blue-400' 
-                        : 'text-green-600 dark:text-green-400'
-                    }`}>
-                      {profile?.subscription_active && realtimeConnected 
-                        ? 'LIVE' 
-                        : 'OPEN'
-                      }
-                    </span>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant={showOverview ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowOverview(!showOverview)}
+                    className="flex items-center gap-2"
+                  >
+                    {showOverview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showOverview ? 'Hide Overview' : 'Show Overview'}
+                  </Button>
+                  <div className="text-center sm:text-right space-y-1">
+                    <p className="text-2xs sm:text-xs lg:text-sm font-medium text-muted-foreground">
+                      {profile?.subscription_active ? 'Real-time Status' : 'Market Status'}
+                    </p>
+                    <div className="flex items-center justify-center sm:justify-end gap-2">
+                      <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${
+                        profile?.subscription_active && realtimeConnected 
+                          ? 'bg-blue-500 animate-pulse' 
+                          : 'bg-green-500 animate-pulse'
+                      }`}></div>
+                      <span className={`text-sm sm:text-base lg:text-lg font-bold ${
+                        profile?.subscription_active && realtimeConnected 
+                          ? 'text-blue-600 dark:text-blue-400' 
+                          : 'text-green-600 dark:text-green-400'
+                      }`}>
+                        {profile?.subscription_active && realtimeConnected 
+                          ? 'LIVE' 
+                          : 'OPEN'
+                        }
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -376,31 +427,51 @@ const DashboardContent = ({
                 </div>
               )}
 
-              {/* Enhanced Responsive Commodities Grid */}
-              {!loading && getCommodities().length > 0 && (
-                <div className="grid gap-3 sm:gap-4 lg:gap-6">
-                  {getCommodities().map((commodity, index) => (
-                    <div 
-                      key={commodity.symbol}
-                      className="animate-slide-up"
-                      style={{ animationDelay: `${index * 100}ms` }}
-                    >
-                      <CommodityCard
-                        name={commodity.name}
-                        symbol={commodity.symbol}
-                        price={commodity.price}
-                        change={commodity.changePercent}
-                        venue={commodity.venue}
-                        contractSize={commodity.contractSize}
-                        
+              {/* Market Overview */}
+              {showOverview && !loading && !error && commodities.length > 0 && (
+                <CommodityOverview commodities={commodities} loading={loading} />
+              )}
+
+              {/* Enhanced Responsive Commodities by Categories */}
+              {!loading && commodities.length > 0 && (
+                <div className="space-y-4 sm:space-y-6">
+                  {categoriesWithData.map((category) => {
+                    const categoryCommodities = getCommoditiesByCategory(category);
+                    if (categoryCommodities.length === 0) return null;
+
+                    const categoryTitle = (() => {
+                      switch (category) {
+                        case "metals":
+                          return "Metal Commodities";
+                        case "grains":
+                          return "Agricultural Commodities";
+                        case "livestock":
+                          return "Livestock Commodities";
+                        case "softs":
+                          return "Soft Commodities";
+                        case "other":
+                          return "Other Commodities";
+                        default:
+                          return "Energy Commodities";
+                      }
+                    })();
+
+                    return (
+                      <CommodityGroupSection
+                        key={category}
+                        title={categoryTitle}
+                        category={category}
+                        commodities={categoryCommodities}
+                        isExpanded={expandedGroups[category]}
+                        onToggle={() => handleGroupToggle(category)}
                       />
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
               {/* Empty State */}
-              {!loading && !error && getCommodities().length === 0 && (
+              {!loading && !error && commodities.length === 0 && (
                 <div className="text-center py-16 space-y-4">
                   <div className="w-16 h-16 mx-auto bg-muted/50 rounded-full flex items-center justify-center">
                     <BarChart3 className="w-8 h-8 text-muted-foreground" />
