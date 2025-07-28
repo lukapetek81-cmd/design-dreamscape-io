@@ -47,34 +47,115 @@ const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; cont
 
 // Mapping of CommodityPriceAPI symbols to our commodity names - MUST match frontend
 const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
+  // Precious Metals
   'XAU': 'Gold Futures',
   'XAG': 'Silver Futures', 
-  'WTIOIL': 'Crude Oil',
-  'BRENTOIL': 'Brent Crude Oil',
-  'NG': 'Natural Gas',
-  'HG': 'Copper',
   'XPT': 'Platinum',
   'XPD': 'Palladium',
+  'XRH': 'Rhodium',
+  
+  // Base Metals
+  'HG': 'Copper',
   'ALU': 'Aluminum',
+  'AL': 'Aluminum LME',
   'ZNC': 'Zinc',
+  'ZINC': 'Zinc LME',
   'LEAD': 'Lead',
-  'NI': 'Nickel',
+  'NICKEL': 'Nickel',
   'TIN': 'Tin',
-  'UX': 'Uranium',
-  'COAL': 'Coal',
+  'STEEL': 'Steel',
+  'HRC-STEEL': 'Hot-Rolled Coil Steel',
+  'TIOC': 'Iron Ore 62% FE',
+  'MG': 'Magnesium',
+  
+  // Industrial/Tech Metals
+  'LC': 'Lithium',
+  'COB': 'Cobalt',
+  'TITAN': 'Titanium',
+  'GA': 'Gallium',
+  'INDIUM': 'Indium',
+  'TEL': 'Tellurium',
+  'NDYM': 'Neodymium',
+  
+  // Energy
+  'WTIOIL': 'Crude Oil',
+  'BRENTOIL': 'Brent Crude Oil',
+  'DBLC1': 'Crude Oil Dubai',
+  'URAL-OIL': 'Ural Oil',
+  'NG': 'Natural Gas',
+  'NGUS': 'Natural Gas US',
+  'NGEU': 'Natural Gas Europe',
+  'LNG': 'Liquefied Natural Gas Japan',
+  'TTF-GAS': 'TTF Gas',
+  'UK-GAS': 'UK Gas',
   'HO': 'Heating Oil',
   'RB': 'Gasoline RBOB',
+  'LGO': 'Gas Oil',
+  'COAL': 'Coal',
+  'AUCOAL': 'Coal Australia',
+  'RB1COAL': 'Coal South Africa',
+  'UXA': 'Uranium',
+  'ETHANOL': 'Ethanol',
+  'METH': 'Methanol',
+  'PROP': 'Propane',
+  'NAPHTHA': 'Naphtha',
+  
+  // Grains & Agriculture
   'CORN': 'Corn Futures',
-  'WHEAT': 'Wheat Futures',
+  'ZW': 'Wheat Futures',
   'SOYBEAN': 'Soybean Futures',
-  'SUGAR': 'Sugar',
-  'COTTON': 'Cotton',
-  'COFFEE': 'Coffee',
-  'COCOA': 'Cocoa',
-  'RICE': 'Rough Rice',
-  'OATS': 'Oat Futures',
+  'ZL': 'Soybean Oil',
+  'ZM': 'Soybean Meal',
+  'OAT': 'Oat Futures',
+  'RR': 'Rough Rice',
+  'CANOLA': 'Canola',
+  
+  // Soft Commodities
+  'LS': 'Sugar',
+  'CT': 'Cotton',
+  'CA': 'Coffee Arabica',
+  'CR': 'Coffee Robusta',
+  'CC': 'Cocoa',
+  'TEA': 'Tea',
+  'TEAK': 'Tea Kolkata',
+  'TEAC': 'Tea Colombo',
+  'TEAM': 'Tea Mombasa',
+  
+  // Oils & Fats
+  'PO': 'Palm Oil',
+  'SUNF': 'Sunflower Oil',
+  'RSO': 'Rapeseed Oil',
+  'CO': 'Coconut Oil',
+  
+  // Livestock & Dairy
   'CATTLE': 'Live Cattle Futures',
   'HOGS': 'Lean Hogs Futures',
+  'MILK': 'Milk',
+  'CHE': 'Cheese',
+  'BUTTER': 'Butter',
+  'EGGS-US': 'Eggs US',
+  'EGGS-CH': 'Eggs China',
+  'POUL': 'Poultry',
+  'SALMON': 'Salmon',
+  'FM': 'Fish Meal',
+  
+  // Industrial Materials
+  'LB': 'Lumber',
+  'RUBBER': 'Rubber',
+  'WOOL': 'Wool',
+  'BIT': 'Bitumen',
+  'K-PULP': 'Kraft Pulp',
+  
+  // Plastics & Chemicals
+  'POL': 'Polyethylene',
+  'PVC': 'Polyvinyl Chloride',
+  'PYL': 'Polypropylene',
+  'SODASH': 'Soda Ash',
+  'UREA': 'Urea',
+  'DIAPH': 'Diammonium Phosphate',
+  
+  // Food & Agriculture
+  'POTATO': 'Potato',
   'OJ': 'Orange Juice'
 };
 
