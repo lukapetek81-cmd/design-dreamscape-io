@@ -520,110 +520,11 @@ serve(async (req) => {
           throw new Error('No symbols returned from CommodityPriceAPI');
         }
       } catch (error) {
-        console.error('CommodityPriceAPI failed, falling back to FMP:', error);
-        commoditiesData = [];
+        console.error('CommodityPriceAPI failed:', error);
+        throw new Error(`CommodityPriceAPI error: ${error.message}`);
       }
-    }
-
-    // Try FMP API if CommodityPriceAPI failed or not available
-    if (commoditiesData.length === 0) {
-      const fmpApiKey = Deno.env.get('FMP_API_KEY');
-      
-      if (fmpApiKey && fmpApiKey !== 'demo') {
-        try {
-          console.log('Using FMP for commodities');
-          
-          // Fetch all commodity quotes from FMP
-          const response = await fetch(
-            `https://financialmodelingprep.com/api/v3/quotes/commodity?apikey=${fmpApiKey}`
-          );
-          
-          if (!response.ok) {
-            throw new Error(`FMP API error: ${response.status}`);
-          }
-          
-          const data = await response.json();
-          
-          if (Array.isArray(data) && data.length > 0) {
-            console.log(`FMP returned ${data.length} commodities`);
-            
-            // Process all FMP data, including commodities not in our predefined list
-            const processedFromPredefined = Object.keys(COMMODITY_SYMBOLS).map(name => {
-              const symbolInfo = COMMODITY_SYMBOLS[name];
-              // Find matching FMP data by symbol
-              const fmpData = data.find(item => 
-                item.symbol === symbolInfo.symbol || 
-                item.name?.toLowerCase().includes(name.toLowerCase().split(' ')[0])
-              );
-              
-              if (fmpData) {
-                return {
-                  data: generateEnhancedData({
-                    symbol: fmpData.symbol,
-                    price: parseFloat(fmpData.price) || 0,
-                    change: parseFloat(fmpData.change) || 0,
-                    changePercent: parseFloat(fmpData.changesPercentage) || 0,
-                    volume: parseInt(fmpData.volume) || 0,
-                  }, name),
-                  processed: true,
-                  originalSymbol: fmpData.symbol
-                };
-              } else {
-                // Use fallback data for commodities not found in FMP
-                return {
-                  data: generateEnhancedData({
-                    symbol: symbolInfo.symbol,
-                    price: 0,
-                    change: 0,
-                    changePercent: 0,
-                    volume: 0,
-                  }, name),
-                  processed: true,
-                  originalSymbol: symbolInfo.symbol
-                };
-              }
-            });
-
-            // Find FMP commodities that weren't in our predefined list
-            const processedSymbols = processedFromPredefined.map(item => item.originalSymbol);
-            const additionalFmpCommodities = data
-              .filter(item => !processedSymbols.includes(item.symbol))
-              .map(fmpData => {
-                // Auto-categorize the commodity based on its name
-                const name = fmpData.name || fmpData.symbol.replace(/[=F]/g, '').replace(/[_-]/g, ' ');
-                const metadata = categorizeSymbol(name);
-                
-                return {
-                  data: generateEnhancedData({
-                    symbol: fmpData.symbol,
-                    price: parseFloat(fmpData.price) || 0,
-                    change: parseFloat(fmpData.change) || 0,
-                    changePercent: parseFloat(fmpData.changesPercentage) || 0,
-                    volume: parseInt(fmpData.volume) || 0,
-                  }, name),
-                  processed: false,
-                  originalSymbol: fmpData.symbol
-                };
-              });
-
-            // Combine predefined and additional commodities
-            commoditiesData = [
-              ...processedFromPredefined.map(item => item.data),
-              ...additionalFmpCommodities.map(item => item.data)
-            ];
-            
-            dataSource = 'fmp';
-            console.log(`Processed ${commoditiesData.length} commodities: ${processedFromPredefined.length} predefined + ${additionalFmpCommodities.length} additional from FMP`);
-          } else {
-            throw new Error('No data returned from FMP API');
-          }
-        } catch (error) {
-          console.warn('FMP API failed, using fallback data:', error);
-          commoditiesData = [];
-        }
-      } else {
-        console.log('No FMP API key configured, using fallback data');
-      }
+    } else {
+      throw new Error('CommodityPriceAPI access requires premium subscription and valid API credentials');
     }
 
     // Use fallback data if both APIs failed
