@@ -45,7 +45,7 @@ export const useAvailableCommodities = () => {
     queryKey: ['all-commodities', getDataDelay()], // Changed key to force cache refresh
     queryFn: async (): Promise<Commodity[]> => {
       try {
-        const { data, error } = await supabase.functions.invoke('fetch-all-commodities', {
+        const { data, error } = await supabase.functions.invoke('fetch-commodity-symbols', {
           body: { dataDelay: getDataDelay() }
         });
 
