@@ -47,68 +47,116 @@ const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; cont
 
 // CommodityPriceAPI symbol mapping - expanded to include all available symbols
 const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
-  // Energy
-  'Crude Oil': 'WTI',
-  'Brent Crude Oil': 'BRENT', 
-  'Natural Gas': 'NATGAS',
-  'Gasoline RBOB': 'GASOLINE',
-  'Heating Oil': 'HEATING-OIL',
-  'Propane': 'PROPANE',
-  'Diesel': 'DIESEL',
-  'Jet Fuel': 'JET-FUEL',
-  'Coal': 'COAL',
-  'Uranium': 'URANIUM',
+  // Precious Metals
+  'XAU': 'Gold Futures',
+  'XAG': 'Silver Futures', 
+  'XPT': 'Platinum',
+  'XPD': 'Palladium',
+  'XRH': 'Rhodium',
   
-  // Metals
-  'Gold Futures': 'GOLD',
-  'Silver Futures': 'SILVER',
-  'Copper': 'COPPER',
-  'Platinum': 'PLATINUM',
-  'Palladium': 'PALLADIUM',
-  'Aluminum': 'ALUMINUM',
-  'Nickel': 'NICKEL',
-  'Zinc': 'ZINC',
-  'Lead': 'LEAD',
-  'Tin': 'TIN',
-  'Iron Ore': 'IRON-ORE',
-  'Steel': 'STEEL',
+  // Base Metals
+  'HG': 'Copper',
+  'ALU': 'Aluminum',
+  'AL': 'Aluminum LME',
+  'ZNC': 'Zinc',
+  'ZINC': 'Zinc LME',
+  'LEAD': 'Lead',
+  'NICKEL': 'Nickel',
+  'TIN': 'Tin',
+  'STEEL': 'Steel',
+  'HRC-STEEL': 'Hot-Rolled Coil Steel',
+  'TIOC': 'Iron Ore 62% FE',
+  'MG': 'Magnesium',
+  
+  // Industrial/Tech Metals
+  'LC': 'Lithium',
+  'COB': 'Cobalt',
+  'TITAN': 'Titanium',
+  'GA': 'Gallium',
+  'INDIUM': 'Indium',
+  'TEL': 'Tellurium',
+  'NDYM': 'Neodymium',
+  
+  // Energy
+  'WTIOIL': 'Crude Oil',
+  'BRENTOIL': 'Brent Crude Oil',
+  'DBLC1': 'Crude Oil Dubai',
+  'URAL-OIL': 'Ural Oil',
+  'NG': 'Natural Gas',
+  'NGUS': 'Natural Gas US',
+  'NGEU': 'Natural Gas Europe',
+  'LNG': 'Liquefied Natural Gas Japan',
+  'TTF-GAS': 'TTF Gas',
+  'UK-GAS': 'UK Gas',
+  'HO': 'Heating Oil',
+  'RB': 'Gasoline RBOB',
+  'LGO': 'Gas Oil',
+  'COAL': 'Coal',
+  'AUCOAL': 'Coal Australia',
+  'RB1COAL': 'Coal South Africa',
+  'UXA': 'Uranium',
+  'ETHANOL': 'Ethanol',
+  'METH': 'Methanol',
+  'PROP': 'Propane',
+  'NAPHTHA': 'Naphtha',
   
   // Grains & Agriculture
-  'Corn Futures': 'CORN',
-  'Wheat Futures': 'WHEAT',
-  'Soybean Futures': 'SOYBEANS',
-  'Soybean Oil': 'SOYBEAN-OIL',
-  'Soybean Meal': 'SOYBEAN-MEAL',
-  'Oat Futures': 'OATS',
-  'Rough Rice': 'RICE',
-  'Barley': 'BARLEY',
-  'Canola': 'CANOLA',
-  'Palm Oil': 'PALM-OIL',
-  'Sunflower Oil': 'SUNFLOWER-OIL',
-  'Rapeseed': 'RAPESEED',
+  'CORN': 'Corn Futures',
+  'ZW': 'Wheat Futures',
+  'SOYBEAN': 'Soybean Futures',
+  'ZL': 'Soybean Oil',
+  'ZM': 'Soybean Meal',
+  'OAT': 'Oat Futures',
+  'RR': 'Rough Rice',
+  'CANOLA': 'Canola',
   
-  // Livestock
-  'Live Cattle Futures': 'CATTLE',
-  'Feeder Cattle Futures': 'FEEDER-CATTLE',
-  'Lean Hogs Futures': 'HOGS',
+  // Soft Commodities
+  'LS': 'Sugar',
+  'CT': 'Cotton',
+  'CA': 'Coffee Arabica',
+  'CR': 'Coffee Robusta',
+  'CC': 'Cocoa',
+  'TEA': 'Tea',
+  'TEAK': 'Tea Kolkata',
+  'TEAC': 'Tea Colombo',
+  'TEAM': 'Tea Mombasa',
   
-  // Softs
-  'Coffee': 'COFFEE',
-  'Sugar': 'SUGAR',
-  'Cotton': 'COTTON',
-  'Cocoa': 'COCOA',
-  'Orange Juice': 'OJ',
-  'Tea': 'TEA',
-  'Rubber': 'RUBBER',
-  'Wool': 'WOOL',
+  // Oils & Fats
+  'PO': 'Palm Oil',
+  'SUNF': 'Sunflower Oil',
+  'RSO': 'Rapeseed Oil',
+  'CO': 'Coconut Oil',
   
-  // Other
-  'Lumber Futures': 'LUMBER',
-  'Ethanol': 'ETHANOL',
-  'Milk': 'MILK',
-  'Cheese': 'CHEESE',
-  'Butter': 'BUTTER',
-  'Eggs': 'EGGS'
+  // Livestock & Dairy
+  'CATTLE': 'Live Cattle Futures',
+  'HOGS': 'Lean Hogs Futures',
+  'MILK': 'Milk',
+  'CHE': 'Cheese',
+  'BUTTER': 'Butter',
+  'EGGS-US': 'Eggs US',
+  'EGGS-CH': 'Eggs China',
+  'POUL': 'Poultry',
+  'SALMON': 'Salmon',
+  'FM': 'Fish Meal',
+  
+  // Industrial Materials
+  'LB': 'Lumber',
+  'RUBBER': 'Rubber',
+  'WOOL': 'Wool',
+  'BIT': 'Bitumen',
+  'K-PULP': 'Kraft Pulp',
+  
+  // Plastics & Chemicals
+  'POL': 'Polyethylene',
+  'PVC': 'Polyvinyl Chloride',
+  'PYL': 'Polypropylene',
+  'SODASH': 'Soda Ash',
+  'UREA': 'Urea',
+  'DIAPH': 'Diammonium Phosphate',
+  
+  // Food & Agriculture
+  'POTATO': 'Potato',
+  'OJ': 'Orange Juice'
 };
 
 serve(async (req) => {

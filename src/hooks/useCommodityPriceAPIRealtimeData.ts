@@ -191,12 +191,21 @@ export const useCommodityPriceAPIRealtimeData = (
 
       // Get symbols for the commodities we need
       const symbols = props.commodities
-        .map(name => COMMODITY_SYMBOL_MAP[name])
+        .map(name => {
+          const symbol = COMMODITY_SYMBOL_MAP[name];
+          console.log(`Mapping commodity "${name}" to symbol "${symbol}"`);
+          return symbol;
+        })
         .filter(Boolean)
         .join(',');
 
+      console.log(`Found ${props.commodities.length} commodities, mapped to ${symbols ? symbols.split(',').length : 0} symbols`);
+      console.log('All commodity names:', props.commodities);
+      console.log('Mapped symbols:', symbols);
+
       if (!symbols) {
         console.warn('No matching symbols found for commodities');
+        console.warn('Available mappings:', Object.keys(COMMODITY_SYMBOL_MAP));
         return;
       }
 
