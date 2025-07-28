@@ -340,7 +340,7 @@ export const useCommodityPriceAPIRealtimeData = (
           if (apiKeyRef.current && !isLimitReached) {
             fetchPrices(apiKeyRef.current);
           }
-        }, 60000); // Update every minute
+        }, 30000); // Update every 30 seconds for real-time data
       }
 
     } catch (err) {
