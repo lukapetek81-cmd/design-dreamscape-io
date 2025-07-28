@@ -19,14 +19,6 @@ import { Button } from '@/components/ui/button';
 const Dashboard = () => {
   const [activeGroup, setActiveGroup] = React.useState("energy");
   const [showOverview, setShowOverview] = React.useState(true);
-  const [expandedGroups, setExpandedGroups] = React.useState<Record<string, boolean>>({
-    energy: true,
-    metals: true,
-    grains: true,
-    livestock: true,
-    softs: true,
-    other: true
-  });
   const isMobile = useIsMobile();
   const { isGuest, profile, loading: authLoading } = useAuth();
   const { data: commodities, isLoading: commoditiesLoading, error: commoditiesError } = useAvailableCommodities();
@@ -51,8 +43,6 @@ const Dashboard = () => {
         setActiveGroup={setActiveGroup}
         showOverview={showOverview}
         setShowOverview={setShowOverview}
-        expandedGroups={expandedGroups}
-        setExpandedGroups={setExpandedGroups}
         isMobile={isMobile}
         profile={profile}
         commodities={commodities || []}
@@ -70,8 +60,6 @@ const DashboardContent = ({
   setActiveGroup,
   showOverview,
   setShowOverview,
-  expandedGroups,
-  setExpandedGroups,
   isMobile, 
   profile, 
   commodities, 
@@ -84,8 +72,6 @@ const DashboardContent = ({
   setActiveGroup: (group: string) => void;
   showOverview: boolean;
   setShowOverview: (show: boolean) => void;
-  expandedGroups: Record<string, boolean>;
-  setExpandedGroups: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   isMobile: boolean;
   profile: any;
   commodities: Commodity[];
@@ -180,10 +166,6 @@ const DashboardContent = ({
     return commodities.filter(commodity => commodity.category === activeGroup);
   };
 
-  const getCommoditiesByCategory = (category: string) => {
-    return commodities.filter(commodity => commodity.category === category);
-  };
-
   const getGroupTitle = () => {
     switch (activeGroup) {
       case "metals":
@@ -201,18 +183,6 @@ const DashboardContent = ({
     }
   };
 
-  const handleGroupToggle = (category: string) => {
-    setExpandedGroups((prev) => ({
-      ...prev,
-      [category]: !prev[category]
-    }));
-  };
-
-  const allCategories = ['energy', 'metals', 'grains', 'livestock', 'softs', 'other'];
-  const categoriesWithData = allCategories.filter(category => 
-    getCommoditiesByCategory(category).length > 0
-  );
-
   const getGroupIcon = () => {
     switch (activeGroup) {
       case "metals":
@@ -229,6 +199,7 @@ const DashboardContent = ({
         return <Zap className="w-5 h-5 sm:w-6 sm:h-6" />;
     }
   };
+
 
   const getCommodityCount = (category: string) => {
     return commodities.filter(commodity => commodity.category === category).length;
@@ -353,16 +324,16 @@ const DashboardContent = ({
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 rounded-2xl bg-gradient-to-r from-card/50 to-muted/30 border border-border/50 shadow-soft hover:shadow-medium transition-shadow duration-300 space-y-3 sm:space-y-0">
                 <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                   <div className="p-2 sm:p-3 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 hover:scale-110 transition-all duration-300">
-                    <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6" />
+                    {getGroupIcon()}
                   </div>
                   <div className="min-w-0 flex-1">
                     <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-1 truncate">
-                      Commodity Markets
+                      {isMobile ? activeGroup.charAt(0).toUpperCase() + activeGroup.slice(1) : getGroupTitle()}
                     </h2>
                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-2xs sm:text-xs lg:text-sm text-muted-foreground">
                        <span className="flex items-center gap-1">
                          <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-primary rounded-full"></span>
-                         {commodities.length} active commodities across {categoriesWithData.length} categories
+                         {getCommodities().length} active commodities
                        </span>
                      </div>
                   </div>
@@ -432,46 +403,30 @@ const DashboardContent = ({
                 <CommodityOverview commodities={commodities} loading={loading} />
               )}
 
-              {/* Enhanced Responsive Commodities by Categories */}
-              {!loading && commodities.length > 0 && (
-                <div className="space-y-4 sm:space-y-6">
-                  {categoriesWithData.map((category) => {
-                    const categoryCommodities = getCommoditiesByCategory(category);
-                    if (categoryCommodities.length === 0) return null;
-
-                    const categoryTitle = (() => {
-                      switch (category) {
-                        case "metals":
-                          return "Metal Commodities";
-                        case "grains":
-                          return "Agricultural Commodities";
-                        case "livestock":
-                          return "Livestock Commodities";
-                        case "softs":
-                          return "Soft Commodities";
-                        case "other":
-                          return "Other Commodities";
-                        default:
-                          return "Energy Commodities";
-                      }
-                    })();
-
-                    return (
-                      <CommodityGroupSection
-                        key={category}
-                        title={categoryTitle}
-                        category={category}
-                        commodities={categoryCommodities}
-                        isExpanded={expandedGroups[category]}
-                        onToggle={() => handleGroupToggle(category)}
+              {/* Enhanced Responsive Commodities Grid */}
+              {!loading && getCommodities().length > 0 && (
+                <div className="grid gap-3 sm:gap-4 lg:gap-6">
+                  {getCommodities().map((commodity, index) => (
+                    <div 
+                      key={commodity.symbol}
+                      className="animate-slide-up"
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                      <CommodityCard
+                        name={commodity.name}
+                        symbol={commodity.symbol}
+                        price={commodity.price}
+                        change={commodity.changePercent}
+                        venue={commodity.venue}
+                        contractSize={commodity.contractSize}
                       />
-                    );
-                  })}
+                    </div>
+                  ))}
                 </div>
               )}
 
               {/* Empty State */}
-              {!loading && !error && commodities.length === 0 && (
+              {!loading && !error && getCommodities().length === 0 && (
                 <div className="text-center py-16 space-y-4">
                   <div className="w-16 h-16 mx-auto bg-muted/50 rounded-full flex items-center justify-center">
                     <BarChart3 className="w-8 h-8 text-muted-foreground" />
