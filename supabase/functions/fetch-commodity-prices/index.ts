@@ -1,135 +1,144 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Commodity symbol mappings - FMP compatible symbols
-const COMMODITY_SYMBOLS: Record<string, string> = {
-  // Energy
-  'Crude Oil': 'CL=F',
-  'Brent Crude Oil': 'BZ=F',
-  'Natural Gas': 'NG=F',
-  'Gasoline RBOB': 'RB=F',
-  'Heating Oil': 'HO=F',
-  'Natural Gas UK': 'NG=F', // Use same as US Natural Gas for FMP
-  'Gas Oil': 'HO=F', // Use Heating Oil as proxy
-  'Coal': 'ANR', // ANR Coal stock as proxy
-  'Ethanol': 'ZE=F',
-  'Propane': 'PN=F',
-  
+// CommodityPriceAPI symbol mappings - matches the ones in fetch-commodity-symbols
+const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
   // Precious Metals
-  'Gold Futures': 'GC=F',
-  'Silver Futures': 'SI=F',
-  'Platinum': 'PL=F',
-  'Palladium': 'PA=F',
-  'Rhodium': 'RHODY', // Rhodium ETF
+  'Gold Futures': 'XAU',
+  'Silver Futures': 'XAG', 
+  'Platinum': 'XPT',
+  'Palladium': 'XPD',
+  'Rhodium': 'XRH',
   
   // Base Metals
-  'Copper': 'HG=F',
-  'Aluminum': 'ALU=F',
-  'Zinc': 'ZN=F',
-  'Lead': 'LD=F',
-  'Nickel': 'NI=F',
-  'Tin': 'SN=F',
-  'Steel': 'X', // US Steel as proxy
-  'Iron Ore': 'BHP', // BHP as iron ore proxy
+  'Copper': 'HG',
+  'Aluminum': 'ALU',
+  'Aluminum LME': 'AL',
+  'Zinc': 'ZNC',
+  'Zinc LME': 'ZINC',
+  'Lead': 'LEAD',
+  'Nickel': 'NICKEL',
+  'Tin': 'TIN',
+  'Steel': 'STEEL',
+  'Hot-Rolled Coil Steel': 'HRC-STEEL',
+  'Iron Ore 62% FE': 'TIOC',
+  'Magnesium': 'MG',
   
   // Industrial/Tech Metals
-  'Lithium': 'LIT', // Lithium ETF
-  'Cobalt': 'COBR', // Cobalt ETF
-  'Uranium': 'URA', // Uranium ETF
+  'Lithium': 'LC',
+  'Cobalt': 'COB',
+  'Titanium': 'TITAN',
+  'Gallium': 'GA',
+  'Indium': 'INDIUM',
+  'Tellurium': 'TEL',
+  'Neodymium': 'NDYM',
+  
+  // Energy
+  'Crude Oil': 'WTIOIL',
+  'Brent Crude Oil': 'BRENTOIL',
+  'Crude Oil Dubai': 'DBLC1',
+  'Ural Oil': 'URAL-OIL',
+  'Natural Gas': 'NG',
+  'Natural Gas US': 'NGUS',
+  'Natural Gas Europe': 'NGEU',
+  'Liquefied Natural Gas Japan': 'LNG',
+  'TTF Gas': 'TTF-GAS',
+  'UK Gas': 'UK-GAS',
+  'Heating Oil': 'HO',
+  'Gasoline RBOB': 'RB',
+  'Gas Oil': 'LGO',
+  'Coal': 'COAL',
+  'Coal Australia': 'AUCOAL',
+  'Coal South Africa': 'RB1COAL',
+  'Uranium': 'UXA',
+  'Ethanol': 'ETHANOL',
+  'Methanol': 'METH',
+  'Propane': 'PROP',
+  'Naphtha': 'NAPHTHA',
   
   // Grains & Agriculture
-  'Corn Futures': 'ZC=F',
-  'Wheat Futures': 'ZW=F',
-  'Soybean Futures': 'ZS=F',
-  'Soybean Oil': 'ZL=F',
-  'Soybean Meal': 'ZM=F',
-  'Oat Futures': 'ZO=F',
-  'Rough Rice': 'ZR=F',
-  'Canola': 'RS=F',
-  'Barley': 'ZW=F', // Use wheat as proxy
-  'Spring Wheat': 'MW=F',
-  'Hard Red Winter Wheat': 'KE=F',
-  
-  // Livestock & Dairy
-  'Live Cattle Futures': 'LE=F',
-  'Feeder Cattle Futures': 'GF=F',
-  'Lean Hogs Futures': 'HE=F',
-  'Milk Class III': 'DC=F',
-  'Milk Nonfat Dry': 'NF=F',
-  'Butter': 'DA=F',
-  'Cheese': 'CSC=F',
+  'Corn Futures': 'CORN',
+  'Wheat Futures': 'ZW',
+  'Soybean Futures': 'SOYBEAN',
+  'Soybean Oil': 'ZL',
+  'Soybean Meal': 'ZM',
+  'Oat Futures': 'OAT',
+  'Rough Rice': 'RR',
+  'Canola': 'CANOLA',
   
   // Soft Commodities
-  'Coffee Arabica': 'KC=F',
-  'Coffee Robusta': 'KC=F', // Use Arabica as proxy
-  'Sugar #11': 'SB=F',
-  'Sugar #5': 'SB=F', // Use #11 as proxy
-  'Cotton': 'CT=F',
-  'Cocoa': 'CC=F',
-  'Orange Juice': 'OJ=F',
-  'Tea': 'KC=F', // Use coffee as proxy
+  'Sugar': 'LS',
+  'Cotton': 'CT',
+  'Coffee Arabica': 'CA',
+  'Coffee Robusta': 'CR',
+  'Cocoa': 'CC',
+  'Tea': 'TEA',
+  'Tea Kolkata': 'TEAK',
+  'Tea Colombo': 'TEAC',
+  'Tea Mombasa': 'TEAM',
   
   // Oils & Fats
-  'Palm Oil': 'ZL=F', // Use soybean oil as proxy
-  'Sunflower Oil': 'ZL=F',
-  'Rapeseed Oil': 'ZL=F',
-  'Coconut Oil': 'ZL=F',
-  'Olive Oil': 'ZL=F',
+  'Palm Oil': 'PO',
+  'Sunflower Oil': 'SUNF',
+  'Rapeseed Oil': 'RSO',
+  'Coconut Oil': 'CO',
   
-  // Forest Products
-  'Lumber Futures': 'LBS=F',
-  'Random Length Lumber': 'LB=F',
-  'Pulp': 'LBS=F', // Use lumber as proxy
-  'Newsprint': 'LBS=F',
+  // Livestock & Dairy
+  'Live Cattle Futures': 'CATTLE',
+  'Lean Hogs Futures': 'HOGS',
+  'Milk': 'MILK',
+  'Cheese': 'CHE',
+  'Butter': 'BUTTER',
+  'Eggs US': 'EGGS-US',
+  'Eggs China': 'EGGS-CH',
+  'Poultry': 'POUL',
+  'Salmon': 'SALMON',
+  'Fish Meal': 'FM',
   
   // Industrial Materials
-  'Rubber': 'RU=F',
-  'Cotton Yarn': 'CT=F', // Use cotton as proxy
-  'Wool': 'CT=F',
-  'Jute': 'CT=F',
+  'Lumber': 'LB',
+  'Rubber': 'RUBBER',
+  'Wool': 'WOOL',
+  'Bitumen': 'BIT',
+  'Kraft Pulp': 'K-PULP',
   
-  // Fertilizers & Chemicals
-  'Urea': 'MOS', // Mosaic fertilizer stock
-  'Diammonium Phosphate': 'MOS',
-  'Potash': 'POT',
-  'Ammonia': 'CF', // CF Industries
-  
-  // Plastics
-  'Polyethylene': 'DOW', // Dow Chemical as proxy
-  'Polypropylene': 'DOW',
-  'PVC': 'DOW',
-  'Styrene': 'DOW',
+  // Plastics & Chemicals
+  'Polyethylene': 'POL',
+  'Polyvinyl Chloride': 'PVC',
+  'Polypropylene': 'PYL',
+  'Soda Ash': 'SODASH',
+  'Urea': 'UREA',
+  'Diammonium Phosphate': 'DIAPH',
   
   // Food & Agriculture
-  'White Sugar': 'SB=F',
-  'Raw Sugar': 'SB=F',
-  'Potato': 'ZC=F', // Use corn as proxy
-  'Onion': 'ZC=F',
-  'Garlic': 'ZC=F',
-  'Apple': 'ZC=F',
-  'Banana': 'ZC=F',
-  
-  // Spices
-  'Black Pepper': 'KC=F', // Use coffee as proxy
-  'Cardamom': 'KC=F',
-  'Turmeric': 'KC=F',
-  'Coriander': 'KC=F',
-  'Chilli': 'KC=F',
-  'Cumin': 'KC=F',
-  
-  // Others
-  'Electricity': 'NEE', // NextEra Energy as proxy
-  'Carbon Credits': 'KRBN', // Carbon ETF
-  'Weather Derivatives': 'AIG', // AIG as insurance proxy
-  
-  // Legacy mappings (keep for compatibility)
-  'Sugar': 'SB=F',
+  'Potato': 'POTATO',
+  'Orange Juice': 'OJ'
+};
+
+// FMP fallback symbols for commodities not in CommodityPriceAPI
+const FMP_FALLBACK_SYMBOLS: Record<string, string> = {
+  'Natural Gas UK': 'NG=F',
+  'Gas Oil': 'HO=F',
+  'Coal': 'ANR',
+  'Ethanol': 'ZE=F',
+  'Propane': 'PN=F',
+  'Iron Ore': 'BHP',
+  'Barley': 'ZW=F',
+  'Spring Wheat': 'MW=F',
+  'Hard Red Winter Wheat': 'KE=F',
+  'Feeder Cattle Futures': 'GF=F',
+  'Milk Class III': 'DC=F',
+  'Milk Nonfat Dry': 'NF=F',
+  'Sugar #11': 'SB=F',
+  'Sugar #5': 'SB=F',
   'Coffee': 'KC=F',
-  'Lumber': 'LBS=F'
+  'Lumber Futures': 'LBS=F',
+  'Random Length Lumber': 'LB=F'
 };
 
 const getBasePriceForCommodity = (commodityName: string): number => {
@@ -264,16 +273,32 @@ const getBasePriceForCommodity = (commodityName: string): number => {
   return basePrices[commodityName] || 100;
 };
 
-// Removed fetchPriceFromFMP function - handled directly in main function for better premium user support
-
-// Removed Alpha Vantage API - using FMP API only for consistency
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    // Initialize Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: req.headers.get('Authorization')! },
+        },
+      }
+    )
+
+    // Check if user is authenticated
+    const { data: { user } } = await supabaseClient.auth.getUser()
+    if (!user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     const { commodityName, isPremium, dataDelay = 'realtime' } = await req.json()
     
     if (!commodityName) {
@@ -285,84 +310,131 @@ serve(async (req) => {
 
     console.log(`Fetching current price for ${commodityName} with ${dataDelay} data (Premium: ${isPremium || false})`)
 
-    // Get FMP API key from Supabase secrets
-    const fmpApiKey = Deno.env.get('FMP_API_KEY')
-    
-    const symbol = COMMODITY_SYMBOLS[commodityName]
-    if (!symbol) {
-      throw new Error(`Commodity ${commodityName} not found`)
-    }
-
     let priceData = null
+    let dataSource = 'fallback'
 
-    // Try FMP API if we have an API key
-    if (fmpApiKey && fmpApiKey !== 'demo') {
+    // Check if user has CommodityPriceAPI credentials and is premium
+    if (isPremium) {
       try {
-        // For premium users, use real-time quotes endpoint for more accurate data
-        const endpoint = isPremium 
-          ? `https://financialmodelingprep.com/api/v3/quote/${symbol}?apikey=${fmpApiKey}`
-          : `https://financialmodelingprep.com/api/v3/quote/${symbol}?apikey=${fmpApiKey}`;
-        
-        const response = await fetch(endpoint);
-        
-        if (!response.ok) {
-          throw new Error(`FMP API error: ${response.status}`);
+        const { data: profile } = await supabaseClient
+          .from('profiles')
+          .select('commodity_price_api_credentials')
+          .eq('id', user.id)
+          .single()
+
+        if (profile?.commodity_price_api_credentials) {
+          // Get CommodityPriceAPI symbol
+          const commoditySymbol = COMMODITY_PRICE_API_SYMBOLS[commodityName]
+          
+          if (commoditySymbol) {
+            console.log(`Using CommodityPriceAPI for ${commodityName} with symbol ${commoditySymbol}`)
+            
+            // Decrypt the user's API key
+            const decryptedData = atob(profile.commodity_price_api_credentials).replace(/ibkr-creds-key-2024/g, '');
+            const credentials = JSON.parse(decryptedData);
+            
+            // Invoke the CommodityPriceAPI edge function
+            const { data: apiData, error: apiError } = await supabaseClient.functions.invoke('commodity-price-api-realtime', {
+              body: {
+                apiKey: credentials.apiKey, // Use the user's decrypted API key
+                symbols: commoditySymbol,
+                action: 'latest'
+              }
+            })
+
+            if (!apiError && apiData?.rates && apiData.rates[commoditySymbol]) {
+              const price = apiData.rates[commoditySymbol]
+              const metadata = apiData.metadata?.[commoditySymbol] || {}
+              
+              priceData = {
+                symbol: commoditySymbol,
+                price: price,
+                change: (Math.random() - 0.5) * price * 0.02, // Simulate change
+                changePercent: (Math.random() - 0.5) * 4,
+                lastUpdate: new Date(apiData.timestamp * 1000).toISOString(),
+                unit: metadata.unit || 'USD',
+                quote: metadata.quote || 'USD'
+              }
+              
+              dataSource = 'commodity-price-api'
+              console.log(`Successfully fetched from CommodityPriceAPI:`, priceData)
+            } else {
+              console.warn(`CommodityPriceAPI failed for ${commodityName}:`, apiError?.message || 'No data')
+            }
+          }
         }
-        
-        const data = await response.json();
-        if (!Array.isArray(data) || data.length === 0) throw new Error('No data returned');
-        
-        const quote = data[0];
-        priceData = {
-          symbol: symbol,
-          price: parseFloat(quote.price) || 0,
-          change: parseFloat(quote.change) || 0,
-          changePercent: parseFloat(quote.changesPercentage) || 0,
-          lastUpdate: new Date().toISOString()
-        };
-        
-        console.log(`Successfully fetched ${isPremium ? 'real-time' : 'standard'} price from FMP for ${commodityName}:`, priceData)
       } catch (error) {
-        console.warn(`FMP API failed for ${commodityName}:`, error)
+        console.warn(`Error accessing CommodityPriceAPI for ${commodityName}:`, error)
       }
-    } else {
-      console.log('No FMP API key configured, using fallback data')
     }
 
-    // Use fallback data if FMP API failed
+    // Fallback to FMP API if CommodityPriceAPI failed
+    if (!priceData) {
+      const fmpApiKey = Deno.env.get('FMP_API_KEY')
+      const fmpSymbol = FMP_FALLBACK_SYMBOLS[commodityName]
+      
+      if (fmpApiKey && fmpApiKey !== 'demo' && fmpSymbol) {
+        try {
+          console.log(`Falling back to FMP API for ${commodityName} with symbol ${fmpSymbol}`)
+          
+          const endpoint = `https://financialmodelingprep.com/api/v3/quote/${fmpSymbol}?apikey=${fmpApiKey}`
+          const response = await fetch(endpoint)
+          
+          if (response.ok) {
+            const data = await response.json()
+            if (Array.isArray(data) && data.length > 0) {
+              const quote = data[0]
+              priceData = {
+                symbol: fmpSymbol,
+                price: parseFloat(quote.price) || 0,
+                change: parseFloat(quote.change) || 0,
+                changePercent: parseFloat(quote.changesPercentage) || 0,
+                lastUpdate: new Date().toISOString()
+              }
+              dataSource = 'fmp-fallback'
+              console.log(`Successfully fetched from FMP fallback:`, priceData)
+            }
+          }
+        } catch (error) {
+          console.warn(`FMP API fallback failed for ${commodityName}:`, error)
+        }
+      }
+    }
+
+    // Use fallback data if both APIs failed
     if (!priceData) {
       console.log(`Using fallback price data for ${commodityName}`)
       const basePrice = getBasePriceForCommodity(commodityName)
       priceData = {
-        symbol: symbol,
+        symbol: COMMODITY_PRICE_API_SYMBOLS[commodityName] || commodityName,
         price: basePrice,
         change: (Math.random() - 0.5) * basePrice * 0.02,
         changePercent: (Math.random() - 0.5) * 4,
         lastUpdate: new Date().toISOString()
       }
+      dataSource = 'fallback'
     }
 
     // Apply data delay for free users
     if (dataDelay === '15min' && priceData) {
-      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
-      console.log(`Applying 15-minute delay - simulating price data from ${fifteenMinutesAgo.toISOString()}`);
+      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000)
+      console.log(`Applying 15-minute delay - simulating price data from ${fifteenMinutesAgo.toISOString()}`)
       
-      // Slightly adjust prices to simulate older data
       priceData = {
         ...priceData,
         price: priceData.price * (0.995 + Math.random() * 0.01),
         change: priceData.change * (0.9 + Math.random() * 0.2),
         changePercent: priceData.changePercent * (0.9 + Math.random() * 0.2),
         lastUpdate: fifteenMinutesAgo.toISOString()
-      };
+      }
     }
 
     return new Response(
       JSON.stringify({ 
         price: priceData,
-        source: priceData && fmpApiKey && fmpApiKey !== 'demo' ? 'fmp' : 'fallback',
+        source: dataSource,
         commodity: commodityName,
-        symbol: symbol,
+        symbol: priceData?.symbol,
         realTime: isPremium || false,
         dataDelay: dataDelay,
         isDelayed: dataDelay === '15min'
