@@ -2,12 +2,12 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import CommodityCard from '@/components/CommodityCard';
 import CommodityGroupSection from '@/components/CommodityGroupSection';
-import CommodityOverview from '@/components/CommodityOverview';
+
 import UserProfile from '@/components/UserProfile';
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import CommoditySidebar from '@/components/CommoditySidebar';
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { BarChart3, Activity, Menu, TrendingUp, Loader, Zap, Coins, Wheat, Beef, Coffee, Package, Eye, EyeOff } from 'lucide-react';
+import { BarChart3, Menu, Loader, Zap, Coins, Wheat, Beef, Coffee, Package } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRealtimeDataContext } from '@/contexts/RealtimeDataContext';
@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 
 const Dashboard = () => {
   const [activeGroup, setActiveGroup] = React.useState("energy");
-  const [showOverview, setShowOverview] = React.useState(true);
+  
   const isMobile = useIsMobile();
   const { isGuest, profile, loading: authLoading } = useAuth();
   const { data: commodities, isLoading: commoditiesLoading, error: commoditiesError } = useAvailableCommodities();
@@ -41,8 +41,6 @@ const Dashboard = () => {
       <DashboardContent 
         activeGroup={activeGroup}
         setActiveGroup={setActiveGroup}
-        showOverview={showOverview}
-        setShowOverview={setShowOverview}
         isMobile={isMobile}
         profile={profile}
         commodities={commodities || []}
@@ -58,8 +56,6 @@ const Dashboard = () => {
 const DashboardContent = ({ 
   activeGroup, 
   setActiveGroup,
-  showOverview,
-  setShowOverview,
   isMobile, 
   profile, 
   commodities, 
@@ -70,8 +66,6 @@ const DashboardContent = ({
 }: {
   activeGroup: string;
   setActiveGroup: (group: string) => void;
-  showOverview: boolean;
-  setShowOverview: (show: boolean) => void;
   isMobile: boolean;
   profile: any;
   commodities: Commodity[];
@@ -339,15 +333,6 @@ const DashboardContent = ({
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Button
-                    variant={showOverview ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setShowOverview(!showOverview)}
-                    className="flex items-center gap-2"
-                  >
-                    {showOverview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    {showOverview ? 'Hide Overview' : 'Show Overview'}
-                  </Button>
                   <div className="text-center sm:text-right space-y-1">
                     <p className="text-2xs sm:text-xs lg:text-sm font-medium text-muted-foreground">
                       {profile?.subscription_active ? 'Real-time Status' : 'Market Status'}
@@ -398,10 +383,6 @@ const DashboardContent = ({
                 </div>
               )}
 
-              {/* Market Overview */}
-              {showOverview && !loading && !error && commodities.length > 0 && (
-                <CommodityOverview commodities={commodities} loading={loading} />
-              )}
 
               {/* Enhanced Responsive Commodities Grid */}
               {!loading && getCommodities().length > 0 && (
