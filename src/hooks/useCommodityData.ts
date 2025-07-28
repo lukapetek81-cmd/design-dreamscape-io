@@ -42,7 +42,7 @@ export const useAvailableCommodities = () => {
   const { getDataDelay, shouldDelayData } = useDelayedData();
   
   return useQuery({
-    queryKey: ['available-commodities', getDataDelay()],
+    queryKey: ['all-commodities', getDataDelay()], // Changed key to force cache refresh
     queryFn: async (): Promise<Commodity[]> => {
       try {
         const { data, error } = await supabase.functions.invoke('fetch-all-commodities', {
