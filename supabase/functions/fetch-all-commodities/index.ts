@@ -460,8 +460,11 @@ serve(async (req) => {
         });
         
         if (decryptError || !decryptedKey) {
+          console.error('Failed to decrypt CommodityPriceAPI key:', decryptError);
           throw new Error('Failed to decrypt CommodityPriceAPI key');
         }
+
+        console.log('Successfully decrypted API key, length:', decryptedKey.key?.length);
 
         console.log('Fetching symbols from CommodityPriceAPI');
         
@@ -473,8 +476,12 @@ serve(async (req) => {
           }
         });
         
+        console.log('CommodityPriceAPI symbols response status:', symbolsResponse.status);
+        
         if (!symbolsResponse.ok) {
-          throw new Error(`CommodityPriceAPI symbols error: ${symbolsResponse.status}`);
+          const errorText = await symbolsResponse.text();
+          console.error('CommodityPriceAPI symbols error response:', errorText);
+          throw new Error(`CommodityPriceAPI symbols error: ${symbolsResponse.status} - ${errorText}`);
         }
         
         const symbolsData = await symbolsResponse.json();
