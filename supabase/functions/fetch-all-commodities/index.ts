@@ -555,8 +555,8 @@ serve(async (req) => {
           if (Array.isArray(data) && data.length > 0) {
             console.log(`FMP returned ${data.length} commodities`);
             
-            // Filter and map FMP data to our known commodities
-            commoditiesData = Object.keys(COMMODITY_SYMBOLS).map(name => {
+            // Process all FMP data, including commodities not in our predefined list
+            const processedFromPredefined = Object.keys(COMMODITY_SYMBOLS).map(name => {
               const symbolInfo = COMMODITY_SYMBOLS[name];
               // Find matching FMP data by symbol
               const fmpData = data.find(item => 
@@ -565,27 +565,63 @@ serve(async (req) => {
               );
               
               if (fmpData) {
-                return generateEnhancedData({
-                  symbol: fmpData.symbol,
-                  price: parseFloat(fmpData.price) || 0,
-                  change: parseFloat(fmpData.change) || 0,
-                  changePercent: parseFloat(fmpData.changesPercentage) || 0,
-                  volume: parseInt(fmpData.volume) || 0, // Use real FMP volume data
-                }, name);
+                return {
+                  data: generateEnhancedData({
+                    symbol: fmpData.symbol,
+                    price: parseFloat(fmpData.price) || 0,
+                    change: parseFloat(fmpData.change) || 0,
+                    changePercent: parseFloat(fmpData.changesPercentage) || 0,
+                    volume: parseInt(fmpData.volume) || 0,
+                  }, name),
+                  processed: true,
+                  originalSymbol: fmpData.symbol
+                };
               } else {
-                // Use fallback data for commodities not found in FMP - but no mock values
-                return generateEnhancedData({
-                  symbol: symbolInfo.symbol,
-                  price: 0, // Will show as missing
-                  change: 0,
-                  changePercent: 0,
-                  volume: 0, // Will show as missing
-                }, name);
+                // Use fallback data for commodities not found in FMP
+                return {
+                  data: generateEnhancedData({
+                    symbol: symbolInfo.symbol,
+                    price: 0,
+                    change: 0,
+                    changePercent: 0,
+                    volume: 0,
+                  }, name),
+                  processed: true,
+                  originalSymbol: symbolInfo.symbol
+                };
               }
             });
+
+            // Find FMP commodities that weren't in our predefined list
+            const processedSymbols = processedFromPredefined.map(item => item.originalSymbol);
+            const additionalFmpCommodities = data
+              .filter(item => !processedSymbols.includes(item.symbol))
+              .map(fmpData => {
+                // Auto-categorize the commodity based on its name
+                const name = fmpData.name || fmpData.symbol.replace(/[=F]/g, '').replace(/[_-]/g, ' ');
+                const metadata = categorizeSymbol(name);
+                
+                return {
+                  data: generateEnhancedData({
+                    symbol: fmpData.symbol,
+                    price: parseFloat(fmpData.price) || 0,
+                    change: parseFloat(fmpData.change) || 0,
+                    changePercent: parseFloat(fmpData.changesPercentage) || 0,
+                    volume: parseInt(fmpData.volume) || 0,
+                  }, name),
+                  processed: false,
+                  originalSymbol: fmpData.symbol
+                };
+              });
+
+            // Combine predefined and additional commodities
+            commoditiesData = [
+              ...processedFromPredefined.map(item => item.data),
+              ...additionalFmpCommodities.map(item => item.data)
+            ];
             
             dataSource = 'fmp';
-            console.log(`Processed ${commoditiesData.length} commodities with enhanced data`);
+            console.log(`Processed ${commoditiesData.length} commodities: ${processedFromPredefined.length} predefined + ${additionalFmpCommodities.length} additional from FMP`);
           } else {
             throw new Error('No data returned from FMP API');
           }
