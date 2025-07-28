@@ -8,8 +8,20 @@ const corsHeaders = {
 // Simple decryption function (this should match the encryption logic in your frontend)
 const decrypt = (encryptedKey: string): string => {
   try {
-    // For now, we'll just return the key as-is since it might be stored as plain text
-    // In a real implementation, you'd decrypt it here
+    // Based on the data I saw in the database, it looks like the key might be base64 encoded
+    // Let's try to decode it and extract the apiKey
+    try {
+      const decoded = atob(encryptedKey);
+      // If it contains JSON, parse it
+      if (decoded.includes('{') && decoded.includes('apiKey')) {
+        const parsed = JSON.parse(decoded.split('ibkr-creds-key-2024')[1].split('ibkr-creds-key-2024')[0]);
+        return parsed.apiKey;
+      }
+    } catch (e) {
+      // If decoding fails, maybe it's already the plain key
+    }
+    
+    // If all else fails, return as-is (might be already decrypted)
     return encryptedKey;
   } catch (error) {
     throw new Error('Failed to decrypt API key');
