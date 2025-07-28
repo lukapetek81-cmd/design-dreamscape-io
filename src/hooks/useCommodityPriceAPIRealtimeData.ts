@@ -95,7 +95,14 @@ export const useCommodityPriceAPIRealtimeData = (
   }, []);
 
   const fetchPrices = useCallback(async (apiKey: string) => {
+    // Don't make API calls if we've already hit the limit
+    if (isLimitReached) {
+      console.log('Skipping API call - limit already reached');
+      return;
+    }
+
     try {
+      console.log('fetchPrices called, isLimitReached:', isLimitReached);
       const { data: authData } = await supabase.auth.getSession();
       if (!authData.session) {
         throw new Error('No authentication session');
@@ -126,13 +133,16 @@ export const useCommodityPriceAPIRealtimeData = (
       if (response.error) {
         // Handle different types of API errors
         const errorMessage = response.error.message || '';
+        console.log('API Error received:', errorMessage);
         
         if (errorMessage.includes('LIMIT_REACHED') || 
             errorMessage.includes('usage limit reached') ||
             errorMessage.includes('maximum request count')) {
+          console.log('Setting limit reached to true');
           setIsLimitReached(true);
           // Clear the polling interval when limit is reached
           if (intervalRef.current) {
+            console.log('Clearing interval due to limit reached');
             clearInterval(intervalRef.current);
             intervalRef.current = null;
           }
@@ -169,13 +179,16 @@ export const useCommodityPriceAPIRealtimeData = (
 
       setPrices(prev => ({ ...prev, ...newPrices }));
       setLastUpdate(new Date());
-      setError(null);
+      // Only clear error if we're not at limit - don't clear limit errors
+      if (!isLimitReached) {
+        setError(null);
+      }
 
     } catch (err) {
       console.error('Error fetching CommodityPriceAPI data:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
     }
-  }, [props.commodities]);
+  }, [props.commodities, isLimitReached]);
 
   const fetchUsage = useCallback(async (apiKey: string) => {
     try {
