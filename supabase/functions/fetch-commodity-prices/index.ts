@@ -152,8 +152,12 @@ const getBasePriceForCommodity = (commodityName: string): number => {
     'Natural Gas UK': 90,
     'Gas Oil': 650,
     'Coal': 85,
+    'Coal Australia': 88,
+    'Coal South Africa': 82,
     'Ethanol': 2.15,
+    'Methanol': 385,
     'Propane': 0.95,
+    'Naphtha': 485,
     
     // Precious Metals
     'Gold Futures': 2000,
@@ -165,17 +169,36 @@ const getBasePriceForCommodity = (commodityName: string): number => {
     // Base Metals
     'Copper': 4.2,
     'Aluminum': 2200,
+    'Aluminum LME': 2200,
     'Zinc': 2800,
+    'Zinc LME': 2800,
     'Lead': 2100,
     'Nickel': 18500,
     'Tin': 32000,
     'Steel': 650,
+    'Hot-Rolled Coil Steel': 685,
+    'Iron Ore 62% FE': 115,
     'Iron Ore': 115,
+    'Magnesium': 2850,
     
     // Industrial/Tech Metals
     'Lithium': 85,
     'Cobalt': 35000,
+    'Titanium': 8500,
+    'Gallium': 285,
+    'Indium': 185,
+    'Tellurium': 485,
+    'Neodymium': 85,
     'Uranium': 50,
+    
+    // Energy - Additional
+    'Crude Oil Dubai': 64,
+    'Ural Oil': 62,
+    'Natural Gas US': 2.85,
+    'Natural Gas Europe': 32,
+    'Liquefied Natural Gas Japan': 15.50,
+    'TTF Gas': 28,
+    'UK Gas': 85,
     
     // Grains & Agriculture
     'Corn Futures': 430,
@@ -194,20 +217,30 @@ const getBasePriceForCommodity = (commodityName: string): number => {
     'Live Cattle Futures': 170,
     'Feeder Cattle Futures': 240,
     'Lean Hogs Futures': 75,
+    'Milk': 20.85,
     'Milk Class III': 20.85,
     'Milk Nonfat Dry': 1.35,
     'Butter': 2.85,
     'Cheese': 1.95,
+    'Eggs US': 2.15,
+    'Eggs China': 1.85,
+    'Poultry': 1.45,
+    'Salmon': 8.50,
+    'Fish Meal': 1850,
     
     // Soft Commodities
     'Coffee Arabica': 165,
     'Coffee Robusta': 2100,
+    'Sugar': 19.75,
     'Sugar #11': 19.75,
     'Sugar #5': 485,
     'Cotton': 72.80,
     'Cocoa': 2850,
     'Orange Juice': 315,
     'Tea': 3.20,
+    'Tea Kolkata': 3.85,
+    'Tea Colombo': 3.65,
+    'Tea Mombasa': 3.45,
     
     // Oils & Fats
     'Palm Oil': 885,
@@ -217,6 +250,7 @@ const getBasePriceForCommodity = (commodityName: string): number => {
     'Olive Oil': 4200,
     
     // Forest Products
+    'Lumber': 485,
     'Lumber Futures': 485,
     'Random Length Lumber': 485,
     'Pulp': 1450,
@@ -227,16 +261,20 @@ const getBasePriceForCommodity = (commodityName: string): number => {
     'Cotton Yarn': 3200,
     'Wool': 14.50,
     'Jute': 850,
+    'Bitumen': 485,
+    'Kraft Pulp': 1450,
     
     // Fertilizers & Chemicals
     'Urea': 385,
     'Diammonium Phosphate': 545,
     'Potash': 285,
     'Ammonia': 485,
+    'Soda Ash': 285,
     
     // Plastics
     'Polyethylene': 1250,
     'Polypropylene': 1180,
+    'Polyvinyl Chloride': 985,
     'PVC': 985,
     'Styrene': 1450,
     
@@ -263,9 +301,7 @@ const getBasePriceForCommodity = (commodityName: string): number => {
     'Weather Derivatives': 100,
     
     // Legacy mappings
-    'Sugar': 19.75,
     'Coffee': 165,
-    'Lumber': 485,
     'Micro Gold Futures': 2000,
     'Micro Silver Futures': 25,
     'Class III Milk Futures': 20.85
@@ -320,7 +356,7 @@ serve(async (req) => {
           .from('profiles')
           .select('commodity_price_api_credentials')
           .eq('id', user.id)
-          .single()
+          .maybeSingle()
 
         if (profile?.commodity_price_api_credentials) {
           // Get CommodityPriceAPI symbol
