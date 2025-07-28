@@ -28,6 +28,7 @@ import ExpertInsights from "./pages/ExpertInsights";
 import LearningHub from "./pages/LearningHub";
 import MarketSentiment from "./pages/MarketSentiment";
 import CommodityPriceAPISettings from "./pages/CommodityPriceAPISettings";
+import APIComparison from "./pages/APIComparison";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -58,6 +59,7 @@ const AppRoutes = () => {
       <Route path="/recent-activity" element={<RecentActivity />} />
       <Route path="/favorites" element={<Favorites />} />
       <Route path="/price-comparison" element={<PriceComparison />} />
+      <Route path="/api-comparison" element={<APIComparison />} />
       <Route path="/market-status" element={<MarketStatus />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />

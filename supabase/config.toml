@@ -40,3 +40,6 @@ verify_jwt = false
 
 [functions.ibkr-fix-bridge]
 verify_jwt = false
+
+[functions.compare-api-prices]
+verify_jwt = true

@@ -1,4 +1,4 @@
-import { Zap, Coins, Wheat, TrendingUp, Beef, Coffee, Package, Newspaper, Moon, Sun, Monitor, Briefcase, Settings, BarChart3, Star, Filter, Calendar, Calculator, MessageSquare, Lightbulb, GraduationCap, Users, Clock, Heart, GitCompare, Activity } from "lucide-react";
+import { Zap, Coins, Wheat, TrendingUp, Beef, Coffee, Package, Newspaper, Moon, Sun, Monitor, Briefcase, Settings, BarChart3, Star, Filter, Calendar, Calculator, MessageSquare, Lightbulb, GraduationCap, Users, Clock, Heart, GitCompare, Activity, Database } from "lucide-react";
 import { CommodityGroup, MarketTool } from "./types";
 
 export const COMMODITY_GROUPS: CommodityGroup[] = [
@@ -13,6 +13,7 @@ export const COMMODITY_GROUPS: CommodityGroup[] = [
 export const MARKET_TOOLS: MarketTool[] = [
   { id: "portfolio", label: "Portfolio", icon: Briefcase, color: "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400", path: "/portfolio" },
   { id: "commodity-price-api-settings", label: "API Settings", icon: Settings, color: "bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400", path: "/commodity-price-api-settings" },
+  { id: "api-comparison", label: "API Comparison", icon: Database, color: "bg-indigo-50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400", path: "/api-comparison" },
   { id: "correlation", label: "Correlation", icon: BarChart3, color: "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400", path: "/correlation" },
   { id: "watchlists", label: "Watchlists", icon: Star, color: "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400", path: "/watchlists" },
   { id: "screener", label: "Screener", icon: Filter, color: "bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800 text-orange-600 dark:text-orange-400", path: "/screener" },
