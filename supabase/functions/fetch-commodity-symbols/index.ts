@@ -1,0 +1,280 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+// Enhanced commodity mappings with categories and contract specs
+const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; contractSize: string; venue: string }> = {
+  // Energy
+  'Crude Oil': { symbol: 'CL=F', category: 'energy', contractSize: '1,000 bbl', venue: 'NYMEX' },
+  'Brent Crude Oil': { symbol: 'BZ=F', category: 'energy', contractSize: '1,000 bbl', venue: 'ICE' },
+  'Natural Gas': { symbol: 'NG=F', category: 'energy', contractSize: '10,000 MMBtu', venue: 'NYMEX' },
+  'Gasoline RBOB': { symbol: 'RB=F', category: 'energy', contractSize: '42,000 gal', venue: 'NYMEX' },
+  'Heating Oil': { symbol: 'HO=F', category: 'energy', contractSize: '42,000 gal', venue: 'NYMEX' },
+  
+  // Metals
+  'Gold Futures': { symbol: 'GC=F', category: 'metals', contractSize: '100 oz', venue: 'COMEX' },
+  'Silver Futures': { symbol: 'SI=F', category: 'metals', contractSize: '5,000 oz', venue: 'COMEX' },
+  'Copper': { symbol: 'HG=F', category: 'metals', contractSize: '25,000 lbs', venue: 'COMEX' },
+  'Platinum': { symbol: 'PL=F', category: 'metals', contractSize: '50 oz', venue: 'NYMEX' },
+  'Palladium': { symbol: 'PA=F', category: 'metals', contractSize: '100 oz', venue: 'NYMEX' },
+  
+  // Grains
+  'Corn Futures': { symbol: 'ZC=F', category: 'grains', contractSize: '5,000 bu', venue: 'CBOT' },
+  'Wheat Futures': { symbol: 'ZW=F', category: 'grains', contractSize: '5,000 bu', venue: 'CBOT' },
+  'Soybean Futures': { symbol: 'ZS=F', category: 'grains', contractSize: '5,000 bu', venue: 'CBOT' },
+  'Oat Futures': { symbol: 'ZO=F', category: 'grains', contractSize: '5,000 bu', venue: 'CBOT' },
+  'Rough Rice': { symbol: 'ZR=F', category: 'grains', contractSize: '2,000 cwt', venue: 'CBOT' },
+  
+  // Livestock
+  'Live Cattle Futures': { symbol: 'LE=F', category: 'livestock', contractSize: '40,000 lbs', venue: 'CME' },
+  'Feeder Cattle Futures': { symbol: 'GF=F', category: 'livestock', contractSize: '50,000 lbs', venue: 'CME' },
+  'Lean Hogs Futures': { symbol: 'HE=F', category: 'livestock', contractSize: '40,000 lbs', venue: 'CME' },
+  
+  // Softs
+  'Coffee': { symbol: 'KC=F', category: 'softs', contractSize: '37,500 lbs', venue: 'ICE' },
+  'Sugar': { symbol: 'SB=F', category: 'softs', contractSize: '112,000 lbs', venue: 'ICE' },
+  'Cotton': { symbol: 'CT=F', category: 'softs', contractSize: '50,000 lbs', venue: 'ICE' },
+  'Cocoa': { symbol: 'CC=F', category: 'softs', contractSize: '10 MT', venue: 'ICE' },
+  'Orange Juice': { symbol: 'OJ=F', category: 'softs', contractSize: '15,000 lbs', venue: 'ICE' },
+  
+  // Other
+  'Lumber Futures': { symbol: 'LBS=F', category: 'other', contractSize: '110,000 bd ft', venue: 'CME' },
+};
+
+// CommodityPriceAPI symbol mapping
+const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
+  'Crude Oil': 'BRENT',
+  'Brent Crude Oil': 'BRENT', 
+  'Natural Gas': 'NATGAS',
+  'Gold Futures': 'GOLD',
+  'Silver Futures': 'SILVER',
+  'Copper': 'COPPER',
+  'Platinum': 'PLATINUM',
+  'Palladium': 'PALLADIUM',
+  'Corn Futures': 'CORN',
+  'Wheat Futures': 'WHEAT',
+  'Soybean Futures': 'SOYBEANS',
+  'Coffee': 'COFFEE',
+  'Sugar': 'SUGAR',
+  'Cotton': 'COTTON',
+  'Cocoa': 'COCOA',
+  'Orange Juice': 'OJ',
+  'Live Cattle Futures': 'CATTLE',
+  'Lean Hogs Futures': 'HOGS',
+  'Rough Rice': 'RICE',
+  'Oat Futures': 'OATS'
+};
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  try {
+    // Initialize Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: req.headers.get('Authorization')! },
+        },
+      }
+    )
+
+    // Check if user is authenticated and has premium subscription
+    const { data: { user } } = await supabaseClient.auth.getUser()
+    let useCommodityPriceAPI = false;
+    let userCredentials = null;
+
+    if (user) {
+      // Check for premium subscription
+      const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('subscription_active, subscription_tier, commodity_price_api_credentials')
+        .eq('id', user.id)
+        .single()
+
+      if (profile?.subscription_active && profile?.subscription_tier === 'premium') {
+        if (profile.commodity_price_api_credentials) {
+          // User has CommodityPriceAPI credentials - use it for symbols
+          useCommodityPriceAPI = true;
+          userCredentials = profile.commodity_price_api_credentials;
+          console.log('Using CommodityPriceAPI for symbols (premium user with credentials)');
+        }
+      }
+    }
+
+    const body = req.method === 'POST' ? await req.json() : {}
+    const { dataDelay = 'realtime' } = body
+    
+    let commoditiesData: any[] = []
+    let dataSource = 'fallback';
+
+    if (useCommodityPriceAPI && userCredentials) {
+      try {
+        // Decrypt credentials (basic implementation for now)
+        const decryptedCredentials = atob(userCredentials).replace(/ibkr-creds-key-2024/g, '');
+        const credentials = JSON.parse(decryptedCredentials);
+        
+        console.log('Fetching symbols from CommodityPriceAPI');
+        
+        // Fetch symbols from CommodityPriceAPI
+        const response = await fetch(
+          `https://api.commoditypriceapi.com/v2/symbols?access_key=${credentials.apiKey}`
+        );
+        
+        if (!response.ok) {
+          throw new Error(`CommodityPriceAPI error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.symbols) {
+          console.log(`CommodityPriceAPI returned ${Object.keys(data.symbols).length} symbols`);
+          dataSource = 'commodity-price-api';
+          
+          // Map CommodityPriceAPI symbols to our commodities
+          commoditiesData = Object.keys(COMMODITY_SYMBOLS).map(name => {
+            const symbolInfo = COMMODITY_SYMBOLS[name];
+            const apiSymbol = COMMODITY_PRICE_API_SYMBOLS[name];
+            
+            return {
+              name,
+              symbol: symbolInfo.symbol,
+              price: 0, // Will be fetched separately for each commodity
+              change: 0,
+              changePercent: 0,
+              volume: null,
+              ...symbolInfo,
+              // Add CommodityPriceAPI metadata
+              commodityPriceAPISymbol: apiSymbol,
+              supportedByCommodityPriceAPI: !!apiSymbol && !!data.symbols[apiSymbol],
+              commodityPriceAPIData: data.symbols[apiSymbol] || null
+            };
+          });
+          
+        } else {
+          throw new Error('Invalid symbols response from CommodityPriceAPI');
+        }
+      } catch (error) {
+        console.warn('CommodityPriceAPI failed, falling back to FMP:', error);
+        useCommodityPriceAPI = false;
+      }
+    }
+
+    // Fallback to FMP if CommodityPriceAPI is not available or failed
+    if (!useCommodityPriceAPI) {
+      console.log('Using FMP for symbols');
+      
+      const fmpApiKey = Deno.env.get('FMP_API_KEY')
+      
+      if (fmpApiKey && fmpApiKey !== 'demo') {
+        try {
+          const response = await fetch(
+            `https://financialmodelingprep.com/api/v3/quotes/commodity?apikey=${fmpApiKey}`
+          );
+          
+          if (!response.ok) {
+            throw new Error(`FMP API error: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          
+          if (Array.isArray(data) && data.length > 0) {
+            console.log(`FMP returned ${data.length} commodities`);
+            dataSource = 'fmp';
+            
+            commoditiesData = Object.keys(COMMODITY_SYMBOLS).map(name => {
+              const symbolInfo = COMMODITY_SYMBOLS[name];
+              const fmpData = data.find(item => 
+                item.symbol === symbolInfo.symbol || 
+                item.name?.toLowerCase().includes(name.toLowerCase().split(' ')[0])
+              );
+              
+              if (fmpData) {
+                return {
+                  name,
+                  symbol: fmpData.symbol,
+                  price: parseFloat(fmpData.price) || 0,
+                  change: parseFloat(fmpData.change) || 0,
+                  changePercent: parseFloat(fmpData.changesPercentage) || 0,
+                  volume: parseInt(fmpData.volume) || 0,
+                  ...symbolInfo,
+                  supportedByCommodityPriceAPI: false
+                };
+              } else {
+                return {
+                  name,
+                  symbol: symbolInfo.symbol,
+                  price: 0,
+                  change: 0,
+                  changePercent: 0,
+                  volume: 0,
+                  ...symbolInfo,
+                  supportedByCommodityPriceAPI: false
+                };
+              }
+            });
+          } else {
+            throw new Error('No data returned from FMP API');
+          }
+        } catch (error) {
+          console.warn('FMP API failed, using fallback data:', error);
+        }
+      }
+    }
+
+    // Use static fallback if both APIs failed
+    if (commoditiesData.length === 0) {
+      console.log('Using static fallback commodity data');
+      dataSource = 'static';
+      commoditiesData = Object.keys(COMMODITY_SYMBOLS).map(name => {
+        return {
+          name,
+          symbol: COMMODITY_SYMBOLS[name].symbol,
+          price: 0,
+          change: 0,
+          changePercent: 0,
+          volume: 0,
+          ...COMMODITY_SYMBOLS[name],
+          supportedByCommodityPriceAPI: !!COMMODITY_PRICE_API_SYMBOLS[name]
+        };
+      });
+    }
+
+    // Apply data delay for free users
+    if (dataDelay === '15min') {
+      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+      console.log(`Applying 15-minute delay - simulating data from ${fifteenMinutesAgo.toISOString()}`);
+    }
+
+    const currentTimestamp = dataDelay === '15min' 
+      ? new Date(Date.now() - 15 * 60 * 1000).toISOString()
+      : new Date().toISOString();
+
+    return new Response(
+      JSON.stringify({ 
+        commodities: commoditiesData,
+        source: dataSource,
+        count: commoditiesData.length,
+        timestamp: currentTimestamp,
+        dataDelay: dataDelay,
+        isDelayed: dataDelay === '15min',
+        usedCommodityPriceAPI: useCommodityPriceAPI
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+
+  } catch (error) {
+    console.error('Error in fetch-commodity-symbols function:', error)
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+})

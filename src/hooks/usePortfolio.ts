@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useDelayedData } from '@/hooks/useDelayedData';
 
 export interface PortfolioPosition {
   id: string;
@@ -29,6 +30,7 @@ export const usePortfolio = () => {
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { isPremium } = useDelayedData();
 
   // Fetch positions from database
   const fetchPositions = async () => {
@@ -58,7 +60,8 @@ export const usePortfolio = () => {
             const response = await supabase.functions.invoke('fetch-commodity-prices', {
               body: { 
                 commodityName: position.commodity_name,
-                isPremium: false // We'll use standard pricing for portfolio
+                isPremium,
+                dataDelay: 'realtime'
               }
             });
             let currentPrice = position.entry_price; // fallback to entry price

@@ -45,7 +45,7 @@ export const useAvailableCommodities = () => {
     queryKey: ['available-commodities', getDataDelay()],
     queryFn: async (): Promise<Commodity[]> => {
       try {
-        const { data, error } = await supabase.functions.invoke('fetch-all-commodities', {
+        const { data, error } = await supabase.functions.invoke('fetch-commodity-symbols', {
           body: { dataDelay: getDataDelay() }
         });
 
@@ -87,14 +87,18 @@ export interface CandlestickData {
 }
 
 export const useCommodityPrice = (commodityName: string) => {
-  const { getDataDelay, shouldDelayData } = useDelayedData();
+  const { getDataDelay, shouldDelayData, isPremium } = useDelayedData();
   
   return useQuery({
-    queryKey: ['commodity-price', commodityName, getDataDelay()],
+    queryKey: ['commodity-price', commodityName, getDataDelay(), isPremium],
     queryFn: async (): Promise<CommodityPriceData | null> => {
       try {
         const { data, error } = await supabase.functions.invoke('fetch-commodity-prices', {
-          body: { commodityName, dataDelay: getDataDelay() }
+          body: { 
+            commodityName, 
+            dataDelay: getDataDelay(),
+            isPremium 
+          }
         });
 
         if (error) {
