@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import { useAuth } from '@/contexts/AuthContext';
 import { useAvailableCommodities } from '@/hooks/useCommodityData';
 import { useCommodityPriceAPIRealtimeData } from '@/hooks/useCommodityPriceAPIRealtimeData';
+import { decryptCredential } from '@/lib/encryption';
 
 interface CommodityPriceAPICredentials {
   apiKey: string;
@@ -49,6 +50,7 @@ export const CommodityPriceAPIProvider: React.FC<CommodityPriceAPIProviderProps>
   const { profile } = useAuth();
   const { data: commodities } = useAvailableCommodities();
   const [isConnecting, setIsConnecting] = useState(false);
+  const [storedCredentials, setStoredCredentials] = useState<CommodityPriceAPICredentials | null>(null);
 
   // Get all available commodities for CommodityPriceAPI
   const allCommodityNames = React.useMemo(() => {
@@ -57,6 +59,25 @@ export const CommodityPriceAPIProvider: React.FC<CommodityPriceAPIProviderProps>
   }, [commodities]);
 
   const isPremium = profile?.subscription_active && profile?.subscription_tier === 'premium';
+
+  // Load stored credentials on mount
+  React.useEffect(() => {
+    const loadCredentials = async () => {
+      if ((profile as any)?.commodity_price_api_credentials) {
+        try {
+          const decrypted = decryptCredential((profile as any).commodity_price_api_credentials);
+          const credentials = JSON.parse(decrypted) as CommodityPriceAPICredentials;
+          setStoredCredentials(credentials);
+        } catch (error) {
+          console.error('Failed to decrypt CommodityPriceAPI credentials:', error);
+        }
+      }
+    };
+
+    if (isPremium && profile) {
+      loadCredentials();
+    }
+  }, [profile, isPremium]);
 
   const {
     prices,
@@ -68,7 +89,8 @@ export const CommodityPriceAPIProvider: React.FC<CommodityPriceAPIProviderProps>
     disconnect
   } = useCommodityPriceAPIRealtimeData({
     commodities: allCommodityNames,
-    enabled: isPremium
+    enabled: isPremium && !!storedCredentials,
+    credentials: storedCredentials
   });
 
   const connect = useCallback(async (credentials: CommodityPriceAPICredentials) => {
