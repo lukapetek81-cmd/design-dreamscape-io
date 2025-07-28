@@ -122,6 +122,11 @@ export const useCommodityPriceAPIRealtimeData = (
       });
 
       if (response.error) {
+        // Check if this is a limit reached error
+        if (response.error.message?.includes('LIMIT_REACHED') || 
+            response.error.message?.includes('usage limit reached')) {
+          throw new Error('API usage limit reached. Please upgrade your plan or wait for the next billing cycle.');
+        }
         throw new Error(response.error.message || 'Failed to fetch prices');
       }
 
@@ -173,6 +178,13 @@ export const useCommodityPriceAPIRealtimeData = (
 
       if (!response.error && response.data) {
         setUsage(response.data);
+      } else if (response.error?.message?.includes('LIMIT_REACHED')) {
+        // Still set usage data if available in error response
+        setUsage({
+          plan: 'Free',
+          quota: 1000,
+          used: 1000
+        });
       }
     } catch (err) {
       console.error('Error fetching usage data:', err);
