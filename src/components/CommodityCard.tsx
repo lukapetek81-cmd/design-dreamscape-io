@@ -10,6 +10,7 @@ import { useCommodityPrice } from '@/hooks/useCommodityData';
 import { useRealtimeDataContext } from '@/contexts/RealtimeDataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { getMarketStatus } from '@/lib/marketHours';
+import { useCommodityPriceAPI } from '@/contexts/CommodityPriceAPIContext';
 
 interface CommodityCardProps {
   name: string;
@@ -18,17 +19,9 @@ interface CommodityCardProps {
   symbol: string;
   venue: string;
   contractSize?: string;
-  ibkrPrice?: {
-    price: number;
-    bid?: number;
-    ask?: number;
-    volume?: number;
-    lastUpdate: string;
-    source: string;
-  };
 }
 
-const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, symbol, venue, contractSize, ibkrPrice }: CommodityCardProps) => {
+const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, symbol, venue, contractSize }: CommodityCardProps) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
   const { data: apiPrice, isLoading: priceLoading } = useCommodityPrice(name);
@@ -44,15 +37,19 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
   // Use real-time data context
   const { getPriceForCommodity, isLiveData, connected: realtimeConnected } = useRealtimeDataContext();
   
-  // Determine data source priority: IBKR > real-time > API > fallback
+  // Use CommodityPriceAPI data
+  const { prices: commodityAPIPrices, connected: apiConnected } = useCommodityPriceAPI();
+  const commodityAPIPrice = commodityAPIPrices[name];
+  
+  // Use real-time data context (now powered by CommodityPriceAPI)
   const realtimePrice = getPriceForCommodity(name);
   
-  // Use IBKR price if available, otherwise fall back to other sources
-  const currentPrice = ibkrPrice?.price ?? realtimePrice?.price ?? apiPrice?.price ?? fallbackPrice;
-  const currentChange = realtimePrice?.changePercent ?? apiPrice?.changePercent ?? fallbackChange;
+  // Use CommodityPriceAPI price if available, otherwise fall back to other sources
+  const currentPrice = realtimePrice?.price ?? commodityAPIPrice?.price ?? apiPrice?.price ?? fallbackPrice;
+  const currentChange = realtimePrice?.changePercent ?? fallbackChange;
   const isPositive = currentChange >= 0;
   const isRealTime = isPremium && isLiveData(name);
-  const isIBKRLive = !!ibkrPrice;
+  const isAPILive = isPremium && apiConnected && !!commodityAPIPrice;
 
   // Function to get the appropriate price units based on commodity name
   const getPriceUnits = (commodityName: string) => {
@@ -173,7 +170,7 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                         {formatPrice(currentPrice, name)}
                       </p>
                       <span className={`text-2xs sm:text-xs font-medium px-1.5 py-0.5 rounded ${
-                        isIBKRLive 
+                        isAPILive 
                           ? 'bg-purple-100 dark:bg-purple-950/20 text-purple-700 dark:text-purple-400' 
                           : isRealTime 
                             ? 'bg-blue-100 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400' 
@@ -181,7 +178,7 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                               ? 'bg-green-100 dark:bg-green-950/20 text-green-700 dark:text-green-400' 
                               : 'bg-muted/50 text-muted-foreground'
                       }`}>
-                        {isIBKRLive ? 'IBKR Live' : isRealTime ? 'Live' : isPremium ? 'Real-time' : '15min delayed'}
+                        {isAPILive ? 'API Live' : isRealTime ? 'Live' : isPremium ? 'Real-time' : '15min delayed'}
                       </span>
                     </div>
                   </div>

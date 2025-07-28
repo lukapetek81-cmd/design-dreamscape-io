@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { RealtimeDataProvider } from "@/contexts/RealtimeDataContext";
-import { IBKRProvider } from "@/contexts/IBKRContext";
+import { CommodityPriceAPIProvider } from "@/contexts/CommodityPriceAPIContext";
 import { useAndroidBackButton } from "@/hooks/useAndroidBackButton";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
@@ -27,7 +27,7 @@ import TradingCommunity from "./pages/TradingCommunity";
 import ExpertInsights from "./pages/ExpertInsights";
 import LearningHub from "./pages/LearningHub";
 import MarketSentiment from "./pages/MarketSentiment";
-import IBKRSettings from "./pages/IBKRSettings";
+import CommodityPriceAPISettings from "./pages/CommodityPriceAPISettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,7 +43,7 @@ const AppRoutes = () => {
       <Route path="/reset-password" element={<ResetPassword />} />
       
       <Route path="/portfolio" element={<Portfolio />} />
-      <Route path="/ibkr-settings" element={<IBKRSettings />} />
+      <Route path="/commodity-price-api-settings" element={<CommodityPriceAPISettings />} />
       <Route path="/news-settings" element={<NewsSettingsPage />} />
       <Route path="/billing" element={<Billing />} />
       <Route path="/correlation" element={<MarketCorrelation />} />
@@ -68,8 +68,8 @@ const AppRoutes = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <RealtimeDataProvider>
-        <IBKRProvider>
+      <CommodityPriceAPIProvider>
+        <RealtimeDataProvider>
           <TooltipProvider>
             <Toaster />
             <Sonner />
@@ -77,8 +77,8 @@ const App = () => (
               <AppRoutes />
             </BrowserRouter>
           </TooltipProvider>
-        </IBKRProvider>
-      </RealtimeDataProvider>
+        </RealtimeDataProvider>
+      </CommodityPriceAPIProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

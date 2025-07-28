@@ -1,7 +1,7 @@
 import React, { createContext, useContext, ReactNode } from 'react';
-import { useGlobalRealtimeData } from '@/hooks/useGlobalRealtimeData';
 import { CommodityPrice, useAvailableCommodities } from '@/hooks/useCommodityData';
 import { useDelayedData } from '@/hooks/useDelayedData';
+import { useCommodityPriceAPI } from '@/contexts/CommodityPriceAPIContext';
 
 interface RealtimeDataContextType {
   prices: Record<string, CommodityPrice>;
@@ -34,14 +34,23 @@ interface RealtimeDataProviderProps {
 
 export const RealtimeDataProvider: React.FC<RealtimeDataProviderProps> = ({ children }) => {
   const { data: commodities } = useAvailableCommodities();
-  const commodityNames = (commodities || []).map(c => c.name);
   const { shouldDelayData, isPremium, getDelayStatus } = useDelayedData();
   const delayStatus = getDelayStatus();
+  const { prices: apiPrices, connected, error, lastUpdate } = useCommodityPriceAPI();
   
-  // Only connect to real-time data for premium users
-  const { prices, connected, error, lastUpdate } = useGlobalRealtimeData(
-    shouldDelayData ? [] : commodityNames
-  );
+  // Convert CommodityPriceAPI format to CommodityPrice format
+  const prices = React.useMemo(() => {
+    const convertedPrices: Record<string, CommodityPrice> = {};
+    Object.entries(apiPrices).forEach(([name, priceData]) => {
+      convertedPrices[name] = {
+        price: priceData.price,
+        change: 0, // CommodityPriceAPI doesn't provide change data
+        changePercent: 0, // CommodityPriceAPI doesn't provide change data
+        timestamp: priceData.lastUpdate
+      };
+    });
+    return convertedPrices;
+  }, [apiPrices]);
 
   const getPriceForCommodity = (commodityName: string): CommodityPrice | null => {
     return prices[commodityName] || null;

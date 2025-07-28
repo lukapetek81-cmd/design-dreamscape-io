@@ -11,7 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRealtimeDataContext } from '@/contexts/RealtimeDataContext';
 import { useAvailableCommodities } from '@/hooks/useCommodityData';
 import { useDelayedData } from '@/hooks/useDelayedData';
-import { useIBKR } from '@/contexts/IBKRContext';
+
 
 const Dashboard = () => {
   const [activeGroup, setActiveGroup] = React.useState("energy");
@@ -19,13 +19,6 @@ const Dashboard = () => {
   const { isGuest, profile, loading: authLoading } = useAuth();
   const { data: commodities, isLoading: commoditiesLoading, error: commoditiesError } = useAvailableCommodities();
   const { connected: realtimeConnected, lastUpdate, error: realtimeError, delayStatus } = useRealtimeDataContext();
-  const { prices: ibkrPrices } = useIBKR();
-
-  // Get all available commodities for IBKR
-  const allCommodityNames = React.useMemo(() => {
-    if (!commodities) return [];
-    return commodities.map(c => c.name);
-  }, [commodities]);
 
   // Show loading screen while auth is checking
   if (authLoading) {
@@ -51,7 +44,6 @@ const Dashboard = () => {
         error={commoditiesError?.message || null}
         realtimeConnected={realtimeConnected}
         delayStatus={delayStatus}
-        ibkrPrices={ibkrPrices}
       />
     </SidebarProvider>
   );
@@ -66,8 +58,7 @@ const DashboardContent = ({
   loading, 
   error, 
   realtimeConnected,
-  delayStatus,
-  ibkrPrices
+  delayStatus
 }: {
   activeGroup: string;
   setActiveGroup: (group: string) => void;
@@ -82,7 +73,6 @@ const DashboardContent = ({
     delayText: string;
     statusText: string;
   };
-  ibkrPrices: Record<string, any>;
 }) => {
   const { toggleSidebar, setOpenMobile } = useSidebar();
   const [touchStart, setTouchStart] = React.useState<number | null>(null);
@@ -402,7 +392,7 @@ const DashboardContent = ({
                         change={commodity.changePercent}
                         venue={commodity.venue}
                         contractSize={commodity.contractSize}
-                        ibkrPrice={ibkrPrices[commodity.name]}
+                        
                       />
                     </div>
                   ))}
