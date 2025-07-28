@@ -191,82 +191,115 @@ export const useCommodityPriceAPIRealtimeData = (
       }
 
       // Get symbols for the commodities we need
-      const symbols = props.commodities
+      const allSymbols = props.commodities
         .map(name => {
           const symbol = COMMODITY_SYMBOL_MAP[name];
           console.log(`Mapping commodity "${name}" to symbol "${symbol}"`);
           return symbol;
         })
-        .filter(Boolean)
-        .join(',');
+        .filter(Boolean);
 
-      console.log(`Found ${props.commodities.length} commodities, mapped to ${symbols ? symbols.split(',').length : 0} symbols`);
+      console.log(`Found ${props.commodities.length} commodities, mapped to ${allSymbols.length} symbols`);
       console.log('All commodity names:', props.commodities);
-      console.log('Mapped symbols:', symbols);
+      console.log('Mapped symbols:', allSymbols);
 
-      if (!symbols) {
+      if (allSymbols.length === 0) {
         console.warn('No matching symbols found for commodities');
         console.warn('Available mappings:', Object.keys(COMMODITY_SYMBOL_MAP));
         return;
       }
 
-      const response = await supabase.functions.invoke('commodity-price-api-realtime', {
-        body: {
-          apiKey,
-          symbols,
-          action: 'latest'
-        },
-        headers: {
-          Authorization: `Bearer ${authData.session.access_token}`
-        }
-      });
-
-      if (response.error) {
-        // Handle different types of API errors
-        const errorMessage = response.error.message || '';
-        console.log('API Error received:', errorMessage);
-        
-        if (errorMessage.includes('LIMIT_REACHED') || 
-            errorMessage.includes('usage limit reached') ||
-            errorMessage.includes('maximum request count')) {
-          console.log('Setting limit reached to true');
-          setIsLimitReached(true);
-          // Clear the polling interval when limit is reached
-          if (intervalRef.current) {
-            console.log('Clearing interval due to limit reached');
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-          }
-          throw new Error('API usage limit reached. Please upgrade your CommodityPriceAPI plan or wait for the next billing cycle.');
-        }
-        
-        if (errorMessage.includes('Edge Function returned a non-2xx status code')) {
-          throw new Error('API request failed. Your API key may have reached its limit or expired.');
-        }
-        
-        throw new Error(errorMessage || 'Failed to fetch prices');
+      // Split symbols into batches of 10 to avoid "Maximum symbols per request exceeded"
+      const BATCH_SIZE = 10;
+      const symbolBatches = [];
+      for (let i = 0; i < allSymbols.length; i += BATCH_SIZE) {
+        symbolBatches.push(allSymbols.slice(i, i + BATCH_SIZE));
       }
 
-      const { rates, metadata, timestamp } = response.data;
+      console.log(`Splitting ${allSymbols.length} symbols into ${symbolBatches.length} batches of max ${BATCH_SIZE}`);
+
+      const allPrices: Record<string, any> = {};
+
+      // Process each batch
+      for (let batchIndex = 0; batchIndex < symbolBatches.length; batchIndex++) {
+        const batch = symbolBatches[batchIndex];
+        const symbols = batch.join(',');
+        
+        console.log(`Processing batch ${batchIndex + 1}/${symbolBatches.length} with ${batch.length} symbols:`, symbols);
+
+        try {
+          const response = await supabase.functions.invoke('commodity-price-api-realtime', {
+            body: {
+              apiKey,
+              symbols,
+              action: 'latest'
+            },
+            headers: {
+              Authorization: `Bearer ${authData.session.access_token}`
+            }
+          });
+
+          if (response.error) {
+            // Handle different types of API errors
+            const errorMessage = response.error.message || '';
+            console.log(`API Error in batch ${batchIndex + 1}:`, errorMessage);
+            
+            if (errorMessage.includes('LIMIT_REACHED') || 
+                errorMessage.includes('usage limit reached') ||
+                errorMessage.includes('maximum request count')) {
+              console.log('Setting limit reached to true');
+              setIsLimitReached(true);
+              // Clear the polling interval when limit is reached
+              if (intervalRef.current) {
+                console.log('Clearing interval due to limit reached');
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
+              }
+              throw new Error('API usage limit reached. Please upgrade your CommodityPriceAPI plan or wait for the next billing cycle.');
+            }
+            
+            // Skip this batch but continue with others
+            console.warn(`Skipping batch ${batchIndex + 1} due to error:`, errorMessage);
+            continue;
+          }
+
+          // Merge successful batch results
+          if (response.data?.rates) {
+            Object.assign(allPrices, response.data.rates);
+            console.log(`Successfully processed batch ${batchIndex + 1}, got ${Object.keys(response.data.rates).length} prices`);
+          }
+
+          // Add small delay between batches to avoid rate limiting
+          if (batchIndex < symbolBatches.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 200)); // 200ms delay
+          }
+
+        } catch (batchError) {
+          console.warn(`Error processing batch ${batchIndex + 1}:`, batchError);
+          // Continue with next batch
+        }
+      }
       
-      // Convert API response to our price format
+      // Convert API response to our price format using collected prices
       const newPrices: Record<string, CommodityPriceAPIPrice> = {};
       
-      Object.entries(rates).forEach(([symbol, price]) => {
+      Object.entries(allPrices).forEach(([symbol, price]) => {
         // Find the commodity name for this symbol
         const commodityName = Object.entries(COMMODITY_SYMBOL_MAP)
           .find(([_, sym]) => sym === symbol)?.[0];
         
-        if (commodityName && metadata[symbol]) {
+        if (commodityName) {
           newPrices[commodityName] = {
             price: price as number,
-            lastUpdate: new Date(timestamp * 1000).toISOString(),
+            lastUpdate: new Date().toISOString(),
             source: 'CommodityPriceAPI',
-            unit: metadata[symbol].unit,
-            quote: metadata[symbol].quote
+            unit: 'USD', // Default unit since metadata might not be available in batch
+            quote: 'USD'
           };
         }
       });
+
+      console.log(`Total prices fetched: ${Object.keys(newPrices).length}`);
 
       setPrices(prev => ({ ...prev, ...newPrices }));
       setLastUpdate(new Date());
