@@ -45,28 +45,70 @@ const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; cont
   'Lumber Futures': { symbol: 'LBS=F', category: 'other', contractSize: '110,000 bd ft', venue: 'CME' },
 };
 
-// CommodityPriceAPI symbol mapping
+// CommodityPriceAPI symbol mapping - expanded to include all available symbols
 const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
-  'Crude Oil': 'BRENT',
+  // Energy
+  'Crude Oil': 'WTI',
   'Brent Crude Oil': 'BRENT', 
   'Natural Gas': 'NATGAS',
+  'Gasoline RBOB': 'GASOLINE',
+  'Heating Oil': 'HEATING-OIL',
+  'Propane': 'PROPANE',
+  'Diesel': 'DIESEL',
+  'Jet Fuel': 'JET-FUEL',
+  'Coal': 'COAL',
+  'Uranium': 'URANIUM',
+  
+  // Metals
   'Gold Futures': 'GOLD',
   'Silver Futures': 'SILVER',
   'Copper': 'COPPER',
   'Platinum': 'PLATINUM',
   'Palladium': 'PALLADIUM',
+  'Aluminum': 'ALUMINUM',
+  'Nickel': 'NICKEL',
+  'Zinc': 'ZINC',
+  'Lead': 'LEAD',
+  'Tin': 'TIN',
+  'Iron Ore': 'IRON-ORE',
+  'Steel': 'STEEL',
+  
+  // Grains & Agriculture
   'Corn Futures': 'CORN',
   'Wheat Futures': 'WHEAT',
   'Soybean Futures': 'SOYBEANS',
+  'Soybean Oil': 'SOYBEAN-OIL',
+  'Soybean Meal': 'SOYBEAN-MEAL',
+  'Oat Futures': 'OATS',
+  'Rough Rice': 'RICE',
+  'Barley': 'BARLEY',
+  'Canola': 'CANOLA',
+  'Palm Oil': 'PALM-OIL',
+  'Sunflower Oil': 'SUNFLOWER-OIL',
+  'Rapeseed': 'RAPESEED',
+  
+  // Livestock
+  'Live Cattle Futures': 'CATTLE',
+  'Feeder Cattle Futures': 'FEEDER-CATTLE',
+  'Lean Hogs Futures': 'HOGS',
+  
+  // Softs
   'Coffee': 'COFFEE',
   'Sugar': 'SUGAR',
   'Cotton': 'COTTON',
   'Cocoa': 'COCOA',
   'Orange Juice': 'OJ',
-  'Live Cattle Futures': 'CATTLE',
-  'Lean Hogs Futures': 'HOGS',
-  'Rough Rice': 'RICE',
-  'Oat Futures': 'OATS'
+  'Tea': 'TEA',
+  'Rubber': 'RUBBER',
+  'Wool': 'WOOL',
+  
+  // Other
+  'Lumber Futures': 'LUMBER',
+  'Ethanol': 'ETHANOL',
+  'Milk': 'MILK',
+  'Cheese': 'CHEESE',
+  'Butter': 'BUTTER',
+  'Eggs': 'EGGS'
 };
 
 serve(async (req) => {
@@ -138,7 +180,11 @@ serve(async (req) => {
           console.log(`CommodityPriceAPI returned ${Object.keys(data.symbols).length} symbols`);
           dataSource = 'commodity-price-api';
           
-          // Map CommodityPriceAPI symbols to our commodities
+          // Create commodities from all available CommodityPriceAPI symbols
+          const availableSymbols = Object.keys(data.symbols);
+          console.log('Available CommodityPriceAPI symbols:', availableSymbols.slice(0, 10), '...'); // Log first 10
+          
+          // Start with our mapped commodities
           commoditiesData = Object.keys(COMMODITY_SYMBOLS).map(name => {
             const symbolInfo = COMMODITY_SYMBOLS[name];
             const apiSymbol = COMMODITY_PRICE_API_SYMBOLS[name];
@@ -156,6 +202,48 @@ serve(async (req) => {
               supportedByCommodityPriceAPI: !!apiSymbol && !!data.symbols[apiSymbol],
               commodityPriceAPIData: data.symbols[apiSymbol] || null
             };
+          });
+          
+          // Add additional commodities that are available in CommodityPriceAPI but not in our static list
+          const reverseMapping = Object.fromEntries(
+            Object.entries(COMMODITY_PRICE_API_SYMBOLS).map(([name, symbol]) => [symbol, name])
+          );
+          
+          availableSymbols.forEach(symbol => {
+            if (!reverseMapping[symbol]) {
+              // This symbol is not in our mapping, add it as a new commodity
+              const symbolData = data.symbols[symbol];
+              const displayName = symbolData.name || symbol.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+              
+              // Categorize based on symbol name
+              let category = 'other';
+              if (symbol.includes('OIL') || symbol.includes('GAS') || symbol.includes('ENERGY')) {
+                category = 'energy';
+              } else if (['GOLD', 'SILVER', 'COPPER', 'PLATINUM', 'PALLADIUM', 'ALUMINUM', 'NICKEL', 'ZINC', 'LEAD', 'TIN'].some(metal => symbol.includes(metal))) {
+                category = 'metals';
+              } else if (['CORN', 'WHEAT', 'SOY', 'RICE', 'OAT', 'BARLEY'].some(grain => symbol.includes(grain))) {
+                category = 'grains';
+              } else if (['CATTLE', 'HOG', 'MILK', 'CHEESE', 'BUTTER', 'EGGS'].some(livestock => symbol.includes(livestock))) {
+                category = 'livestock';
+              } else if (['COFFEE', 'SUGAR', 'COTTON', 'COCOA', 'TEA', 'RUBBER'].some(soft => symbol.includes(soft))) {
+                category = 'softs';
+              }
+              
+              commoditiesData.push({
+                name: displayName,
+                symbol: symbol,
+                price: 0,
+                change: 0,
+                changePercent: 0,
+                volume: null,
+                category,
+                contractSize: 'Variable',
+                venue: 'Various',
+                commodityPriceAPISymbol: symbol,
+                supportedByCommodityPriceAPI: true,
+                commodityPriceAPIData: symbolData
+              });
+            }
           });
           
         } else {
