@@ -78,6 +78,7 @@ export const useCommodityPriceAPIRealtimeData = (
     quota: number;
     used: number;
   } | null>(null);
+  const [isLimitReached, setIsLimitReached] = useState(false);
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const apiKeyRef = useRef<string | null>(null);
@@ -89,6 +90,7 @@ export const useCommodityPriceAPIRealtimeData = (
     }
     setConnected(false);
     setError(null);
+    setIsLimitReached(false);
     apiKeyRef.current = null;
   }, []);
 
@@ -128,6 +130,12 @@ export const useCommodityPriceAPIRealtimeData = (
         if (errorMessage.includes('LIMIT_REACHED') || 
             errorMessage.includes('usage limit reached') ||
             errorMessage.includes('maximum request count')) {
+          setIsLimitReached(true);
+          // Clear the polling interval when limit is reached
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
           throw new Error('API usage limit reached. Please upgrade your CommodityPriceAPI plan or wait for the next billing cycle.');
         }
         
@@ -193,6 +201,7 @@ export const useCommodityPriceAPIRealtimeData = (
         if (errorMessage.includes('LIMIT_REACHED') || 
             errorMessage.includes('usage limit reached') ||
             errorMessage.includes('maximum request count')) {
+          setIsLimitReached(true);
           setUsage({
             plan: 'Free',
             quota: 1000,
@@ -208,6 +217,7 @@ export const useCommodityPriceAPIRealtimeData = (
   const connect = useCallback(async (credentials: CommodityPriceAPICredentials) => {
     try {
       setError(null);
+      setIsLimitReached(false);
       apiKeyRef.current = credentials.apiKey;
 
       // Test the API key and fetch initial data
@@ -217,15 +227,18 @@ export const useCommodityPriceAPIRealtimeData = (
       setConnected(true);
 
       // Set up polling for real-time updates (every minute for premium users)
+      // Only start polling if we haven't reached the limit
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
 
-      intervalRef.current = setInterval(() => {
-        if (apiKeyRef.current) {
-          fetchPrices(apiKeyRef.current);
-        }
-      }, 60000); // Update every minute
+      if (!isLimitReached) {
+        intervalRef.current = setInterval(() => {
+          if (apiKeyRef.current && !isLimitReached) {
+            fetchPrices(apiKeyRef.current);
+          }
+        }, 60000); // Update every minute
+      }
 
     } catch (err) {
       console.error('Failed to connect to CommodityPriceAPI:', err);
