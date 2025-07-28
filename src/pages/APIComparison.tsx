@@ -6,6 +6,7 @@ import { Menu } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
 import { APIPriceComparison } from '@/components/APIPriceComparison';
+import { DirectExchangeFeeds } from '@/components/DirectExchangeFeeds';
 import UserProfile from '@/components/UserProfile';
 
 const APIComparison = () => {
@@ -40,15 +41,16 @@ const APIComparison = () => {
           <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 shadow-soft">
             <div className="container flex h-16 sm:h-20 items-center justify-between px-3 sm:px-4 md:px-6">
               <div className="flex items-center gap-4">
-                <h1 className="text-xl sm:text-2xl font-bold">API Price Comparison</h1>
+                <h1 className="text-xl sm:text-2xl font-bold">Data Sources & Exchange Feeds</h1>
               </div>
               <UserProfile />
             </div>
           </header>
           
           {/* Main Content */}
-          <main className="flex-1 container px-3 sm:px-4 md:px-6 py-6 space-y-6">
-            <div className="max-w-6xl mx-auto">
+          <main className="flex-1 container px-3 sm:px-4 md:px-6 py-6 space-y-8">
+            <div className="max-w-6xl mx-auto space-y-8">
+              <DirectExchangeFeeds />
               <APIPriceComparison />
             </div>
           </main>

@@ -43,3 +43,6 @@ verify_jwt = false
 
 [functions.compare-api-prices]
 verify_jwt = true
+
+[functions.direct-exchange-feeds]
+verify_jwt = true
