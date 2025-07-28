@@ -11,25 +11,29 @@ import { useCommodityPriceAPICredentials } from '@/hooks/useCommodityPriceAPICre
 
 export const CommodityPriceAPICredentialsManager: React.FC = () => {
   const { connect, disconnect, connected, error, isConnecting, usage } = useCommodityPriceAPI();
-  const { storedCredentials, saveCredentials, clearCredentials } = useCommodityPriceAPICredentials();
+  const { storedCredentials, saveCredentials, clearCredentials, getDecryptedCredentials } = useCommodityPriceAPICredentials();
   
   const [apiKey, setApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
+  const [hasStoredCredentials, setHasStoredCredentials] = useState(false);
 
   useEffect(() => {
     if (storedCredentials) {
-      setApiKey('***************'); // Show masked version
+      setHasStoredCredentials(true);
+      setApiKey(''); // Keep empty to allow new key entry
+    } else {
+      setHasStoredCredentials(false);
     }
   }, [storedCredentials]);
 
   const handleConnect = async () => {
-    if (!apiKey || apiKey === '***************') {
+    if (!apiKey.trim()) {
       return;
     }
 
     try {
-      await connect({ apiKey });
-      await saveCredentials({ apiKey });
+      await connect({ apiKey: apiKey.trim() });
+      await saveCredentials({ apiKey: apiKey.trim() });
     } catch (error) {
       console.error('Connection failed:', error);
     }
@@ -85,10 +89,10 @@ export const CommodityPriceAPICredentialsManager: React.FC = () => {
             {!connected ? (
               <Button 
                 onClick={handleConnect} 
-                disabled={!apiKey || apiKey === '***************' || isConnecting}
+                disabled={!apiKey.trim() || isConnecting}
                 className="flex-1"
               >
-                {isConnecting ? 'Connecting...' : 'Connect'}
+                {isConnecting ? 'Connecting...' : hasStoredCredentials ? 'Update & Connect' : 'Connect'}
               </Button>
             ) : (
               <Button onClick={handleDisconnect} variant="outline" className="flex-1">
@@ -96,12 +100,20 @@ export const CommodityPriceAPICredentialsManager: React.FC = () => {
               </Button>
             )}
             
-            {storedCredentials && (
+            {hasStoredCredentials && (
               <Button onClick={handleClearCredentials} variant="destructive">
                 Clear
               </Button>
             )}
           </div>
+
+          {hasStoredCredentials && !connected && (
+            <Alert>
+              <AlertDescription>
+                You have stored credentials. Enter a new API key to update them, or click "Clear" to remove stored credentials.
+              </AlertDescription>
+            </Alert>
+          )}
 
           {error && (
             <Alert variant="destructive">
