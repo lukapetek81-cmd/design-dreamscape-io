@@ -45,292 +45,37 @@ const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; cont
   'Lumber Futures': { symbol: 'LBS=F', category: 'other', contractSize: '110,000 bd ft', venue: 'CME' },
 };
 
-// Mapping of CommodityPriceAPI symbols to our commodity names
+// Mapping of CommodityPriceAPI symbols to our commodity names - MUST match frontend
 const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
-  'ALUMINIUM': 'Aluminum',
-  'BRENT': 'Brent Crude Oil',
-  'COFFEE': 'Coffee',
-  'COPPER': 'Copper',
+  'XAU': 'Gold Futures',
+  'XAG': 'Silver Futures', 
+  'WTIOIL': 'Crude Oil',
+  'BRENTOIL': 'Brent Crude Oil',
+  'NG': 'Natural Gas',
+  'HG': 'Copper',
+  'XPT': 'Platinum',
+  'XPD': 'Palladium',
+  'ALU': 'Aluminum',
+  'ZNC': 'Zinc',
+  'LEAD': 'Lead',
+  'NI': 'Nickel',
+  'TIN': 'Tin',
+  'UX': 'Uranium',
+  'COAL': 'Coal',
+  'HO': 'Heating Oil',
+  'RB': 'Gasoline RBOB',
   'CORN': 'Corn Futures',
-  'COTTON': 'Cotton',
-  'GOLD': 'Gold Futures',
-  'NATURALGAS': 'Natural Gas',
-  'SILVER': 'Silver Futures',
-  'SUGAR': 'Sugar',
-  'WTI': 'Crude Oil',
   'WHEAT': 'Wheat Futures',
-  'SOYBEANS': 'Soybean Futures',
-  'PLATINUM': 'Platinum',
-  'PALLADIUM': 'Palladium',
+  'SOYBEAN': 'Soybean Futures',
+  'SUGAR': 'Sugar',
+  'COTTON': 'Cotton',
+  'COFFEE': 'Coffee',
   'COCOA': 'Cocoa',
-  'LEAN_HOGS': 'Lean Hogs Futures',
-  'LIVE_CATTLE': 'Live Cattle Futures',
-  'FEEDER_CATTLE': 'Feeder Cattle Futures',
-  'GASOLINE': 'Gasoline RBOB',
-  'HEATING_OIL': 'Heating Oil',
-  'ORANGE_JUICE': 'Orange Juice',
   'RICE': 'Rough Rice',
   'OATS': 'Oat Futures',
-  'LUMBER': 'Lumber Futures',
-  'ZINC': 'Zinc',
-  'NICKEL': 'Nickel',
-  'LEAD': 'Lead',
-  'TIN': 'Tin',
-  'STEEL': 'Steel',
-  'IRON_ORE': 'Iron Ore',
-  'URANIUM': 'Uranium',
-  'LITHIUM': 'Lithium',
-  'COBALT': 'Cobalt',
-  'MOLYBDENUM': 'Molybdenum',
-  'TITANIUM': 'Titanium',
-  'VANADIUM': 'Vanadium',
-  'CHROMIUM': 'Chromium',
-  'MANGANESE': 'Manganese',
-  'MAGNESIUM': 'Magnesium',
-  'RARE_EARTH': 'Rare Earth Metals',
-  'PROPANE': 'Propane',
-  'ETHANOL': 'Ethanol',
-  'METHANOL': 'Methanol',
-  'NAPHTHA': 'Naphtha',
-  'KEROSENE': 'Kerosene',
-  'DIESEL': 'Diesel',
-  'FUEL_OIL': 'Fuel Oil',
-  'BITUMEN': 'Bitumen',
-  'LNG': 'Liquefied Natural Gas',
-  'LPG': 'Liquefied Petroleum Gas',
-  'COAL': 'Coal',
-  'CARBON_CREDITS': 'Carbon Credits',
-  'RUBBER': 'Rubber',
-  'PALM_OIL': 'Palm Oil',
-  'CANOLA': 'Canola',
-  'RAPESEED': 'Rapeseed',
-  'SUNFLOWER': 'Sunflower Oil',
-  'SOYBEAN_OIL': 'Soybean Oil',
-  'SOYBEAN_MEAL': 'Soybean Meal',
-  'BARLEY': 'Barley',
-  'RYE': 'Rye',
-  'MILLET': 'Millet',
-  'SORGHUM': 'Sorghum',
-  'QUINOA': 'Quinoa',
-  'BUCKWHEAT': 'Buckwheat',
-  'CHICKPEAS': 'Chickpeas',
-  'LENTILS': 'Lentils',
-  'BLACK_BEANS': 'Black Beans',
-  'KIDNEY_BEANS': 'Kidney Beans',
-  'PINTO_BEANS': 'Pinto Beans',
-  'NAVY_BEANS': 'Navy Beans',
-  'LIMA_BEANS': 'Lima Beans',
-  'GREEN_BEANS': 'Green Beans',
-  'PEAS': 'Peas',
-  'TEA': 'Tea',
-  'VANILLA': 'Vanilla',
-  'PEPPER': 'Black Pepper',
-  'CINNAMON': 'Cinnamon',
-  'CARDAMOM': 'Cardamom',
-  'CLOVES': 'Cloves',
-  'NUTMEG': 'Nutmeg',
-  'TURMERIC': 'Turmeric',
-  'GINGER': 'Ginger',
-  'GARLIC': 'Garlic',
-  'ONIONS': 'Onions',
-  'POTATOES': 'Potatoes',
-  'TOMATOES': 'Tomatoes',
-  'APPLES': 'Apples',
-  'ORANGES': 'Oranges',
-  'BANANAS': 'Bananas',
-  'GRAPES': 'Grapes',
-  'STRAWBERRIES': 'Strawberries',
-  'BLUEBERRIES': 'Blueberries',
-  'CRANBERRIES': 'Cranberries',
-  'CHERRIES': 'Cherries',
-  'PEACHES': 'Peaches',
-  'PEARS': 'Pears',
-  'PLUMS': 'Plums',
-  'AVOCADOS': 'Avocados',
-  'LEMONS': 'Lemons',
-  'LIMES': 'Limes',
-  'GRAPEFRUIT': 'Grapefruit',
-  'PINEAPPLES': 'Pineapples',
-  'MANGOES': 'Mangoes',
-  'PAPAYAS': 'Papayas',
-  'KIWI': 'Kiwi Fruit',
-  'COCONUTS': 'Coconuts',
-  'DATES': 'Dates',
-  'FIGS': 'Figs',
-  'RAISINS': 'Raisins',
-  'ALMONDS': 'Almonds',
-  'WALNUTS': 'Walnuts',
-  'PECANS': 'Pecans',
-  'CASHEWS': 'Cashews',
-  'PISTACHIOS': 'Pistachios',
-  'HAZELNUTS': 'Hazelnuts',
-  'BRAZIL_NUTS': 'Brazil Nuts',
-  'MACADAMIA_NUTS': 'Macadamia Nuts',
-  'PINE_NUTS': 'Pine Nuts',
-  'CHESTNUTS': 'Chestnuts',
-  'PEANUTS': 'Peanuts',
-  'SUNFLOWER_SEEDS': 'Sunflower Seeds',
-  'PUMPKIN_SEEDS': 'Pumpkin Seeds',
-  'SESAME_SEEDS': 'Sesame Seeds',
-  'CHIA_SEEDS': 'Chia Seeds',
-  'FLAX_SEEDS': 'Flax Seeds',
-  'HEMP_SEEDS': 'Hemp Seeds',
-  'POPPY_SEEDS': 'Poppy Seeds',
-  'BEEF': 'Beef',
-  'PORK': 'Pork',
-  'LAMB': 'Lamb',
-  'CHICKEN': 'Chicken',
-  'TURKEY': 'Turkey',
-  'DUCK': 'Duck',
-  'GOOSE': 'Goose',
-  'FISH': 'Fish',
-  'SALMON': 'Salmon',
-  'TUNA': 'Tuna',
-  'SHRIMP': 'Shrimp',
-  'LOBSTER': 'Lobster',
-  'CRAB': 'Crab',
-  'OYSTERS': 'Oysters',
-  'CLAMS': 'Clams',
-  'MUSSELS': 'Mussels',
-  'SCALLOPS': 'Scallops',
-  'MILK': 'Milk',
-  'CHEESE': 'Cheese',
-  'BUTTER': 'Butter',
-  'YOGURT': 'Yogurt',
-  'EGGS': 'Eggs',
-  'HONEY': 'Honey',
-  'MAPLE_SYRUP': 'Maple Syrup',
-  'WINE': 'Wine',
-  'BEER': 'Beer',
-  'WHISKEY': 'Whiskey',
-  'VODKA': 'Vodka',
-  'RUM': 'Rum',
-  'GIN': 'Gin',
-  'TEQUILA': 'Tequila',
-  'BRANDY': 'Brandy',
-  'COGNAC': 'Cognac',
-  'CHAMPAGNE': 'Champagne',
-  'SAKE': 'Sake',
-  'TOBACCO': 'Tobacco',
-  'COTTON_FABRIC': 'Cotton Fabric',
-  'WOOL': 'Wool',
-  'SILK': 'Silk',
-  'LINEN': 'Linen',
-  'POLYESTER': 'Polyester',
-  'NYLON': 'Nylon',
-  'RAYON': 'Rayon',
-  'SPANDEX': 'Spandex',
-  'LEATHER': 'Leather',
-  'FUR': 'Fur',
-  'FEATHERS': 'Feathers',
-  'DOWN': 'Down',
-  'CASHMERE': 'Cashmere',
-  'ALPACA': 'Alpaca Fiber',
-  'MOHAIR': 'Mohair',
-  'ANGORA': 'Angora',
-  'HEMP_FIBER': 'Hemp Fiber',
-  'JUTE': 'Jute',
-  'FLAX_FIBER': 'Flax Fiber',
-  'BAMBOO': 'Bamboo',
-  'CORK': 'Cork',
-  'RESIN': 'Resin',
-  'LATEX': 'Latex',
-  'WAX': 'Wax',
-  'TALLOW': 'Tallow',
-  'LANOLIN': 'Lanolin',
-  'GLYCERIN': 'Glycerin',
-  'ETHYLENE': 'Ethylene',
-  'PROPYLENE': 'Propylene',
-  'BENZENE': 'Benzene',
-  'TOLUENE': 'Toluene',
-  'XYLENE': 'Xylene',
-  'STYRENE': 'Styrene',
-  'VINYL': 'Vinyl',
-  'ACETONE': 'Acetone',
-  'FORMALDEHYDE': 'Formaldehyde',
-  'AMMONIA': 'Ammonia',
-  'SULFUR': 'Sulfur',
-  'PHOSPHORUS': 'Phosphorus',
-  'POTASH': 'Potash',
-  'UREA': 'Urea',
-  'LIME': 'Lime',
-  'GYPSUM': 'Gypsum',
-  'SALT': 'Salt',
-  'SAND': 'Sand',
-  'GRAVEL': 'Gravel',
-  'STONE': 'Stone',
-  'MARBLE': 'Marble',
-  'GRANITE': 'Granite',
-  'LIMESTONE': 'Limestone',
-  'SLATE': 'Slate',
-  'CLAY': 'Clay',
-  'CEMENT': 'Cement',
-  'CONCRETE': 'Concrete',
-  'ASPHALT': 'Asphalt',
-  'GLASS': 'Glass',
-  'CERAMIC': 'Ceramic',
-  'BRICK': 'Brick',
-  'TILE': 'Tile',
-  'INSULATION': 'Insulation',
-  'DRYWALL': 'Drywall',
-  'PLYWOOD': 'Plywood',
-  'PARTICLE_BOARD': 'Particle Board',
-  'HARDWOOD': 'Hardwood',
-  'SOFTWOOD': 'Softwood',
-  'PLASTER': 'Plaster',
-  'PAINT': 'Paint',
-  'VARNISH': 'Varnish',
-  'LACQUER': 'Lacquer',
-  'SHELLAC': 'Shellac',
-  'ADHESIVE': 'Adhesive',
-  'SEALANT': 'Sealant',
-  'CAULK': 'Caulk',
-  'FOAM': 'Foam',
-  'FIBERGLASS': 'Fiberglass',
-  'CARBON_FIBER': 'Carbon Fiber',
-  'KEVLAR': 'Kevlar',
-  'NOMEX': 'Nomex',
-  'TEFLON': 'Teflon',
-  'SILICONE': 'Silicone',
-  'POLYURETHANE': 'Polyurethane',
-  'POLYSTYRENE': 'Polystyrene',
-  'POLYPROPYLENE': 'Polypropylene',
-  'POLYETHYLENE': 'Polyethylene',
-  'PVC': 'PVC',
-  'ABS': 'ABS Plastic',
-  'ACRYLIC': 'Acrylic',
-  'POLYCARBONATE': 'Polycarbonate',
-  'PHENOLIC': 'Phenolic Resin',
-  'EPOXY': 'Epoxy',
-  'POLYIMIDE': 'Polyimide',
-  'PTFE': 'PTFE',
-  'PEEK': 'PEEK',
-  'PPS': 'PPS',
-  'PEI': 'PEI',
-  'PAI': 'PAI',
-  'PBI': 'PBI',
-  'PI': 'Polyimide',
-  'PSU': 'PSU',
-  'PPSU': 'PPSU',
-  'PES': 'PES',
-  'PAS': 'PAS',
-  'LCP': 'LCP',
-  'PARA': 'Para-aramid',
-  'META': 'Meta-aramid',
-  'UHMWPE': 'UHMWPE',
-  'HDPE': 'HDPE',
-  'LDPE': 'LDPE',
-  'LLDPE': 'LLDPE',
-  'EVA': 'EVA',
-  'EAA': 'EAA',
-  'EMAA': 'EMAA',
-  'SURLYN': 'Surlyn',
-  'TPU': 'TPU',
-  'TPE': 'TPE',
-  'TPV': 'TPV',
-  'SEBS': 'SEBS',
-  'SIS': 'SIS',
-  'SBS': 'SBS'
+  'CATTLE': 'Live Cattle Futures',
+  'HOGS': 'Lean Hogs Futures',
+  'OJ': 'Orange Juice'
 };
 
 // Auto-categorize function for new symbols
@@ -466,75 +211,58 @@ serve(async (req) => {
 
         console.log('Successfully decrypted API key, length:', decryptedKey.key?.length);
 
-        console.log('Fetching symbols from CommodityPriceAPI');
+        console.log('Fetching commodity prices from CommodityPriceAPI');
         
-        // First, get all available symbols from CommodityPriceAPI
-        const symbolsResponse = await fetch(`https://api.commoditypriceapi.com/v2/symbols`, {
+        // Get prices for the symbols we support
+        const supportedSymbols = Object.keys(COMMODITY_PRICE_API_SYMBOLS);
+        const symbolsQuery = supportedSymbols.join(',');
+        
+        console.log(`Requesting prices for symbols: ${symbolsQuery}`);
+        
+        const pricesResponse = await fetch(`https://api.commoditypriceapi.com/v2/rates/latest?symbols=${symbolsQuery}`, {
           headers: {
             'x-api-key': decryptedKey.key,
             'Content-Type': 'application/json'
           }
         });
         
-        console.log('CommodityPriceAPI symbols response status:', symbolsResponse.status);
+        console.log('CommodityPriceAPI prices response status:', pricesResponse.status);
         
-        if (!symbolsResponse.ok) {
-          const errorText = await symbolsResponse.text();
-          console.error('CommodityPriceAPI symbols error response:', errorText);
-          throw new Error(`CommodityPriceAPI symbols error: ${symbolsResponse.status} - ${errorText}`);
+        if (!pricesResponse.ok) {
+          const errorText = await pricesResponse.text();
+          console.error('CommodityPriceAPI prices error response:', errorText);
+          throw new Error(`CommodityPriceAPI prices error: ${pricesResponse.status} - ${errorText}`);
         }
         
-        const symbolsData = await symbolsResponse.json();
-        console.log(`CommodityPriceAPI returned ${symbolsData.data?.length || 0} symbols`);
+        const pricesData = await pricesResponse.json();
         
-        if (symbolsData.success && symbolsData.data && symbolsData.data.length > 0) {
-          // Get latest prices for all symbols
-          const symbolsList = symbolsData.data.join(',');
+        if (pricesData.success && pricesData.rates) {
+          console.log(`CommodityPriceAPI returned prices for ${Object.keys(pricesData.rates).length} symbols`);
           
-          const pricesResponse = await fetch(`https://api.commoditypriceapi.com/v2/rates/latest?symbols=${symbolsList}`, {
-            headers: {
-              'x-api-key': decryptedKey.key,
-              'Content-Type': 'application/json'
-            }
+          // Process all supported symbols from CommodityPriceAPI
+          commoditiesData = Object.entries(COMMODITY_PRICE_API_SYMBOLS).map(([symbol, mappedName]) => {
+            const price = pricesData.rates[symbol] || 0;
+            
+            // Get existing metadata or auto-categorize
+            const existingMetadata = COMMODITY_SYMBOLS[mappedName];
+            const metadata = existingMetadata || {
+              symbol: symbol,
+              ...categorizeSymbol(mappedName)
+            };
+            
+            return generateEnhancedData({
+              symbol: metadata.symbol,
+              price: price,
+              change: 0, // CommodityPriceAPI doesn't provide change data
+              changePercent: 0, // CommodityPriceAPI doesn't provide change data
+              volume: 0, // CommodityPriceAPI doesn't provide volume
+            }, mappedName);
           });
           
-          if (!pricesResponse.ok) {
-            throw new Error(`CommodityPriceAPI prices error: ${pricesResponse.status}`);
-          }
-          
-          const pricesData = await pricesResponse.json();
-          
-          if (pricesData.success && pricesData.data) {
-            console.log(`CommodityPriceAPI returned prices for ${Object.keys(pricesData.data).length} symbols`);
-            
-            // Process all symbols from CommodityPriceAPI
-            commoditiesData = symbolsData.data.map((symbol: string) => {
-              const priceInfo = pricesData.data[symbol];
-              const mappedName = COMMODITY_PRICE_API_SYMBOLS[symbol] || symbol.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
-              
-              // Get existing metadata or auto-categorize
-              const existingMetadata = COMMODITY_SYMBOLS[mappedName];
-              const metadata = existingMetadata || {
-                symbol: symbol,
-                ...categorizeSymbol(mappedName)
-              };
-              
-              return generateEnhancedData({
-                symbol: metadata.symbol,
-                price: priceInfo?.price || 0,
-                change: priceInfo?.change || 0,
-                changePercent: priceInfo?.change_percent || 0,
-                volume: 0, // CommodityPriceAPI doesn't provide volume
-              }, mappedName);
-            });
-            
-            dataSource = 'commoditypriceapi';
-            console.log(`Processed ${commoditiesData.length} commodities from CommodityPriceAPI`);
-          } else {
-            throw new Error('No price data returned from CommodityPriceAPI');
-          }
+          dataSource = 'commoditypriceapi';
+          console.log(`Processed ${commoditiesData.length} commodities from CommodityPriceAPI`);
         } else {
-          throw new Error('No symbols returned from CommodityPriceAPI');
+          throw new Error('No price data returned from CommodityPriceAPI');
         }
       } catch (error) {
         console.error('CommodityPriceAPI failed:', error);

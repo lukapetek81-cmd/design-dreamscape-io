@@ -33,12 +33,12 @@ interface CommodityPriceAPIRealtimeDataHook {
   disconnect: () => void;
 }
 
-// Map common commodity names to CommodityPriceAPI symbols
+// Map common commodity names to CommodityPriceAPI symbols - MUST match backend
 const COMMODITY_SYMBOL_MAP: Record<string, string> = {
-  'Gold': 'XAU',
-  'Silver': 'XAG',
-  'Crude Oil WTI': 'WTIOIL',
-  'Crude Oil Brent': 'BRENTOIL',
+  'Gold Futures': 'XAU',
+  'Silver Futures': 'XAG', 
+  'Crude Oil': 'WTIOIL',
+  'Brent Crude Oil': 'BRENTOIL',
   'Natural Gas': 'NG',
   'Copper': 'HG',
   'Platinum': 'XPT',
@@ -51,18 +51,18 @@ const COMMODITY_SYMBOL_MAP: Record<string, string> = {
   'Uranium': 'UX',
   'Coal': 'COAL',
   'Heating Oil': 'HO',
-  'Gasoline': 'RB',
-  'Corn': 'CORN',
-  'Wheat': 'WHEAT',
-  'Soybeans': 'SOYBEAN',
+  'Gasoline RBOB': 'RB',
+  'Corn Futures': 'CORN',
+  'Wheat Futures': 'WHEAT',
+  'Soybean Futures': 'SOYBEAN',
   'Sugar': 'SUGAR',
   'Cotton': 'COTTON',
   'Coffee': 'COFFEE',
   'Cocoa': 'COCOA',
-  'Rice': 'RICE',
-  'Oats': 'OATS',
-  'Live Cattle': 'CATTLE',
-  'Lean Hogs': 'HOGS',
+  'Rough Rice': 'RICE',
+  'Oat Futures': 'OATS',
+  'Live Cattle Futures': 'CATTLE',
+  'Lean Hogs Futures': 'HOGS',
   'Orange Juice': 'OJ'
 };
 
