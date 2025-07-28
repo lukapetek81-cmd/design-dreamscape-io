@@ -45,7 +45,7 @@ export const useAvailableCommodities = () => {
     queryKey: ['available-commodities', getDataDelay()],
     queryFn: async (): Promise<Commodity[]> => {
       try {
-        const { data, error } = await supabase.functions.invoke('fetch-commodity-symbols', {
+        const { data, error } = await supabase.functions.invoke('fetch-all-commodities', {
           body: { dataDelay: getDataDelay() }
         });
 
