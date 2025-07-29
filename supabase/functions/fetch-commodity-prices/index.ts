@@ -456,11 +456,18 @@ serve(async (req) => {
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000)
       console.log(`Applying 15-minute delay - simulating price data from ${fifteenMinutesAgo.toISOString()}`)
       
+      // Use a deterministic seed based on commodity name for consistent delayed pricing
+      const commodityHash = commodityName.split('').reduce((a, b) => {
+        a = ((a << 5) - a) + b.charCodeAt(0)
+        return a & a
+      }, 0)
+      const seededRandom = (Math.abs(commodityHash) % 100) / 100
+      
       priceData = {
         ...priceData,
-        price: priceData.price * (0.995 + Math.random() * 0.01),
-        change: priceData.change * (0.9 + Math.random() * 0.2),
-        changePercent: priceData.changePercent * (0.9 + Math.random() * 0.2),
+        price: priceData.price * (0.995 + seededRandom * 0.01),
+        change: priceData.change * (0.9 + seededRandom * 0.2),
+        changePercent: priceData.changePercent * (0.9 + seededRandom * 0.2),
         lastUpdate: fifteenMinutesAgo.toISOString()
       }
     }

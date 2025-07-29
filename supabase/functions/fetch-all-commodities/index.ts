@@ -372,13 +372,22 @@ serve(async (req) => {
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
       console.log(`Applying 15-minute delay - simulating data from ${fifteenMinutesAgo.toISOString()}`);
       
-      // Slightly reduce prices to simulate older data and add small random variations
-      commoditiesData = commoditiesData.map(commodity => ({
-        ...commodity,
-        price: commodity.price > 0 ? commodity.price * (0.99 + Math.random() * 0.02) : 0,
-        change: commodity.change * (0.9 + Math.random() * 0.2),
-        changePercent: commodity.changePercent * (0.9 + Math.random() * 0.2),
-      }));
+      // Use deterministic seeded randomization for consistent delayed pricing
+      commoditiesData = commoditiesData.map(commodity => {
+        // Create a deterministic seed based on commodity name
+        const commodityHash = commodity.name.split('').reduce((a, b) => {
+          a = ((a << 5) - a) + b.charCodeAt(0)
+          return a & a
+        }, 0)
+        const seededRandom = (Math.abs(commodityHash) % 100) / 100
+        
+        return {
+          ...commodity,
+          price: commodity.price > 0 ? commodity.price * (0.995 + seededRandom * 0.01) : 0,
+          change: commodity.change * (0.9 + seededRandom * 0.2),
+          changePercent: commodity.changePercent * (0.9 + seededRandom * 0.2),
+        }
+      });
     }
 
     const currentTimestamp = dataDelay === '15min' 
