@@ -6,7 +6,6 @@ import { Menu } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
 import { APIPriceComparison } from '@/components/APIPriceComparison';
-import { DirectExchangeFeeds } from '@/components/DirectExchangeFeeds';
 import UserProfile from '@/components/UserProfile';
 
 const APIComparison = () => {
@@ -50,7 +49,6 @@ const APIComparison = () => {
           {/* Main Content */}
           <main className="flex-1 container px-3 sm:px-4 md:px-6 py-6 space-y-8">
             <div className="max-w-6xl mx-auto space-y-8">
-              <DirectExchangeFeeds />
               <APIPriceComparison />
             </div>
           </main>
