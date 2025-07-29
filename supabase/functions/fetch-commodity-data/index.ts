@@ -8,30 +8,160 @@ const corsHeaders = {
 
 // Commodity symbol mappings - FMP only
 const COMMODITY_SYMBOLS: Record<string, string> = {
+  // Precious Metals
   'Gold Futures': 'GC=F',
   'Silver Futures': 'SI=F',
-  'Copper': 'HG=F',
   'Platinum': 'PL=F',
   'Palladium': 'PA=F',
+  'Rhodium': 'PA=F', // Use Palladium as fallback for Rhodium
+  
+  // Base Metals
+  'Copper': 'HG=F',
+  'Aluminum': 'HG=F', // Use Copper as fallback
+  'Aluminum LME': 'HG=F',
+  'Zinc': 'HG=F',
+  'Zinc LME': 'HG=F',
+  'Lead': 'HG=F',
+  'Nickel': 'HG=F',
+  'Tin': 'HG=F',
+  'Steel': 'HG=F',
+  'Hot-Rolled Coil Steel': 'HG=F',
+  'Iron Ore 62% FE': 'HG=F',
+  'Iron Ore': 'HG=F',
+  'Magnesium': 'HG=F',
+  
+  // Industrial/Tech Metals
+  'Lithium': 'HG=F', // Use Copper as fallback
+  'Cobalt': 'HG=F',
+  'Titanium': 'HG=F',
+  'Gallium': 'HG=F',
+  'Indium': 'HG=F',
+  'Tellurium': 'HG=F',
+  'Neodymium': 'HG=F',
+  'Uranium': 'HG=F',
+  
+  // Energy
   'Crude Oil': 'CL=F',
   'Brent Crude Oil': 'BZ=F',
+  'Crude Oil Dubai': 'CL=F',
+  'Ural Oil': 'CL=F',
   'Natural Gas': 'NG=F',
+  'Natural Gas US': 'NG=F',
+  'Natural Gas Europe': 'NG=F',
+  'Natural Gas UK': 'NG=F',
+  'Liquefied Natural Gas Japan': 'NG=F',
+  'TTF Gas': 'NG=F',
+  'UK Gas': 'NG=F',
   'Heating Oil': 'HO=F',
   'Gasoline RBOB': 'RB=F',
+  'Gas Oil': 'HO=F',
+  'Coal': 'HO=F',
+  'Coal Australia': 'HO=F',
+  'Coal South Africa': 'HO=F',
+  'Ethanol': 'RB=F',
+  'Methanol': 'RB=F',
+  'Propane': 'NG=F',
+  'Naphtha': 'RB=F',
+  
+  // Grains & Agriculture
   'Corn Futures': 'ZC=F',
   'Wheat Futures': 'ZW=F',
   'Soybean Futures': 'ZS=F',
+  'Soybean Oil': 'ZL=F',
+  'Soybean Meal': 'ZM=F',
+  'Oat Futures': 'ZO=F',
+  'Rough Rice': 'ZR=F',
+  'Canola': 'ZS=F',
+  'Barley': 'ZW=F',
+  'Spring Wheat': 'ZW=F',
+  'Hard Red Winter Wheat': 'ZW=F',
+  
+  // Livestock & Dairy
   'Live Cattle Futures': 'LE=F',
   'Feeder Cattle Futures': 'GF=F',
   'Lean Hogs Futures': 'HE=F',
-  'Oat Futures': 'ZO=F',
-  'Sugar': 'SB=F',
-  'Cotton': 'CT=F',
-  'Lumber': 'LBS=F',
-  'Orange Juice': 'OJ=F',
+  'Milk': 'HE=F',
+  'Milk Class III': 'HE=F',
+  'Milk Nonfat Dry': 'HE=F',
+  'Butter': 'HE=F',
+  'Cheese': 'HE=F',
+  'Eggs US': 'HE=F',
+  'Eggs China': 'HE=F',
+  'Poultry': 'HE=F',
+  'Salmon': 'HE=F',
+  'Fish Meal': 'HE=F',
+  
+  // Soft Commodities
+  'Coffee Arabica': 'KC=F',
+  'Coffee Robusta': 'KC=F',
   'Coffee': 'KC=F',
-  'Rough Rice': 'ZR=F',
-  'Cocoa': 'CC=F'
+  'Sugar': 'SB=F',
+  'Sugar #11': 'SB=F',
+  'Sugar #5': 'SB=F',
+  'Cotton': 'CT=F',
+  'Cocoa': 'CC=F',
+  'Orange Juice': 'OJ=F',
+  'Tea': 'KC=F',
+  'Tea Kolkata': 'KC=F',
+  'Tea Colombo': 'KC=F',
+  'Tea Mombasa': 'KC=F',
+  
+  // Oils & Fats
+  'Palm Oil': 'ZL=F',
+  'Sunflower Oil': 'ZL=F',
+  'Rapeseed Oil': 'ZL=F',
+  'Coconut Oil': 'ZL=F',
+  'Olive Oil': 'ZL=F',
+  
+  // Forest Products
+  'Lumber': 'LBS=F',
+  'Lumber Futures': 'LBS=F',
+  'Random Length Lumber': 'LBS=F',
+  'Pulp': 'LBS=F',
+  'Newsprint': 'LBS=F',
+  
+  // Industrial Materials
+  'Rubber': 'CT=F',
+  'Cotton Yarn': 'CT=F',
+  'Wool': 'CT=F',
+  'Jute': 'CT=F',
+  'Bitumen': 'CL=F',
+  'Kraft Pulp': 'LBS=F',
+  
+  // Fertilizers & Chemicals
+  'Urea': 'NG=F',
+  'Diammonium Phosphate': 'NG=F',
+  'Potash': 'NG=F',
+  'Ammonia': 'NG=F',
+  'Soda Ash': 'NG=F',
+  
+  // Plastics
+  'Polyethylene': 'CL=F',
+  'Polypropylene': 'CL=F',
+  'Polyvinyl Chloride': 'CL=F',
+  'PVC': 'CL=F',
+  'Styrene': 'CL=F',
+  
+  // Food & Agriculture
+  'White Sugar': 'SB=F',
+  'Raw Sugar': 'SB=F',
+  'Potato': 'ZC=F',
+  'Onion': 'ZC=F',
+  'Garlic': 'ZC=F',
+  'Apple': 'OJ=F',
+  'Banana': 'OJ=F',
+  
+  // Spices
+  'Black Pepper': 'KC=F',
+  'Cardamom': 'KC=F',
+  'Turmeric': 'KC=F',
+  'Coriander': 'KC=F',
+  'Chilli': 'KC=F',
+  'Cumin': 'KC=F',
+  
+  // Others
+  'Electricity': 'NG=F',
+  'Carbon Credits': 'NG=F'
 };
 
 const generateFallbackData = (commodityName: string, timeframe: string, basePrice: number, isPremium: boolean = false, chartType: string = 'line') => {
@@ -162,38 +292,168 @@ const generateFallbackData = (commodityName: string, timeframe: string, basePric
 
 const getBasePriceForCommodity = (commodityName: string): number => {
   const basePrices: Record<string, number> = {
-    'Gold': 2000, // Add simple "Gold" mapping
-    'Gold Futures': 2000,
-    'Micro Gold Futures': 2000,
-    'Silver': 25, // Add simple "Silver" mapping  
-    'Silver Futures': 25,
-    'Micro Silver Futures': 25,
-    'Copper': 4.2,
-    'Aluminum': 2200,
-    'Platinum': 1050,
-    'Palladium': 1200,
+    // Energy
     'Crude Oil': 65,
-    'Brent Crude Oil': 67,
+    'Brent Crude Oil': 70,
     'Natural Gas': 2.85,
     'Gasoline RBOB': 2.1,
     'Heating Oil': 2.3,
-    'Corn': 430, // Add simple "Corn" mapping
+    'Natural Gas UK': 90,
+    'Gas Oil': 650,
+    'Coal': 85,
+    'Coal Australia': 88,
+    'Coal South Africa': 82,
+    'Ethanol': 2.15,
+    'Methanol': 385,
+    'Propane': 0.95,
+    'Naphtha': 485,
+    
+    // Precious Metals
+    'Gold Futures': 2000,
+    'Silver Futures': 25,
+    'Platinum': 1050,
+    'Palladium': 1200,
+    'Rhodium': 4500,
+    
+    // Base Metals
+    'Copper': 4.2,
+    'Aluminum': 2200,
+    'Aluminum LME': 2200,
+    'Zinc': 2800,
+    'Zinc LME': 2800,
+    'Lead': 2100,
+    'Nickel': 18500,
+    'Tin': 32000,
+    'Steel': 650,
+    'Hot-Rolled Coil Steel': 685,
+    'Iron Ore 62% FE': 115,
+    'Iron Ore': 115,
+    'Magnesium': 2850,
+    
+    // Industrial/Tech Metals
+    'Lithium': 85,
+    'Cobalt': 35000,
+    'Titanium': 8500,
+    'Gallium': 285,
+    'Indium': 185,
+    'Tellurium': 485,
+    'Neodymium': 85,
+    'Uranium': 50,
+    
+    // Energy - Additional
+    'Crude Oil Dubai': 64,
+    'Ural Oil': 62,
+    'Natural Gas US': 2.85,
+    'Natural Gas Europe': 32,
+    'Liquefied Natural Gas Japan': 15.50,
+    'TTF Gas': 28,
+    'UK Gas': 85,
+    
+    // Grains & Agriculture
     'Corn Futures': 430,
-    'Wheat': 550, // Add simple "Wheat" mapping
     'Wheat Futures': 550,
     'Soybean Futures': 1150,
+    'Soybean Oil': 45,
+    'Soybean Meal': 315,
+    'Oat Futures': 385,
+    'Rough Rice': 16.25,
+    'Canola': 520,
+    'Barley': 240,
+    'Spring Wheat': 580,
+    'Hard Red Winter Wheat': 565,
+    
+    // Livestock & Dairy
     'Live Cattle Futures': 170,
     'Feeder Cattle Futures': 240,
     'Lean Hogs Futures': 75,
-    'Class III Milk Futures': 20.85,
-    'Oat Futures': 385,
-    'Sugar': 19.75,
-    'Cotton': 72.80,
-    'Lumber Futures': 485,
-    'Orange Juice': 315,
+    'Milk': 20.85,
+    'Milk Class III': 20.85,
+    'Milk Nonfat Dry': 1.35,
+    'Butter': 2.85,
+    'Cheese': 1.95,
+    'Eggs US': 2.15,
+    'Eggs China': 1.85,
+    'Poultry': 1.45,
+    'Salmon': 8.50,
+    'Fish Meal': 1850,
+    
+    // Soft Commodities
+    'Coffee Arabica': 165,
+    'Coffee Robusta': 2100,
     'Coffee': 165,
-    'Rough Rice': 16.25,
+    'Sugar': 19.75,
+    'Sugar #11': 19.75,
+    'Sugar #5': 485,
+    'Cotton': 72.80,
     'Cocoa': 2850,
+    'Orange Juice': 315,
+    'Tea': 3.20,
+    'Tea Kolkata': 3.85,
+    'Tea Colombo': 3.65,
+    'Tea Mombasa': 3.45,
+    
+    // Oils & Fats
+    'Palm Oil': 885,
+    'Sunflower Oil': 1350,
+    'Rapeseed Oil': 1450,
+    'Coconut Oil': 1650,
+    'Olive Oil': 4200,
+    
+    // Forest Products
+    'Lumber': 485,
+    'Lumber Futures': 485,
+    'Random Length Lumber': 485,
+    'Pulp': 1450,
+    'Newsprint': 685,
+    
+    // Industrial Materials
+    'Rubber': 1.85,
+    'Cotton Yarn': 3200,
+    'Wool': 14.50,
+    'Jute': 850,
+    'Bitumen': 485,
+    'Kraft Pulp': 1450,
+    
+    // Fertilizers & Chemicals
+    'Urea': 385,
+    'Diammonium Phosphate': 545,
+    'Potash': 285,
+    'Ammonia': 485,
+    'Soda Ash': 285,
+    
+    // Plastics
+    'Polyethylene': 1250,
+    'Polypropylene': 1180,
+    'Polyvinyl Chloride': 985,
+    'PVC': 985,
+    'Styrene': 1450,
+    
+    // Food & Agriculture
+    'White Sugar': 485,
+    'Raw Sugar': 19.75,
+    'Potato': 285,
+    'Onion': 385,
+    'Garlic': 1250,
+    'Apple': 1.85,
+    'Banana': 0.85,
+    
+    // Spices
+    'Black Pepper': 6500,
+    'Cardamom': 1850,
+    'Turmeric': 685,
+    'Coriander': 1250,
+    'Chilli': 2850,
+    'Cumin': 4500,
+    
+    // Others
+    'Electricity': 125,
+    'Carbon Credits': 25,
+    
+    // Simple mappings for legacy support
+    'Gold': 2000,
+    'Silver': 25,
+    'Corn': 430,
+    'Wheat': 550,
   };
   return basePrices[commodityName] || 100;
 };
