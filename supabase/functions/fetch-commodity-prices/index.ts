@@ -349,91 +349,34 @@ serve(async (req) => {
     let priceData = null
     let dataSource = 'fallback'
 
-    // Check if user has CommodityPriceAPI credentials and is premium
-    if (isPremium) {
+    // Use FMP API as primary source
+    const fmpApiKey = Deno.env.get('FMP_API_KEY')
+    const fmpSymbol = FMP_FALLBACK_SYMBOLS[commodityName]
+    
+    if (fmpApiKey && fmpApiKey !== 'demo' && fmpSymbol) {
       try {
-        const { data: profile } = await supabaseClient
-          .from('profiles')
-          .select('commodity_price_api_credentials')
-          .eq('id', user.id)
-          .maybeSingle()
-
-        if (profile?.commodity_price_api_credentials) {
-          // Get CommodityPriceAPI symbol
-          const commoditySymbol = COMMODITY_PRICE_API_SYMBOLS[commodityName]
-          
-          if (commoditySymbol) {
-            console.log(`Using CommodityPriceAPI for ${commodityName} with symbol ${commoditySymbol}`)
-            
-            // Decrypt the user's API key
-            const decryptedData = atob(profile.commodity_price_api_credentials).replace(/ibkr-creds-key-2024/g, '');
-            const credentials = JSON.parse(decryptedData);
-            
-            // Invoke the CommodityPriceAPI edge function
-            const { data: apiData, error: apiError } = await supabaseClient.functions.invoke('commodity-price-api-realtime', {
-              body: {
-                apiKey: credentials.apiKey, // Use the user's decrypted API key
-                symbols: commoditySymbol,
-                action: 'latest'
-              }
-            })
-
-            if (!apiError && apiData?.rates && apiData.rates[commoditySymbol]) {
-              const price = apiData.rates[commoditySymbol]
-              const metadata = apiData.metadata?.[commoditySymbol] || {}
-              
-              priceData = {
-                symbol: commoditySymbol,
-                price: price,
-                change: (Math.random() - 0.5) * price * 0.02, // Simulate change
-                changePercent: (Math.random() - 0.5) * 4,
-                lastUpdate: new Date(apiData.timestamp * 1000).toISOString(),
-                unit: metadata.unit || 'USD',
-                quote: metadata.quote || 'USD'
-              }
-              
-              dataSource = 'commodity-price-api'
-              console.log(`Successfully fetched from CommodityPriceAPI:`, priceData)
-            } else {
-              console.warn(`CommodityPriceAPI failed for ${commodityName}:`, apiError?.message || 'No data')
+        console.log(`Using FMP API for ${commodityName} with symbol ${fmpSymbol}`)
+        
+        const endpoint = `https://financialmodelingprep.com/api/v3/quote/${fmpSymbol}?apikey=${fmpApiKey}`
+        const response = await fetch(endpoint)
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (Array.isArray(data) && data.length > 0) {
+            const quote = data[0]
+            priceData = {
+              symbol: fmpSymbol,
+              price: parseFloat(quote.price) || 0,
+              change: parseFloat(quote.change) || 0,
+              changePercent: parseFloat(quote.changesPercentage) || 0,
+              lastUpdate: new Date().toISOString()
             }
+            dataSource = 'fmp'
+            console.log(`Successfully fetched from FMP:`, priceData)
           }
         }
       } catch (error) {
-        console.warn(`Error accessing CommodityPriceAPI for ${commodityName}:`, error)
-      }
-    }
-
-    // Fallback to FMP API if CommodityPriceAPI failed
-    if (!priceData) {
-      const fmpApiKey = Deno.env.get('FMP_API_KEY')
-      const fmpSymbol = FMP_FALLBACK_SYMBOLS[commodityName]
-      
-      if (fmpApiKey && fmpApiKey !== 'demo' && fmpSymbol) {
-        try {
-          console.log(`Falling back to FMP API for ${commodityName} with symbol ${fmpSymbol}`)
-          
-          const endpoint = `https://financialmodelingprep.com/api/v3/quote/${fmpSymbol}?apikey=${fmpApiKey}`
-          const response = await fetch(endpoint)
-          
-          if (response.ok) {
-            const data = await response.json()
-            if (Array.isArray(data) && data.length > 0) {
-              const quote = data[0]
-              priceData = {
-                symbol: fmpSymbol,
-                price: parseFloat(quote.price) || 0,
-                change: parseFloat(quote.change) || 0,
-                changePercent: parseFloat(quote.changesPercentage) || 0,
-                lastUpdate: new Date().toISOString()
-              }
-              dataSource = 'fmp-fallback'
-              console.log(`Successfully fetched from FMP fallback:`, priceData)
-            }
-          }
-        } catch (error) {
-          console.warn(`FMP API fallback failed for ${commodityName}:`, error)
-        }
+        console.warn(`FMP API failed for ${commodityName}:`, error)
       }
     }
 
