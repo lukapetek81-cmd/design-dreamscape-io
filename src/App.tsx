@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { RealtimeDataProvider } from "@/contexts/RealtimeDataContext";
-import { CommodityPriceAPIProvider } from "@/contexts/CommodityPriceAPIContext";
+
 import { useAndroidBackButton } from "@/hooks/useAndroidBackButton";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
@@ -27,7 +27,7 @@ import TradingCommunity from "./pages/TradingCommunity";
 import ExpertInsights from "./pages/ExpertInsights";
 import LearningHub from "./pages/LearningHub";
 import MarketSentiment from "./pages/MarketSentiment";
-import CommodityPriceAPISettings from "./pages/CommodityPriceAPISettings";
+
 import APIComparison from "./pages/APIComparison";
 import NotFound from "./pages/NotFound";
 
@@ -44,7 +44,7 @@ const AppRoutes = () => {
       <Route path="/reset-password" element={<ResetPassword />} />
       
       <Route path="/portfolio" element={<Portfolio />} />
-      <Route path="/commodity-price-api-settings" element={<CommodityPriceAPISettings />} />
+      
       <Route path="/news-settings" element={<NewsSettingsPage />} />
       <Route path="/billing" element={<Billing />} />
       <Route path="/correlation" element={<MarketCorrelation />} />
@@ -70,17 +70,15 @@ const AppRoutes = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <CommodityPriceAPIProvider>
-        <RealtimeDataProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <AppRoutes />
-            </BrowserRouter>
-          </TooltipProvider>
-        </RealtimeDataProvider>
-      </CommodityPriceAPIProvider>
+      <RealtimeDataProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </TooltipProvider>
+      </RealtimeDataProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

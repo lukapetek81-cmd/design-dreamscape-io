@@ -259,27 +259,19 @@ serve(async (req) => {
       }
     )
 
-    // Check if user is authenticated and has premium subscription
+    // Check if user is authenticated
     const { data: { user } } = await supabaseClient.auth.getUser()
-    let useCommodityPriceAPI = false;
-    let userCredentials = null;
+    let isPremium = false;
 
     if (user) {
       // Check for premium subscription
       const { data: profile } = await supabaseClient
         .from('profiles')
-        .select('subscription_active, subscription_tier, commodity_price_api_credentials')
+        .select('subscription_active, subscription_tier')
         .eq('id', user.id)
         .single()
 
-      if (profile?.subscription_active && profile?.subscription_tier === 'premium') {
-        if (profile.commodity_price_api_credentials) {
-          // User has CommodityPriceAPI credentials - use it for symbols
-          useCommodityPriceAPI = true;
-          userCredentials = profile.commodity_price_api_credentials;
-          console.log('Using CommodityPriceAPI for symbols (premium user with credentials)');
-        }
-      }
+      isPremium = profile?.subscription_active && profile?.subscription_tier === 'premium';
     }
 
     const body = req.method === 'POST' ? await req.json() : {}
@@ -288,112 +280,11 @@ serve(async (req) => {
     let commoditiesData: any[] = []
     let dataSource = 'fallback';
 
-    if (useCommodityPriceAPI && userCredentials) {
+    // Use FMP API as primary source
+    const fmpApiKey = Deno.env.get('FMP_API_KEY');
+    if (fmpApiKey && fmpApiKey !== 'demo') {
       try {
-        // Decrypt credentials (basic implementation for now)
-        const decryptedCredentials = atob(userCredentials).replace(/ibkr-creds-key-2024/g, '');
-        const credentials = JSON.parse(decryptedCredentials);
-        
-        console.log('Fetching symbols from CommodityPriceAPI');
-        
-        // Fetch symbols from CommodityPriceAPI
-        const response = await fetch(
-          `https://api.commoditypriceapi.com/v2/symbols?access_key=${credentials.apiKey}`
-        );
-        
-        if (!response.ok) {
-          throw new Error(`CommodityPriceAPI error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.success && data.symbols) {
-          console.log(`CommodityPriceAPI returned ${Object.keys(data.symbols).length} symbols`);
-          dataSource = 'commodity-price-api';
-          
-          // Create commodities from all available CommodityPriceAPI symbols
-          const availableSymbols = Object.keys(data.symbols);
-          console.log('Available CommodityPriceAPI symbols:', availableSymbols.slice(0, 10), '...'); // Log first 10
-          
-          // Start with our mapped commodities
-          commoditiesData = Object.keys(COMMODITY_SYMBOLS).map(name => {
-            const symbolInfo = COMMODITY_SYMBOLS[name];
-            const apiSymbol = COMMODITY_PRICE_API_SYMBOLS[name];
-            
-            return {
-              name,
-              symbol: symbolInfo.symbol,
-              price: 0, // Will be fetched separately for each commodity
-              change: 0,
-              changePercent: 0,
-              volume: null,
-              ...symbolInfo,
-              // Add CommodityPriceAPI metadata
-              commodityPriceAPISymbol: apiSymbol,
-              supportedByCommodityPriceAPI: !!apiSymbol && !!data.symbols[apiSymbol],
-              commodityPriceAPIData: data.symbols[apiSymbol] || null
-            };
-          });
-          
-          // Add additional commodities that are available in CommodityPriceAPI but not in our static list
-          const reverseMapping = Object.fromEntries(
-            Object.entries(COMMODITY_PRICE_API_SYMBOLS).map(([name, symbol]) => [symbol, name])
-          );
-          
-          availableSymbols.forEach(symbol => {
-            if (!reverseMapping[symbol]) {
-              // This symbol is not in our mapping, add it as a new commodity
-              const symbolData = data.symbols[symbol];
-              const displayName = symbolData.name || symbol.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-              
-              // Categorize based on symbol name
-              let category = 'other';
-              if (symbol.includes('OIL') || symbol.includes('GAS') || symbol.includes('ENERGY')) {
-                category = 'energy';
-              } else if (['GOLD', 'SILVER', 'COPPER', 'PLATINUM', 'PALLADIUM', 'ALUMINUM', 'NICKEL', 'ZINC', 'LEAD', 'TIN'].some(metal => symbol.includes(metal))) {
-                category = 'metals';
-              } else if (['CORN', 'WHEAT', 'SOY', 'RICE', 'OAT', 'BARLEY'].some(grain => symbol.includes(grain))) {
-                category = 'grains';
-              } else if (['CATTLE', 'HOG', 'MILK', 'CHEESE', 'BUTTER', 'EGGS'].some(livestock => symbol.includes(livestock))) {
-                category = 'livestock';
-              } else if (['COFFEE', 'SUGAR', 'COTTON', 'COCOA', 'TEA', 'RUBBER'].some(soft => symbol.includes(soft))) {
-                category = 'softs';
-              }
-              
-              commoditiesData.push({
-                name: displayName,
-                symbol: symbol,
-                price: 0,
-                change: 0,
-                changePercent: 0,
-                volume: null,
-                category,
-                contractSize: 'Variable',
-                venue: 'Various',
-                commodityPriceAPISymbol: symbol,
-                supportedByCommodityPriceAPI: true,
-                commodityPriceAPIData: symbolData
-              });
-            }
-          });
-          
-        } else {
-          throw new Error('Invalid symbols response from CommodityPriceAPI');
-        }
-      } catch (error) {
-        console.warn('CommodityPriceAPI failed, falling back to FMP:', error);
-        useCommodityPriceAPI = false;
-      }
-    }
-
-    // Fallback to FMP if CommodityPriceAPI is not available or failed
-    if (!useCommodityPriceAPI) {
-      console.log('Using FMP for symbols');
-      
-      const fmpApiKey = Deno.env.get('FMP_API_KEY')
-      
-      if (fmpApiKey && fmpApiKey !== 'demo') {
-        try {
+        console.log('Using FMP for symbols');
           const response = await fetch(
             `https://financialmodelingprep.com/api/v3/quotes/commodity?apikey=${fmpApiKey}`
           );
@@ -424,7 +315,7 @@ serve(async (req) => {
                   changePercent: parseFloat(fmpData.changesPercentage) || 0,
                   volume: parseInt(fmpData.volume) || 0,
                   ...symbolInfo,
-                  supportedByCommodityPriceAPI: false
+                  supportedByFMP: true
                 };
               } else {
                 return {
@@ -435,17 +326,18 @@ serve(async (req) => {
                   changePercent: 0,
                   volume: 0,
                   ...symbolInfo,
-                  supportedByCommodityPriceAPI: false
+                  supportedByFMP: false
                 };
               }
             });
           } else {
             throw new Error('No data returned from FMP API');
           }
-        } catch (error) {
-          console.warn('FMP API failed, using fallback data:', error);
-        }
+      } catch (error) {
+        console.warn('FMP API failed, using fallback data:', error);
       }
+    } else {
+      console.log('No FMP API key, using static fallback data');
     }
 
     // Use static fallback if both APIs failed
@@ -461,7 +353,7 @@ serve(async (req) => {
           changePercent: 0,
           volume: 0,
           ...COMMODITY_SYMBOLS[name],
-          supportedByCommodityPriceAPI: !!COMMODITY_PRICE_API_SYMBOLS[name]
+          supportedByFMP: false
         };
       });
     }
@@ -484,7 +376,7 @@ serve(async (req) => {
         timestamp: currentTimestamp,
         dataDelay: dataDelay,
         isDelayed: dataDelay === '15min',
-        usedCommodityPriceAPI: useCommodityPriceAPI
+        usedFMP: dataSource === 'fmp'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

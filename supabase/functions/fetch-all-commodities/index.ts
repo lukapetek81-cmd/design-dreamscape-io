@@ -259,101 +259,84 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     
     let isPremium = false;
-    let commodityPriceAPIKey = null;
     
     if (user && !userError) {
       const { data: profile } = await supabaseClient
         .from('profiles')
-        .select('subscription_active, subscription_tier, commodity_price_api_credentials')
+        .select('subscription_active, subscription_tier')
         .eq('id', user.id)
         .single();
       
       isPremium = profile?.subscription_active && profile?.subscription_tier === 'premium';
-      commodityPriceAPIKey = profile?.commodity_price_api_credentials;
     }
 
     let commoditiesData: any[] = []
     let dataSource = 'fallback';
 
-    // Try CommodityPriceAPI first if premium user with credentials
-    if (isPremium && commodityPriceAPIKey) {
+    // Use FMP API as primary source
+    const fmpApiKey = Deno.env.get('FMP_API_KEY');
+    if (fmpApiKey && fmpApiKey !== 'demo') {
       try {
-        console.log('Using CommodityPriceAPI for commodities (premium user with credentials)');
+        console.log('Using FMP API for commodities');
         
-        // Decrypt the API key
-        const { data: decryptedKey, error: decryptError } = await supabaseClient.functions.invoke('decrypt-api-key', {
-          body: { encryptedKey: commodityPriceAPIKey }
-        });
+        // Get all commodity symbols for batch request
+        const commoditySymbols = Object.values(COMMODITY_SYMBOLS).map(c => c.symbol);
+        const symbolsQuery = commoditySymbols.join(',');
         
-        if (decryptError || !decryptedKey) {
-          console.error('Failed to decrypt CommodityPriceAPI key:', decryptError);
-          throw new Error('Failed to decrypt CommodityPriceAPI key');
-        }
-
-        console.log('Successfully decrypted API key, length:', decryptedKey.key?.length);
-
-        console.log('Fetching commodity prices from CommodityPriceAPI');
+        console.log(`Requesting prices for FMP symbols: ${symbolsQuery}`);
         
-        // Get prices for the symbols we support
-        const supportedSymbols = Object.keys(COMMODITY_PRICE_API_SYMBOLS);
-        const symbolsQuery = supportedSymbols.join(',');
+        const pricesResponse = await fetch(`https://financialmodelingprep.com/api/v3/quote/${symbolsQuery}?apikey=${fmpApiKey}`);
         
-        console.log(`Requesting prices for symbols: ${symbolsQuery}`);
-        
-        const pricesResponse = await fetch(`https://api.commoditypriceapi.com/v2/rates/latest?symbols=${symbolsQuery}`, {
-          headers: {
-            'x-api-key': decryptedKey.key,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        console.log('CommodityPriceAPI prices response status:', pricesResponse.status);
+        console.log('FMP API prices response status:', pricesResponse.status);
         
         if (!pricesResponse.ok) {
           const errorText = await pricesResponse.text();
-          console.error('CommodityPriceAPI prices error response:', errorText);
-          throw new Error(`CommodityPriceAPI prices error: ${pricesResponse.status} - ${errorText}`);
+          console.error('FMP API prices error response:', errorText);
+          throw new Error(`FMP API prices error: ${pricesResponse.status} - ${errorText}`);
         }
         
         const pricesData = await pricesResponse.json();
         
-        if (pricesData.success && pricesData.rates) {
-          console.log(`CommodityPriceAPI returned prices for ${Object.keys(pricesData.rates).length} symbols`);
+        if (Array.isArray(pricesData) && pricesData.length > 0) {
+          console.log(`FMP API returned prices for ${pricesData.length} symbols`);
           
-          // Process all supported symbols from CommodityPriceAPI
-          commoditiesData = Object.entries(COMMODITY_PRICE_API_SYMBOLS).map(([symbol, mappedName]) => {
-            const price = pricesData.rates[symbol] || 0;
+          // Process FMP data
+          commoditiesData = Object.entries(COMMODITY_SYMBOLS).map(([name, metadata]) => {
+            const fmpData = pricesData.find(quote => quote.symbol === metadata.symbol);
             
-            // Get existing metadata or auto-categorize
-            const existingMetadata = COMMODITY_SYMBOLS[mappedName];
-            const metadata = existingMetadata || {
-              symbol: symbol,
-              ...categorizeSymbol(mappedName)
-            };
-            
-            return generateEnhancedData({
-              symbol: metadata.symbol,
-              price: price,
-              change: 0, // CommodityPriceAPI doesn't provide change data
-              changePercent: 0, // CommodityPriceAPI doesn't provide change data
-              volume: 0, // CommodityPriceAPI doesn't provide volume
-            }, mappedName);
+            if (fmpData) {
+              return generateEnhancedData({
+                symbol: metadata.symbol,
+                price: parseFloat(fmpData.price) || 0,
+                change: parseFloat(fmpData.change) || 0,
+                changePercent: parseFloat(fmpData.changesPercentage) || 0,
+                volume: parseInt(fmpData.volume) || 0,
+              }, name);
+            } else {
+              // Return commodity with zero values if no FMP data
+              return generateEnhancedData({
+                symbol: metadata.symbol,
+                price: 0,
+                change: 0,
+                changePercent: 0,
+                volume: 0,
+              }, name);
+            }
           });
           
-          dataSource = 'commoditypriceapi';
-          console.log(`Processed ${commoditiesData.length} commodities from CommodityPriceAPI`);
+          dataSource = 'fmp';
+          console.log(`Processed ${commoditiesData.length} commodities from FMP API`);
         } else {
-          throw new Error('No price data returned from CommodityPriceAPI');
+          throw new Error('No price data returned from FMP API');
         }
       } catch (error) {
-        console.error('CommodityPriceAPI failed:', error);
-        throw new Error(`CommodityPriceAPI error: ${error.message}`);
+        console.error('FMP API failed:', error);
+        // Don't throw, fall back to fallback data
+        console.log('Falling back to fallback data due to FMP API error');
       }
-    } else {
-      throw new Error('CommodityPriceAPI access requires premium subscription and valid API credentials');
     }
 
-    // Use fallback data if both APIs failed
+    // Use fallback data if FMP API failed
     if (commoditiesData.length === 0) {
       console.log('Generating minimal fallback commodity data (no mock values)');
       commoditiesData = Object.keys(COMMODITY_SYMBOLS).map(name => {

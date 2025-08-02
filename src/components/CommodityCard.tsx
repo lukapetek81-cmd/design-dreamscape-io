@@ -10,7 +10,7 @@ import { useCommodityPrice } from '@/hooks/useCommodityData';
 import { useRealtimeDataContext } from '@/contexts/RealtimeDataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { getMarketStatus } from '@/lib/marketHours';
-import { useCommodityPriceAPI } from '@/contexts/CommodityPriceAPIContext';
+
 
 interface CommodityCardProps {
   name: string;
@@ -37,19 +37,15 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
   // Use real-time data context
   const { getPriceForCommodity, isLiveData, connected: realtimeConnected } = useRealtimeDataContext();
   
-  // Use CommodityPriceAPI data
-  const { prices: commodityAPIPrices, connected: apiConnected } = useCommodityPriceAPI();
-  const commodityAPIPrice = commodityAPIPrices[name];
-  
-  // Use real-time data context (now powered by CommodityPriceAPI)
+  // Use real-time data context
   const realtimePrice = getPriceForCommodity(name);
   
-  // Use CommodityPriceAPI price if available, otherwise fall back to other sources
-  const currentPrice = realtimePrice?.price ?? commodityAPIPrice?.price ?? apiPrice?.price ?? fallbackPrice;
+  // Use price from real-time context or fall back to API price
+  const currentPrice = realtimePrice?.price ?? apiPrice?.price ?? fallbackPrice;
   const currentChange = realtimePrice?.changePercent ?? fallbackChange;
   const isPositive = currentChange >= 0;
   const isRealTime = isPremium && isLiveData(name);
-  const isAPILive = isPremium && apiConnected && !!commodityAPIPrice;
+  const isAPILive = isPremium && realtimeConnected;
 
   // Function to get the appropriate price units based on commodity name
   const getPriceUnits = (commodityName: string) => {

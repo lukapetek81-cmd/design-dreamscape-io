@@ -5,7 +5,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Menu } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
-import { APIPriceComparison } from '@/components/APIPriceComparison';
+
 import UserProfile from '@/components/UserProfile';
 
 const APIComparison = () => {
@@ -49,7 +49,10 @@ const APIComparison = () => {
           {/* Main Content */}
           <main className="flex-1 container px-3 sm:px-4 md:px-6 py-6 space-y-8">
             <div className="max-w-6xl mx-auto space-y-8">
-              <APIPriceComparison />
+              <div className="text-center py-8">
+                <h2 className="text-2xl font-bold mb-4">API Comparison Removed</h2>
+                <p className="text-muted-foreground">API price comparison has been removed. All price data now comes from FMP API only.</p>
+              </div>
             </div>
           </main>
         </div>
