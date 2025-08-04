@@ -300,29 +300,23 @@ serve(async (req) => {
         if (Array.isArray(pricesData) && pricesData.length > 0) {
           console.log(`FMP API returned prices for ${pricesData.length} symbols`);
           
-          // Process FMP data
-          commoditiesData = Object.entries(COMMODITY_SYMBOLS).map(([name, metadata]) => {
-            const fmpData = pricesData.find(quote => quote.symbol === metadata.symbol);
-            
-            if (fmpData) {
-              return generateEnhancedData({
-                symbol: metadata.symbol,
-                price: parseFloat(fmpData.price) || 0,
-                change: parseFloat(fmpData.change) || 0,
-                changePercent: parseFloat(fmpData.changesPercentage) || 0,
-                volume: parseInt(fmpData.volume) || 0,
-              }, name);
-            } else {
-              // Return commodity with zero values if no FMP data
-              return generateEnhancedData({
-                symbol: metadata.symbol,
-                price: 0,
-                change: 0,
-                changePercent: 0,
-                volume: 0,
-              }, name);
-            }
-          });
+          // Process FMP data - only include commodities with actual FMP data
+          commoditiesData = Object.entries(COMMODITY_SYMBOLS)
+            .map(([name, metadata]) => {
+              const fmpData = pricesData.find(quote => quote.symbol === metadata.symbol);
+              
+              if (fmpData) {
+                return generateEnhancedData({
+                  symbol: metadata.symbol,
+                  price: parseFloat(fmpData.price) || 0,
+                  change: parseFloat(fmpData.change) || 0,
+                  changePercent: parseFloat(fmpData.changesPercentage) || 0,
+                  volume: parseInt(fmpData.volume) || 0,
+                }, name);
+              }
+              return null; // Will be filtered out
+            })
+            .filter(Boolean); // Remove null entries (commodities without FMP data)
           
           dataSource = 'fmp';
           console.log(`Processed ${commoditiesData.length} commodities from FMP API`);
@@ -336,18 +330,24 @@ serve(async (req) => {
       }
     }
 
-    // Use fallback data if FMP API failed
+    // Use limited fallback data if FMP API failed - only core commodities
     if (commoditiesData.length === 0) {
-      console.log('Generating minimal fallback commodity data (no mock values)');
-      commoditiesData = Object.keys(COMMODITY_SYMBOLS).map(name => {
-        return generateEnhancedData({
-          symbol: COMMODITY_SYMBOLS[name].symbol,
-          price: 0, // Will show as missing
-          change: 0,
-          changePercent: 0,
-          volume: 0, // Will show as missing
-        }, name);
-      });
+      console.log('Generating limited fallback commodity data (core commodities only)');
+      const corecommodities = [
+        'Crude Oil', 'Natural Gas', 'Gold Futures', 'Silver Futures', 
+        'Corn Futures', 'Wheat Futures', 'Coffee'
+      ];
+      commoditiesData = corecommodities
+        .filter(name => COMMODITY_SYMBOLS[name])
+        .map(name => {
+          return generateEnhancedData({
+            symbol: COMMODITY_SYMBOLS[name].symbol,
+            price: 0, // Will show as missing
+            change: 0,
+            changePercent: 0,
+            volume: 0, // Will show as missing
+          }, name);
+        });
     }
 
     // Apply data delay for free users

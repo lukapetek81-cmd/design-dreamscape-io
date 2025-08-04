@@ -299,37 +299,30 @@ serve(async (req) => {
             console.log(`FMP returned ${data.length} commodities`);
             dataSource = 'fmp';
             
-            commoditiesData = Object.keys(COMMODITY_SYMBOLS).map(name => {
-              const symbolInfo = COMMODITY_SYMBOLS[name];
-              const fmpData = data.find(item => 
-                item.symbol === symbolInfo.symbol || 
-                item.name?.toLowerCase().includes(name.toLowerCase().split(' ')[0])
-              );
-              
-              if (fmpData) {
-                return {
-                  name,
-                  symbol: fmpData.symbol,
-                  price: parseFloat(fmpData.price) || 0,
-                  change: parseFloat(fmpData.change) || 0,
-                  changePercent: parseFloat(fmpData.changesPercentage) || 0,
-                  volume: parseInt(fmpData.volume) || 0,
-                  ...symbolInfo,
-                  supportedByFMP: true
-                };
-              } else {
-                return {
-                  name,
-                  symbol: symbolInfo.symbol,
-                  price: 0,
-                  change: 0,
-                  changePercent: 0,
-                  volume: 0,
-                  ...symbolInfo,
-                  supportedByFMP: false
-                };
-              }
-            });
+            // Only include commodities that FMP actually returns data for
+            commoditiesData = Object.keys(COMMODITY_SYMBOLS)
+              .map(name => {
+                const symbolInfo = COMMODITY_SYMBOLS[name];
+                const fmpData = data.find(item => 
+                  item.symbol === symbolInfo.symbol || 
+                  item.name?.toLowerCase().includes(name.toLowerCase().split(' ')[0])
+                );
+                
+                if (fmpData) {
+                  return {
+                    name,
+                    symbol: fmpData.symbol,
+                    price: parseFloat(fmpData.price) || 0,
+                    change: parseFloat(fmpData.change) || 0,
+                    changePercent: parseFloat(fmpData.changesPercentage) || 0,
+                    volume: parseInt(fmpData.volume) || 0,
+                    ...symbolInfo,
+                    supportedByFMP: true
+                  };
+                }
+                return null; // Will be filtered out
+              })
+              .filter(Boolean); // Remove null entries (unsupported commodities)
           } else {
             throw new Error('No data returned from FMP API');
           }
@@ -340,22 +333,28 @@ serve(async (req) => {
       console.log('No FMP API key, using static fallback data');
     }
 
-    // Use static fallback if both APIs failed
+    // Use limited fallback if FMP API failed - only show a few core commodities
     if (commoditiesData.length === 0) {
-      console.log('Using static fallback commodity data');
+      console.log('Using limited fallback commodity data (core commodities only)');
       dataSource = 'static';
-      commoditiesData = Object.keys(COMMODITY_SYMBOLS).map(name => {
-        return {
-          name,
-          symbol: COMMODITY_SYMBOLS[name].symbol,
-          price: 0,
-          change: 0,
-          changePercent: 0,
-          volume: 0,
-          ...COMMODITY_SYMBOLS[name],
-          supportedByFMP: false
-        };
-      });
+      const corecommodities = [
+        'Crude Oil', 'Natural Gas', 'Gold Futures', 'Silver Futures', 
+        'Corn Futures', 'Wheat Futures', 'Coffee'
+      ];
+      commoditiesData = corecommodities
+        .filter(name => COMMODITY_SYMBOLS[name])
+        .map(name => {
+          return {
+            name,
+            symbol: COMMODITY_SYMBOLS[name].symbol,
+            price: 0,
+            change: 0,
+            changePercent: 0,
+            volume: 0,
+            ...COMMODITY_SYMBOLS[name],
+            supportedByFMP: false
+          };
+        });
     }
 
     // Apply data delay for free users
