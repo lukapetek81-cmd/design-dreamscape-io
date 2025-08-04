@@ -45,124 +45,8 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
   const [isHovered, setIsHovered] = React.useState(false);
   const [selectedContract, setSelectedContract] = React.useState<string>(symbol);
   
-  // Fetch available futures contracts from both FMP and IBKR
-  const { data: fmpContracts, isLoading: fmpLoading } = useQuery({
-    queryKey: ['fmp-contracts', name],
-    queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke('fetch-commodity-symbols', {
-        body: { dataDelay: 'realtime' }
-      });
-      
-      if (error) throw new Error(error.message);
-      
-      // Filter contracts that match this specific commodity
-      const contracts = data.commodities as FuturesContract[];
-      return contracts.filter(contract => {
-        const contractName = contract.name.toLowerCase();
-        const cardName = name.toLowerCase();
-        
-        // Exact matching for specific commodities
-        if (cardName.includes('crude oil') || cardName === 'crude oil') {
-          return contractName.includes('crude oil') && !contractName.includes('heating');
-        }
-        
-        if (cardName.includes('brent crude') || cardName === 'brent crude oil') {
-          return contractName.includes('brent crude');
-        }
-        
-        if (cardName.includes('heating oil') || cardName === 'heating oil') {
-          return contractName.includes('heating oil');
-        }
-        
-        if (cardName.includes('gasoline') || cardName.includes('rbob')) {
-          return contractName.includes('gasoline') || contractName.includes('rbob');
-        }
-        
-        if (cardName.includes('natural gas') || cardName === 'natural gas') {
-          return contractName.includes('natural gas') && !contractName.includes('gasoline');
-        }
-        
-        if (cardName === 'gold' || cardName.includes('gold futures')) {
-          return contractName === 'gold futures' || contractName.includes('gold') && !contractName.includes('micro');
-        }
-        
-        if (cardName.includes('micro gold')) {
-          return contractName.includes('micro gold');
-        }
-        
-        if (cardName === 'silver' || cardName.includes('silver futures')) {
-          return contractName.includes('silver') && !contractName.includes('micro');
-        }
-        
-        if (cardName.includes('micro silver')) {
-          return contractName.includes('micro silver');
-        }
-        
-        if (cardName.includes('copper')) {
-          return contractName.includes('copper');
-        }
-        
-        if (cardName.includes('platinum')) {
-          return contractName.includes('platinum');
-        }
-        
-        if (cardName.includes('palladium')) {
-          return contractName.includes('palladium');
-        }
-        
-        if (cardName.includes('corn')) {
-          return contractName.includes('corn') && !contractName.includes('cotton');
-        }
-        
-        if (cardName.includes('wheat')) {
-          return contractName.includes('wheat');
-        }
-        
-        if (cardName.includes('soybean')) {
-          return contractName.includes('soybean');
-        }
-        
-        if (cardName.includes('cotton')) {
-          return contractName.includes('cotton');
-        }
-        
-        if (cardName.includes('sugar')) {
-          return contractName.includes('sugar');
-        }
-        
-        if (cardName.includes('coffee')) {
-          return contractName.includes('coffee');
-        }
-        
-        if (cardName.includes('cocoa')) {
-          return contractName.includes('cocoa');
-        }
-        
-        if (cardName.includes('orange juice')) {
-          return contractName.includes('orange juice');
-        }
-        
-        if (cardName.includes('live cattle')) {
-          return contractName.includes('live cattle');
-        }
-        
-        if (cardName.includes('lean hogs') || cardName.includes('hogs')) {
-          return contractName.includes('hogs');
-        }
-        
-        if (cardName.includes('lumber')) {
-          return contractName.includes('lumber');
-        }
-        
-        // Exact name match as fallback
-        return contractName === cardName;
-      });
-    },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-  });
-
-  // Fetch IBKR contracts
-  const { data: ibkrData, isLoading: ibkrLoading } = useQuery({
+  // Fetch IBKR contracts exclusively
+  const { data: availableContracts, isLoading: contractsLoading } = useQuery({
     queryKey: ['ibkr-contracts', name],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke('fetch-ibkr-futures', {
@@ -170,39 +54,21 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
       });
       
       if (error) throw new Error(error.message);
-      return data.contracts as FuturesContract[];
+      
+      // Add IBKR source to all contracts and sort by expiration date
+      const contracts = (data.contracts as FuturesContract[]).map(contract => ({
+        ...contract,
+        source: 'IBKR'
+      }));
+      
+      // Sort by expiration date (nearest first)
+      return contracts.sort((a, b) => {
+        if (!a.expirationDate || !b.expirationDate) return 0;
+        return new Date(a.expirationDate).getTime() - new Date(b.expirationDate).getTime();
+      });
     },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
-
-  // Combine contracts from both sources
-  const availableContracts = React.useMemo(() => {
-    const combined: FuturesContract[] = [];
-    
-    // Add FMP contracts
-    if (fmpContracts) {
-      combined.push(...fmpContracts.map(contract => ({
-        ...contract,
-        source: 'FMP'
-      })));
-    }
-    
-    // Add IBKR contracts
-    if (ibkrData) {
-      combined.push(...ibkrData.map(contract => ({
-        ...contract,
-        source: 'IBKR'
-      })));
-    }
-    
-    // Sort by expiration date (nearest first)
-    return combined.sort((a, b) => {
-      if (!a.expirationDate || !b.expirationDate) return 0;
-      return new Date(a.expirationDate).getTime() - new Date(b.expirationDate).getTime();
-    });
-  }, [fmpContracts, ibkrData]);
-
-  const contractsLoading = fmpLoading || ibkrLoading;
 
   const { data: apiPrice, isLoading: priceLoading } = useCommodityPrice(name);
   const { profile } = useAuth();
@@ -382,16 +248,12 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                         </SelectTrigger>
                         <SelectContent>
                           {availableContracts.map((contract) => (
-                            <SelectItem key={`${contract.symbol}-${contract.source || 'unknown'}`} value={contract.symbol}>
+                            <SelectItem key={contract.symbol} value={contract.symbol}>
                               <div className="flex flex-col">
                                 <div className="flex items-center gap-2">
                                   <span className="font-medium">{contract.symbol}</span>
-                                  <span className={`text-xs px-1.5 py-0.5 rounded ${
-                                    contract.source === 'IBKR' 
-                                      ? 'bg-blue-100 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400' 
-                                      : 'bg-green-100 dark:bg-green-950/20 text-green-700 dark:text-green-400'
-                                  }`}>
-                                    {contract.source || 'FMP'}
+                                  <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400">
+                                    IBKR
                                   </span>
                                 </div>
                                 <span className="text-xs text-muted-foreground">
