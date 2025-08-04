@@ -235,30 +235,57 @@ serve(async (req) => {
     let priceData = null
     let dataSource = 'fallback'
 
-    // Use FMP API as primary source
+    // Use FMP API as primary source - get the symbol directly from FMP's commodity list
     const fmpApiKey = Deno.env.get('FMP_API_KEY')
-    const fmpSymbol = FMP_SYMBOLS[commodityName]
     
-    if (fmpApiKey && fmpApiKey !== 'demo' && fmpSymbol) {
+    if (fmpApiKey && fmpApiKey !== 'demo') {
       try {
-        console.log(`Using FMP API for ${commodityName} with symbol ${fmpSymbol}`)
+        console.log(`Using FMP API to find current price for ${commodityName}`)
         
-        const endpoint = `https://financialmodelingprep.com/api/v3/quote/${fmpSymbol}?apikey=${fmpApiKey}`
-        const response = await fetch(endpoint)
+        // First, get all available commodities to find the correct symbol
+        const commoditiesResponse = await fetch(
+          `https://financialmodelingprep.com/api/v3/quotes/commodity?apikey=${fmpApiKey}`
+        )
         
-        if (response.ok) {
-          const data = await response.json()
-          if (Array.isArray(data) && data.length > 0) {
-            const quote = data[0]
-            priceData = {
-              symbol: fmpSymbol,
-              price: parseFloat(quote.price) || 0,
-              change: parseFloat(quote.change) || 0,
-              changePercent: parseFloat(quote.changesPercentage) || 0,
-              lastUpdate: new Date().toISOString()
+        if (commoditiesResponse.ok) {
+          const commoditiesData = await commoditiesResponse.json()
+          
+          if (Array.isArray(commoditiesData) && commoditiesData.length > 0) {
+            // Find the matching commodity from FMP's list
+            const fmpCommodity = commoditiesData.find(item => {
+              // Try exact name match first
+              if (item.name && item.name.toLowerCase() === commodityName.toLowerCase()) {
+                return true;
+              }
+              
+              // Try symbol match with our hardcoded mapping as fallback
+              const hardcodedSymbol = FMP_SYMBOLS[commodityName];
+              if (hardcodedSymbol && item.symbol === hardcodedSymbol) {
+                return true;
+              }
+              
+              // Try partial name matching
+              const itemNameLower = (item.name || '').toLowerCase();
+              const commodityNameLower = commodityName.toLowerCase();
+              
+              // Extract key words for matching
+              const commodityWords = commodityNameLower.split(' ').filter(w => w.length > 2);
+              return commodityWords.some(word => itemNameLower.includes(word));
+            });
+            
+            if (fmpCommodity) {
+              priceData = {
+                symbol: fmpCommodity.symbol,
+                price: parseFloat(fmpCommodity.price) || 0,
+                change: parseFloat(fmpCommodity.change) || 0,
+                changePercent: parseFloat(fmpCommodity.changesPercentage) || 0,
+                lastUpdate: new Date().toISOString()
+              }
+              dataSource = 'fmp'
+              console.log(`Successfully fetched from FMP:`, priceData)
+            } else {
+              console.log(`No FMP commodity found matching "${commodityName}"`)
             }
-            dataSource = 'fmp'
-            console.log(`Successfully fetched from FMP:`, priceData)
           }
         }
       } catch (error) {
