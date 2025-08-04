@@ -117,12 +117,12 @@ export const useCommodityPrice = (commodityName: string) => {
   });
 };
 
-export const useCommodityHistoricalData = (commodityName: string, timeframe: string, chartType: string = 'line') => {
+export const useCommodityHistoricalData = (commodityName: string, timeframe: string, chartType: string = 'line', contractSymbol?: string) => {
   const { profile } = useAuth();
   const { getDataDelay, shouldDelayData } = useDelayedData();
   
   return useQuery({
-    queryKey: ['commodity-historical', commodityName, timeframe, chartType, getDataDelay()],
+    queryKey: ['commodity-historical', commodityName, timeframe, chartType, contractSymbol, getDataDelay()],
     queryFn: async (): Promise<{ data: CommodityHistoricalData[], loading: boolean, error: string | null }> => {
       try {
         const isPremium = profile?.subscription_active && profile?.subscription_tier === 'premium';
@@ -133,7 +133,8 @@ export const useCommodityHistoricalData = (commodityName: string, timeframe: str
             timeframe, 
             isPremium,
             chartType,
-            dataDelay: getDataDelay()
+            dataDelay: getDataDelay(),
+            contractSymbol
           }
         });
 

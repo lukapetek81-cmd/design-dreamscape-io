@@ -464,7 +464,7 @@ serve(async (req) => {
   }
 
   try {
-    const { commodityName, timeframe, isPremium, chartType, dataDelay = 'realtime' } = await req.json()
+    const { commodityName, timeframe, isPremium, chartType, dataDelay = 'realtime', contractSymbol } = await req.json()
     
     if (!commodityName || !timeframe) {
       return new Response(
@@ -473,12 +473,13 @@ serve(async (req) => {
       )
     }
 
-    console.log(`Fetching data for ${commodityName}, timeframe: ${timeframe}, chartType: ${chartType || 'line'} with ${dataDelay} data (Premium: ${isPremium || false})`)
+    console.log(`Fetching data for ${commodityName}${contractSymbol ? ` (${contractSymbol})` : ''}, timeframe: ${timeframe}, chartType: ${chartType || 'line'} with ${dataDelay} data (Premium: ${isPremium || false})`)
 
     // Get FMP API key from Supabase secrets
     const fmpApiKey = Deno.env.get('FMP_API_KEY')
     
-    const symbol = COMMODITY_SYMBOLS[commodityName]
+    // Use contract symbol if provided, otherwise fall back to commodity mapping
+    const symbol = contractSymbol || COMMODITY_SYMBOLS[commodityName]
     if (!symbol) {
       throw new Error(`Commodity ${commodityName} not found`)
     }

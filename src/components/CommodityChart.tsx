@@ -39,7 +39,7 @@ const CommodityChart = ({ name, basePrice, selectedContract, contractData }: Com
   const [isLandscape, setIsLandscape] = React.useState(false);
   const isMobile = useIsMobile();
   
-  const { data: queryData, isLoading: loading, error: queryError } = useCommodityHistoricalData(name, selectedTimeframe, chartType);
+  const { data: queryData, isLoading: loading, error: queryError } = useCommodityHistoricalData(name, selectedTimeframe, chartType, selectedContract);
   const { data: currentPrice } = useCommodityPrice(name);
   const { profile } = useAuth();
 
