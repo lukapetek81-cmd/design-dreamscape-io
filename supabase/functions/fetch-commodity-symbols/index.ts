@@ -285,47 +285,53 @@ serve(async (req) => {
     if (fmpApiKey && fmpApiKey !== 'demo') {
       try {
         console.log('Using FMP for symbols');
-          const response = await fetch(
-            `https://financialmodelingprep.com/api/v3/quotes/commodity?apikey=${fmpApiKey}`
-          );
+        
+        // Fetch available commodities directly from FMP
+        const response = await fetch(
+          `https://financialmodelingprep.com/api/v3/quotes/commodity?apikey=${fmpApiKey}`
+        );
+        
+        if (!response.ok) {
+          throw new Error(`FMP API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (Array.isArray(data) && data.length > 0) {
+          console.log(`FMP returned ${data.length} commodities`);
+          dataSource = 'fmp';
           
-          if (!response.ok) {
-            throw new Error(`FMP API error: ${response.status}`);
-          }
-          
-          const data = await response.json();
-          
-          if (Array.isArray(data) && data.length > 0) {
-            console.log(`FMP returned ${data.length} commodities`);
-            dataSource = 'fmp';
+          // Build commodity list from FMP data, using our category mappings where available
+          commoditiesData = data.map(fmpItem => {
+            // Try to find a match in our static mapping for additional metadata
+            const matchedCommodity = Object.entries(COMMODITY_SYMBOLS).find(([name, info]) => 
+              info.symbol === fmpItem.symbol || 
+              name.toLowerCase().includes(fmpItem.name?.toLowerCase().split(' ')[0] || '')
+            );
             
-            // Only include commodities that FMP actually returns data for
-            commoditiesData = Object.keys(COMMODITY_SYMBOLS)
-              .map(name => {
-                const symbolInfo = COMMODITY_SYMBOLS[name];
-                const fmpData = data.find(item => 
-                  item.symbol === symbolInfo.symbol || 
-                  item.name?.toLowerCase().includes(name.toLowerCase().split(' ')[0])
-                );
-                
-                if (fmpData) {
-                  return {
-                    name,
-                    symbol: fmpData.symbol,
-                    price: parseFloat(fmpData.price) || 0,
-                    change: parseFloat(fmpData.change) || 0,
-                    changePercent: parseFloat(fmpData.changesPercentage) || 0,
-                    volume: parseInt(fmpData.volume) || 0,
-                    ...symbolInfo,
-                    supportedByFMP: true
-                  };
-                }
-                return null; // Will be filtered out
-              })
-              .filter(Boolean); // Remove null entries (unsupported commodities)
-          } else {
-            throw new Error('No data returned from FMP API');
-          }
+            const commodityName = matchedCommodity ? matchedCommodity[0] : 
+              (fmpItem.name || fmpItem.symbol.replace('=F', ' Futures'));
+            
+            const metadata = matchedCommodity ? matchedCommodity[1] : {
+              category: 'other',
+              contractSize: 'TBD',
+              venue: 'Various'
+            };
+            
+            return {
+              name: commodityName,
+              symbol: fmpItem.symbol,
+              price: parseFloat(fmpItem.price) || 0,
+              change: parseFloat(fmpItem.change) || 0,
+              changePercent: parseFloat(fmpItem.changesPercentage) || 0,
+              volume: parseInt(fmpItem.volume) || 0,
+              ...metadata,
+              supportedByFMP: true
+            };
+          });
+        } else {
+          throw new Error('No data returned from FMP API');
+        }
       } catch (error) {
         console.warn('FMP API failed, using fallback data:', error);
       }

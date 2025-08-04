@@ -279,49 +279,55 @@ serve(async (req) => {
       try {
         console.log('Using FMP API for commodities');
         
-        // Get all commodity symbols for batch request
-        const commoditySymbols = Object.values(COMMODITY_SYMBOLS).map(c => c.symbol);
-        const symbolsQuery = commoditySymbols.join(',');
+        // Get all commodities directly from FMP
+        const commoditiesResponse = await fetch(
+          `https://financialmodelingprep.com/api/v3/quotes/commodity?apikey=${fmpApiKey}`
+        );
         
-        console.log(`Requesting prices for FMP symbols: ${symbolsQuery}`);
+        console.log('FMP API commodities response status:', commoditiesResponse.status);
         
-        const pricesResponse = await fetch(`https://financialmodelingprep.com/api/v3/quote/${symbolsQuery}?apikey=${fmpApiKey}`);
-        
-        console.log('FMP API prices response status:', pricesResponse.status);
-        
-        if (!pricesResponse.ok) {
-          const errorText = await pricesResponse.text();
-          console.error('FMP API prices error response:', errorText);
-          throw new Error(`FMP API prices error: ${pricesResponse.status} - ${errorText}`);
+        if (!commoditiesResponse.ok) {
+          const errorText = await commoditiesResponse.text();
+          console.error('FMP API commodities error response:', errorText);
+          throw new Error(`FMP API commodities error: ${commoditiesResponse.status} - ${errorText}`);
         }
         
-        const pricesData = await pricesResponse.json();
+        const commoditiesData = await commoditiesResponse.json();
         
-        if (Array.isArray(pricesData) && pricesData.length > 0) {
-          console.log(`FMP API returned prices for ${pricesData.length} symbols`);
+        if (Array.isArray(commoditiesData) && commoditiesData.length > 0) {
+          console.log(`FMP API returned ${commoditiesData.length} commodities`);
           
-          // Process FMP data - only include commodities with actual FMP data
-          commoditiesData = Object.entries(COMMODITY_SYMBOLS)
-            .map(([name, metadata]) => {
-              const fmpData = pricesData.find(quote => quote.symbol === metadata.symbol);
-              
-              if (fmpData) {
-                return generateEnhancedData({
-                  symbol: metadata.symbol,
-                  price: parseFloat(fmpData.price) || 0,
-                  change: parseFloat(fmpData.change) || 0,
-                  changePercent: parseFloat(fmpData.changesPercentage) || 0,
-                  volume: parseInt(fmpData.volume) || 0,
-                }, name);
-              }
-              return null; // Will be filtered out
-            })
-            .filter(Boolean); // Remove null entries (commodities without FMP data)
+          // Process FMP data - build from what FMP provides, enhanced with our metadata
+          commoditiesData = commoditiesData.map(fmpItem => {
+            // Try to find a match in our static mapping for additional metadata
+            const matchedCommodity = Object.entries(COMMODITY_SYMBOLS).find(([name, info]) => 
+              info.symbol === fmpItem.symbol || 
+              name.toLowerCase().includes(fmpItem.name?.toLowerCase().split(' ')[0] || '')
+            );
+            
+            const commodityName = matchedCommodity ? matchedCommodity[0] : 
+              (fmpItem.name || fmpItem.symbol.replace('=F', ' Futures'));
+            
+            const metadata = matchedCommodity ? matchedCommodity[1] : {
+              category: 'other',
+              contractSize: 'TBD',
+              venue: 'Various'
+            };
+            
+            return generateEnhancedData({
+              symbol: fmpItem.symbol,
+              price: parseFloat(fmpItem.price) || 0,
+              change: parseFloat(fmpItem.change) || 0,
+              changePercent: parseFloat(fmpItem.changesPercentage) || 0,
+              volume: parseInt(fmpItem.volume) || 0,
+              ...metadata
+            }, commodityName);
+          });
           
           dataSource = 'fmp';
           console.log(`Processed ${commoditiesData.length} commodities from FMP API`);
         } else {
-          throw new Error('No price data returned from FMP API');
+          throw new Error('No commodity data returned from FMP API');
         }
       } catch (error) {
         console.error('FMP API failed:', error);
