@@ -54,17 +54,108 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
       
       if (error) throw new Error(error.message);
       
-      // Filter contracts that match this commodity name or are related
+      // Filter contracts that match this specific commodity
       const contracts = data.commodities as FuturesContract[];
-      return contracts.filter(contract => 
-        contract.name.toLowerCase().includes(name.toLowerCase()) ||
-        name.toLowerCase().includes(contract.name.toLowerCase().split(' ')[0]) ||
-        (name.toLowerCase().includes('crude') && contract.name.toLowerCase().includes('crude')) ||
-        (name.toLowerCase().includes('oil') && contract.name.toLowerCase().includes('oil')) ||
-        (name.toLowerCase().includes('gas') && contract.name.toLowerCase().includes('gas')) ||
-        (name.toLowerCase().includes('gold') && contract.name.toLowerCase().includes('gold')) ||
-        (name.toLowerCase().includes('silver') && contract.name.toLowerCase().includes('silver'))
-      );
+      return contracts.filter(contract => {
+        const contractName = contract.name.toLowerCase();
+        const cardName = name.toLowerCase();
+        
+        // Exact matching for specific commodities
+        if (cardName.includes('crude oil') || cardName === 'crude oil') {
+          return contractName.includes('crude oil') && !contractName.includes('heating');
+        }
+        
+        if (cardName.includes('brent crude') || cardName === 'brent crude oil') {
+          return contractName.includes('brent crude');
+        }
+        
+        if (cardName.includes('heating oil') || cardName === 'heating oil') {
+          return contractName.includes('heating oil');
+        }
+        
+        if (cardName.includes('gasoline') || cardName.includes('rbob')) {
+          return contractName.includes('gasoline') || contractName.includes('rbob');
+        }
+        
+        if (cardName.includes('natural gas') || cardName === 'natural gas') {
+          return contractName.includes('natural gas') && !contractName.includes('gasoline');
+        }
+        
+        if (cardName === 'gold' || cardName.includes('gold futures')) {
+          return contractName === 'gold futures' || contractName.includes('gold') && !contractName.includes('micro');
+        }
+        
+        if (cardName.includes('micro gold')) {
+          return contractName.includes('micro gold');
+        }
+        
+        if (cardName === 'silver' || cardName.includes('silver futures')) {
+          return contractName.includes('silver') && !contractName.includes('micro');
+        }
+        
+        if (cardName.includes('micro silver')) {
+          return contractName.includes('micro silver');
+        }
+        
+        if (cardName.includes('copper')) {
+          return contractName.includes('copper');
+        }
+        
+        if (cardName.includes('platinum')) {
+          return contractName.includes('platinum');
+        }
+        
+        if (cardName.includes('palladium')) {
+          return contractName.includes('palladium');
+        }
+        
+        if (cardName.includes('corn')) {
+          return contractName.includes('corn') && !contractName.includes('cotton');
+        }
+        
+        if (cardName.includes('wheat')) {
+          return contractName.includes('wheat');
+        }
+        
+        if (cardName.includes('soybean')) {
+          return contractName.includes('soybean');
+        }
+        
+        if (cardName.includes('cotton')) {
+          return contractName.includes('cotton');
+        }
+        
+        if (cardName.includes('sugar')) {
+          return contractName.includes('sugar');
+        }
+        
+        if (cardName.includes('coffee')) {
+          return contractName.includes('coffee');
+        }
+        
+        if (cardName.includes('cocoa')) {
+          return contractName.includes('cocoa');
+        }
+        
+        if (cardName.includes('orange juice')) {
+          return contractName.includes('orange juice');
+        }
+        
+        if (cardName.includes('live cattle')) {
+          return contractName.includes('live cattle');
+        }
+        
+        if (cardName.includes('lean hogs') || cardName.includes('hogs')) {
+          return contractName.includes('hogs');
+        }
+        
+        if (cardName.includes('lumber')) {
+          return contractName.includes('lumber');
+        }
+        
+        // Exact name match as fallback
+        return contractName === cardName;
+      });
     },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
