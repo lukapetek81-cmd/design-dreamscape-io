@@ -22,6 +22,7 @@ interface FuturesContract {
   venue: string;
   supportedByFMP: boolean;
   expirationDate?: string;
+  source?: string;
 }
 
 interface CommodityChartProps {

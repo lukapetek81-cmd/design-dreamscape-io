@@ -28,6 +28,7 @@ interface FuturesContract {
   venue: string;
   supportedByFMP: boolean;
   expirationDate?: string;
+  source?: string;
 }
 
 interface CommodityCardProps {
@@ -44,9 +45,9 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
   const [isHovered, setIsHovered] = React.useState(false);
   const [selectedContract, setSelectedContract] = React.useState<string>(symbol);
   
-  // Fetch available futures contracts for this commodity
-  const { data: availableContracts, isLoading: contractsLoading } = useQuery({
-    queryKey: ['futures-contracts', name],
+  // Fetch available futures contracts from both FMP and IBKR
+  const { data: fmpContracts, isLoading: fmpLoading } = useQuery({
+    queryKey: ['fmp-contracts', name],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke('fetch-commodity-symbols', {
         body: { dataDelay: 'realtime' }
@@ -159,6 +160,49 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
     },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
+
+  // Fetch IBKR contracts
+  const { data: ibkrData, isLoading: ibkrLoading } = useQuery({
+    queryKey: ['ibkr-contracts', name],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('fetch-ibkr-futures', {
+        body: { commodity: name }
+      });
+      
+      if (error) throw new Error(error.message);
+      return data.contracts as FuturesContract[];
+    },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+
+  // Combine contracts from both sources
+  const availableContracts = React.useMemo(() => {
+    const combined: FuturesContract[] = [];
+    
+    // Add FMP contracts
+    if (fmpContracts) {
+      combined.push(...fmpContracts.map(contract => ({
+        ...contract,
+        source: 'FMP'
+      })));
+    }
+    
+    // Add IBKR contracts
+    if (ibkrData) {
+      combined.push(...ibkrData.map(contract => ({
+        ...contract,
+        source: 'IBKR'
+      })));
+    }
+    
+    // Sort by expiration date (nearest first)
+    return combined.sort((a, b) => {
+      if (!a.expirationDate || !b.expirationDate) return 0;
+      return new Date(a.expirationDate).getTime() - new Date(b.expirationDate).getTime();
+    });
+  }, [fmpContracts, ibkrData]);
+
+  const contractsLoading = fmpLoading || ibkrLoading;
 
   const { data: apiPrice, isLoading: priceLoading } = useCommodityPrice(name);
   const { profile } = useAuth();
@@ -338,11 +382,21 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                         </SelectTrigger>
                         <SelectContent>
                           {availableContracts.map((contract) => (
-                            <SelectItem key={contract.symbol} value={contract.symbol}>
+                            <SelectItem key={`${contract.symbol}-${contract.source || 'unknown'}`} value={contract.symbol}>
                               <div className="flex flex-col">
-                                <span className="font-medium">{contract.symbol}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">{contract.symbol}</span>
+                                  <span className={`text-xs px-1.5 py-0.5 rounded ${
+                                    contract.source === 'IBKR' 
+                                      ? 'bg-blue-100 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400' 
+                                      : 'bg-green-100 dark:bg-green-950/20 text-green-700 dark:text-green-400'
+                                  }`}>
+                                    {contract.source || 'FMP'}
+                                  </span>
+                                </div>
                                 <span className="text-xs text-muted-foreground">
                                   ${formatPrice(contract.price, contract.name)} • Vol: {contract.volume.toLocaleString()}
+                                  {contract.expirationDate && ` • Exp: ${new Date(contract.expirationDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
                                 </span>
                               </div>
                             </SelectItem>
