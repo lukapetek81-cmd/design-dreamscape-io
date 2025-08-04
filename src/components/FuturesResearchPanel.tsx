@@ -1,11 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, CheckCircle, XCircle, Search } from 'lucide-react';
 import { useFuturesResearch } from '@/hooks/useFuturesResearch';
+import { AlphaVantageResearchPanel } from './AlphaVantageResearchPanel';
 
 export const FuturesResearchPanel = () => {
+  return (
+    <div className="w-full max-w-7xl mx-auto space-y-6">
+      <Tabs defaultValue="alpha-vantage" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="alpha-vantage">Alpha Vantage Research</TabsTrigger>
+          <TabsTrigger value="fmp">FMP Research</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="alpha-vantage" className="space-y-4">
+          <AlphaVantageResearchPanel />
+        </TabsContent>
+        
+        <TabsContent value="fmp" className="space-y-4">
+          <FMPResearchContent />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+const FMPResearchContent = () => {
   const { data, isLoading, error, refetch } = useFuturesResearch();
 
   if (isLoading) {
