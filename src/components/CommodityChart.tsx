@@ -10,12 +10,28 @@ import ChartContainer from './charts/ChartContainer';
 import ChartFooter from './charts/ChartFooter';
 import { X, Maximize2, BarChart3 } from 'lucide-react';
 
+interface FuturesContract {
+  name: string;
+  symbol: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  volume: number;
+  category: string;
+  contractSize: string;
+  venue: string;
+  supportedByFMP: boolean;
+  expirationDate?: string;
+}
+
 interface CommodityChartProps {
   name: string;
   basePrice: number;
+  selectedContract?: string;
+  contractData?: FuturesContract;
 }
 
-const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
+const CommodityChart = ({ name, basePrice, selectedContract, contractData }: CommodityChartProps) => {
   const [selectedTimeframe, setSelectedTimeframe] = React.useState<string>('1m');
   const [chartType, setChartType] = React.useState<'line' | 'candlestick'>('line');
   const [isFullScreen, setIsFullScreen] = React.useState(false);
@@ -137,6 +153,7 @@ const CommodityChart = ({ name, basePrice }: CommodityChartProps) => {
               <h2 className="text-sm font-bold text-foreground truncate">{name}</h2>
               <p className="text-xs text-muted-foreground truncate">
                 {selectedTimeframe.toUpperCase()} • {chartType === 'line' ? 'Line' : 'Candlestick'}
+                {selectedContract && ` • ${selectedContract}`}
               </p>
             </div>
           </div>
