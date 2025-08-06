@@ -287,7 +287,10 @@ const PriceComparison = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate(-1)}
+              onClick={() => {
+                console.log('Back button clicked');
+                navigate(-1);
+              }}
               className="mr-2"
             >
               <ArrowLeft className="h-4 w-4" />
