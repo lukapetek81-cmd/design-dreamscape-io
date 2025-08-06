@@ -5,6 +5,9 @@ import CommodityGroupSection from '@/components/CommodityGroupSection';
 import VirtualizedCommodityList from '@/components/VirtualizedCommodityList';
 import { FadeInAnimation } from '@/components/animations/Animations';
 import { StatusIndicator } from '@/components/ui/status-indicator';
+import { useSwipeGesture } from '@/hooks/useSwipeGesture';
+import { MobileHeader } from '@/components/mobile/MobileComponents';
+import { PullToRefresh } from '@/components/mobile/PullToRefresh';
 
 import UserProfile from '@/components/UserProfile';
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
@@ -21,6 +24,12 @@ import { Button } from '@/components/ui/button';
 
 const Dashboard = () => {
   const [activeGroup, setActiveGroup] = React.useState("energy");
+  
+  // Enhanced refresh handler for mobile pull-to-refresh
+  const handleRefresh = React.useCallback(async () => {
+    // Trigger data refetch here
+    window.location.reload(); // Simple approach, could be improved with proper data refetching
+  }, []);
   
   const isMobile = useIsMobile();
   const { isGuest, profile, loading: authLoading } = useAuth();
@@ -85,6 +94,22 @@ const DashboardContent = ({
   const [touchStart, setTouchStart] = React.useState<number | null>(null);
   const [touchEnd, setTouchEnd] = React.useState<number | null>(null);
   const [isLandscape, setIsLandscape] = React.useState(false);
+
+  // Enhanced swipe gesture for mobile navigation
+  const swipeHandlers = useSwipeGesture({
+    onSwipeRight: () => {
+      if (isMobile && !isLandscape) {
+        setOpenMobile(true);
+      }
+    },
+    onSwipeLeft: () => {
+      if (isMobile) {
+        setOpenMobile(false);
+      }
+    },
+    threshold: 75,
+    enabled: isMobile,
+  });
 
   // Handle swipe detection
   const minSwipeDistance = 50;

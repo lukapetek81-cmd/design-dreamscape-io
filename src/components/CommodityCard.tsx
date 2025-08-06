@@ -13,6 +13,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getMarketStatus } from '@/lib/marketHours';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { TouchRipple } from '@/components/mobile/TouchRipple';
+import { useHaptics } from '@/hooks/useHaptics';
 
 
 interface FuturesContract {
@@ -43,6 +45,7 @@ const CommodityCard = React.memo(({ name, price: fallbackPrice, change: fallback
   const [isOpen, setIsOpen] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
   const [selectedContract, setSelectedContract] = React.useState<string>(symbol);
+  const { vibrateTouch } = useHaptics();
   
   const { data: apiPrice, isLoading: priceLoading } = useCommodityPrice(name);
   const { profile } = useAuth();
@@ -177,10 +180,14 @@ const CommodityCard = React.memo(({ name, price: fallbackPrice, change: fallback
     return new Date(now.getFullYear(), now.getMonth() + futureMonths, 15);
   }, []);
 
-  // Optimize touch handlers with useCallback
+  // Enhanced touch handlers with haptic feedback
   const handleMouseEnter = React.useCallback(() => setIsHovered(true), []);
   const handleMouseLeave = React.useCallback(() => setIsHovered(false), []);
   const handleContractChange = React.useCallback((value: string) => setSelectedContract(value), []);
+  const handleCardTouch = React.useCallback(() => {
+    vibrateTouch();
+    setIsOpen(!isOpen);
+  }, [vibrateTouch, isOpen]);
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -188,10 +195,12 @@ const CommodityCard = React.memo(({ name, price: fallbackPrice, change: fallback
         className="w-full touch-manipulation focus-ring"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onTouchStart={handleCardTouch}
         aria-label={`${isOpen ? 'Collapse' : 'Expand'} details for ${name} commodity`}
         aria-expanded={isOpen}
       >
-        <Card className="group relative overflow-hidden card-hover-effect border-0 bg-gradient-to-r from-card via-card to-card/80 backdrop-blur-sm shadow-soft active:scale-[0.98] transition-all duration-200">
+        <TouchRipple className="w-full">
+          <Card className="group relative overflow-hidden card-hover-effect border-0 bg-gradient-to-r from-card via-card to-card/80 backdrop-blur-sm shadow-soft active:scale-[0.98] transition-all duration-200">
           {/* Enhanced Background Pattern with Responsive Adjustments */}
           <div className={`absolute inset-0 bg-gradient-to-r from-primary/3 via-accent/2 to-transparent transition-all duration-500 ${
             isHovered || isOpen ? 'opacity-100' : 'opacity-0'
@@ -393,7 +402,8 @@ const CommodityCard = React.memo(({ name, price: fallbackPrice, change: fallback
               </div>
             )}
           </div>
-        </Card>
+          </Card>
+        </TouchRipple>
       </CollapsibleTrigger>
       
       <CollapsibleContent className="overflow-hidden">

@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useHaptics } from "@/hooks/useHaptics";
 import { COMMODITY_GROUPS } from "./constants";
 import { CommodityCounts } from "./types";
 
@@ -20,6 +21,7 @@ interface CommodityGroupsListProps {
 const CommodityGroupsList = ({ activeGroup, onGroupSelect, commodityCounts }: CommodityGroupsListProps) => {
   const { state, setOpenMobile } = useSidebar();
   const isMobile = useIsMobile();
+  const { vibrateSelection } = useHaptics();
   const collapsed = state === "collapsed";
 
   const getGroupCount = (groupId: string) => {
@@ -27,6 +29,11 @@ const CommodityGroupsList = ({ activeGroup, onGroupSelect, commodityCounts }: Co
   };
 
   const handleGroupSelect = (groupId: string) => {
+    // Haptic feedback for mobile selection
+    if (isMobile) {
+      vibrateSelection();
+    }
+    
     onGroupSelect(groupId);
     // Auto-close mobile sidebar after selection for better UX
     if (isMobile) {
