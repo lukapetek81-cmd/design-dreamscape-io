@@ -8,12 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart, Plus, X, TrendingUp, TrendingDown, Minus, ArrowLeft } from "lucide-react";
+import { BarChart, Plus, X, TrendingUp, TrendingDown, Minus, ArrowLeft, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { PriceComparisonChart } from "@/components/PriceComparisonChart";
+import { useQuery } from "@tanstack/react-query";
 
 interface Commodity {
   name: string;
@@ -22,6 +23,22 @@ interface Commodity {
   change: number;
   changePercent: number;
   group: string;
+  contractSymbol?: string; // Optional contract symbol for futures
+}
+
+interface FuturesContract {
+  name: string;
+  symbol: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  volume: number;
+  category: string;
+  contractSize: string;
+  venue: string;
+  supportedByFMP: boolean;
+  expirationDate?: string;
+  source?: string;
 }
 
 interface ComparisonSession {
@@ -49,12 +66,30 @@ const PriceComparison = () => {
   const [comparisonName, setComparisonName] = useState("");
   const [savedComparisons, setSavedComparisons] = useState<ComparisonSession[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showContracts, setShowContracts] = useState<Record<string, boolean>>({});
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const commodityCounts = {
     energy: 0, metals: 0, grains: 0, livestock: 0, softs: 0, other: 0
+  };
+
+  // Fetch IBKR contracts for a specific commodity
+  const useIBKRContracts = (commodityName: string) => {
+    return useQuery({
+      queryKey: ['ibkr-contracts', commodityName],
+      queryFn: async () => {
+        const { data, error } = await supabase.functions.invoke('fetch-ibkr-futures', {
+          body: { commodity: commodityName }
+        });
+        
+        if (error) throw new Error(error.message);
+        return data.contracts as FuturesContract[];
+      },
+      enabled: !!commodityName && showContracts[commodityName],
+      staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    });
   };
 
   useEffect(() => {
@@ -87,11 +122,17 @@ const PriceComparison = () => {
     }
   };
 
-  const addCommodity = (commodity: Commodity) => {
-    if (selectedCommodities.find(c => c.symbol === commodity.symbol)) {
+  const addCommodity = (commodity: Commodity, contractSymbol?: string) => {
+    const key = contractSymbol ? `${commodity.symbol}-${contractSymbol}` : commodity.symbol;
+    
+    if (selectedCommodities.find(c => 
+      (c.contractSymbol && contractSymbol) 
+        ? `${c.symbol}-${c.contractSymbol}` === key
+        : c.symbol === commodity.symbol && !contractSymbol
+    )) {
       toast({
         title: "Already Added",
-        description: "This commodity is already in your comparison",
+        description: "This commodity/contract is already in your comparison",
         variant: "destructive",
       });
       return;
@@ -106,11 +147,29 @@ const PriceComparison = () => {
       return;
     }
 
-    setSelectedCommodities(prev => [...prev, commodity]);
+    const commodityToAdd: Commodity = {
+      ...commodity,
+      contractSymbol,
+      symbol: contractSymbol || commodity.symbol
+    };
+
+    setSelectedCommodities(prev => [...prev, commodityToAdd]);
   };
 
-  const removeCommodity = (symbol: string) => {
-    setSelectedCommodities(prev => prev.filter(c => c.symbol !== symbol));
+  const removeCommodity = (symbol: string, contractSymbol?: string) => {
+    setSelectedCommodities(prev => prev.filter(c => {
+      if (contractSymbol) {
+        return !(c.symbol === symbol && c.contractSymbol === contractSymbol);
+      }
+      return c.symbol !== symbol;
+    }));
+  };
+
+  const toggleContractsView = (commodityName: string) => {
+    setShowContracts(prev => ({
+      ...prev,
+      [commodityName]: !prev[commodityName]
+    }));
   };
 
   const saveComparison = async () => {
@@ -283,22 +342,28 @@ const PriceComparison = () => {
                           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {selectedCommodities.map((commodity) => (
                               <Card key={commodity.symbol} className="relative">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="absolute top-2 right-2 h-6 w-6 p-0"
-                                  onClick={() => removeCommodity(commodity.symbol)}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                                <CardContent className="p-4">
-                                  <div className="space-y-2">
-                                    <div className="flex items-center gap-2">
-                                      <h3 className="font-semibold">{commodity.name}</h3>
-                                      <Badge variant="secondary" className="text-xs">
-                                        {commodity.symbol}
-                                      </Badge>
-                                    </div>
+                                 <Button
+                                   variant="ghost"
+                                   size="sm"
+                                   className="absolute top-2 right-2 h-6 w-6 p-0"
+                                   onClick={() => removeCommodity(commodity.symbol, commodity.contractSymbol)}
+                                 >
+                                   <X className="h-4 w-4" />
+                                 </Button>
+                                 <CardContent className="p-4">
+                                   <div className="space-y-2">
+                                     <div className="flex items-center gap-2">
+                                       <h3 className="font-semibold">{commodity.name}</h3>
+                                       <Badge variant="secondary" className="text-xs">
+                                         {commodity.contractSymbol || commodity.symbol}
+                                       </Badge>
+                                       {commodity.contractSymbol && (
+                                         <Badge variant="outline" className="text-xs">
+                                           <Calendar className="w-3 h-3 mr-1" />
+                                           Contract
+                                         </Badge>
+                                       )}
+                                     </div>
                                     <div className="text-2xl font-bold">
                                       ${commodity.price.toFixed(2)}
                                     </div>
@@ -335,32 +400,92 @@ const PriceComparison = () => {
                         Add Commodities
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-2">
-                      {availableCommodities.map((commodity) => {
-                        const isSelected = selectedCommodities.some(c => c.symbol === commodity.symbol);
-                        return (
-                          <div key={commodity.symbol} 
-                               className={`flex items-center justify-between p-2 border rounded ${
-                                 isSelected ? 'bg-muted' : ''
-                               }`}>
-                            <div>
-                              <div className="font-medium text-sm">{commodity.name}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {commodity.symbol} - ${commodity.price.toFixed(2)}
-                              </div>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => addCommodity(commodity)}
-                              disabled={isSelected}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        );
-                      })}
-                    </CardContent>
+                     <CardContent className="space-y-4">
+                       {availableCommodities.map((commodity) => {
+                         const contractsQuery = useIBKRContracts(commodity.name);
+                         const hasContracts = contractsQuery.data && contractsQuery.data.length > 0;
+                         const showingContracts = showContracts[commodity.name];
+                         
+                         return (
+                           <div key={commodity.symbol} className="space-y-2">
+                             {/* Base Commodity */}
+                             <div className={`flex items-center justify-between p-2 border rounded ${
+                               selectedCommodities.some(c => c.symbol === commodity.symbol && !c.contractSymbol) ? 'bg-muted' : ''
+                             }`}>
+                               <div className="flex-1">
+                                 <div className="font-medium text-sm">{commodity.name}</div>
+                                 <div className="text-xs text-muted-foreground">
+                                   {commodity.symbol} - ${commodity.price.toFixed(2)}
+                                 </div>
+                               </div>
+                               <div className="flex items-center gap-1">
+                                 {hasContracts && (
+                                   <Button
+                                     variant="ghost"
+                                     size="sm"
+                                     onClick={() => toggleContractsView(commodity.name)}
+                                   >
+                                     <Calendar className="h-4 w-4" />
+                                   </Button>
+                                 )}
+                                 <Button
+                                   variant="ghost"
+                                   size="sm"
+                                   onClick={() => addCommodity(commodity)}
+                                   disabled={selectedCommodities.some(c => c.symbol === commodity.symbol && !c.contractSymbol)}
+                                 >
+                                   <Plus className="h-4 w-4" />
+                                 </Button>
+                               </div>
+                             </div>
+                             
+                             {/* Futures Contracts */}
+                             {showingContracts && hasContracts && (
+                               <div className="ml-4 space-y-1">
+                                 {contractsQuery.data?.slice(0, 6).map((contract) => {
+                                   const isSelected = selectedCommodities.some(c => 
+                                     c.symbol === commodity.symbol && c.contractSymbol === contract.symbol
+                                   );
+                                   
+                                   return (
+                                     <div key={contract.symbol} 
+                                          className={`flex items-center justify-between p-2 border rounded text-sm ${
+                                            isSelected ? 'bg-muted' : ''
+                                          }`}>
+                                       <div className="flex-1">
+                                         <div className="font-medium flex items-center gap-2">
+                                           <span>{contract.symbol}</span>
+                                           <Badge variant="outline" className="text-xs">
+                                             {contract.source || 'IBKR'}
+                                           </Badge>
+                                         </div>
+                                         <div className="text-xs text-muted-foreground">
+                                           ${contract.price.toFixed(2)} • Vol: {contract.volume.toLocaleString()}
+                                           {contract.expirationDate && ` • Exp: ${new Date(contract.expirationDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                                         </div>
+                                       </div>
+                                       <Button
+                                         variant="ghost"
+                                         size="sm"
+                                         onClick={() => addCommodity({
+                                           ...commodity,
+                                           price: contract.price,
+                                           change: contract.change,
+                                           changePercent: contract.changePercent
+                                         }, contract.symbol)}
+                                         disabled={isSelected}
+                                       >
+                                         <Plus className="h-4 w-4" />
+                                       </Button>
+                                     </div>
+                                   );
+                                 })}
+                               </div>
+                             )}
+                           </div>
+                         );
+                       })}
+                     </CardContent>
                   </Card>
 
                   {savedComparisons.length > 0 && (

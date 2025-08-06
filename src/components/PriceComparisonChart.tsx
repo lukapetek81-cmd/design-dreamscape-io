@@ -15,6 +15,7 @@ interface Commodity {
   change: number;
   changePercent: number;
   group: string;
+  contractSymbol?: string; // Optional contract symbol for futures
 }
 
 interface PriceComparisonChartProps {
@@ -49,9 +50,14 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
   const [useLogScale, setUseLogScale] = useState(false);
   const { prices, connected, lastUpdate, isLiveData } = useRealtimeDataContext();
 
-  // Get historical data for each commodity
+  // Get historical data for each commodity (with contract support)
   const historicalQueries = commodities.map(commodity => 
-    useCommodityHistoricalData(commodity.name, timeframe)
+    useCommodityHistoricalData(
+      commodity.name, 
+      timeframe, 
+      'line', 
+      commodity.contractSymbol
+    )
   );
 
   // Process and combine historical data
@@ -103,7 +109,9 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
           }
 
           const existing = dateMap.get(dateKey)!;
-          existing[commodity.symbol] = point.price;
+          // Use the display symbol (contract symbol if available, otherwise base symbol)
+          const displaySymbol = commodity.contractSymbol || commodity.symbol;
+          existing[displaySymbol] = point.price;
         });
       });
 
@@ -140,12 +148,13 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
     };
 
     commodities.forEach(commodity => {
+      const displaySymbol = commodity.contractSymbol || commodity.symbol;
       const livePrice = prices[commodity.name];
       if (livePrice) {
-        newDataPoint[commodity.symbol] = livePrice.price;
+        newDataPoint[displaySymbol] = livePrice.price;
       } else {
         // Fallback to last known price if no live data
-        newDataPoint[commodity.symbol] = commodity.price;
+        newDataPoint[displaySymbol] = commodity.price;
       }
     });
 
@@ -272,18 +281,25 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
                   }}
                 />
                 <Legend />
-                {commodities.map((commodity, index) => (
-                  <Line
-                    key={commodity.symbol}
-                    type="monotone"
-                    dataKey={commodity.symbol}
-                    stroke={COLORS[index % COLORS.length]}
-                    strokeWidth={2}
-                    dot={false}
-                    name={`${commodity.name} (${commodity.symbol})`}
-                    connectNulls={false}
-                  />
-                ))}
+                {commodities.map((commodity, index) => {
+                  const displaySymbol = commodity.contractSymbol || commodity.symbol;
+                  const displayName = commodity.contractSymbol 
+                    ? `${commodity.name} (${commodity.contractSymbol})` 
+                    : `${commodity.name} (${commodity.symbol})`;
+                    
+                  return (
+                    <Line
+                      key={displaySymbol}
+                      type="monotone"
+                      dataKey={displaySymbol}
+                      stroke={COLORS[index % COLORS.length]}
+                      strokeWidth={2}
+                      dot={false}
+                      name={displayName}
+                      connectNulls={false}
+                    />
+                  );
+                })}
               </LineChart>
             </ResponsiveContainer>
           )}
@@ -308,13 +324,14 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
             <span>Last update: {lastUpdate.toLocaleTimeString()}</span>
             <div className="flex items-center gap-4">
               {commodities.map((commodity) => {
+                const displaySymbol = commodity.contractSymbol || commodity.symbol;
                 const livePrice = prices[commodity.name];
                 const hasLiveData = isLiveData(commodity.name);
                 
                 return (
-                  <div key={commodity.symbol} className="flex items-center gap-1">
+                  <div key={displaySymbol} className="flex items-center gap-1">
                     <span className={`w-2 h-2 rounded-full ${hasLiveData ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
-                    <span>{commodity.symbol}</span>
+                    <span>{displaySymbol}</span>
                     {livePrice && (
                       <span className={livePrice.change >= 0 ? 'text-green-600' : 'text-red-600'}>
                         ${livePrice.price.toFixed(2)}
