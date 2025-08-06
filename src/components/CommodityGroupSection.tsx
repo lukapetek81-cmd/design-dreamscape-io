@@ -23,7 +23,8 @@ interface CommodityGroupSectionProps {
   onToggle?: () => void;
 }
 
-const getGroupIcon = (category: string) => {
+// Memoize icon and color functions for better performance
+const getGroupIcon = React.useMemo(() => (category: string) => {
   switch (category) {
     case 'metals':
       return <Coins className="w-5 h-5" />;
@@ -38,9 +39,9 @@ const getGroupIcon = (category: string) => {
     default:
       return <Zap className="w-5 h-5" />;
   }
-};
+}, []);
 
-const getGroupColor = (category: string) => {
+const getGroupColor = React.useMemo(() => (category: string) => {
   switch (category) {
     case 'energy':
       return 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400';
@@ -57,37 +58,49 @@ const getGroupColor = (category: string) => {
     default:
       return 'bg-primary/10 text-primary';
   }
-};
+}, []);
 
-const CommodityGroupSection = ({ 
+const CommodityGroupSection = React.memo(({ 
   title, 
   category, 
   commodities, 
   isExpanded = true,
   onToggle 
 }: CommodityGroupSectionProps) => {
-  const gainers = commodities.filter(c => c.changePercent > 0);
-  const losers = commodities.filter(c => c.changePercent < 0);
-  const unchanged = commodities.filter(c => c.changePercent === 0);
+  // Memoize expensive calculations
+  const { gainers, losers, unchanged, avgChange } = React.useMemo(() => {
+    const gainers = commodities.filter(c => c.changePercent > 0);
+    const losers = commodities.filter(c => c.changePercent < 0);
+    const unchanged = commodities.filter(c => c.changePercent === 0);
+    
+    const avgChange = commodities.length > 0 
+      ? commodities.reduce((sum, c) => sum + c.changePercent, 0) / commodities.length 
+      : 0;
+      
+    return { gainers, losers, unchanged, avgChange };
+  }, [commodities]);
 
-  const avgChange = commodities.length > 0 
-    ? commodities.reduce((sum, c) => sum + c.changePercent, 0) / commodities.length 
-    : 0;
+  // Memoize group icon and color
+  const groupIcon = React.useMemo(() => getGroupIcon(category), [category]);
+  const groupColor = React.useMemo(() => getGroupColor(category), [category]);
 
-  const totalValue = commodities.reduce((sum, c) => sum + (c.price || 0), 0);
+  // Memoize click handler
+  const handleToggle = React.useCallback(() => {
+    onToggle?.();
+  }, [onToggle]);
 
   if (commodities.length === 0) return null;
 
   return (
     <Card className="overflow-hidden bg-gradient-to-r from-card via-card to-card/80 border border-border/50 shadow-soft">
       <div 
-        className="p-4 sm:p-6 border-b border-border/30 bg-gradient-to-r from-background/50 to-muted/20 cursor-pointer hover:from-background/70 hover:to-muted/30 transition-all duration-300"
-        onClick={onToggle}
+        className="p-4 sm:p-6 border-b border-border/30 bg-gradient-to-r from-background/50 to-muted/20 cursor-pointer hover:from-background/70 hover:to-muted/30 transition-all duration-300 mobile-touch-target"
+        onClick={handleToggle}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 sm:gap-4">
-            <div className={`p-2 sm:p-3 rounded-xl ${getGroupColor(category)} transition-all duration-300 hover:scale-110`}>
-              {getGroupIcon(category)}
+            <div className={`p-2 sm:p-3 rounded-xl ${groupColor} transition-all duration-300 hover:scale-110`}>
+              {groupIcon}
             </div>
             <div>
               <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">{title}</h3>
@@ -187,6 +200,6 @@ const CommodityGroupSection = ({
       )}
     </Card>
   );
-};
+});
 
 export default CommodityGroupSection;

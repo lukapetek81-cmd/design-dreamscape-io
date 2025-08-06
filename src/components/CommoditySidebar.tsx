@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Sidebar,
   SidebarContent,
@@ -20,15 +21,18 @@ interface CommoditySidebarProps {
   commodityCounts: CommodityCounts;
 }
 
-const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: CommoditySidebarProps) => {
+const CommoditySidebar = React.memo(({ activeGroup, onGroupSelect, commodityCounts }: CommoditySidebarProps) => {
   const { state } = useSidebar();
   const { profile } = useAuth();
   const isMobile = useIsMobile();
   const collapsed = state === "collapsed";
 
-  // Check if user has premium subscription (real-time access)
-  const isPremiumUser = profile?.subscription_active && 
-    (profile?.subscription_tier === 'premium' || profile?.subscription_tier === 'pro');
+  // Memoize premium status check
+  const isPremiumUser = React.useMemo(() => 
+    profile?.subscription_active && 
+    (profile?.subscription_tier === 'premium' || profile?.subscription_tier === 'pro'),
+    [profile?.subscription_active, profile?.subscription_tier]
+  );
 
   return (
     <Sidebar className="border-r bg-background">
@@ -65,6 +69,6 @@ const CommoditySidebar = ({ activeGroup, onGroupSelect, commodityCounts }: Commo
       </SidebarFooter>
     </Sidebar>
   );
-};
+});
 
 export default CommoditySidebar;

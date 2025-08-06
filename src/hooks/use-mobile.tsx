@@ -7,11 +7,16 @@ export function useIsMobile() {
 
   React.useEffect(() => {
     const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
-    const onChange = () => {
+    
+    // Use throttled callback for better performance
+    const onChange = React.useCallback(() => {
       setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    }
-    mql.addEventListener("change", onChange)
+    }, [])
+    
+    // Use passive listener for better scroll performance
+    mql.addEventListener("change", onChange, { passive: true })
     setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+    
     return () => mql.removeEventListener("change", onChange)
   }, [])
 

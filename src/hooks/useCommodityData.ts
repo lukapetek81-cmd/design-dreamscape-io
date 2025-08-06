@@ -42,7 +42,7 @@ export const useAvailableCommodities = () => {
   const { getDataDelay, shouldDelayData } = useDelayedData();
   
   return useQuery({
-    queryKey: ['all-commodities', getDataDelay()], // Changed key to force cache refresh
+    queryKey: ['all-commodities', getDataDelay()],
     queryFn: async (): Promise<Commodity[]> => {
       try {
         const { data, error } = await supabase.functions.invoke('fetch-commodity-symbols', {
@@ -54,16 +54,17 @@ export const useAvailableCommodities = () => {
           throw new Error(error.message);
         }
 
-        console.log('Raw commodities API response:', data);
-
         return data?.commodities || [];
       } catch (error) {
         console.warn('Error fetching commodities:', error);
         throw error;
       }
     },
-    refetchInterval: shouldDelayData ? 900000 : 600000, // 15 min for delayed, 10 min for real-time (reduced frequency for mobile)
-    staleTime: shouldDelayData ? 840000 : 540000, // 14 min for delayed, 9 min for real-time
+    refetchInterval: shouldDelayData ? 1200000 : 900000, // 20 min for delayed, 15 min for real-time (optimized for mobile)
+    staleTime: shouldDelayData ? 1080000 : 720000, // 18 min for delayed, 12 min for real-time
+    gcTime: shouldDelayData ? 1800000 : 1200000, // 30 min for delayed, 20 min for real-time
+    refetchOnWindowFocus: false, // Prevent unnecessary refetches on mobile
+    refetchOnReconnect: 'always', // But refetch when connection restored
   });
 };
 
