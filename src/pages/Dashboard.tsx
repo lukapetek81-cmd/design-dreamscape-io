@@ -247,12 +247,6 @@ const DashboardContent = ({
         }}
       />
       
-      {/* Floating Sidebar Trigger Button - Hide in landscape */}
-      {!isLandscape && (
-        <SidebarTrigger className="fixed left-4 bottom-20 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl active:scale-95 touch-manipulation transition-all duration-200 flex items-center justify-center md:hidden">
-          <Menu className="w-6 h-6" />
-        </SidebarTrigger>
-      )}
       
       <div className="flex-1 flex flex-col min-w-0">
           {/* Enhanced Responsive Header */}
@@ -260,6 +254,10 @@ const DashboardContent = ({
             <div className="container flex h-16 sm:h-20 items-center justify-between px-3 sm:px-4 md:px-6">
               {/* Mobile Layout - Better spacing to prevent overlap */}
               <div className="flex sm:hidden w-full items-center justify-between gap-2">
+                {/* Mobile Sidebar Trigger */}
+                <SidebarTrigger className="p-2 w-10 h-10 rounded-lg hover:bg-muted transition-colors">
+                  <Menu className="w-5 h-5" />
+                </SidebarTrigger>
                 <div className="text-left space-y-0.5 min-w-0 flex-1">
                   <p className="text-2xs text-muted-foreground font-medium tracking-wide truncate">
                     {delayStatus.delayText} data
@@ -300,6 +298,10 @@ const DashboardContent = ({
 
               {/* Desktop Layout - Original */}
               <div className="hidden sm:flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                {/* Desktop Sidebar Trigger */}
+                <SidebarTrigger className="p-2 w-10 h-10 rounded-lg hover:bg-muted transition-colors">
+                  <Menu className="w-5 h-5" />
+                </SidebarTrigger>
                 <div className="text-left space-y-0.5 sm:space-y-1 min-w-0 flex-1">
                   <p className="text-2xs sm:text-xs lg:text-sm text-muted-foreground font-medium tracking-wide truncate">
                     {delayStatus.statusText}
