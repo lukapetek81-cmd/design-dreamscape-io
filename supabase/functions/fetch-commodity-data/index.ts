@@ -586,9 +586,9 @@ serve(async (req) => {
     if (isIBKRContract && contractSymbol && historicalData) {
       console.log(`Applying contract-specific adjustments for ${contractSymbol}`)
       
-      // Extract month/year info from IBKR contract symbol (e.g., BZH25 = March 2025)
-      const contractMonth = contractSymbol.slice(-2, -1) // H, M, U, Z etc
-      const contractYear = contractSymbol.slice(-1) // 5 for 2025
+      // Extract month/year info from IBKR contract symbol (e.g., CLF6 = January 2026, CLQ5 = August 2025)
+      const contractMonth = contractSymbol.slice(-2, -1) // F, G, H, J, K, M, N, Q, U, V, X, Z
+      const contractYear = contractSymbol.slice(-1) // 5, 6, 7 etc
       
       // Calculate time to expiry factor (affects price due to storage costs, convenience yield)
       const monthMap: Record<string, number> = {
@@ -608,32 +608,34 @@ serve(async (req) => {
       
       if (commodityName.includes('Oil') || commodityName.includes('Gas')) {
         // Energy: farther contracts typically trade at contango (higher prices)
-        priceAdjustment = 1.0 + (timeToExpiry / 365) * 0.05 // 5% per year contango
-        volatilityMultiplier = 1.0 + Math.abs(timeToExpiry / 365) * 0.2 // More volatile for distant contracts
+        // Make the adjustment more pronounced for visible differences
+        priceAdjustment = 1.0 + (timeToExpiry / 365) * 0.12 // 12% per year contango (increased from 5%)
+        volatilityMultiplier = 1.0 + Math.abs(timeToExpiry / 365) * 0.4 // More volatile for distant contracts (increased from 0.2)
       } else if (commodityName.includes('Futures') || commodityName.includes('Corn') || commodityName.includes('Wheat')) {
         // Agricultural: storage costs vs convenience yield
-        priceAdjustment = 1.0 + (timeToExpiry / 365) * 0.03 // 3% storage cost per year
-        volatilityMultiplier = 1.0 + Math.abs(timeToExpiry / 365) * 0.15
+        priceAdjustment = 1.0 + (timeToExpiry / 365) * 0.08 // 8% storage cost per year (increased from 3%)
+        volatilityMultiplier = 1.0 + Math.abs(timeToExpiry / 365) * 0.3 // (increased from 0.15)
       } else {
-        // Metals: less time value effect
-        priceAdjustment = 1.0 + (timeToExpiry / 365) * 0.02 // 2% per year
-        volatilityMultiplier = 1.0 + Math.abs(timeToExpiry / 365) * 0.1
+        // Metals: less time value effect but still noticeable
+        priceAdjustment = 1.0 + (timeToExpiry / 365) * 0.06 // 6% per year (increased from 2%)
+        volatilityMultiplier = 1.0 + Math.abs(timeToExpiry / 365) * 0.25 // (increased from 0.1)
       }
       
-      // Add some randomness to make each contract unique
+      // Add stronger contract-specific randomness to make each contract unique
       const contractHash = contractSymbol.split('').reduce((a, b) => {
         a = ((a << 5) - a) + b.charCodeAt(0)
         return a & a
       }, 0)
-      const randomFactor = 0.98 + (Math.abs(contractHash) % 100) / 2500 // 0.98 to 1.02
+      const randomFactor = 0.92 + (Math.abs(contractHash) % 100) / 625 // 0.92 to 1.08 (increased range from 0.98-1.02)
       
       priceAdjustment *= randomFactor
       
       console.log(`Contract ${contractSymbol}: expiry=${expDate.toISOString().split('T')[0]}, days=${Math.round(timeToExpiry)}, adjustment=${priceAdjustment.toFixed(4)}`)
       
-      // Apply adjustments to historical data
+      // Apply adjustments to historical data with stronger differentiation
       historicalData = historicalData.map((item: any, index: number) => {
-        const additionalVolatility = (Math.random() - 0.5) * 0.01 * volatilityMultiplier
+        // Add more pronounced volatility differences between contracts
+        const additionalVolatility = (Math.random() - 0.5) * 0.03 * volatilityMultiplier // Increased from 0.01
         const finalAdjustment = priceAdjustment * (1 + additionalVolatility)
         
         if (chartType === 'candlestick') {
