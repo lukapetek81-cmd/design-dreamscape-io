@@ -308,7 +308,7 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                             ? 'bg-green-100 dark:bg-green-950/20 text-green-700 dark:text-green-400' 
                             : 'bg-muted/50 text-muted-foreground'
                         }`}>
-                        {isAPILive ? 'API Live' : isRealTime ? 'Live' : isPremium ? 'Real-time' : 'FMP API'}
+                        {isAPILive ? 'API Live' : isRealTime ? 'Live' : isPremium ? 'Real-time' : 'Market Data'}
                       </span>
                     </div>
                   </div>
