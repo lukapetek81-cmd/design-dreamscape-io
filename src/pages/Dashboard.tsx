@@ -2,7 +2,6 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import CommodityCard from '@/components/CommodityCard';
 import CommodityGroupSection from '@/components/CommodityGroupSection';
-import { FuturesResearchPanel } from '@/components/FuturesResearchPanel';
 import VirtualizedCommodityList from '@/components/VirtualizedCommodityList';
 
 import UserProfile from '@/components/UserProfile';
@@ -20,7 +19,6 @@ import { Button } from '@/components/ui/button';
 
 const Dashboard = () => {
   const [activeGroup, setActiveGroup] = React.useState("energy");
-  const [showFuturesResearch, setShowFuturesResearch] = React.useState(false);
   
   const isMobile = useIsMobile();
   const { isGuest, profile, loading: authLoading } = useAuth();
@@ -51,8 +49,6 @@ const Dashboard = () => {
         error={commoditiesError?.message || null}
         realtimeConnected={realtimeConnected}
         delayStatus={delayStatus}
-        showFuturesResearch={showFuturesResearch}
-        setShowFuturesResearch={setShowFuturesResearch}
       />
     </SidebarProvider>
   );
@@ -67,9 +63,7 @@ const DashboardContent = ({
   loading, 
   error, 
   realtimeConnected,
-  delayStatus,
-  showFuturesResearch,
-  setShowFuturesResearch
+  delayStatus
 }: {
   activeGroup: string;
   setActiveGroup: (group: string) => void;
@@ -84,8 +78,6 @@ const DashboardContent = ({
     delayText: string;
     statusText: string;
   };
-  showFuturesResearch: boolean;
-  setShowFuturesResearch: (show: boolean) => void;
 }) => {
   const { toggleSidebar, setOpenMobile } = useSidebar();
   const [touchStart, setTouchStart] = React.useState<number | null>(null);
@@ -342,17 +334,6 @@ const DashboardContent = ({
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  {/* Only show Futures Research button for non-energy commodities */}
-                  {activeGroup !== 'energy' && (
-                    <Button 
-                      onClick={() => setShowFuturesResearch(!showFuturesResearch)}
-                      variant={showFuturesResearch ? "default" : "outline"}
-                      size="sm"
-                      className="text-xs"
-                    >
-                      Futures Research
-                    </Button>
-                  )}
                   <div className="text-center sm:text-right space-y-1">
                     <p className="text-2xs sm:text-xs lg:text-sm font-medium text-muted-foreground">
                       {profile?.subscription_active ? 'Real-time Status' : 'Market Status'}
@@ -378,12 +359,6 @@ const DashboardContent = ({
                 </div>
               </div>
 
-              {/* Futures Research Panel */}
-              {showFuturesResearch && (
-                <div className="space-y-4">
-                  <FuturesResearchPanel />
-                </div>
-              )}
 
 
               {/* Loading State */}
