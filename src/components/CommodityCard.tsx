@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -40,7 +39,7 @@ interface CommodityCardProps {
   contractSize?: string;
 }
 
-const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, symbol, venue, contractSize }: CommodityCardProps) => {
+const CommodityCard = React.memo(({ name, price: fallbackPrice, change: fallbackChange, symbol, venue, contractSize }: CommodityCardProps) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
   const [selectedContract, setSelectedContract] = React.useState<string>(symbol);
@@ -48,14 +47,17 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
   const { data: apiPrice, isLoading: priceLoading } = useCommodityPrice(name);
   const { profile } = useAuth();
   
-  // Get market status for this commodity
-  const marketStatus = getMarketStatus(name);
+  // Get market status for this commodity - memoized
+  const marketStatus = React.useMemo(() => getMarketStatus(name), [name]);
   
-  // Check if user has premium subscription for real-time data
-  const isPremium = profile?.subscription_active && 
-    (profile?.subscription_tier === 'premium' || profile?.subscription_tier === 'pro');
+  // Check if user has premium subscription for real-time data - memoized
+  const isPremium = React.useMemo(() => 
+    profile?.subscription_active && 
+    (profile?.subscription_tier === 'premium' || profile?.subscription_tier === 'pro'),
+    [profile?.subscription_active, profile?.subscription_tier]
+  );
 
-  // Fetch IBKR contracts exclusively - only for premium users
+  // Fetch IBKR contracts exclusively - only for premium users with improved caching
   const { data: availableContracts, isLoading: contractsLoading } = useQuery({
     queryKey: ['ibkr-contracts', name],
     queryFn: async () => {
@@ -77,7 +79,8 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
         return new Date(a.expirationDate).getTime() - new Date(b.expirationDate).getTime();
       });
     },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 1000 * 60 * 10, // Increased cache to 10 minutes for better performance
+    gcTime: 1000 * 60 * 15, // Cache for 15 minutes in memory
     enabled: isPremium, // Only fetch contracts for premium users
   });
   
@@ -87,22 +90,33 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
   // Don't auto-select IBKR contracts - keep the default symbol that free users see
   // Premium users will have the option to manually select IBKR contracts from the dropdown
 
-  // Get the selected contract data (only for premium users, and only if an IBKR contract is selected)
-  const selectedContractData = isPremium && availableContracts ? availableContracts.find(c => c.symbol === selectedContract) : null;
+  // Get the selected contract data (only for premium users, and only if an IBKR contract is selected) - memoized
+  const selectedContractData = React.useMemo(() => 
+    isPremium && availableContracts ? availableContracts.find(c => c.symbol === selectedContract) : null,
+    [isPremium, availableContracts, selectedContract]
+  );
   
   // Use real-time data context
   const realtimePrice = getPriceForCommodity(name);
   
   // For premium users: Use price from selected contract, real-time context, or fall back to API price
-  // For free users: Use real-time context or fall back to API price (no contract data)
-  const currentPrice = selectedContractData?.price ?? realtimePrice?.price ?? apiPrice?.price ?? fallbackPrice;
-  const currentChange = selectedContractData?.changePercent ?? realtimePrice?.changePercent ?? fallbackChange;
+  // For free users: Use real-time context or fall back to API price (no contract data) - memoized
+  const currentPrice = React.useMemo(() => 
+    selectedContractData?.price ?? realtimePrice?.price ?? apiPrice?.price ?? fallbackPrice,
+    [selectedContractData?.price, realtimePrice?.price, apiPrice?.price, fallbackPrice]
+  );
+  
+  const currentChange = React.useMemo(() =>
+    selectedContractData?.changePercent ?? realtimePrice?.changePercent ?? fallbackChange,
+    [selectedContractData?.changePercent, realtimePrice?.changePercent, fallbackChange]
+  );
+  
   const isPositive = currentChange >= 0;
   const isRealTime = isPremium && isLiveData(name);
   const isAPILive = isPremium && realtimeConnected;
 
-  // Function to get the appropriate price units based on commodity name
-  const getPriceUnits = (commodityName: string) => {
+  // Function to get the appropriate price units based on commodity name - memoized
+  const getPriceUnits = React.useCallback((commodityName: string) => {
     const name = commodityName.toLowerCase();
     
     // Energy commodities
@@ -134,20 +148,20 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
     
     // Default fallback
     return 'USD';
-  };
+  }, []);
 
-  // Format expiration date
-  const formatExpirationDate = (contract: FuturesContract) => {
+  // Format expiration date - memoized
+  const formatExpirationDate = React.useCallback((contract: FuturesContract) => {
     if (!contract.expirationDate) return 'N/A';
     return new Date(contract.expirationDate).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric'
     });
-  };
+  }, []);
 
-  // Generate mock expiration dates for contracts (in a real app, this would come from the API)
-  const getExpirationDate = (contractSymbol: string) => {
+  // Generate mock expiration dates for contracts (in a real app, this would come from the API) - memoized
+  const getExpirationDate = React.useCallback((contractSymbol: string) => {
     // Extract month/year from symbol or generate based on current date
     const now = new Date();
     const months = ['F', 'G', 'H', 'J', 'K', 'M', 'N', 'Q', 'U', 'V', 'X', 'Z'];
@@ -161,14 +175,19 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
     // Fallback: add 1-6 months to current date
     const futureMonths = Math.floor(Math.random() * 6) + 1;
     return new Date(now.getFullYear(), now.getMonth() + futureMonths, 15);
-  };
+  }, []);
+
+  // Optimize touch handlers with useCallback
+  const handleMouseEnter = React.useCallback(() => setIsHovered(true), []);
+  const handleMouseLeave = React.useCallback(() => setIsHovered(false), []);
+  const handleContractChange = React.useCallback((value: string) => setSelectedContract(value), []);
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <CollapsibleTrigger 
         className="w-full touch-manipulation"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         <Card className="group relative overflow-hidden card-hover-effect border-0 bg-gradient-to-r from-card via-card to-card/80 backdrop-blur-sm shadow-soft active:scale-[0.98] transition-all duration-200">
           {/* Enhanced Background Pattern with Responsive Adjustments */}
@@ -247,7 +266,7 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                   {/* Contract Selector - Show for premium users with available contracts */}
                   {isPremium && availableContracts && availableContracts.length > 0 && (
                     <div className="mt-3">
-                      <Select value={selectedContract} onValueChange={setSelectedContract}>
+                      <Select value={selectedContract} onValueChange={handleContractChange}>
                         <SelectTrigger className="w-full sm:w-[280px] h-8 text-xs">
                           <SelectValue placeholder="Select Contract" />
                         </SelectTrigger>
@@ -335,35 +354,39 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                 </div>
                 
                 <div className={`flex items-center p-2 rounded-full transition-all duration-300 ${
-                  isOpen ? 'bg-primary/20 text-primary' : 'bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary'
+                  isOpen ? 'bg-primary/20 text-primary' : 'bg-muted/50 text-muted-foreground'
                 }`}>
                   {isOpen ? (
-                    <ChevronUp className="w-4 h-4 lg:w-5 lg:h-5" />
+                    <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" />
                   ) : (
-                    <ChevronDown className="w-4 h-4 lg:w-5 lg:h-5" />
+                    <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5" />
                   )}
                 </div>
               </div>
             </div>
 
             {/* Mobile Stats Section - Visible only when expanded on mobile */}
-            <div className={`sm:hidden transition-all duration-300 ${
-              isOpen ? 'opacity-100 max-h-20 mt-4' : 'opacity-0 max-h-0 overflow-hidden'
-            }`}>
-              <div className="flex justify-around py-3 border-t border-border/50">
-                <div className="text-center">
-                  <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">Units</p>
-                  <p className="text-sm font-bold number-display">{getPriceUnits(name)}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">Status</p>
-                  <div className="flex items-center justify-center gap-1">
-                    <Activity className="w-3 h-3 text-green-500" />
-                    <p className="text-xs font-bold text-green-600 dark:text-green-400">Live</p>
+            {isOpen && (
+              <div className="mt-4 sm:hidden border-t border-border/50 pt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center">
+                    <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Price Units</p>
+                    <p className="text-xs font-semibold text-muted-foreground number-display">{getPriceUnits(name)}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Market Status</p>
+                    <div className="flex items-center justify-center gap-1">
+                      <div className={`w-1.5 h-1.5 rounded-full ${
+                        marketStatus.isOpen ? 'bg-green-500' : 'bg-red-500'
+                      }`}></div>
+                      <span className="text-xs font-semibold text-muted-foreground">
+                        {marketStatus.isOpen ? 'Open' : 'Closed'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </Card>
       </CollapsibleTrigger>
@@ -381,6 +404,8 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
       </CollapsibleContent>
     </Collapsible>
   );
-};
+});
+
+CommodityCard.displayName = 'CommodityCard';
 
 export default CommodityCard;

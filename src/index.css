@@ -310,6 +310,40 @@
   .mobile-modal {
     @apply fixed inset-4 rounded-2xl max-h-[85vh];
   }
+
+  /* Mobile performance optimizations */
+  * {
+    -webkit-overflow-scrolling: touch;
+    transform: translateZ(0);
+  }
+
+  /* Better touch targets */
+  button, [role="button"], .mobile-touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Optimize scrolling */
+  .overflow-y-auto, .overflow-auto {
+    overscroll-behavior: contain;
+  }
+
+  /* Improve text rendering */
+  body {
+    text-rendering: optimizeSpeed;
+  }
+
+  /* Optimize backdrop blur for mobile */
+  .backdrop-blur-xl {
+    backdrop-filter: blur(8px);
+  }
+
+  /* Better card animations */
+  .card-hover-effect {
+    transition: transform 150ms ease-out;
+  }
 }
 
 /* Enhanced tablet-specific styles */

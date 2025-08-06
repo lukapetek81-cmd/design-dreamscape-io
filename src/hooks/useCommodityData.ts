@@ -62,8 +62,8 @@ export const useAvailableCommodities = () => {
         throw error;
       }
     },
-    refetchInterval: shouldDelayData ? 900000 : 300000, // 15 min for delayed, 5 min for real-time
-    staleTime: shouldDelayData ? 840000 : 240000, // 14 min for delayed, 4 min for real-time
+    refetchInterval: shouldDelayData ? 900000 : 600000, // 15 min for delayed, 10 min for real-time (reduced frequency for mobile)
+    staleTime: shouldDelayData ? 840000 : 540000, // 14 min for delayed, 9 min for real-time
   });
 };
 
@@ -112,8 +112,8 @@ export const useCommodityPrice = (commodityName: string) => {
         return null;
       }
     },
-    refetchInterval: shouldDelayData ? 900000 : 30000, // 15 min for delayed, 30 sec for real-time
-    staleTime: shouldDelayData ? 840000 : 25000, // 14 min for delayed, 25 sec for real-time
+    refetchInterval: shouldDelayData ? 900000 : 120000, // 15 min for delayed, 2 min for real-time (reduced frequency)
+    staleTime: shouldDelayData ? 840000 : 100000, // 14 min for delayed, 1.5 min for real-time
   });
 };
 
@@ -185,7 +185,7 @@ export const useCommodityHistoricalData = (commodityName: string, timeframe: str
         };
       }
     },
-    refetchInterval: shouldDelayData ? 900000 : 60000, // 15 min for delayed, 1 min for real-time
-    staleTime: shouldDelayData ? 840000 : 50000, // 14 min for delayed, 50 sec for real-time
+    refetchInterval: shouldDelayData ? 900000 : 300000, // 15 min for delayed, 5 min for real-time (reduced frequency)
+    staleTime: shouldDelayData ? 840000 : 240000, // 14 min for delayed, 4 min for real-time
   });
 };

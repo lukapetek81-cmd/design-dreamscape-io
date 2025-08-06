@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import CommodityCard from '@/components/CommodityCard';
 import CommodityGroupSection from '@/components/CommodityGroupSection';
 import { FuturesResearchPanel } from '@/components/FuturesResearchPanel';
+import VirtualizedCommodityList from '@/components/VirtualizedCommodityList';
 
 import UserProfile from '@/components/UserProfile';
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
@@ -164,11 +165,11 @@ const DashboardContent = ({
     }
   };
 
-  const getCommodities = () => {
+  const getCommodities = React.useMemo(() => {
     return commodities.filter(commodity => commodity.category === activeGroup);
-  };
+  }, [commodities, activeGroup]);
 
-  const getGroupTitle = () => {
+  const getGroupTitle = React.useMemo(() => {
     switch (activeGroup) {
       case "metals":
         return "Metal Commodities";
@@ -183,9 +184,9 @@ const DashboardContent = ({
       default:
         return "Energy Commodities";
     }
-  };
+  }, [activeGroup]);
 
-  const getGroupIcon = () => {
+  const getGroupIcon = React.useMemo(() => {
     switch (activeGroup) {
       case "metals":
         return <Coins className="w-5 h-5 sm:w-6 sm:h-6" />;
@@ -200,12 +201,12 @@ const DashboardContent = ({
       default:
         return <Zap className="w-5 h-5 sm:w-6 sm:h-6" />;
     }
-  };
+  }, [activeGroup]);
 
 
-  const getCommodityCount = (category: string) => {
+  const getCommodityCount = React.useCallback((category: string) => {
     return commodities.filter(commodity => commodity.category === category).length;
-  };
+  }, [commodities]);
 
   return (
     <div 
@@ -325,17 +326,17 @@ const DashboardContent = ({
               {/* View Toggle Header */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 rounded-2xl bg-gradient-to-r from-card/50 to-muted/30 border border-border/50 shadow-soft hover:shadow-medium transition-shadow duration-300 space-y-3 sm:space-y-0">
                 <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                  <div className="p-2 sm:p-3 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 hover:scale-110 transition-all duration-300">
-                    {getGroupIcon()}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-1 truncate">
-                      {isMobile ? activeGroup.charAt(0).toUpperCase() + activeGroup.slice(1) : getGroupTitle()}
+                   <div className="p-2 sm:p-3 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 hover:scale-110 transition-all duration-300">
+                     {getGroupIcon}
+                   </div>
+                   <div className="min-w-0 flex-1">
+                     <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-1 truncate">
+                       {isMobile ? activeGroup.charAt(0).toUpperCase() + activeGroup.slice(1) : getGroupTitle}
                     </h2>
                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-2xs sm:text-xs lg:text-sm text-muted-foreground">
-                       <span className="flex items-center gap-1">
-                         <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-primary rounded-full"></span>
-                         {getCommodities().length} active commodities
+                        <span className="flex items-center gap-1">
+                          <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-primary rounded-full"></span>
+                          {getCommodities.length} active commodities
                        </span>
                      </div>
                   </div>
@@ -407,30 +408,16 @@ const DashboardContent = ({
               )}
 
 
-              {/* Enhanced Responsive Commodities Grid */}
-              {!loading && getCommodities().length > 0 && (
-                <div className="grid gap-3 sm:gap-4 lg:gap-6">
-                  {getCommodities().map((commodity, index) => (
-                    <div 
-                      key={commodity.symbol}
-                      className="animate-slide-up"
-                      style={{ animationDelay: `${index * 100}ms` }}
-                    >
-                      <CommodityCard
-                        name={commodity.name}
-                        symbol={commodity.symbol}
-                        price={commodity.price}
-                        change={commodity.changePercent}
-                        venue={commodity.venue}
-                        contractSize={commodity.contractSize}
-                      />
-                    </div>
-                  ))}
-                </div>
+              {/* Enhanced Responsive Commodities Grid with Virtualization */}
+              {!loading && getCommodities.length > 0 && (
+                <VirtualizedCommodityList 
+                  commodities={getCommodities} 
+                  loading={loading}
+                />
               )}
 
               {/* Empty State */}
-              {!loading && !error && getCommodities().length === 0 && (
+              {!loading && !error && getCommodities.length === 0 && (
                 <div className="text-center py-16 space-y-4">
                   <div className="w-16 h-16 mx-auto bg-muted/50 rounded-full flex items-center justify-center">
                     <BarChart3 className="w-8 h-8 text-muted-foreground" />
