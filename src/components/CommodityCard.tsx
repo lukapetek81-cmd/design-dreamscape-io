@@ -45,7 +45,17 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
   const [isHovered, setIsHovered] = React.useState(false);
   const [selectedContract, setSelectedContract] = React.useState<string>(symbol);
   
-  // Fetch IBKR contracts exclusively
+  const { data: apiPrice, isLoading: priceLoading } = useCommodityPrice(name);
+  const { profile } = useAuth();
+  
+  // Get market status for this commodity
+  const marketStatus = getMarketStatus(name);
+  
+  // Check if user has premium subscription for real-time data
+  const isPremium = profile?.subscription_active && 
+    (profile?.subscription_tier === 'premium' || profile?.subscription_tier === 'pro');
+
+  // Fetch IBKR contracts exclusively - only for premium users
   const { data: availableContracts, isLoading: contractsLoading } = useQuery({
     queryKey: ['ibkr-contracts', name],
     queryFn: async () => {
@@ -68,24 +78,15 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
       });
     },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    enabled: isPremium, // Only fetch contracts for premium users
   });
-
-  const { data: apiPrice, isLoading: priceLoading } = useCommodityPrice(name);
-  const { profile } = useAuth();
-  
-  // Get market status for this commodity
-  const marketStatus = getMarketStatus(name);
-  
-  // Check if user has premium subscription for real-time data
-  const isPremium = profile?.subscription_active && 
-    (profile?.subscription_tier === 'premium' || profile?.subscription_tier === 'pro');
   
   // Use real-time data context
   const { getPriceForCommodity, isLiveData, connected: realtimeConnected } = useRealtimeDataContext();
   
-  // Auto-select the first IBKR contract when contracts are loaded
+  // Auto-select the first IBKR contract when contracts are loaded (premium users only)
   React.useEffect(() => {
-    if (availableContracts && availableContracts.length > 0) {
+    if (isPremium && availableContracts && availableContracts.length > 0) {
       // If current selected contract is not in the available contracts, select the first one
       const isCurrentContractAvailable = availableContracts.some(c => c.symbol === selectedContract);
       if (!isCurrentContractAvailable) {
@@ -93,15 +94,16 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
         setSelectedContract(availableContracts[0].symbol);
       }
     }
-  }, [availableContracts, selectedContract, name]);
+  }, [availableContracts, selectedContract, name, isPremium]);
 
-  // Get the selected contract data
-  const selectedContractData = availableContracts?.find(c => c.symbol === selectedContract);
+  // Get the selected contract data (only for premium users)
+  const selectedContractData = isPremium ? availableContracts?.find(c => c.symbol === selectedContract) : null;
   
   // Use real-time data context
   const realtimePrice = getPriceForCommodity(name);
   
-  // Use price from selected contract, real-time context, or fall back to API price
+  // For premium users: Use price from selected contract, real-time context, or fall back to API price
+  // For free users: Use real-time context or fall back to API price (no contract data)
   const currentPrice = selectedContractData?.price ?? realtimePrice?.price ?? apiPrice?.price ?? fallbackPrice;
   const currentChange = selectedContractData?.changePercent ?? realtimePrice?.changePercent ?? fallbackChange;
   const isPositive = currentChange >= 0;
@@ -216,7 +218,7 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                               {selectedContractData?.contractSize || contractSize}
                             </span>
                           )}
-                          {selectedContractData && (
+                          {isPremium && selectedContractData && (
                             <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-medium bg-amber-100 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 rounded-full tracking-wider">
                               <Calendar className="w-3 h-3" />
                               {formatExpirationDate({ ...selectedContractData, expirationDate: getExpirationDate(selectedContract).toISOString() })}
@@ -251,8 +253,8 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                     </div>
                   </div>
                   
-                  {/* Contract Selector - Only show if multiple contracts available */}
-                  {availableContracts && availableContracts.length > 1 && (
+                  {/* Contract Selector - Only show for premium users with multiple contracts available */}
+                  {isPremium && availableContracts && availableContracts.length > 1 && (
                     <div className="mt-3">
                       <Select value={selectedContract} onValueChange={setSelectedContract}>
                         <SelectTrigger className="w-full sm:w-[200px] h-8 text-xs">
@@ -276,6 +278,16 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                       </Select>
                     </div>
                   )}
+
+                  {/* Premium upgrade prompt for free users */}
+                  {!isPremium && (
+                    <div className="mt-3 p-3 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-primary/20">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="inline-block w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+                        <span>Upgrade to Premium for futures contracts and real-time data</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Price and Change - Responsive Layout */}
@@ -292,11 +304,11 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                           ? 'bg-purple-100 dark:bg-purple-950/20 text-purple-700 dark:text-purple-400' 
                           : isRealTime 
                             ? 'bg-blue-100 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400' 
-                            : isPremium 
-                              ? 'bg-green-100 dark:bg-green-950/20 text-green-700 dark:text-green-400' 
-                              : 'bg-muted/50 text-muted-foreground'
-                      }`}>
-                        {isAPILive ? 'API Live' : isRealTime ? 'Live' : isPremium ? 'Real-time' : '15min delayed'}
+                          : isPremium 
+                            ? 'bg-green-100 dark:bg-green-950/20 text-green-700 dark:text-green-400' 
+                            : 'bg-muted/50 text-muted-foreground'
+                        }`}>
+                        {isAPILive ? 'API Live' : isRealTime ? 'Live' : isPremium ? 'Real-time' : 'FMP API'}
                       </span>
                     </div>
                   </div>

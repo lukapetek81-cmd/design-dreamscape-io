@@ -67,7 +67,7 @@ const PriceComparison = () => {
   const [savedComparisons, setSavedComparisons] = useState<ComparisonSession[]>([]);
   const [loading, setLoading] = useState(false);
   const [showContracts, setShowContracts] = useState<Record<string, boolean>>({});
-  const { user } = useAuth();
+  const { user, isPremium } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -75,8 +75,10 @@ const PriceComparison = () => {
     energy: 0, metals: 0, grains: 0, livestock: 0, softs: 0, other: 0
   };
 
-  // Fetch IBKR contracts for a specific commodity
+  // Fetch IBKR contracts for a specific commodity (premium users only)
   const useIBKRContracts = (commodityName: string) => {
+    const { isPremium } = useAuth();
+    
     return useQuery({
       queryKey: ['ibkr-contracts', commodityName],
       queryFn: async () => {
@@ -87,7 +89,7 @@ const PriceComparison = () => {
         if (error) throw new Error(error.message);
         return data.contracts as FuturesContract[];
       },
-      enabled: !!commodityName && showContracts[commodityName],
+      enabled: !!commodityName && showContracts[commodityName] && isPremium,
       staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     });
   };
@@ -417,18 +419,18 @@ const PriceComparison = () => {
                                  <div className="text-xs text-muted-foreground">
                                    {commodity.symbol} - ${commodity.price.toFixed(2)}
                                  </div>
-                               </div>
-                               <div className="flex items-center gap-1">
-                                 {hasContracts && (
-                                   <Button
-                                     variant="ghost"
-                                     size="sm"
-                                     onClick={() => toggleContractsView(commodity.name)}
-                                   >
-                                     <Calendar className="h-4 w-4" />
-                                   </Button>
-                                 )}
-                                 <Button
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  {isPremium && hasContracts && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => toggleContractsView(commodity.name)}
+                                    >
+                                      <Calendar className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                  <Button
                                    variant="ghost"
                                    size="sm"
                                    onClick={() => addCommodity(commodity)}
@@ -438,9 +440,9 @@ const PriceComparison = () => {
                                  </Button>
                                </div>
                              </div>
-                             
-                             {/* Futures Contracts */}
-                             {showingContracts && hasContracts && (
+                              
+                              {/* Futures Contracts - Only show for premium users */}
+                              {isPremium && showingContracts && hasContracts && (
                                <div className="ml-4 space-y-1">
                                  {contractsQuery.data?.slice(0, 6).map((contract) => {
                                    const isSelected = selectedCommodities.some(c => 
@@ -477,9 +479,19 @@ const PriceComparison = () => {
                                      </div>
                                    );
                                  })}
-                               </div>
-                             )}
-                           </div>
+                                </div>
+                              )}
+
+                              {/* Premium upgrade prompt for futures contracts */}
+                              {!isPremium && (
+                                <div className="ml-4 mt-2 p-3 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-primary/20">
+                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <span className="inline-block w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+                                    <span>Upgrade to Premium to access futures contracts</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                          );
                        })}
                      </CardContent>
