@@ -389,7 +389,7 @@ const DashboardContent = ({
                     <Loader className="w-8 h-8 animate-spin text-primary mx-auto" />
                     <div className="space-y-2">
                       <p className="text-lg font-semibold text-foreground">Loading Commodities</p>
-                      <p className="text-sm text-muted-foreground">Fetching real-time data from FMP API...</p>
+                      <p className="text-sm text-muted-foreground">Fetching data from FMP API...</p>
                     </div>
                   </div>
                 </div>
