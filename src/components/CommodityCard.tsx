@@ -248,7 +248,7 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                   {isPremium && availableContracts && availableContracts.length > 0 && (
                     <div className="mt-3">
                       <Select value={selectedContract} onValueChange={setSelectedContract}>
-                        <SelectTrigger className="w-full sm:w-[200px] h-8 text-xs">
+                        <SelectTrigger className="w-full sm:w-[280px] h-8 text-xs">
                           <SelectValue placeholder="Select Contract" />
                         </SelectTrigger>
                         <SelectContent>
