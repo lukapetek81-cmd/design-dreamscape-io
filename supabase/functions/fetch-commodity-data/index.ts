@@ -474,12 +474,14 @@ serve(async (req) => {
     }
 
     console.log(`Fetching data for ${commodityName}${contractSymbol ? ` (${contractSymbol})` : ''}, timeframe: ${timeframe}, chartType: ${chartType || 'line'} with ${dataDelay} data (Premium: ${isPremium || false})`)
+    console.log(`Contract symbol provided: ${contractSymbol}`)
 
     // Get FMP API key from Supabase secrets
     const fmpApiKey = Deno.env.get('FMP_API_KEY')
     
     // Use contract symbol if provided, otherwise fall back to commodity mapping
     const symbol = contractSymbol || COMMODITY_SYMBOLS[commodityName]
+    console.log(`Using symbol for API call: ${symbol}`)
     if (!symbol) {
       throw new Error(`Commodity ${commodityName} not found`)
     }

@@ -121,11 +121,16 @@ export const useCommodityHistoricalData = (commodityName: string, timeframe: str
   const { profile } = useAuth();
   const { getDataDelay, shouldDelayData } = useDelayedData();
   
+  // Debug logging to see what contract symbol is being passed
+  console.log(`useCommodityHistoricalData called for ${commodityName} with contract: ${contractSymbol}`);
+  
   return useQuery({
     queryKey: ['commodity-historical', commodityName, timeframe, chartType, contractSymbol, getDataDelay()],
     queryFn: async (): Promise<{ data: CommodityHistoricalData[], loading: boolean, error: string | null }> => {
       try {
         const isPremium = profile?.subscription_active && profile?.subscription_tier === 'premium';
+        
+        console.log(`Fetching commodity data for ${commodityName} with contract symbol: ${contractSymbol}`);
         
         const { data, error } = await supabase.functions.invoke('fetch-commodity-data', {
           body: { 

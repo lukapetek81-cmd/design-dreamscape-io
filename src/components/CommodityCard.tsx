@@ -83,6 +83,18 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
   // Use real-time data context
   const { getPriceForCommodity, isLiveData, connected: realtimeConnected } = useRealtimeDataContext();
   
+  // Auto-select the first IBKR contract when contracts are loaded
+  React.useEffect(() => {
+    if (availableContracts && availableContracts.length > 0) {
+      // If current selected contract is not in the available contracts, select the first one
+      const isCurrentContractAvailable = availableContracts.some(c => c.symbol === selectedContract);
+      if (!isCurrentContractAvailable) {
+        console.log(`Switching to first IBKR contract: ${availableContracts[0].symbol} for ${name}`);
+        setSelectedContract(availableContracts[0].symbol);
+      }
+    }
+  }, [availableContracts, selectedContract, name]);
+
   // Get the selected contract data
   const selectedContractData = availableContracts?.find(c => c.symbol === selectedContract);
   
