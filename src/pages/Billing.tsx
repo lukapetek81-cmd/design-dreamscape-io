@@ -19,7 +19,7 @@ const Billing = () => {
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={() => navigate(-1)}
+                onClick={() => navigate('/')}
                 className="mr-2"
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -47,7 +47,7 @@ const Billing = () => {
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/')}
               className="mr-2"
             >
               <ArrowLeft className="w-4 h-4" />

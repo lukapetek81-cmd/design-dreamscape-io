@@ -12,7 +12,7 @@ const NewsSettingsPage: React.FC = () => {
       {/* Back Button */}
       <Button 
         variant="ghost" 
-        onClick={() => navigate(-1)} 
+        onClick={() => navigate('/')} 
         className="mb-6 gap-2 hover:bg-muted/50"
       >
         <ArrowLeft className="w-4 h-4" />

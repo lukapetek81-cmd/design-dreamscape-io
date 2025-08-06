@@ -155,7 +155,7 @@ const LearningHub = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/')}
               className="mr-2"
             >
               <ArrowLeft className="h-4 w-4" />

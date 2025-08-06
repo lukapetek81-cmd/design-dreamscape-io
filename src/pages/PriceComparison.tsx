@@ -289,7 +289,7 @@ const PriceComparison = () => {
               size="sm"
               onClick={() => {
                 console.log('Back button clicked');
-                navigate(-1);
+                navigate('/');
               }}
               className="mr-2"
             >
