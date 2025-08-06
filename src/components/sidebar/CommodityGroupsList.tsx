@@ -51,11 +51,13 @@ const CommodityGroupsList = ({ activeGroup, onGroupSelect, commodityCounts }: Co
                 <SidebarMenuButton
                   isActive={isActive}
                   onClick={() => handleGroupSelect(group.id)}
-                  className={`flex items-center gap-3 rounded-lg transition-all duration-200 ${
+                  className={`flex items-center gap-3 rounded-lg transition-all duration-200 focus-ring ${
                     isMobile 
                       ? 'px-6 py-6 min-h-[72px] active:scale-95 touch-manipulation text-base' 
                       : 'px-3 py-2'
                   }`}
+                  aria-label={`View ${group.label} commodities (${count} available)`}
+                  aria-pressed={isActive}
                 >
                   <div className={`flex items-center justify-center w-8 h-8 rounded-lg ${group.color}`}>
                     <Icon className="w-4 h-4" />
@@ -65,7 +67,10 @@ const CommodityGroupsList = ({ activeGroup, onGroupSelect, commodityCounts }: Co
                       <div className="flex-1 min-w-0">
                         <span className="font-bold text-foreground">{group.label}</span>
                       </div>
-                      <span className="text-xs bg-muted px-2 py-1 rounded-full font-semibold">
+                      <span 
+                        className="text-xs bg-muted px-2 py-1 rounded-full font-semibold"
+                        aria-label={`${count} commodities in this category`}
+                      >
                         {count}
                       </span>
                     </>

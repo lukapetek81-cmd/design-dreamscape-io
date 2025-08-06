@@ -185,9 +185,11 @@ const CommodityCard = React.memo(({ name, price: fallbackPrice, change: fallback
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <CollapsibleTrigger 
-        className="w-full touch-manipulation"
+        className="w-full touch-manipulation focus-ring"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        aria-label={`${isOpen ? 'Collapse' : 'Expand'} details for ${name} commodity`}
+        aria-expanded={isOpen}
       >
         <Card className="group relative overflow-hidden card-hover-effect border-0 bg-gradient-to-r from-card via-card to-card/80 backdrop-blur-sm shadow-soft active:scale-[0.98] transition-all duration-200">
           {/* Enhanced Background Pattern with Responsive Adjustments */}
@@ -267,7 +269,10 @@ const CommodityCard = React.memo(({ name, price: fallbackPrice, change: fallback
                   {isPremium && availableContracts && availableContracts.length > 0 && (
                     <div className="mt-3">
                       <Select value={selectedContract} onValueChange={handleContractChange}>
-                        <SelectTrigger className="w-full sm:w-[280px] h-8 text-xs">
+                        <SelectTrigger 
+                          className="w-full sm:w-[280px] h-8 text-xs focus-ring"
+                          aria-label="Select futures contract"
+                        >
                           <SelectValue placeholder="Select Contract" />
                         </SelectTrigger>
                         <SelectContent>

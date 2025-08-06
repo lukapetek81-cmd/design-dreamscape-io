@@ -4,6 +4,7 @@ import CommodityCard from '@/components/CommodityCard';
 import CommodityGroupSection from '@/components/CommodityGroupSection';
 import VirtualizedCommodityList from '@/components/VirtualizedCommodityList';
 import { FadeInAnimation } from '@/components/animations/Animations';
+import { StatusIndicator } from '@/components/ui/status-indicator';
 
 import UserProfile from '@/components/UserProfile';
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
@@ -337,25 +338,16 @@ const DashboardContent = ({
                 <div className="flex items-center gap-3">
                   <div className="text-center sm:text-right space-y-1">
                     <p className="text-2xs sm:text-xs lg:text-sm font-medium text-muted-foreground">
-                      {profile?.subscription_active ? 'Real-time Status' : 'Market Status'}
+                      Market Status
                     </p>
-                    <div className="flex items-center justify-center sm:justify-end gap-2">
-                      <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${
-                        profile?.subscription_active && realtimeConnected 
-                          ? 'bg-blue-500 animate-pulse' 
-                          : 'bg-green-500 animate-pulse'
-                      }`}></div>
-                      <span className={`text-sm sm:text-base lg:text-lg font-bold ${
-                        profile?.subscription_active && realtimeConnected 
-                          ? 'text-blue-600 dark:text-blue-400' 
-                          : 'text-green-600 dark:text-green-400'
-                      }`}>
-                        {profile?.subscription_active && realtimeConnected 
-                          ? 'LIVE' 
-                          : 'OPEN'
-                        }
-                      </span>
-                    </div>
+                    <StatusIndicator
+                      status={profile?.subscription_active && realtimeConnected ? 'live' : 'delayed'}
+                      label={profile?.subscription_active && realtimeConnected ? 'LIVE' : 'OPEN'}
+                      size="md"
+                      showLabel={true}
+                      animated={true}
+                      className="justify-center sm:justify-end"
+                    />
                   </div>
                 </div>
               </div>
