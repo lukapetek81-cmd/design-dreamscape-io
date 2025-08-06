@@ -342,14 +342,17 @@ const DashboardContent = ({
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Button 
-                    onClick={() => setShowFuturesResearch(!showFuturesResearch)}
-                    variant={showFuturesResearch ? "default" : "outline"}
-                    size="sm"
-                    className="text-xs"
-                  >
-                    Futures Research
-                  </Button>
+                  {/* Only show Futures Research button for non-energy commodities */}
+                  {activeGroup !== 'energy' && (
+                    <Button 
+                      onClick={() => setShowFuturesResearch(!showFuturesResearch)}
+                      variant={showFuturesResearch ? "default" : "outline"}
+                      size="sm"
+                      className="text-xs"
+                    >
+                      Futures Research
+                    </Button>
+                  )}
                   <div className="text-center sm:text-right space-y-1">
                     <p className="text-2xs sm:text-xs lg:text-sm font-medium text-muted-foreground">
                       {profile?.subscription_active ? 'Real-time Status' : 'Market Status'}
