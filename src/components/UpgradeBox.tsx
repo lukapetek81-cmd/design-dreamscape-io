@@ -114,11 +114,15 @@ const UpgradeBox = () => {
           
           <div className="space-y-2">
             <p className="text-sm font-semibold text-yellow-900 dark:text-yellow-100">
-              Real-Time Data Access
+              Real-Time Data Access + Futures Contracts
             </p>
             <div className="flex items-center gap-2 text-xs text-yellow-700 dark:text-yellow-300">
               <Zap className="w-3 h-3" />
               <span>Live market data</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-yellow-700 dark:text-yellow-300">
+              <CheckCircle className="w-3 h-3" />
+              <span>IBKR futures contracts</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-yellow-700 dark:text-yellow-300">
               <CheckCircle className="w-3 h-3" />
@@ -164,12 +168,12 @@ const UpgradeBox = () => {
         
         <div className="space-y-2">
           <h3 className="text-sm font-bold text-orange-900 dark:text-orange-100">
-            {isGuestUser ? 'Get Real-Time Data' : 'Upgrade to Real-Time'}
+            {isGuestUser ? 'Get Real-Time Data + Futures' : 'Upgrade to Real-Time + Futures'}
           </h3>
           <p className="text-xs text-orange-700 dark:text-orange-300">
             {isGuestUser 
-              ? 'Sign up and upgrade to get live market data instead of delays'
-              : 'Your data is delayed by 15 minutes. Upgrade for instant updates!'
+              ? 'Sign up and upgrade to get live market data and IBKR futures contracts'
+              : 'Your data is delayed by 15 minutes. Upgrade for instant updates & futures access!'
             }
           </p>
         </div>
@@ -178,6 +182,10 @@ const UpgradeBox = () => {
           <div className="flex items-center gap-2 text-xs text-orange-600 dark:text-orange-400">
             <Zap className="w-3 h-3" />
             <span>Instant price updates</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-orange-600 dark:text-orange-400">
+            <CheckCircle className="w-3 h-3" />
+            <span>IBKR futures contracts</span>
           </div>
           <div className="flex items-center gap-2 text-xs text-orange-600 dark:text-orange-400">
             <CheckCircle className="w-3 h-3" />
@@ -192,11 +200,11 @@ const UpgradeBox = () => {
         <div className="pt-2 border-t border-orange-200 dark:border-orange-800">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="text-lg font-bold text-orange-900 dark:text-orange-100">$5</p>
+              <p className="text-lg font-bold text-orange-900 dark:text-orange-100">$9.99</p>
               <p className="text-xs text-orange-600 dark:text-orange-400">per month</p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-muted-foreground line-through">$25/mo</p>
+              <p className="text-xs text-muted-foreground line-through">$49/mo</p>
               <p className="text-xs text-green-600 font-semibold">80% off launch</p>
             </div>
           </div>

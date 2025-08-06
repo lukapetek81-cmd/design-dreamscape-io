@@ -64,8 +64,8 @@ serve(async (req) => {
           price_data: {
             currency: "usd",
             product_data: { 
-              name: "Real-Time Data Access",
-              description: "Get real-time commodity prices instead of 15-minute delayed data"
+              name: "Real-Time Data Access + Futures",
+              description: "Get real-time commodity prices and access to IBKR futures contracts instead of 15-minute delayed data"
             },
             unit_amount: 999, // $9.99 in cents
             recurring: { interval: "month" },
