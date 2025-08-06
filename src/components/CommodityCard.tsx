@@ -84,20 +84,11 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
   // Use real-time data context
   const { getPriceForCommodity, isLiveData, connected: realtimeConnected } = useRealtimeDataContext();
   
-  // Auto-select the first IBKR contract when contracts are loaded (premium users only)
-  React.useEffect(() => {
-    if (isPremium && availableContracts && availableContracts.length > 0) {
-      // If current selected contract is not in the available contracts, select the first one
-      const isCurrentContractAvailable = availableContracts.some(c => c.symbol === selectedContract);
-      if (!isCurrentContractAvailable) {
-        console.log(`Switching to first IBKR contract: ${availableContracts[0].symbol} for ${name}`);
-        setSelectedContract(availableContracts[0].symbol);
-      }
-    }
-  }, [availableContracts, selectedContract, name, isPremium]);
+  // Don't auto-select IBKR contracts - keep the default symbol that free users see
+  // Premium users will have the option to manually select IBKR contracts from the dropdown
 
-  // Get the selected contract data (only for premium users)
-  const selectedContractData = isPremium ? availableContracts?.find(c => c.symbol === selectedContract) : null;
+  // Get the selected contract data (only for premium users, and only if an IBKR contract is selected)
+  const selectedContractData = isPremium && availableContracts ? availableContracts.find(c => c.symbol === selectedContract) : null;
   
   // Use real-time data context
   const realtimePrice = getPriceForCommodity(name);
@@ -253,19 +244,37 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                     </div>
                   </div>
                   
-                  {/* Contract Selector - Only show for premium users with multiple contracts available */}
-                  {isPremium && availableContracts && availableContracts.length > 1 && (
+                  {/* Contract Selector - Show for premium users with available contracts */}
+                  {isPremium && availableContracts && availableContracts.length > 0 && (
                     <div className="mt-3">
                       <Select value={selectedContract} onValueChange={setSelectedContract}>
                         <SelectTrigger className="w-full sm:w-[200px] h-8 text-xs">
                           <SelectValue placeholder="Select Contract" />
                         </SelectTrigger>
                         <SelectContent>
+                          {/* Default contract (same as free users see) */}
+                          <SelectItem value={symbol}>
+                            <div className="flex flex-col">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">{symbol}</span>
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-950/20 text-gray-700 dark:text-gray-400">
+                                  Default
+                                </span>
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                Standard commodity data
+                              </span>
+                            </div>
+                          </SelectItem>
+                          {/* IBKR Futures Contracts */}
                           {availableContracts.map((contract) => (
                             <SelectItem key={contract.symbol} value={contract.symbol}>
                               <div className="flex flex-col">
                                 <div className="flex items-center gap-2">
                                   <span className="font-medium">{contract.symbol}</span>
+                                  <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400">
+                                    Futures
+                                  </span>
                                 </div>
                                 <span className="text-xs text-muted-foreground">
                                   ${formatPrice(contract.price, contract.name)} • Vol: {contract.volume.toLocaleString()}
