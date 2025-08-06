@@ -264,9 +264,6 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                               <div className="flex flex-col">
                                 <div className="flex items-center gap-2">
                                   <span className="font-medium">{contract.symbol}</span>
-                                  <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400">
-                                    IBKR
-                                  </span>
                                 </div>
                                 <span className="text-xs text-muted-foreground">
                                   ${formatPrice(contract.price, contract.name)} • Vol: {contract.volume.toLocaleString()}

@@ -452,18 +452,15 @@ const PriceComparison = () => {
                                           className={`flex items-center justify-between p-2 border rounded text-sm ${
                                             isSelected ? 'bg-muted' : ''
                                           }`}>
-                                       <div className="flex-1">
-                                         <div className="font-medium flex items-center gap-2">
-                                           <span>{contract.symbol}</span>
-                                           <Badge variant="outline" className="text-xs">
-                                             {contract.source || 'IBKR'}
-                                           </Badge>
-                                         </div>
-                                         <div className="text-xs text-muted-foreground">
-                                           ${contract.price.toFixed(2)} • Vol: {contract.volume.toLocaleString()}
-                                           {contract.expirationDate && ` • Exp: ${new Date(contract.expirationDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
-                                         </div>
-                                       </div>
+                                        <div className="flex-1">
+                                          <div className="font-medium flex items-center gap-2">
+                                            <span>{contract.symbol}</span>
+                                          </div>
+                                          <div className="text-xs text-muted-foreground">
+                                            ${contract.price.toFixed(2)} • Vol: {contract.volume.toLocaleString()}
+                                            {contract.expirationDate && ` • Exp: ${new Date(contract.expirationDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                                          </div>
+                                        </div>
                                        <Button
                                          variant="ghost"
                                          size="sm"
