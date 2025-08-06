@@ -479,8 +479,19 @@ serve(async (req) => {
     // Get FMP API key from Supabase secrets
     const fmpApiKey = Deno.env.get('FMP_API_KEY')
     
-    // Use contract symbol if provided, otherwise fall back to commodity mapping
-    const symbol = contractSymbol || COMMODITY_SYMBOLS[commodityName]
+    // For IBKR contract symbols, map back to base FMP symbols
+    let symbol = contractSymbol || COMMODITY_SYMBOLS[commodityName]
+    
+    // If contract symbol is provided but it's an IBKR symbol (not supported by FMP), 
+    // fall back to the base commodity symbol
+    if (contractSymbol) {
+      const baseFmpSymbol = COMMODITY_SYMBOLS[commodityName]
+      if (baseFmpSymbol) {
+        console.log(`Using base FMP symbol ${baseFmpSymbol} instead of IBKR contract symbol ${contractSymbol}`)
+        symbol = baseFmpSymbol
+      }
+    }
+    
     console.log(`Using symbol for API call: ${symbol}`)
     if (!symbol) {
       throw new Error(`Commodity ${commodityName} not found`)
