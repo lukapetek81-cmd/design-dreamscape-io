@@ -288,15 +288,6 @@ const CommodityCard = ({ name, price: fallbackPrice, change: fallbackChange, sym
                     </div>
                   )}
 
-                  {/* Premium upgrade prompt for free users */}
-                  {!isPremium && (
-                    <div className="mt-3 p-3 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-primary/20">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span className="inline-block w-2 h-2 bg-primary rounded-full animate-pulse"></span>
-                        <span>Upgrade to Premium for futures contracts and real-time data</span>
-                      </div>
-                    </div>
-                  )}
                 </div>
                 
                 {/* Price and Change - Responsive Layout */}
