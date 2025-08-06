@@ -192,8 +192,8 @@ const MarketCorrelation = () => {
             mobileView ? (
               /* Mobile View - List Format */
               <div className="space-y-4">
-                {filteredCommodities.map(commodity1 => (
-                  <div key={commodity1.name} className="space-y-2">
+                {filteredCommodities.map((commodity1, index) => (
+                  <div key={`${commodity1.name}-${commodity1.symbol}-${index}`} className="space-y-2">
                     <h4 className="font-semibold text-sm border-b pb-1">{commodity1.name}</h4>
                     <div className="grid grid-cols-1 gap-2">
                       {filteredCommodities
@@ -204,10 +204,10 @@ const MarketCorrelation = () => {
                           return corrB - corrA;
                         })
                         .slice(0, 5) // Show top 5 correlations
-                        .map(commodity2 => {
+                        .map((commodity2, idx) => {
                           const correlation = correlationMatrix[commodity1.name]?.[commodity2.name] || 0;
                           return (
-                            <div key={commodity2.name} className="flex items-center justify-between p-3 rounded-lg border">
+                            <div key={`${commodity1.symbol}-${commodity2.symbol}-${idx}`} className="flex items-center justify-between p-3 rounded-lg border hover:shadow-md transition-all duration-200">
                               <div className="flex-1">
                                 <div className="font-medium text-sm">{commodity2.name}</div>
                                 <div className="text-xs text-muted-foreground">{commodity2.symbol}</div>
@@ -247,16 +247,16 @@ const MarketCorrelation = () => {
                   </div>
 
                   {/* Matrix rows */}
-                  {filteredCommodities.map(commodity1 => (
-                    <div key={commodity1.name} className="grid gap-1 mb-1" style={{ gridTemplateColumns: `200px repeat(${filteredCommodities.length}, 80px)` }}>
+                  {filteredCommodities.map((commodity1, idx1) => (
+                    <div key={`${commodity1.name}-${commodity1.symbol}-row-${idx1}`} className="grid gap-1 mb-1" style={{ gridTemplateColumns: `200px repeat(${filteredCommodities.length}, 80px)` }}>
                       <div className="p-2 text-sm font-medium truncate">
                         {commodity1.name}
                       </div>
-                      {filteredCommodities.map(commodity2 => {
+                      {filteredCommodities.map((commodity2, idx2) => {
                         const correlation = correlationMatrix[commodity1.name]?.[commodity2.name] || 0;
                         return (
                           <div 
-                            key={commodity2.name}
+                            key={`${commodity1.symbol}-${commodity2.symbol}-cell-${idx2}`}
                             className={`p-2 text-xs font-bold text-center rounded transition-all hover:scale-110 cursor-pointer ${getCorrelationColor(correlation)} ${
                               correlation > 0 ? 'text-white' : correlation < -0.5 ? 'text-white' : 'text-gray-800'
                             }`}

@@ -2,6 +2,8 @@ import React, { useMemo, useState, useEffect } from 'react';
 import CommodityCard from './CommodityCard';
 import { Commodity } from '@/hooks/useCommodityData';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { SkeletonCard } from '@/components/ui/enhanced-skeleton';
+import { FadeInAnimation, StaggeredAnimation } from '@/components/animations/Animations';
 
 interface VirtualizedCommodityListProps {
   commodities: Commodity[];
@@ -53,9 +55,15 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
     return (
       <div className="grid gap-3 sm:gap-4 lg:gap-6">
         {Array.from({ length: isMobile ? 3 : 6 }).map((_, index) => (
-          <div key={index} className="animate-pulse">
-            <div className="h-32 bg-muted rounded-lg"></div>
-          </div>
+          <FadeInAnimation key={index} delay={index * 0.1}>
+            <SkeletonCard 
+              showImage={false}
+              showTitle={true}
+              showDescription={true}
+              showActions={false}
+              lines={3}
+            />
+          </FadeInAnimation>
         ))}
       </div>
     );
@@ -63,7 +71,7 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:gap-4 lg:gap-6">
+      <StaggeredAnimation staggerDelay={0.05} className="grid gap-3 sm:gap-4 lg:gap-6">
         {visibleCommodities.map((commodity, index) => (
           <div key={`${commodity.symbol}-${index}`}>
             <CommodityCard
@@ -76,22 +84,35 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
             />
           </div>
         ))}
-      </div>
+      </StaggeredAnimation>
       
-      {/* Loading indicator for additional items */}
+      {/* Enhanced Loading indicator for additional items */}
       {isLoadingMore && (
-        <div className="flex justify-center py-4">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-        </div>
+        <FadeInAnimation>
+          <div className="flex justify-center py-6">
+            <div className="flex items-center gap-3 px-4 py-2 bg-muted/50 rounded-full">
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-transparent"></div>
+              <span className="text-sm text-muted-foreground font-medium">Loading more commodities...</span>
+            </div>
+          </div>
+        </FadeInAnimation>
       )}
       
-      {/* Load more indicator */}
+      {/* Enhanced Load more indicator */}
       {visibleItems < commodities.length && !isLoadingMore && (
-        <div className="text-center py-4">
-          <p className="text-sm text-muted-foreground">
-            Showing {visibleItems} of {commodities.length} commodities
-          </p>
-        </div>
+        <FadeInAnimation>
+          <div className="text-center py-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-card border border-border/50 rounded-full shadow-sm">
+              <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+              <p className="text-sm text-muted-foreground font-medium">
+                Showing {visibleItems} of {commodities.length} commodities
+              </p>
+              <div className="text-xs text-primary font-semibold">
+                Scroll for more
+              </div>
+            </div>
+          </div>
+        </FadeInAnimation>
       )}
     </div>
   );

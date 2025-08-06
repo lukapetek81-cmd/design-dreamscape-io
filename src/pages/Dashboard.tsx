@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import CommodityCard from '@/components/CommodityCard';
 import CommodityGroupSection from '@/components/CommodityGroupSection';
 import VirtualizedCommodityList from '@/components/VirtualizedCommodityList';
+import { FadeInAnimation } from '@/components/animations/Animations';
 
 import UserProfile from '@/components/UserProfile';
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
@@ -361,28 +362,59 @@ const DashboardContent = ({
 
 
 
-              {/* Loading State */}
+              {/* Enhanced Loading State */}
               {loading && (
-                <div className="flex items-center justify-center py-16">
-                  <div className="text-center space-y-4">
-                    <Loader className="w-8 h-8 animate-spin text-primary mx-auto" />
-                    <div className="space-y-2">
-                      <p className="text-lg font-semibold text-foreground">Loading Commodities</p>
-                      <p className="text-sm text-muted-foreground">Fetching data from FMP API...</p>
+                <FadeInAnimation>
+                  <div className="flex items-center justify-center py-16">
+                    <div className="text-center space-y-6">
+                      <div className="relative">
+                        <div className="w-16 h-16 mx-auto border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <BarChart3 className="w-6 h-6 text-primary" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-xl font-semibold text-foreground">Loading Commodities</p>
+                        <p className="text-sm text-muted-foreground">Fetching real-time market data...</p>
+                        <div className="flex items-center justify-center gap-1 mt-3">
+                          <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                          <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </FadeInAnimation>
               )}
 
-              {/* Error State */}
+              {/* Enhanced Error State */}
               {error && !loading && (
-                <div className="p-6 rounded-xl bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/20 dark:to-rose-950/20 border border-red-200 dark:border-red-800">
-                  <div className="text-center space-y-2">
-                    <p className="text-lg font-semibold text-red-700 dark:text-red-400">Failed to Load Commodities</p>
-                    <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-                    <p className="text-xs text-red-500 dark:text-red-500">Using fallback data instead</p>
+                <FadeInAnimation>
+                  <div className="p-6 rounded-xl bg-gradient-to-r from-red-50 to-red-100 dark:from-red-950/20 dark:to-red-900/20 border border-red-200 dark:border-red-800/50 shadow-soft">
+                    <div className="text-center space-y-3">
+                      <div className="w-12 h-12 mx-auto bg-red-100 dark:bg-red-950/50 rounded-full flex items-center justify-center">
+                        <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-lg font-semibold text-red-700 dark:text-red-400">Connection Issue</p>
+                        <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                          {error}
+                        </p>
+                        <p className="text-xs text-red-500 dark:text-red-500 mt-2">
+                          Don't worry, we're showing you cached data instead
+                        </p>
+                      </div>
+                      <button 
+                        onClick={() => window.location.reload()}
+                        className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+                      >
+                        Try Again
+                      </button>
+                    </div>
                   </div>
-                </div>
+                </FadeInAnimation>
               )}
 
 
@@ -394,17 +426,27 @@ const DashboardContent = ({
                 />
               )}
 
-              {/* Empty State */}
+              {/* Enhanced Empty State */}
               {!loading && !error && getCommodities.length === 0 && (
-                <div className="text-center py-16 space-y-4">
-                  <div className="w-16 h-16 mx-auto bg-muted/50 rounded-full flex items-center justify-center">
-                    <BarChart3 className="w-8 h-8 text-muted-foreground" />
+                <FadeInAnimation>
+                  <div className="text-center py-16 space-y-6">
+                    <div className="w-20 h-20 mx-auto bg-gradient-to-br from-muted/50 to-muted/30 rounded-full flex items-center justify-center">
+                      <BarChart3 className="w-10 h-10 text-muted-foreground" />
+                    </div>
+                    <div className="space-y-3">
+                      <p className="text-xl font-semibold text-foreground">No Commodities Available</p>
+                      <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+                        There are currently no commodities available in this category. Try selecting a different category or check back later.
+                      </p>
+                      <button 
+                        onClick={() => window.location.reload()}
+                        className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+                      >
+                        Refresh Data
+                      </button>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <p className="text-lg font-semibold text-foreground">No Commodities Found</p>
-                    <p className="text-sm text-muted-foreground">No commodities available in this category.</p>
-                  </div>
-                </div>
+                </FadeInAnimation>
               )}
             </div>
           </main>
