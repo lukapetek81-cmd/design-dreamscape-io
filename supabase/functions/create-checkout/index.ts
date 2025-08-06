@@ -67,7 +67,7 @@ serve(async (req) => {
               name: "Real-Time Data Access",
               description: "Get real-time commodity prices instead of 15-minute delayed data"
             },
-            unit_amount: 500, // $5.00 in cents
+            unit_amount: 999, // $9.99 in cents
             recurring: { interval: "month" },
           },
           quantity: 1,
