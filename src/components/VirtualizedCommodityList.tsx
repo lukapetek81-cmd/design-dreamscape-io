@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { SkeletonCard } from '@/components/ui/enhanced-skeleton';
+import { usePerformanceOptimizer } from '@/hooks/usePerformanceOptimizer';
 import { FadeInAnimation, StaggeredAnimation } from '@/components/animations/Animations';
 
 interface FuturesContract {

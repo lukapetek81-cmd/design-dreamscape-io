@@ -11,8 +11,8 @@ import { useHaptics } from '@/hooks/useHaptics';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePremiumGating } from '@/hooks/usePremiumGating';
 import { getMarketStatus } from '@/lib/marketHours';
-import CommodityChart from './CommodityChart';
-import CommodityNews from './CommodityNews';
+import LazyChart from './LazyChart';
+import LazyNews from './LazyNews';
 
 interface CommodityCardProps {
   name: string;
@@ -314,7 +314,7 @@ const CommodityCard = React.memo<CommodityCardProps>(({
       
       <CollapsibleContent className="overflow-hidden">
         <div className="mt-3 sm:mt-4 space-y-4 sm:space-y-6 animate-accordion-down">
-          <CommodityChart 
+          <LazyChart 
             name={name} 
             basePrice={displayPrice || 0} 
             selectedContract={selectedContract}
@@ -327,7 +327,7 @@ const CommodityCard = React.memo<CommodityCardProps>(({
               venue: selectedContractData.venue || venue || 'NYMEX'
             } : undefined}
           />
-          <CommodityNews commodity={name} />
+          <LazyNews commodity={name} />
         </div>
       </CollapsibleContent>
     </Collapsible>

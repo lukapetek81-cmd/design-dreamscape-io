@@ -1,0 +1,86 @@
+import React, { lazy, Suspense } from 'react';
+import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
+import { Skeleton } from '@/components/ui/enhanced-skeleton';
+import { Card } from '@/components/ui/card';
+import { BarChart3 } from 'lucide-react';
+
+const CommodityChart = lazy(() => import('./CommodityChart'));
+
+interface LazyChartProps {
+  name: string;
+  basePrice: number;
+  selectedContract?: string;
+  contractData?: any;
+  className?: string;
+}
+
+// Chart skeleton component
+const ChartSkeleton = () => (
+  <Card className="p-4 sm:p-6 mt-4 sm:mt-6 bg-gradient-to-br from-card/80 to-muted/20 border border-border/50 shadow-soft">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-primary/10 text-primary">
+          <BarChart3 className="w-4 h-4" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton variant="text" className="w-32 h-5" />
+          <Skeleton variant="text" className="w-24 h-3" />
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <Skeleton variant="rectangular" className="w-16 h-8" />
+        <Skeleton variant="rectangular" className="w-16 h-8" />
+        <Skeleton variant="rectangular" className="w-20 h-8" />
+      </div>
+    </div>
+    
+    <div className="h-[200px] sm:h-[250px] lg:h-[300px] w-full p-2 sm:p-4 bg-gradient-to-br from-background/50 to-muted/20 rounded-xl border border-border/30">
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="w-12 h-12 mx-auto bg-muted/50 rounded-full flex items-center justify-center">
+            <BarChart3 className="w-6 h-6 text-muted-foreground animate-pulse" />
+          </div>
+          <Skeleton variant="text" className="w-24 h-4 mx-auto" />
+        </div>
+      </div>
+    </div>
+    
+    <div className="mt-4 flex justify-between items-center">
+      <Skeleton variant="text" className="w-20 h-4" />
+      <Skeleton variant="text" className="w-16 h-4" />
+    </div>
+  </Card>
+);
+
+const LazyChart: React.FC<LazyChartProps> = ({ 
+  name, 
+  basePrice, 
+  selectedContract, 
+  contractData,
+  className = ''
+}) => {
+  const { elementRef, isIntersecting } = useIntersectionObserver({
+    rootMargin: '200px', // Load charts when they're 200px away from viewport
+    threshold: 0.1,
+    triggerOnce: true,
+  });
+
+  return (
+    <div ref={elementRef as React.RefObject<HTMLDivElement>} className={className}>
+      {isIntersecting ? (
+        <Suspense fallback={<ChartSkeleton />}>
+          <CommodityChart
+            name={name}
+            basePrice={basePrice}
+            selectedContract={selectedContract}
+            contractData={contractData}
+          />
+        </Suspense>
+      ) : (
+        <ChartSkeleton />
+      )}
+    </div>
+  );
+};
+
+export default React.memo(LazyChart);

@@ -28,15 +28,21 @@ import { Button } from '@/components/ui/button';
 const Dashboard = () => {
   const [activeGroup, setActiveGroup] = React.useState("energy");
   
-  // Enhanced refresh handler for mobile pull-to-refresh
-  const handleRefresh = React.useCallback(async () => {
-    // Trigger data refetch here
-    window.location.reload(); // Simple approach, could be improved with proper data refetching
-  }, []);
-  
   const isMobile = useIsMobile();
   const { isGuest, profile, loading: authLoading } = useAuth();
   const { data: commodities, isLoading: commoditiesLoading, error: commoditiesError, refetch: refetchCommodities } = useAvailableCommodities();
+  
+  // Enhanced refresh handler for mobile pull-to-refresh
+  const handleRefresh = React.useCallback(async () => {
+    try {
+      // Trigger proper data refetch instead of page reload
+      if (refetchCommodities) {
+        await refetchCommodities();
+      }
+    } catch (error) {
+      console.error('Failed to refresh data:', error);
+    }
+  }, [refetchCommodities]);
   const { connected: realtimeConnected, lastUpdate, error: realtimeError, delayStatus } = useRealtimeDataContext();
 
   // Show loading screen while auth is checking
@@ -64,6 +70,7 @@ const Dashboard = () => {
         onRetry={() => refetchCommodities()}
         realtimeConnected={realtimeConnected}
         delayStatus={delayStatus}
+        handleRefresh={handleRefresh}
       />
     </SidebarProvider>
   );
@@ -79,7 +86,8 @@ const DashboardContent = ({
   error, 
   realtimeConnected,
   delayStatus,
-  onRetry
+  onRetry,
+  handleRefresh
 }: {
   activeGroup: string;
   setActiveGroup: (group: string) => void;
@@ -95,6 +103,7 @@ const DashboardContent = ({
     delayText: string;
     statusText: string;
   };
+  handleRefresh: () => Promise<void>;
 }) => {
   const { toggleSidebar, setOpenMobile } = useSidebar();
   const [touchStart, setTouchStart] = React.useState<number | null>(null);
@@ -350,7 +359,8 @@ const DashboardContent = ({
           </header>
 
           {/* Enhanced Responsive Main Content */}
-          <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 xl:p-10 overflow-x-hidden">
+          <PullToRefresh onRefresh={handleRefresh} enabled={isMobile}>
+            <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 xl:p-10 overflow-x-hidden">
             <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 lg:space-y-8">
               {/* View Toggle Header */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 rounded-2xl bg-gradient-to-r from-card/50 to-muted/30 border border-border/50 shadow-soft hover:shadow-medium transition-shadow duration-300 space-y-3 sm:space-y-0">
@@ -477,6 +487,7 @@ const DashboardContent = ({
               )}
             </div>
           </main>
+          </PullToRefresh>
           
           {/* Floating Menu Button for Mobile - Bottom Left */}
           <SidebarTrigger className="fixed left-4 bottom-20 z-50 w-16 h-16 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl active:scale-95 touch-manipulation transition-all duration-200 flex items-center justify-center md:hidden">
