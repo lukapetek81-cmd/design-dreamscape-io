@@ -62,6 +62,11 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
     )
   );
 
+  // Create a stable key for tracking when data actually changes
+  const dataVersionKey = historicalQueries
+    .map(q => `${q.isLoading}-${q.data?.data?.length || 0}-${q.error?.message || ''}`)
+    .join('|');
+
   // Process and combine historical data
   useEffect(() => {
     if (commodities.length === 0) {
@@ -134,7 +139,7 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
     } finally {
       setIsLoading(false);
     }
-  }, [commodities, historicalQueries]);
+  }, [commodities, timeframe, dataVersionKey]);
 
   // Update chart with real-time data
   useEffect(() => {
