@@ -19,17 +19,25 @@ export const useAndroidBackButton = () => {
         const { App } = await import('@capacitor/app');
         console.log('Capacitor App imported successfully');
 
-        const handleBackButton = () => {
+        const handleBackButton = (event: any) => {
           console.log('🔴 ANDROID BACK BUTTON PRESSED! Current path:', location.pathname);
+          
+          // Prevent the default behavior (app exit)
+          if (event && event.preventDefault) {
+            event.preventDefault();
+          }
           
           // Always navigate to home instead of exiting
           if (location.pathname !== '/') {
             console.log('➡️ Navigating to home from:', location.pathname);
             navigate('/', { replace: true });
           } else {
-            console.log('➡️ Already on home, preventing app exit by staying on home');
-            // Prevent app exit by doing nothing or showing a toast
+            console.log('➡️ Already on home, staying on home page');
+            // We're already on home, just prevent the app from closing
           }
+          
+          // Return false to prevent default behavior
+          return false;
         };
 
         console.log('Adding back button listener...');
