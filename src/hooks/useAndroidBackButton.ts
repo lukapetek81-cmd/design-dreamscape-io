@@ -6,56 +6,68 @@ export const useAndroidBackButton = () => {
   const location = useLocation();
 
   useEffect(() => {
-    console.log('🚀 Setting up Android back button listener...');
+    console.log('🚀 Setting up Android back button with priority handling...');
     
-    const setupListener = async () => {
-      // Only setup in Capacitor environment
-      if (typeof window === 'undefined' || !(window as any).Capacitor) {
-        console.log('❌ Not in Capacitor environment');
-        return null;
-      }
-
-      try {
-        const { App } = await import('@capacitor/app');
-        console.log('✅ Capacitor App imported');
-
-        const handleBackButton = () => {
-          console.log('🔴 Android back button pressed!');
-          console.log('📍 Current path:', location.pathname);
-          
-          // If not on home page, navigate to home
-          if (location.pathname !== '/') {
-            console.log('🏠 Navigating to home page');
-            navigate('/', { replace: true });
-          } else {
-            console.log('🏠 Already on home - doing nothing to prevent app exit');
-            // Don't call App.exitApp() - just do nothing
-            // This prevents the app from closing
-          }
-        };
-
-        const listener = await App.addListener('backButton', handleBackButton);
-        console.log('✅ Back button listener registered');
+    // Method 1: Using document event listener with priority
+    const handleBackButton = (event: any) => {
+      console.log('🔴 BACK BUTTON EVENT TRIGGERED!');
+      console.log('📍 Current path:', location.pathname);
+      
+      // Always prevent default behavior first
+      event.detail.register(10, () => {
+        console.log('🎯 Priority handler executing...');
         
-        return () => {
-          console.log('🧹 Removing back button listener');
-          listener.remove();
-        };
-      } catch (error) {
-        console.error('❌ Failed to setup back button listener:', error);
-        return null;
+        if (location.pathname !== '/') {
+          console.log('🏠 Navigating to home from:', location.pathname);
+          navigate('/', { replace: true });
+        } else {
+          console.log('🏠 Already on home - preventing app exit');
+          // Do nothing - this prevents the app from closing
+        }
+      });
+    };
+
+    // Add document listener for ionBackButton with priority handling
+    document.addEventListener('ionBackButton', handleBackButton);
+    console.log('✅ ionBackButton listener with priority added');
+
+    // Method 2: Capacitor App listener as backup
+    let capacitorCleanup: (() => void) | null = null;
+    
+    const setupCapacitorListener = async () => {
+      if (typeof window !== 'undefined' && (window as any).Capacitor) {
+        try {
+          const { App } = await import('@capacitor/app');
+          console.log('✅ Setting up Capacitor App listener...');
+          
+          const listener = await App.addListener('backButton', (data) => {
+            console.log('🔥 Capacitor back button triggered (backup)');
+            console.log('📍 Current path:', location.pathname);
+            console.log('📦 Data:', data);
+            
+            if (location.pathname !== '/') {
+              console.log('🏠 Navigating to home via Capacitor listener');
+              navigate('/', { replace: true });
+            } else {
+              console.log('🏠 On home - doing nothing to prevent exit');
+            }
+          });
+          
+          capacitorCleanup = () => listener.remove();
+          console.log('✅ Capacitor backup listener added');
+        } catch (error) {
+          console.error('❌ Capacitor listener failed:', error);
+        }
       }
     };
 
-    let cleanup: (() => void) | null = null;
-    
-    setupListener().then((cleanupFn) => {
-      cleanup = cleanupFn;
-    });
+    setupCapacitorListener();
 
     return () => {
-      if (cleanup) {
-        cleanup();
+      console.log('🧹 Cleaning up back button listeners');
+      document.removeEventListener('ionBackButton', handleBackButton);
+      if (capacitorCleanup) {
+        capacitorCleanup();
       }
     };
   }, [navigate, location.pathname]);
