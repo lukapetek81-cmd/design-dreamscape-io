@@ -1,6 +1,5 @@
 import React from 'react';
 import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 interface PriceChangeIndicatorProps {
   change: number;
@@ -80,13 +79,9 @@ export const PriceChangeIndicator: React.FC<PriceChangeIndicatorProps> = ({
 
   if (animated) {
     return (
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.2 }}
-      >
+      <div className="animate-scale-in">
         {content}
-      </motion.div>
+      </div>
     );
   }
 

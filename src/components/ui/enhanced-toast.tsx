@@ -1,6 +1,5 @@
 import React from 'react';
 import { AlertCircle, CheckCircle, Info, XCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -64,57 +63,48 @@ export const EnhancedToast: React.FC<ToastProps> = ({
     }
   }, [autoClose, autoCloseDelay, isVisible, onClose]);
 
+  if (!isVisible) return null;
+
   return (
-    <AnimatePresence>
-      {isVisible && (
-        <motion.div
-          initial={{ opacity: 0, y: -50, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -50, scale: 0.95 }}
-          transition={{ duration: 0.3, ease: 'easeOut' }}
-          className={`
-            fixed top-4 right-4 z-50 max-w-sm w-full
-            ${config.bgColor} ${config.borderColor}
-            border rounded-lg shadow-lg p-4
-            cursor-pointer hover:shadow-xl
-            transition-shadow duration-200
-          `}
-          onClick={onClose}
-        >
-          <div className="flex items-start gap-3">
-            <Icon className={`w-5 h-5 ${config.iconColor} mt-0.5 flex-shrink-0`} />
-            <div className="flex-1 min-w-0">
-              <p className={`font-semibold text-sm ${config.titleColor}`}>
-                {title}
-              </p>
-              {description && (
-                <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                  {description}
-                </p>
-              )}
-            </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onClose();
-              }}
-              className="text-muted-foreground hover:text-foreground transition-colors p-1 -m-1"
-            >
-              <XCircle className="w-4 h-4" />
-            </button>
-          </div>
-          
-          {/* Progress bar for auto-close */}
-          {autoClose && (
-            <motion.div
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ duration: autoCloseDelay / 1000, ease: 'linear' }}
-              className={`absolute bottom-0 left-0 h-1 ${config.iconColor.replace('text-', 'bg-')} rounded-b-lg origin-left`}
-            />
+    <div
+      className={`
+        fixed top-4 right-4 z-50 max-w-sm w-full
+        ${config.bgColor} ${config.borderColor}
+        border rounded-lg shadow-lg p-4
+        cursor-pointer hover:shadow-xl
+        transition-shadow duration-200 animate-fade-in
+      `}
+      onClick={onClose}
+    >
+      <div className="flex items-start gap-3">
+        <Icon className={`w-5 h-5 ${config.iconColor} mt-0.5 flex-shrink-0`} />
+        <div className="flex-1 min-w-0">
+          <p className={`font-semibold text-sm ${config.titleColor}`}>
+            {title}
+          </p>
+          {description && (
+            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+              {description}
+            </p>
           )}
-        </motion.div>
+        </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
+          className="text-muted-foreground hover:text-foreground transition-colors p-1 -m-1"
+        >
+          <XCircle className="w-4 h-4" />
+        </button>
+      </div>
+      
+      {/* Progress bar for auto-close */}
+      {autoClose && (
+        <div
+          className={`absolute bottom-0 left-0 h-1 ${config.iconColor.replace('text-', 'bg-')} rounded-b-lg origin-left animate-pulse`}
+        />
       )}
-    </AnimatePresence>
+    </div>
   );
 };

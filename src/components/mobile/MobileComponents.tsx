@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -29,10 +28,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   if (!isMobile) return null;
 
   return (
-    <motion.header
-      initial={{ y: -50, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.3 }}
+    <header
       className={`
         ${sticky ? 'sticky top-0 z-40' : ''}
         ${transparent ? 'bg-transparent' : 'bg-background/95 backdrop-blur-md border-b border-border/50'}
@@ -79,10 +75,11 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
       <div className="flex items-center">
         {rightAction || <div className="w-9" />} {/* Spacer for centering */}
       </div>
-    </motion.header>
+    </header>
   );
 };
 
+// Simplified versions without framer-motion
 interface MobileBottomSheetProps {
   isOpen: boolean;
   onClose: () => void;
@@ -102,7 +99,7 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
 }) => {
   const isMobile = useIsMobile();
 
-  if (!isMobile) return null;
+  if (!isMobile || !isOpen) return null;
 
   const heightClasses = {
     half: 'max-h-[50vh]',
@@ -111,51 +108,40 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-50"
-            onClick={onClose}
-          />
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/50 z-50"
+        onClick={onClose}
+      />
 
-          {/* Bottom Sheet */}
-          <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className={`
-              fixed bottom-0 left-0 right-0 z-50
-              bg-background rounded-t-2xl border-t border-border/50
-              ${heightClasses[height]} overflow-hidden
-              ${className}
-            `}
-          >
-            {/* Handle */}
-            <div className="flex justify-center pt-3 pb-2">
-              <div className="w-10 h-1 bg-muted rounded-full" />
-            </div>
+      {/* Bottom Sheet */}
+      <div
+        className={`
+          fixed bottom-0 left-0 right-0 z-50
+          bg-background rounded-t-2xl border-t border-border/50
+          ${heightClasses[height]} overflow-hidden
+          ${className}
+        `}
+      >
+        {/* Handle */}
+        <div className="flex justify-center pt-3 pb-2">
+          <div className="w-10 h-1 bg-muted rounded-full" />
+        </div>
 
-            {/* Header */}
-            {title && (
-              <div className="px-4 py-2 border-b border-border/50">
-                <h2 className="text-lg font-semibold text-center">{title}</h2>
-              </div>
-            )}
+        {/* Header */}
+        {title && (
+          <div className="px-4 py-2 border-b border-border/50">
+            <h2 className="text-lg font-semibold text-center">{title}</h2>
+          </div>
+        )}
 
-            {/* Content */}
-            <div className="overflow-y-auto custom-scrollbar">
-              {children}
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+        {/* Content */}
+        <div className="overflow-y-auto custom-scrollbar">
+          {children}
+        </div>
+      </div>
+    </>
   );
 };
 
@@ -201,11 +187,7 @@ export const MobileFab: React.FC<MobileFabProps> = ({
   };
 
   return (
-    <motion.button
-      initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0, opacity: 0 }}
-      whileTap={{ scale: 0.95 }}
+    <button
       onClick={onClick}
       className={`
         fixed z-40 rounded-full shadow-lg
@@ -220,6 +202,6 @@ export const MobileFab: React.FC<MobileFabProps> = ({
       aria-label={label}
     >
       {icon}
-    </motion.button>
+    </button>
   );
 };

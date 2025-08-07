@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 interface FadeInAnimationProps {
   children: React.ReactNode;
@@ -15,14 +14,9 @@ export const FadeInAnimation: React.FC<FadeInAnimationProps> = ({
   className = '',
 }) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration, delay }}
-      className={className}
-    >
+    <div className={`animate-fade-in ${className}`} style={{ animationDelay: `${delay}s` }}>
       {children}
-    </motion.div>
+    </div>
   );
 };
 
@@ -51,14 +45,9 @@ export const SlideInAnimation: React.FC<SlideInAnimationProps> = ({
   const offset = directionOffsets[direction];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, ...offset }}
-      animate={{ opacity: 1, x: 0, y: 0 }}
-      transition={{ duration, delay }}
-      className={className}
-    >
+    <div className={`animate-slide-in-right ${className}`} style={{ animationDelay: `${delay}s` }}>
       {children}
-    </motion.div>
+    </div>
   );
 };
 
@@ -76,14 +65,9 @@ export const ScaleAnimation: React.FC<ScaleAnimationProps> = ({
   className = '',
 }) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration, delay }}
-      className={className}
-    >
+    <div className={`animate-scale-in ${className}`} style={{ animationDelay: `${delay}s` }}>
       {children}
-    </motion.div>
+    </div>
   );
 };
 
