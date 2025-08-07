@@ -5,6 +5,7 @@ import { useRetry } from '@/hooks/useRetry';
 import { useOfflineStatus } from '@/hooks/useOfflineStatus';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDelayedData } from './useDelayedData';
+import { useCacheOptimization } from './useCacheOptimization';
 
 export interface CommodityPriceData {
   price: number;
@@ -42,6 +43,10 @@ export interface Commodity {
 
 export const useAvailableCommodities = () => {
   const { getDataDelay, shouldDelayData } = useDelayedData();
+  const { getOptimizedQuerySettings } = useCacheOptimization();
+  
+  // Get optimized settings for commodity data
+  const optimizedSettings = getOptimizedQuerySettings('price');
   
   return useQuery({
     queryKey: ['all-commodities', getDataDelay()],
@@ -62,9 +67,7 @@ export const useAvailableCommodities = () => {
         throw error;
       }
     },
-    refetchInterval: shouldDelayData ? 1200000 : 900000, // 20 min for delayed, 15 min for real-time (optimized for mobile)
-    staleTime: shouldDelayData ? 1080000 : 720000, // 18 min for delayed, 12 min for real-time
-    gcTime: shouldDelayData ? 1800000 : 1200000, // 30 min for delayed, 20 min for real-time
+    ...optimizedSettings,
     refetchOnWindowFocus: false, // Prevent unnecessary refetches on mobile
     refetchOnReconnect: 'always', // But refetch when connection restored
   });
@@ -91,6 +94,10 @@ export interface CandlestickData {
 
 export const useCommodityPrice = (commodityName: string) => {
   const { getDataDelay, shouldDelayData, isPremium } = useDelayedData();
+  const { getOptimizedQuerySettings } = useCacheOptimization();
+  
+  // Get optimized settings for price data
+  const optimizedSettings = getOptimizedQuerySettings('price');
   
   return useQuery({
     queryKey: ['commodity-price', commodityName, getDataDelay(), isPremium],
@@ -115,14 +122,17 @@ export const useCommodityPrice = (commodityName: string) => {
         return null;
       }
     },
-    refetchInterval: shouldDelayData ? 900000 : 120000, // 15 min for delayed, 2 min for real-time (reduced frequency)
-    staleTime: shouldDelayData ? 840000 : 100000, // 14 min for delayed, 1.5 min for real-time
+    ...optimizedSettings,
   });
 };
 
 export const useCommodityHistoricalData = (commodityName: string, timeframe: string, chartType: string = 'line', contractSymbol?: string) => {
   const { profile } = useAuth();
   const { getDataDelay, shouldDelayData } = useDelayedData();
+  const { getOptimizedQuerySettings } = useCacheOptimization();
+  
+  // Get optimized settings for historical data
+  const optimizedSettings = getOptimizedQuerySettings('historical');
   
   // Debug logging to see what contract symbol is being passed
   console.log(`useCommodityHistoricalData called for ${commodityName} with contract: ${contractSymbol}`);
@@ -188,7 +198,6 @@ export const useCommodityHistoricalData = (commodityName: string, timeframe: str
         };
       }
     },
-    refetchInterval: shouldDelayData ? 900000 : 300000, // 15 min for delayed, 5 min for real-time (reduced frequency)
-    staleTime: shouldDelayData ? 840000 : 240000, // 14 min for delayed, 4 min for real-time
+    ...optimizedSettings,
   });
 };

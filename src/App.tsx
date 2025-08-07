@@ -1,11 +1,13 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { RealtimeDataProvider } from "@/contexts/RealtimeDataContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { createOptimizedQueryClient, queryClientConfigs } from "@/lib/queryClient";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 import { useAndroidBackButton } from "@/hooks/useAndroidBackButton";
 import Dashboard from "./pages/Dashboard";
@@ -32,25 +34,17 @@ import MarketSentiment from "./pages/MarketSentiment";
 import APIComparison from "./pages/APIComparison";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: (failureCount, error) => {
-        // Don't retry on 4xx errors (client errors)
-        if (error && typeof error === 'object' && 'status' in error) {
-          const status = (error as any).status;
-          if (status >= 400 && status < 500) {
-            return false;
-          }
-        }
-        // Retry up to 3 times for other errors
-        return failureCount < 3;
-      },
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-  },
-});
+// Create optimized query client with mobile-aware configuration
+const getQueryClient = () => {
+  const isMobileDevice = typeof window !== 'undefined' && window.innerWidth < 768;
+  
+  // Use mobile-optimized config for mobile devices
+  const config = isMobileDevice ? queryClientConfigs.mobile : queryClientConfigs.standard;
+  
+  return createOptimizedQueryClient(config);
+};
+
+const queryClient = getQueryClient();
 
 const AppRoutes = () => {
   useAndroidBackButton();
