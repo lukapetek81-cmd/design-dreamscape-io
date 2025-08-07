@@ -1,6 +1,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useRetry } from '@/hooks/useRetry';
+import { useOfflineStatus } from '@/hooks/useOfflineStatus';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDelayedData } from './useDelayedData';
 

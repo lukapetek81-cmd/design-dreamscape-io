@@ -8,6 +8,9 @@ import { StatusIndicator } from '@/components/ui/status-indicator';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { MobileHeader } from '@/components/mobile/MobileComponents';
 import { PullToRefresh } from '@/components/mobile/PullToRefresh';
+import { DataErrorFallback, CommodityDataFallback } from '@/components/DataErrorFallback';
+import { OfflineIndicator } from '@/components/OfflineIndicator';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 import UserProfile from '@/components/UserProfile';
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
@@ -33,7 +36,7 @@ const Dashboard = () => {
   
   const isMobile = useIsMobile();
   const { isGuest, profile, loading: authLoading } = useAuth();
-  const { data: commodities, isLoading: commoditiesLoading, error: commoditiesError } = useAvailableCommodities();
+  const { data: commodities, isLoading: commoditiesLoading, error: commoditiesError, refetch: refetchCommodities } = useAvailableCommodities();
   const { connected: realtimeConnected, lastUpdate, error: realtimeError, delayStatus } = useRealtimeDataContext();
 
   // Show loading screen while auth is checking
@@ -58,6 +61,7 @@ const Dashboard = () => {
         commodities={commodities || []}
         loading={commoditiesLoading}
         error={commoditiesError?.message || null}
+        onRetry={() => refetchCommodities()}
         realtimeConnected={realtimeConnected}
         delayStatus={delayStatus}
       />
@@ -74,7 +78,8 @@ const DashboardContent = ({
   loading, 
   error, 
   realtimeConnected,
-  delayStatus
+  delayStatus,
+  onRetry
 }: {
   activeGroup: string;
   setActiveGroup: (group: string) => void;
@@ -83,6 +88,7 @@ const DashboardContent = ({
   commodities: Commodity[];
   loading: boolean;
   error: string | null;
+  onRetry: () => void;
   realtimeConnected: boolean;
   delayStatus: {
     isDelayed: boolean;
@@ -265,35 +271,36 @@ const DashboardContent = ({
                 </div>
                 
                 {/* Mobile Status and Profile - Right aligned with proper spacing */}
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full border hover:scale-105 transition-transform duration-200 ${
-                    loading 
-                      ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800'
-                      : error 
-                        ? 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800'
-                        : 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800'
-                  }`}>
-                    {loading ? (
-                      <Loader className="h-1.5 w-1.5 animate-spin text-blue-500" />
-                    ) : error ? (
-                      <div className="h-1.5 w-1.5 bg-red-500 rounded-full"></div>
-                    ) : (
-                      <div className="h-1.5 w-1.5 bg-green-500 rounded-full animate-pulse shadow-sm shadow-green-500/50"></div>
-                    )}
-                     <span className={`text-2xs font-semibold whitespace-nowrap ${
-                       loading
-                         ? 'text-blue-700 dark:text-blue-400'
-                         : error
-                           ? 'text-red-700 dark:text-red-400'
-                           : delayStatus.isDelayed
-                             ? 'text-orange-700 dark:text-orange-400'
-                             : 'text-green-700 dark:text-green-400'
-                     }`}>
-                       {loading ? 'Loading' : error ? 'Error' : delayStatus.delayText}
-                     </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <OfflineIndicator className="px-2 py-1 rounded-full border bg-muted/50" />
+                    <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full border hover:scale-105 transition-transform duration-200 ${
+                      loading 
+                        ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800'
+                        : error 
+                          ? 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800'
+                          : 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800'
+                    }`}>
+                      {loading ? (
+                        <Loader className="h-1.5 w-1.5 animate-spin text-blue-500" />
+                      ) : error ? (
+                        <div className="h-1.5 w-1.5 bg-red-500 rounded-full"></div>
+                      ) : (
+                        <div className="h-1.5 w-1.5 bg-green-500 rounded-full animate-pulse shadow-sm shadow-green-500/50"></div>
+                      )}
+                       <span className={`text-2xs font-semibold whitespace-nowrap ${
+                         loading
+                           ? 'text-blue-700 dark:text-blue-400'
+                           : error
+                             ? 'text-red-700 dark:text-red-400'
+                             : delayStatus.isDelayed
+                               ? 'text-orange-700 dark:text-orange-400'
+                               : 'text-green-700 dark:text-green-400'
+                       }`}>
+                         {loading ? 'Loading' : error ? 'Error' : delayStatus.delayText}
+                       </span>
+                    </div>
+                    <UserProfile />
                   </div>
-                  <UserProfile />
-                </div>
               </div>
 
               {/* Desktop Layout - Original */}
@@ -310,6 +317,7 @@ const DashboardContent = ({
               </div>
               
               <div className="hidden sm:flex items-center gap-2 sm:gap-4 shrink-0">
+                <OfflineIndicator showWhenOnline className="px-2 py-1 rounded-full border bg-muted/50" />
                 <div className={`flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-1 sm:py-2 rounded-full border hover:scale-105 transition-transform duration-200 ${
                   loading 
                     ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800'

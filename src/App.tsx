@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { RealtimeDataProvider } from "@/contexts/RealtimeDataContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 import { useAndroidBackButton } from "@/hooks/useAndroidBackButton";
 import Dashboard from "./pages/Dashboard";
@@ -31,7 +32,25 @@ import MarketSentiment from "./pages/MarketSentiment";
 import APIComparison from "./pages/APIComparison";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error) => {
+        // Don't retry on 4xx errors (client errors)
+        if (error && typeof error === 'object' && 'status' in error) {
+          const status = (error as any).status;
+          if (status >= 400 && status < 500) {
+            return false;
+          }
+        }
+        // Retry up to 3 times for other errors
+        return failureCount < 3;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 const AppRoutes = () => {
   useAndroidBackButton();
@@ -68,19 +87,23 @@ const AppRoutes = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <RealtimeDataProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </TooltipProvider>
-      </RealtimeDataProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <RealtimeDataProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <ErrorBoundary fallback={<div>Something went wrong with routing</div>}>
+                <AppRoutes />
+              </ErrorBoundary>
+            </BrowserRouter>
+          </TooltipProvider>
+        </RealtimeDataProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
