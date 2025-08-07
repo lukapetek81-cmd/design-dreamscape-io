@@ -180,11 +180,12 @@ const CommodityCard = React.memo(({ name, price: fallbackPrice, change: fallback
     return new Date(now.getFullYear(), now.getMonth() + futureMonths, 15);
   }, []);
 
-  // Enhanced touch handlers with haptic feedback
-  const handleMouseEnter = React.useCallback(() => setIsHovered(true), []);
-  const handleMouseLeave = React.useCallback(() => setIsHovered(false), []);
+  // Enhanced touch handlers with haptic feedback - removed problematic hover handlers
   const handleContractChange = React.useCallback((value: string) => setSelectedContract(value), []);
-  const handleCardTouch = React.useCallback(() => {
+  
+  const handleToggle = React.useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     vibrateTouch();
     setIsOpen(!isOpen);
   }, [vibrateTouch, isOpen]);
@@ -193,9 +194,7 @@ const CommodityCard = React.memo(({ name, price: fallbackPrice, change: fallback
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <CollapsibleTrigger 
         className="w-full touch-manipulation focus-ring"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onTouchStart={handleCardTouch}
+        onClick={handleToggle}
         aria-label={`${isOpen ? 'Collapse' : 'Expand'} details for ${name} commodity`}
         aria-expanded={isOpen}
       >
@@ -276,15 +275,17 @@ const CommodityCard = React.memo(({ name, price: fallbackPrice, change: fallback
                   
                   {/* Contract Selector - Show for premium users with available contracts */}
                   {isPremium && availableContracts && availableContracts.length > 0 && (
-                    <div className="mt-3">
+                    <div className="mt-3" onClick={(e) => e.stopPropagation()}>
                       <Select value={selectedContract} onValueChange={handleContractChange}>
                         <SelectTrigger 
-                          className="w-full sm:w-[280px] h-8 text-xs focus-ring"
+                          className="w-full sm:w-[280px] h-8 text-xs focus-ring bg-background/80 backdrop-blur-sm border-border/50 hover:bg-background"
                           aria-label="Select futures contract"
+                          onClick={(e) => e.stopPropagation()}
                         >
                           <SelectValue placeholder="Select Contract" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-50 bg-background border-border shadow-lg"
+                          onClick={(e) => e.stopPropagation()}>
                           {/* Default contract (same as free users see) */}
                           <SelectItem value={symbol}>
                             <div className="flex flex-col">
@@ -351,7 +352,7 @@ const CommodityCard = React.memo(({ name, price: fallbackPrice, change: fallback
                     isPositive 
                       ? 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200 dark:from-green-950/20 dark:to-emerald-950/20 dark:text-green-400 dark:border-green-800' 
                       : 'bg-gradient-to-r from-red-50 to-rose-50 text-red-700 border border-red-200 dark:from-red-950/20 dark:to-rose-950/20 dark:text-red-400 dark:border-red-800'
-                  } ${isHovered ? 'scale-105' : ''}`}>
+                  } ${isOpen ? 'scale-105' : ''}`}>
                     {isPositive ? <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" /> : <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4" />}
                     <span className="number-display">{Math.abs(currentChange).toFixed(2)}%</span>
                   </div>
