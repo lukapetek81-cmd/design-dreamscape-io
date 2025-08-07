@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
-import { ArrowLeft, Filter, Search, TrendingUp, TrendingDown, BarChart3, RefreshCw, ArrowUp, ArrowDown } from 'lucide-react';
+import { Filter, Search, TrendingUp, TrendingDown, BarChart3, RefreshCw, ArrowUp, ArrowDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAvailableCommodities } from '@/hooks/useCommodityData';
 import { useAuth } from '@/contexts/AuthContext';
+import { MobilePageHeader } from '@/components/mobile/MobilePageHeader';
 
 interface ScreenerFilters {
   category: string;
@@ -142,36 +143,20 @@ const MarketScreener = () => {
   const categories = ['all', ...Array.from(new Set((commodities || []).map(c => c.category)))];
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      {/* Header */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-4 mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </Button>
-          <div className="text-sm text-muted-foreground">
-            Real-time data • Last updated: {new Date().toLocaleString()}
-          </div>
+    <div className="min-h-screen bg-background">
+      {/* Mobile-optimized header */}
+      <MobilePageHeader
+        title="Market Screener"
+        subtitle="Filter and analyze commodities by performance, volume, and other key metrics"
+        onBack={() => navigate('/')}
+      >
+        <div className="text-xs text-muted-foreground hidden sm:block">
+          Last updated: {new Date().toLocaleTimeString()}
         </div>
-        
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-            <Filter className="w-8 h-8 text-primary" />
-            Market Screener
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Filter and analyze commodities by performance, volume, and other key metrics
-          </p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      </MobilePageHeader>
+      
+        <div className="container mx-auto p-4 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Filters Sidebar */}
         <div className="lg:col-span-1 space-y-4">
           <Card>
@@ -461,6 +446,7 @@ const MarketScreener = () => {
           </CardContent>
         </Card>
       )}
+        </div>
     </div>
   );
 };

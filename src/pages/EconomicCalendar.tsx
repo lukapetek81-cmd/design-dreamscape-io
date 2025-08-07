@@ -3,9 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Calendar, Clock, TrendingUp, AlertTriangle, Star, Filter } from 'lucide-react';
+import { Calendar, Clock, TrendingUp, AlertTriangle, Star, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { MobilePageHeader } from '@/components/mobile/MobilePageHeader';
 
 interface EconomicEvent {
   id: string;
@@ -149,32 +150,16 @@ const EconomicCalendar = () => {
   const categories = Array.from(new Set(events.map(e => e.category)));
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      {/* Header */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-4 mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </Button>
-        </div>
-        
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-            <Calendar className="w-8 h-8 text-primary" />
-            Economic Calendar
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Track key economic events and their potential impact on commodity markets
-          </p>
-        </div>
-
-        {/* Filters */}
+    <div className="min-h-screen bg-background">
+      {/* Mobile-optimized header */}
+      <MobilePageHeader
+        title="Economic Calendar"
+        subtitle="Track key economic events and their potential impact on commodity markets"
+        onBack={() => navigate('/')}
+      />
+      
+        <div className="container mx-auto p-4 space-y-6">
+          {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4">
           <Select value={selectedImpact} onValueChange={setSelectedImpact}>
             <SelectTrigger className="w-[180px]">
@@ -202,10 +187,10 @@ const EconomicCalendar = () => {
             </SelectContent>
           </Select>
         </div>
-      </div>
 
-      {/* Calendar View */}
-      <div className="space-y-6">
+        {/* Calendar View */}
+        <div className="space-y-6">
+
         {Object.entries(groupedEvents)
           .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
           .map(([date, dateEvents]) => (
@@ -319,6 +304,7 @@ const EconomicCalendar = () => {
           </CardContent>
         </Card>
       )}
+        </div>
     </div>
   );
 };

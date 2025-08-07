@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Plus, GripVertical, Star, Trash2, Edit, Eye } from 'lucide-react';
+import { Plus, GripVertical, Star, Trash2, Edit, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAvailableCommodities } from '@/hooks/useCommodityData';
 import { useAuth } from '@/contexts/AuthContext';
+import { MobilePageHeader } from '@/components/mobile/MobilePageHeader';
 
 interface Watchlist {
   id: string;
@@ -127,42 +128,21 @@ const Watchlists = () => {
   const selectedWatchlistData = watchlists.find(w => w.id === selectedWatchlist);
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      {/* Header */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-4 mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              console.log('Back button clicked - navigating to dashboard');
-              navigate('/');
-            }}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </Button>
-        </div>
-        
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-              <Star className="w-8 h-8 text-primary" />
-              Watchlists
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Create and manage custom commodity watchlists with drag-and-drop sorting
-            </p>
-          </div>
-
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                New Watchlist
-              </Button>
-            </DialogTrigger>
+    <div className="min-h-screen bg-background">
+      {/* Mobile-optimized header */}
+      <MobilePageHeader
+        title="Watchlists"
+        subtitle="Create and manage custom commodity watchlists with drag-and-drop sorting"
+        onBack={() => navigate('/')}
+      >
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="flex items-center gap-2 touch-manipulation">
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">New Watchlist</span>
+              <span className="sm:hidden">New</span>
+            </Button>
+          </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Create New Watchlist</DialogTitle>
@@ -214,10 +194,10 @@ const Watchlists = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      </MobilePageHeader>
+      
+      <div className="container mx-auto p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Watchlists Sidebar */}
         <div className="lg:col-span-1 space-y-4">
           <Card>
@@ -366,9 +346,11 @@ const Watchlists = () => {
             </Card>
           )}
         </div>
+        </div>
       </div>
 
-      {!profile?.subscription_active && (
+      <div className="container mx-auto p-4">
+        {!profile?.subscription_active && (
         <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -382,7 +364,8 @@ const Watchlists = () => {
             </div>
           </CardContent>
         </Card>
-      )}
+        )}
+      </div>
     </div>
   );
 };

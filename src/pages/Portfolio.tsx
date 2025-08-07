@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Loader, TrendingUp, TrendingDown, DollarSign, Briefcase, Plus, Wallet, ArrowLeft } from 'lucide-react';
+import { Loader, TrendingUp, TrendingDown, DollarSign, Briefcase, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePortfolio, PositionWithCurrentPrice } from '@/hooks/usePortfolio';
 import AddPositionForm from '@/components/AddPositionForm';
 import PositionCard from '@/components/PositionCard';
+import { MobilePageHeader } from '@/components/mobile/MobilePageHeader';
 
 import { PremiumGate } from '@/components/PremiumGate';
 
@@ -44,30 +45,24 @@ const Portfolio: React.FC = () => {
 
   return (
     <PremiumGate feature="your investment portfolio">
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-      {/* Back Button */}
-      <Button 
-        variant="ghost" 
-        onClick={() => navigate('/')} 
-        className="mb-4 gap-2 hover:bg-muted/50"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back
-      </Button>
-      
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">My Portfolio</h1>
-          <p className="text-muted-foreground mt-1">
-            Track your commodity positions and performance
-          </p>
-        </div>
-        <Button onClick={() => setShowAddForm(true)} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Add Position
-        </Button>
-      </div>
+      <div className="min-h-screen bg-background">
+        {/* Mobile-optimized header */}
+        <MobilePageHeader
+          title="My Portfolio"
+          subtitle="Track your commodity positions and performance"
+          onBack={() => navigate('/')}
+        >
+          <Button 
+            onClick={() => setShowAddForm(true)} 
+            className="gap-2 touch-manipulation"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Add Position</span>
+            <span className="sm:hidden">Add</span>
+          </Button>
+        </MobilePageHeader>
+        
+        <div className="container mx-auto px-4 py-6 max-w-7xl">
 
       {/* Portfolio Summary */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -220,7 +215,8 @@ const Portfolio: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+        </div>
+      </div>
     </PremiumGate>
   );
 };
