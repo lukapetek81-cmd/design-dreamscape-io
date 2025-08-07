@@ -6,90 +6,68 @@ export const useAndroidBackButton = () => {
   const location = useLocation();
 
   useEffect(() => {
-    console.log('🚀 INITIALIZING Android back button listener...');
+    console.log('🚀 Setting up Android hardware back button listener...');
     console.log('📍 Current location:', location.pathname);
-    console.log('🌐 Window Capacitor exists:', !!(window as any)?.Capacitor);
     
-    const setupListener = async () => {
-      // Check if we're in a Capacitor environment
-      if (typeof window === 'undefined') {
-        console.log('❌ Window is undefined');
-        return null;
+    const handleHardwareBackButton = (event: CustomEvent) => {
+      console.log('🔥 ANDROID HARDWARE BACK BUTTON PRESSED!');
+      console.log('📍 Current path:', location.pathname);
+      console.log('🎯 Event details:', event);
+      
+      // Always navigate to home page instead of exiting app
+      if (location.pathname !== '/') {
+        console.log('🏠 Navigating to home from:', location.pathname);
+        navigate('/', { replace: true });
+      } else {
+        console.log('🏠 Already on home page');
+        // On home page, we could show an exit confirmation or just stay
+        // For now, just prevent the default app exit
       }
       
-      if (!(window as any).Capacitor) {
-        console.log('❌ Not in Capacitor environment');
-        return null;
-      }
+      // Prevent the default behavior (app exit)
+      event.preventDefault();
+      event.stopPropagation();
+    };
 
-      console.log('✅ Capacitor environment detected');
+    // Listen for the ionBackButton event (Ionic/Capacitor specific)
+    document.addEventListener('ionBackButton', handleHardwareBackButton as EventListener);
+    console.log('✅ ionBackButton listener added');
 
-      try {
-        const { App } = await import('@capacitor/app');
-        console.log('✅ Capacitor App imported successfully');
-
-        // Test if App methods are available
-        console.log('🔍 App.addListener available:', typeof App.addListener === 'function');
-
-        const handleBackButton = (data: any) => {
-          console.log('🔥🔥🔥 ANDROID BACK BUTTON HANDLER TRIGGERED! 🔥🔥🔥');
-          console.log('📍 Current path when back pressed:', location.pathname);
-          console.log('📦 Event data:', data);
+    // Also try the Capacitor approach as backup
+    let capacitorCleanup: (() => void) | null = null;
+    
+    const setupCapacitorListener = async () => {
+      if (typeof window !== 'undefined' && (window as any).Capacitor) {
+        try {
+          const { App } = await import('@capacitor/app');
+          console.log('✅ Setting up Capacitor App listener as backup');
           
-          // Try to prevent default in multiple ways
-          try {
-            if (data && typeof data.preventDefault === 'function') {
-              data.preventDefault();
-              console.log('✅ Called preventDefault on event');
+          const listener = await App.addListener('backButton', (data) => {
+            console.log('🔥 Capacitor back button triggered');
+            console.log('📍 Current path:', location.pathname);
+            
+            if (location.pathname !== '/') {
+              console.log('🏠 Navigating to home via Capacitor listener');
+              navigate('/', { replace: true });
             }
-          } catch (e) {
-            console.log('❌ preventDefault failed:', e);
-          }
-
-          // Navigate to home
-          if (location.pathname !== '/') {
-            console.log('🏠 Navigating to home from:', location.pathname);
-            navigate('/', { replace: true });
-          } else {
-            console.log('🏠 Already on home page, staying here');
-          }
+          });
           
-          // Return false to prevent default behavior
-          console.log('🛑 Returning false to prevent default');
-          return false;
-        };
-
-        console.log('🎯 Adding back button listener...');
-        const listener = await App.addListener('backButton', handleBackButton);
-        console.log('🎉 Android back button listener added successfully!');
-        console.log('🔗 Listener object:', listener);
-        
-        return listener;
-      } catch (error) {
-        console.error('💥 CRITICAL ERROR setting up Android back button:', error);
-        console.error('📋 Error details:', JSON.stringify(error, null, 2));
-        return null;
+          capacitorCleanup = () => listener.remove();
+          console.log('✅ Capacitor backup listener added');
+        } catch (error) {
+          console.log('❌ Capacitor listener setup failed:', error);
+        }
       }
     };
 
-    let cleanup: (() => void) | null = null;
-    
-    setupListener().then((listener) => {
-      if (listener) {
-        console.log('🧹 Setting up cleanup function');
-        cleanup = () => {
-          console.log('🗑️ Removing Android back button listener');
-          listener.remove();
-        };
-      } else {
-        console.log('❌ No listener to clean up');
-      }
-    });
+    setupCapacitorListener();
 
+    // Cleanup function
     return () => {
-      console.log('🧽 Cleanup effect triggered');
-      if (cleanup) {
-        cleanup();
+      console.log('🧹 Cleaning up back button listeners');
+      document.removeEventListener('ionBackButton', handleHardwareBackButton as EventListener);
+      if (capacitorCleanup) {
+        capacitorCleanup();
       }
     };
   }, [navigate, location.pathname]);
