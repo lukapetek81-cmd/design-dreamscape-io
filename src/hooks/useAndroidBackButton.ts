@@ -6,44 +6,47 @@ export const useAndroidBackButton = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const handleBackButton = async () => {
-      console.log('Android back button pressed, current path:', location.pathname);
-      
+    let removeListener: (() => void) | null = null;
+
+    const setupBackButtonListener = async () => {
       // Only works in Capacitor environment
       if (typeof window !== 'undefined' && (window as any).Capacitor) {
         try {
           const { App } = await import('@capacitor/app');
           
-          // If we're not on the main page, navigate to main page (like the in-app back button)
-          if (location.pathname !== '/') {
-            console.log('Navigating back to main dashboard');
-            navigate('/', { replace: true });
-            return;
-          }
+          const handleBackButton = () => {
+            console.log('Android back button pressed, current path:', location.pathname);
+            
+            // If we're not on the main dashboard, go back to main dashboard
+            if (location.pathname !== '/') {
+              console.log('Navigating back to main dashboard');
+              navigate('/', { replace: true });
+            } else {
+              // If we're already on the main dashboard, exit the app
+              console.log('On main dashboard, exiting app');
+              App.exitApp();
+            }
+          };
+
+          // Add the back button listener
+          const listener = await App.addListener('backButton', handleBackButton);
+          removeListener = () => listener.remove();
           
-          // If we're already on the main page, let the app exit
-          console.log('On main page, exiting app');
-          App.exitApp();
+          console.log('Android back button listener set up successfully');
         } catch (error) {
-          console.log('Capacitor App plugin not available:', error);
+          console.log('Failed to set up Android back button listener:', error);
         }
       }
     };
 
-    // Only add listener in Capacitor environment
-    if (typeof window !== 'undefined' && (window as any).Capacitor) {
-      import('@capacitor/app').then(({ App }) => {
-        console.log('Setting up Android back button listener');
-        App.addListener('backButton', handleBackButton);
-        
-        // Return cleanup function
-        return () => {
-          console.log('Cleaning up Android back button listener');
-          App.removeAllListeners();
-        };
-      }).catch((error) => {
-        console.log('Capacitor App plugin not available during setup:', error);
-      });
-    }
+    setupBackButtonListener();
+
+    // Cleanup function
+    return () => {
+      if (removeListener) {
+        removeListener();
+        console.log('Android back button listener removed');
+      }
+    };
   }, [navigate, location.pathname]);
 };
