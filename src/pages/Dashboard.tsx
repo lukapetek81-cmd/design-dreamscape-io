@@ -3,7 +3,6 @@ import { Navigate } from 'react-router-dom';
 import CommodityCard from '@/components/CommodityCard';
 import CommodityGroupSection from '@/components/CommodityGroupSection';
 import VirtualizedCommodityList from '@/components/VirtualizedCommodityList';
-import PerformanceMonitor from '@/components/PerformanceMonitor';
 import { FadeInAnimation } from '@/components/animations/Animations';
 import { StatusIndicator } from '@/components/ui/status-indicator';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
@@ -475,9 +474,6 @@ const DashboardContent = ({
           <SidebarTrigger className="fixed left-4 bottom-20 z-50 w-16 h-16 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl active:scale-95 touch-manipulation transition-all duration-200 flex items-center justify-center md:hidden">
             <Menu className="w-6 h-6" />
           </SidebarTrigger>
-          
-          {/* Performance Monitor */}
-          <PerformanceMonitor enabled={true} showDetails={false} />
       </div>
     </div>
   );

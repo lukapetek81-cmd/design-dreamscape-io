@@ -60,13 +60,11 @@ export const useAvailableCommodities = () => {
         throw error;
       }
     },
-    refetchInterval: shouldDelayData ? 1800000 : 600000, // 30 min for delayed, 10 min for real-time (reduced frequency)
-    staleTime: shouldDelayData ? 1200000 : 480000, // 20 min for delayed, 8 min for real-time
-    gcTime: shouldDelayData ? 2400000 : 1200000, // 40 min for delayed, 20 min for real-time
+    refetchInterval: shouldDelayData ? 1200000 : 900000, // 20 min for delayed, 15 min for real-time (optimized for mobile)
+    staleTime: shouldDelayData ? 1080000 : 720000, // 18 min for delayed, 12 min for real-time
+    gcTime: shouldDelayData ? 1800000 : 1200000, // 30 min for delayed, 20 min for real-time
     refetchOnWindowFocus: false, // Prevent unnecessary refetches on mobile
     refetchOnReconnect: 'always', // But refetch when connection restored
-    retry: 2, // Reduce retry attempts for better performance
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
   });
 };
 

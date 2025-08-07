@@ -1,5 +1,5 @@
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import OptimizedCommodityCard from './OptimizedCommodityCard';
+import React, { useMemo, useState, useEffect } from 'react';
+import CommodityCard from './CommodityCard';
 import { Commodity } from '@/hooks/useCommodityData';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SkeletonCard } from '@/components/ui/enhanced-skeleton';
@@ -18,68 +18,37 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
   const [visibleItems, setVisibleItems] = useState(10); // Start with 10 items
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  // Optimized scroll handler with throttling
-  const handleScroll = useCallback(() => {
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    const windowHeight = window.innerHeight;
-    const documentHeight = document.documentElement.scrollHeight;
-    
-    // If user scrolled to 80% of the page, load more items
-    if (scrollTop + windowHeight >= documentHeight * 0.8 && !isLoadingMore && visibleItems < commodities.length) {
-      setIsLoadingMore(true);
-      
-      // Use requestAnimationFrame for smoother performance
-      requestAnimationFrame(() => {
-        setVisibleItems(prev => Math.min(prev + (isMobile ? 5 : 10), commodities.length));
-        setIsLoadingMore(false);
-      });
-    }
-  }, [commodities.length, visibleItems, isLoadingMore, isMobile]);
-
-  // Throttled scroll event listener
+  // Increase visible items when scrolling near bottom
   useEffect(() => {
-    let ticking = false;
-    
-    const throttledScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          handleScroll();
-          ticking = false;
-        });
-        ticking = true;
+    const handleScroll = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      
+      // If user scrolled to 80% of the page, load more items
+      if (scrollTop + windowHeight >= documentHeight * 0.8 && !isLoadingMore && visibleItems < commodities.length) {
+        setIsLoadingMore(true);
+        
+        // Simulate loading delay for better UX
+        setTimeout(() => {
+          setVisibleItems(prev => Math.min(prev + (isMobile ? 5 : 10), commodities.length));
+          setIsLoadingMore(false);
+        }, 300);
       }
     };
 
-    window.addEventListener('scroll', throttledScroll, { passive: true });
-    return () => window.removeEventListener('scroll', throttledScroll);
-  }, [handleScroll]);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [commodities.length, visibleItems, isLoadingMore, isMobile]);
 
   // Reset visible items when commodities change
   useEffect(() => {
     setVisibleItems(isMobile ? 5 : 10);
   }, [commodities, isMobile]);
 
-  // Memoize visible commodities and optimize rendering
   const visibleCommodities = useMemo(() => 
     commodities.slice(0, visibleItems), 
     [commodities, visibleItems]
-  );
-
-  // Memoize rendered cards to prevent unnecessary re-renders
-  const renderedCards = useMemo(() => 
-    visibleCommodities.map((commodity, index) => (
-      <div key={`${commodity.symbol}-${index}`}>
-        <OptimizedCommodityCard
-          name={commodity.name}
-          price={commodity.price}
-          change={commodity.change || 0}
-          changePercent={commodity.changePercent}
-          symbol={commodity.symbol}
-          venue={commodity.venue}
-          contractSize={commodity.contractSize}
-        />
-      </div>
-    )), [visibleCommodities]
   );
 
   if (loading) {
@@ -102,8 +71,20 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
 
   return (
     <div className="space-y-4">
-      <StaggeredAnimation staggerDelay={0.03} className="grid gap-3 sm:gap-4 lg:gap-6">
-        {renderedCards}
+      <StaggeredAnimation staggerDelay={0.05} className="grid gap-3 sm:gap-4 lg:gap-6">
+        {visibleCommodities.map((commodity, index) => (
+          <div key={`${commodity.symbol}-${index}`}>
+            <CommodityCard
+              name={commodity.name}
+              price={commodity.price}
+              change={commodity.change || 0}
+              changePercent={commodity.changePercent}
+              symbol={commodity.symbol}
+              venue={commodity.venue}
+              contractSize={commodity.contractSize}
+            />
+          </div>
+        ))}
       </StaggeredAnimation>
       
       {/* Enhanced Loading indicator for additional items */}
