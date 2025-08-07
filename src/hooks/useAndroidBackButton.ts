@@ -17,15 +17,17 @@ export const useAndroidBackButton = () => {
           const handleBackButton = () => {
             console.log('Android back button pressed, current path:', location.pathname);
             
-            // If we're not on the main dashboard, go back to main dashboard
+            // Always navigate to main dashboard instead of exiting
+            // This ensures users can navigate back to home from any page
             if (location.pathname !== '/') {
-              console.log('Navigating back to main dashboard');
+              console.log('Navigating back to main dashboard from:', location.pathname);
               navigate('/', { replace: true });
-            } else {
-              // If we're already on the main dashboard, exit the app
-              console.log('On main dashboard, exiting app');
-              App.exitApp();
+              return;
             }
+            
+            // Only exit if user presses back again quickly on main dashboard
+            console.log('Already on main dashboard - navigating to dashboard again to prevent exit');
+            navigate('/', { replace: true });
           };
 
           // Add the back button listener
