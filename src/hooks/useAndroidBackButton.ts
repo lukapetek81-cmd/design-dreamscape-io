@@ -12,7 +12,7 @@ export const useAndroidBackButton = () => {
         try {
           const { App } = await import('@capacitor/app');
           
-          // If we're not on the main page, navigate to main page
+          // If we're not on the main page, go back to main page (like the in-app back button)
           if (location.pathname !== '/') {
             navigate('/', { replace: true });
             return;
