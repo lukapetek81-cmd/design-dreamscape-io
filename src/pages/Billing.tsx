@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import CustomerPortal from '@/components/CustomerPortal';
+import { IBKRCredentialsForm } from '@/components/IBKRCredentialsForm';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
@@ -57,7 +58,10 @@ const Billing = () => {
           <p className="text-sm sm:text-base text-muted-foreground">Manage your subscription, view invoices, and update billing information.</p>
         </div>
         
-        <CustomerPortal />
+        <div className="space-y-6">
+          <CustomerPortal />
+          <IBKRCredentialsForm />
+        </div>
       </div>
     </div>
   );
