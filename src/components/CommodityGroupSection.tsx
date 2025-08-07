@@ -189,7 +189,8 @@ const CommodityGroupSection = React.memo(({
                   name={commodity.name}
                   symbol={commodity.symbol}
                   price={commodity.price}
-                  change={commodity.changePercent}
+                  change={commodity.change || 0}
+                  changePercent={commodity.changePercent}
                   venue={commodity.venue}
                   contractSize={commodity.contractSize}
                 />

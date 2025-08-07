@@ -24,7 +24,16 @@ export const MobilePageHeader: React.FC<MobilePageHeaderProps> = ({
 }) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { toggleSidebar } = useSidebar();
+  
+  // Safely try to use sidebar hook, but don't fail if not available
+  let toggleSidebar: (() => void) | undefined;
+  try {
+    const sidebar = useSidebar();
+    toggleSidebar = sidebar.toggleSidebar;
+  } catch (error) {
+    // Sidebar not available, that's fine
+    toggleSidebar = undefined;
+  }
 
   const handleBack = () => {
     if (onBack) {
@@ -57,7 +66,7 @@ export const MobilePageHeader: React.FC<MobilePageHeaderProps> = ({
             </Button>
 
             {/* Optional sidebar toggle for mobile */}
-            {showSidebarToggle && isMobile && (
+            {showSidebarToggle && isMobile && toggleSidebar && (
               <Button
                 variant="ghost"
                 size="default"

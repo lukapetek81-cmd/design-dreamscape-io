@@ -1,352 +1,217 @@
-import React from 'react';
-import { Card } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import React, { useState, useCallback, useMemo } from 'react';
+import { Card, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, ChevronDown, ChevronUp, DollarSign, Activity, BarChart3, Calendar } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { formatPrice } from '@/lib/commodityUtils';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DollarSign, TrendingUp, TrendingDown, ChevronDown, ChevronUp, Calendar } from 'lucide-react';
+import { TouchRipple } from './mobile/TouchRipple';
+
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useHaptics } from '@/hooks/useHaptics';
+import { useAuth } from '@/contexts/AuthContext';
+import { usePremiumGating } from '@/hooks/usePremiumGating';
+import { getMarketStatus } from '@/lib/marketHours';
 import CommodityChart from './CommodityChart';
 import CommodityNews from './CommodityNews';
-import { useCommodityPrice } from '@/hooks/useCommodityData';
-import { useRealtimeDataContext } from '@/contexts/RealtimeDataContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { getMarketStatus } from '@/lib/marketHours';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { TouchRipple } from '@/components/mobile/TouchRipple';
-import { useHaptics } from '@/hooks/useHaptics';
-
-
-interface FuturesContract {
-  name: string;
-  symbol: string;
-  price: number;
-  change: number;
-  changePercent: number;
-  volume: number;
-  category: string;
-  contractSize: string;
-  venue: string;
-  supportedByFMP: boolean;
-  expirationDate?: string;
-  source?: string;
-}
 
 interface CommodityCardProps {
   name: string;
-  price: number;
-  change: number;
   symbol: string;
-  venue: string;
+  price: number | null;
+  change: number;
+  changePercent: number;
+  volume?: string;
+  lastUpdate?: string;
+  venue?: string;
   contractSize?: string;
+  category?: string;
+  availableContracts?: Array<{
+    name: string;
+    symbol: string;
+    price: number;
+    change: number;
+    changePercent: number;
+    volume?: number;
+    expirationDate: string;
+    contractSize?: string;
+    venue?: string;
+  }>;
 }
 
-const CommodityCard = React.memo(({ name, price: fallbackPrice, change: fallbackChange, symbol, venue, contractSize }: CommodityCardProps) => {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [isHovered, setIsHovered] = React.useState(false);
-  const [selectedContract, setSelectedContract] = React.useState<string>(symbol);
+const CommodityCard = React.memo<CommodityCardProps>(({ 
+  name, 
+  symbol, 
+  price, 
+  change, 
+  changePercent, 
+  volume, 
+  lastUpdate, 
+  venue = 'NYMEX',
+  contractSize,
+  category,
+  availableContracts
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedContract, setSelectedContract] = useState(symbol);
+  const isMobile = useIsMobile();
   const { vibrateTouch } = useHaptics();
-  
-  const { data: apiPrice, isLoading: priceLoading } = useCommodityPrice(name);
   const { profile } = useAuth();
-  
-  // Get market status for this commodity - memoized
-  const marketStatus = React.useMemo(() => getMarketStatus(name), [name]);
-  
-  // Check if user has premium subscription for real-time data - memoized
-  const isPremium = React.useMemo(() => 
-    profile?.subscription_active && 
-    (profile?.subscription_tier === 'premium' || profile?.subscription_tier === 'pro'),
-    [profile?.subscription_active, profile?.subscription_tier]
-  );
+  const { isPremium } = usePremiumGating();
+  const marketStatus = getMarketStatus(name);
 
-  // Fetch IBKR contracts exclusively - only for premium users with improved caching
-  const { data: availableContracts, isLoading: contractsLoading } = useQuery({
-    queryKey: ['ibkr-contracts', name],
-    queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke('fetch-ibkr-futures', {
-        body: { commodity: name }
-      });
-      
-      if (error) throw new Error(error.message);
-      
-      // Add IBKR source to all contracts and sort by expiration date
-      const contracts = (data.contracts as FuturesContract[]).map(contract => ({
-        ...contract,
-        source: 'IBKR'
-      }));
-      
-      // Sort by expiration date (nearest first)
-      return contracts.sort((a, b) => {
-        if (!a.expirationDate || !b.expirationDate) return 0;
-        return new Date(a.expirationDate).getTime() - new Date(b.expirationDate).getTime();
-      });
-    },
-    staleTime: 1000 * 60 * 10, // Increased cache to 10 minutes for better performance
-    gcTime: 1000 * 60 * 15, // Cache for 15 minutes in memory
-    enabled: isPremium, // Only fetch contracts for premium users
-  });
-  
-  // Use real-time data context
-  const { getPriceForCommodity, isLiveData, connected: realtimeConnected } = useRealtimeDataContext();
-  
-  // Don't auto-select IBKR contracts - keep the default symbol that free users see
-  // Premium users will have the option to manually select IBKR contracts from the dropdown
+  // Get current price data for selected contract
+  const selectedContractData = useMemo(() => {
+    if (!availableContracts) return null;
+    return availableContracts.find(contract => contract.symbol === selectedContract) || null;
+  }, [availableContracts, selectedContract]);
 
-  // Get the selected contract data (only for premium users, and only if an IBKR contract is selected) - memoized
-  const selectedContractData = React.useMemo(() => 
-    isPremium && availableContracts ? availableContracts.find(c => c.symbol === selectedContract) : null,
-    [isPremium, availableContracts, selectedContract]
-  );
-  
-  // Use real-time data context
-  const realtimePrice = getPriceForCommodity(name);
-  
-  // For premium users: Use price from selected contract, real-time context, or fall back to API price
-  // For free users: Use real-time context or fall back to API price (no contract data) - memoized
-  const currentPrice = React.useMemo(() => 
-    selectedContractData?.price ?? realtimePrice?.price ?? apiPrice?.price ?? fallbackPrice,
-    [selectedContractData?.price, realtimePrice?.price, apiPrice?.price, fallbackPrice]
-  );
-  
-  const currentChange = React.useMemo(() =>
-    selectedContractData?.changePercent ?? realtimePrice?.changePercent ?? fallbackChange,
-    [selectedContractData?.changePercent, realtimePrice?.changePercent, fallbackChange]
-  );
-  
-  const isPositive = currentChange >= 0;
-  const isRealTime = isPremium && isLiveData(name);
-  const isAPILive = isPremium && realtimeConnected;
-
-  // Function to get the appropriate price units based on commodity name - memoized
-  const getPriceUnits = React.useCallback((commodityName: string) => {
-    const name = commodityName.toLowerCase();
-    
-    // Energy commodities
-    if (name.includes('crude') || name.includes('oil')) return 'USD/bbl';
-    if (name.includes('natural gas')) return 'USD/MMBtu';
-    if (name.includes('gasoline') || name.includes('heating oil')) return 'USD/gal';
-    
-    // Metals
-    if (name.includes('gold') || name.includes('silver') || name.includes('platinum') || name.includes('palladium')) return 'USD/oz';
-    if (name.includes('copper')) return 'USD/lb';
-    
-    // Grains and Agricultural (priced in cents)
-    if (name.includes('corn') || name.includes('wheat') || name.includes('soybean') || name.includes('oat')) return 'cents/bu';
-    if (name.includes('rice')) return 'USD/cwt';
-    if (name.includes('soybean meal')) return 'USD/ton';
-    if (name.includes('soybean oil')) return 'cents/lb';
-    
-    // Livestock (priced in cents)
-    if (name.includes('cattle')) return 'cents/lb';
-    if (name.includes('hogs')) return 'cents/lb';
-    
-    // Softs (priced in cents)
-    if (name.includes('cocoa')) return 'USD/MT';
-    if (name.includes('coffee')) return 'cents/lb';
-    if (name.includes('cotton')) return 'cents/lb';
-    if (name.includes('lumber')) return 'USD/1000ft';
-    if (name.includes('orange juice')) return 'cents/lb';
-    if (name.includes('sugar')) return 'cents/lb';
-    
-    // Default fallback
-    return 'USD';
-  }, []);
-
-  // Format expiration date - memoized
-  const formatExpirationDate = React.useCallback((contract: FuturesContract) => {
-    if (!contract.expirationDate) return 'N/A';
-    return new Date(contract.expirationDate).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  }, []);
-
-  // Generate mock expiration dates for contracts (in a real app, this would come from the API) - memoized
-  const getExpirationDate = React.useCallback((contractSymbol: string) => {
-    // Extract month/year from symbol or generate based on current date
-    const now = new Date();
-    const months = ['F', 'G', 'H', 'J', 'K', 'M', 'N', 'Q', 'U', 'V', 'X', 'Z'];
-    const monthIndex = months.indexOf(contractSymbol.slice(-2, -1));
-    const year = parseInt(contractSymbol.slice(-1)) + 2020; // Assuming 2025+ contracts
-    
-    if (monthIndex !== -1 && year) {
-      return new Date(year, monthIndex, 15); // 15th of the month
+  // Price display logic
+  const displayPrice = useMemo(() => {
+    if (selectedContractData) {
+      return selectedContractData.price;
     }
-    
-    // Fallback: add 1-6 months to current date
-    const futureMonths = Math.floor(Math.random() * 6) + 1;
-    return new Date(now.getFullYear(), now.getMonth() + futureMonths, 15);
+    return price;
+  }, [selectedContractData, price]);
+
+  const currentChange = useMemo(() => {
+    if (selectedContractData) {
+      return selectedContractData.changePercent;
+    }
+    return changePercent;
+  }, [selectedContractData, changePercent]);
+
+  const isPositive = currentChange >= 0;
+
+  // Format price for display
+  const formatPrice = useCallback((priceValue: number): string => {
+    if (priceValue >= 1000) {
+      return priceValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    return priceValue.toFixed(2);
   }, []);
 
-  // Enhanced touch handlers with haptic feedback - removed problematic hover handlers
-  const handleContractChange = React.useCallback((value: string) => setSelectedContract(value), []);
-  
-  const handleToggle = React.useCallback((e: React.MouseEvent | React.TouchEvent) => {
+  // Get price units helper
+  const getPriceUnits = useCallback((commodityName: string): string => {
+    if (commodityName.toLowerCase().includes('oil') || commodityName.toLowerCase().includes('gasoline')) {
+      return '$/barrel';
+    }
+    if (commodityName.toLowerCase().includes('gas')) {
+      return '$/MMBtu';
+    }
+    if (commodityName.toLowerCase().includes('gold') || commodityName.toLowerCase().includes('silver')) {
+      return '$/oz';
+    }
+    if (commodityName.toLowerCase().includes('corn') || commodityName.toLowerCase().includes('wheat')) {
+      return '¢/bushel';
+    }
+    return '$/unit';
+  }, []);
+
+  // Contract change handler
+  const handleContractChange = useCallback((value: string) => {
+    setSelectedContract(value);
+  }, []);
+
+  // Toggle handler
+  const handleToggle = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
     vibrateTouch();
     setIsOpen(!isOpen);
   }, [vibrateTouch, isOpen]);
 
+  // Generate expiration date helper
+  const getExpirationDate = useCallback((contractSymbol: string): Date => {
+    const now = new Date();
+    const futureMonths = Math.floor(Math.random() * 12) + 1;
+    return new Date(now.getFullYear(), now.getMonth() + futureMonths, 15);
+  }, []);
+
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger 
-        className="w-full touch-manipulation focus-ring"
-        onClick={handleToggle}
-        aria-label={`${isOpen ? 'Collapse' : 'Expand'} details for ${name} commodity`}
-        aria-expanded={isOpen}
-      >
-        <TouchRipple className="w-full">
-          <Card className="group relative overflow-hidden card-hover-effect border-0 bg-gradient-to-r from-card via-card to-card/80 backdrop-blur-sm shadow-soft active:scale-[0.98] transition-all duration-200">
-          {/* Enhanced Background Pattern with Responsive Adjustments */}
+      <div className="w-full">
+        <Card className="group relative overflow-hidden card-hover-effect border-0 bg-gradient-to-r from-card via-card to-card/80 backdrop-blur-sm shadow-soft transition-all duration-200">
+          {/* Enhanced Background Pattern */}
           <div className={`absolute inset-0 bg-gradient-to-r from-primary/3 via-accent/2 to-transparent transition-all duration-500 ${
-            isHovered || isOpen ? 'opacity-100' : 'opacity-0'
+            isOpen ? 'opacity-100' : 'opacity-0'
           }`} />
           <div className={`absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 lg:w-32 lg:h-32 bg-gradient-to-br from-primary/5 to-transparent rounded-full blur-2xl sm:blur-3xl transition-opacity duration-700 ${
-            isHovered || isOpen ? 'opacity-100' : 'opacity-0'
+            isOpen ? 'opacity-100' : 'opacity-0'
           }`} />
           
-          <div className="relative p-3 sm:p-4 md:p-6 lg:p-8">
-            {/* Mobile-First Responsive Layout */}
-            <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between">
-              {/* Main Content - Stacked on Mobile */}
+          <CardHeader className="relative p-3 sm:p-4 md:p-6 lg:p-8">
+            {/* Header with click handler */}
+            <div 
+              className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between cursor-pointer touch-manipulation focus-ring"
+              onClick={handleToggle}
+              role="button"
+              tabIndex={0}
+              aria-label={`${isOpen ? 'Collapse' : 'Expand'} details for ${name} commodity`}
+            >
+              {/* Main Content */}
               <div className="flex-1 space-y-3 sm:space-y-4">
-                {/* Header Section */}
-                <div className="flex flex-col justify-between">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2 sm:gap-3 flex-1">
-                      <div className={`p-1.5 sm:p-2 rounded-lg bg-primary/10 text-primary transition-all duration-300 ${
-                        isHovered ? 'bg-primary/20 scale-110' : ''
-                      }`}>
-                        <DollarSign className="w-3 h-3 sm:w-4 sm:h-4" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h3 className="text-base sm:text-lg lg:text-xl font-bold text-foreground transition-colors tracking-tight truncate group-hover:text-primary">
-                          {name}
-                        </h3>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-bold bg-muted/60 rounded-full text-muted-foreground uppercase tracking-wider">
-                            {selectedContract}
-                          </span>
-                          <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-medium bg-primary/10 text-primary rounded-full uppercase tracking-wider">
-                            {selectedContractData?.venue || venue}
-                          </span>
-                          {(selectedContractData?.contractSize || contractSize) && (
-                            <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-medium bg-secondary/10 text-secondary-foreground rounded-full tracking-wider">
-                              {selectedContractData?.contractSize || contractSize}
-                            </span>
-                          )}
-                          {isPremium && selectedContractData && (
-                            <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-medium bg-amber-100 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 rounded-full tracking-wider">
-                              <Calendar className="w-3 h-3" />
-                              {formatExpirationDate({ ...selectedContractData, expirationDate: getExpirationDate(selectedContract).toISOString() })}
-                            </span>
-                          )}
-                          {priceLoading && !isRealTime && (
-                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
-                          )}
-                          {isRealTime && (
-                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                          )}
-                          {!isRealTime && apiPrice && (
-                            <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${
-                              marketStatus.isOpen ? 'bg-green-500' : 'bg-red-500'
-                            }`}></div>
-                          )}
-                        </div>
-                      </div>
+                {/* Title and badges */}
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2 sm:gap-3 flex-1">
+                    <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 text-primary transition-all duration-300">
+                      <DollarSign className="w-3 h-3 sm:w-4 sm:h-4" />
                     </div>
-                    
-                    {/* Mobile Expand Icon */}
-                    <div className="flex items-center sm:hidden">
-                      <div className={`p-2 rounded-full transition-all duration-300 ${
-                        isOpen ? 'bg-primary/20 text-primary' : 'bg-muted/50 text-muted-foreground'
-                      }`}>
-                        {isOpen ? (
-                          <ChevronUp className="w-4 h-4" />
-                        ) : (
-                          <ChevronDown className="w-4 h-4" />
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-base sm:text-lg lg:text-xl font-bold text-foreground transition-colors tracking-tight truncate group-hover:text-primary">
+                        {name}
+                      </h3>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-bold bg-muted/60 rounded-full text-muted-foreground uppercase tracking-wider">
+                          {selectedContract}
+                        </span>
+                        <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-medium bg-primary/10 text-primary rounded-full uppercase tracking-wider">
+                          {selectedContractData?.venue || venue}
+                        </span>
+                        {(selectedContractData?.contractSize || contractSize) && (
+                          <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-medium bg-secondary/10 text-secondary-foreground rounded-full tracking-wider">
+                            {selectedContractData?.contractSize || contractSize}
+                          </span>
                         )}
+                        {isPremium && selectedContractData && (
+                          <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-medium bg-amber-100 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 rounded-full tracking-wider">
+                            <Calendar className="w-3 h-3" />
+                            {selectedContractData.expirationDate ? new Date(selectedContractData.expirationDate).toLocaleDateString() : 'N/A'}
+                          </span>
+                        )}
+                        <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                          marketStatus.isOpen ? 'bg-green-500' : 'bg-red-500'
+                        }`}></div>
                       </div>
                     </div>
                   </div>
                   
-                  {/* Contract Selector - Show for premium users with available contracts */}
-                  {isPremium && availableContracts && availableContracts.length > 0 && (
-                    <div className="mt-3" onClick={(e) => e.stopPropagation()}>
-                      <Select value={selectedContract} onValueChange={handleContractChange}>
-                        <SelectTrigger 
-                          className="w-full sm:w-[280px] h-8 text-xs focus-ring bg-background/80 backdrop-blur-sm border-border/50 hover:bg-background"
-                          aria-label="Select futures contract"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <SelectValue placeholder="Select Contract" />
-                        </SelectTrigger>
-                        <SelectContent className="z-50 bg-background border-border shadow-lg"
-                          onClick={(e) => e.stopPropagation()}>
-                          {/* Default contract (same as free users see) */}
-                          <SelectItem value={symbol}>
-                            <div className="flex flex-col">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">{symbol}</span>
-                                <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-950/20 text-gray-700 dark:text-gray-400">
-                                  Default
-                                </span>
-                              </div>
-                              <span className="text-xs text-muted-foreground">
-                                Standard commodity data
-                              </span>
-                            </div>
-                          </SelectItem>
-                          {/* IBKR Futures Contracts */}
-                          {availableContracts.map((contract) => (
-                            <SelectItem key={contract.symbol} value={contract.symbol}>
-                              <div className="flex flex-col">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium">{contract.symbol}</span>
-                                  <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400">
-                                    Futures
-                                  </span>
-                                </div>
-                                <span className="text-xs text-muted-foreground">
-                                  ${formatPrice(contract.price, contract.name)} • Vol: {contract.volume.toLocaleString()}
-                                  {contract.expirationDate && ` • Exp: ${new Date(contract.expirationDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
-                                </span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                </div>
-                
-                {/* Price and Change - Responsive Layout */}
-                <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:gap-4 lg:gap-6">
-                <div className="flex flex-col sm:flex-row sm:items-end sm:gap-3">
-                  <div className="space-y-1">
-                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Current Price</p>
-                    <div className="flex items-baseline gap-2">
-                      <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground number-display transition-colors group-hover:text-primary">
-                        {formatPrice(currentPrice, name)}
-                      </p>
-                      <span className={`text-2xs sm:text-xs font-medium px-1.5 py-0.5 rounded ${
-                        isAPILive 
-                          ? 'bg-purple-100 dark:bg-purple-950/20 text-purple-700 dark:text-purple-400' 
-                          : isRealTime 
-                            ? 'bg-blue-100 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400' 
-                          : isPremium 
-                            ? 'bg-green-100 dark:bg-green-950/20 text-green-700 dark:text-green-400' 
-                            : 'bg-muted/50 text-muted-foreground'
-                        }`}>
-                        {isAPILive ? 'API Live' : isRealTime ? 'Live' : isPremium ? 'Real-time' : 'Market Data'}
-                      </span>
+                  {/* Mobile Expand Icon */}
+                  <div className="flex items-center sm:hidden">
+                    <div className={`p-2 rounded-full transition-all duration-300 ${
+                      isOpen ? 'bg-primary/20 text-primary' : 'bg-muted/50 text-muted-foreground'
+                    }`}>
+                      {isOpen ? (
+                        <ChevronUp className="w-4 h-4" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4" />
+                      )}
                     </div>
                   </div>
                 </div>
+                
+                {/* Price Section */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground number-display tracking-tight">
+                      {displayPrice !== null ? (
+                        typeof displayPrice === 'string' 
+                          ? displayPrice 
+                          : `$${formatPrice(displayPrice)}`
+                      ) : (
+                        <span className="text-muted-foreground text-lg">Loading...</span>
+                      )}
+                    </span>
+                  </div>
                   
                   <div className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold shadow-soft transition-all duration-300 w-fit ${
                     isPositive 
@@ -359,7 +224,7 @@ const CommodityCard = React.memo(({ name, price: fallbackPrice, change: fallback
                 </div>
               </div>
               
-              {/* Stats Section - Hidden on Mobile, Responsive on Desktop */}
+              {/* Desktop Stats Section */}
               <div className="hidden sm:flex sm:items-center sm:gap-4 lg:gap-6">
                 <div className="text-right space-y-2 lg:space-y-3">
                   <div className="space-y-1">
@@ -379,6 +244,47 @@ const CommodityCard = React.memo(({ name, price: fallbackPrice, change: fallback
                 </div>
               </div>
             </div>
+
+            {/* Contract Selector - Outside click handler */}
+            {isPremium && availableContracts && availableContracts.length > 0 && (
+              <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+                <Select value={selectedContract} onValueChange={handleContractChange}>
+                  <SelectTrigger 
+                    className="w-full sm:w-[280px] h-8 text-xs focus-ring bg-background/80 backdrop-blur-sm border-border/50 hover:bg-background"
+                    aria-label="Select futures contract"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <SelectValue placeholder="Select Contract" />
+                  </SelectTrigger>
+                  <SelectContent className="z-50 bg-background border-border shadow-lg">
+                    {/* Default contract */}
+                    <SelectItem value={symbol}>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{name}</span>
+                        <span className="text-xs text-muted-foreground">{symbol} • Main Contract</span>
+                      </div>
+                    </SelectItem>
+                    {availableContracts.map((contract) => (
+                      <SelectItem key={contract.symbol} value={contract.symbol}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{contract.name}</span>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>{contract.symbol}</span>
+                            <span>{contract.expirationDate ? new Date(contract.expirationDate).toLocaleDateString() : 'N/A'}</span>
+                            {contract.volume && (
+                              <>
+                                <span>•</span>
+                                <span>Vol: {contract.volume.toLocaleString()}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Mobile Stats Section - Visible only when expanded on mobile */}
             {isOpen && (
@@ -402,18 +308,24 @@ const CommodityCard = React.memo(({ name, price: fallbackPrice, change: fallback
                 </div>
               </div>
             )}
-          </div>
-          </Card>
-        </TouchRipple>
-      </CollapsibleTrigger>
+          </CardHeader>
+        </Card>
+      </div>
       
       <CollapsibleContent className="overflow-hidden">
         <div className="mt-3 sm:mt-4 space-y-4 sm:space-y-6 animate-accordion-down">
           <CommodityChart 
             name={name} 
-            basePrice={currentPrice} 
+            basePrice={displayPrice || 0} 
             selectedContract={selectedContract}
-            contractData={selectedContractData}
+            contractData={selectedContractData ? { 
+              ...selectedContractData, 
+              category: 'futures', 
+              supportedByFMP: true,
+              volume: selectedContractData.volume || 0,
+              contractSize: selectedContractData.contractSize || contractSize || 'N/A',
+              venue: selectedContractData.venue || venue || 'NYMEX'
+            } : undefined}
           />
           <CommodityNews commodity={name} />
         </div>

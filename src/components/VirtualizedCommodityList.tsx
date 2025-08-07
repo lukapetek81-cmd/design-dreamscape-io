@@ -77,7 +77,8 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
             <CommodityCard
               name={commodity.name}
               price={commodity.price}
-              change={commodity.changePercent}
+              change={commodity.change || 0}
+              changePercent={commodity.changePercent}
               symbol={commodity.symbol}
               venue={commodity.venue}
               contractSize={commodity.contractSize}
