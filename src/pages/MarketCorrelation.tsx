@@ -7,14 +7,15 @@ import { TrendingUp, TrendingDown, Activity, BarChart3, ArrowLeft, Smartphone, M
 import { useAvailableCommodities } from '@/hooks/useCommodityData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const MarketCorrelation = () => {
   const [timeframe, setTimeframe] = useState('30d');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [mobileView, setMobileView] = useState(false);
   const { data: commodities } = useAvailableCommodities();
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   // Filter commodities by category
   const filteredCommodities = selectedCategory === 'all' 
@@ -66,7 +67,7 @@ const MarketCorrelation = () => {
   const categories = ['all', ...Array.from(new Set((commodities || []).map((c: any) => c.category)))];
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
+    <div className="container mx-auto p-3 lg:p-4 space-y-4 lg:space-y-6 max-w-7xl">
       {/* Header */}
       <div className="space-y-4">
         <div>
@@ -81,17 +82,19 @@ const MarketCorrelation = () => {
               Back
             </Button>
           </div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-            <BarChart3 className="w-8 h-8 text-primary" />
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground flex items-center gap-2">
+            <BarChart3 className="w-6 h-6 lg:w-8 lg:h-8 text-primary" />
             Market Correlation
           </h1>
-          <p className="text-muted-foreground mt-2">
+          <p className="text-sm lg:text-base text-muted-foreground mt-2">
             Discover how different commodities move together and identify market relationships
           </p>
         </div>
 
         {/* Controls */}
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-col gap-3 lg:gap-4">{
+          /* Mobile view controls */}
+        <div className="flex flex-col sm:flex-row gap-2 lg:gap-4">
           <Select value={timeframe} onValueChange={setTimeframe}>
             <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Select timeframe" />
@@ -109,48 +112,43 @@ const MarketCorrelation = () => {
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
-              {categories.map((category: any) => (
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.filter(cat => cat !== 'all').map(category => (
                 <SelectItem key={category} value={category}>
-                  {category === 'all' ? 'All Categories' : category.charAt(0).toUpperCase() + category.slice(1)}
+                  {category.charAt(0).toUpperCase() + category.slice(1)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-
-          {/* View Toggle */}
-          <div className="flex items-center gap-2 sm:ml-auto">
-            <Button
-              variant={mobileView ? "outline" : "default"}
-              size="sm"
-              onClick={() => setMobileView(false)}
-              className="flex items-center gap-1"
-            >
-              <Monitor className="w-4 h-4" />
-              <span className="hidden sm:inline">Desktop</span>
-            </Button>
-            <Button
-              variant={mobileView ? "default" : "outline"}
-              size="sm"
-              onClick={() => setMobileView(true)}
-              className="flex items-center gap-1"
-            >
-              <Smartphone className="w-4 h-4" />
-              <span className="hidden sm:inline">Mobile</span>
-            </Button>
           </div>
+
+          {/* Mobile View Toggle - Only show on mobile */}
+          {isMobile && (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground">Display:</span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 px-3"
+              >
+                <Monitor className="w-4 h-4 mr-1" />
+                Compact View
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Correlation Legend */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Correlation Legend</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-base lg:text-lg">Correlation Legend</CardTitle>
+          <CardDescription className="text-sm">
             Understanding correlation values and their meanings
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
             <div className="space-y-2">
               <h4 className="font-semibold text-green-700 dark:text-green-400">Positive Correlation</h4>
               <p className="text-muted-foreground">Commodities move in the same direction</p>
@@ -182,15 +180,15 @@ const MarketCorrelation = () => {
       {/* Correlation Matrix */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Correlation Matrix</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-base lg:text-lg">Correlation Matrix</CardTitle>
+          <CardDescription className="text-sm">
             Showing correlations for {filteredCommodities.length} commodities over the last {timeframe}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {filteredCommodities.length > 0 ? (
-            mobileView ? (
-              /* Mobile View - List Format */
+            isMobile ? (
+              // Mobile view - Show simplified correlation pairs
               <div className="space-y-4">
                 {filteredCommodities.map((commodity1, index) => (
                   <div key={`${commodity1.name}-${commodity1.symbol}-${index}`} className="space-y-2">

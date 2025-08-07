@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { TrendingUp, TrendingDown, Activity, Clock } from 'lucide-react';
 import { useCommodityHistoricalData } from '@/hooks/useCommodityData';
 import { useRealtimeDataContext } from '@/contexts/RealtimeDataContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Commodity {
   name: string;
@@ -49,6 +50,7 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
   const [failedCommodities, setFailedCommodities] = useState<string[]>([]);
   const [useLogScale, setUseLogScale] = useState(false);
   const { prices, connected, lastUpdate, isLiveData } = useRealtimeDataContext();
+  const isMobile = useIsMobile();
 
   // Get historical data for each commodity (with contract support)
   const historicalQueries = commodities.map(commodity => 

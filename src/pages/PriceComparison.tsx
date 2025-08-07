@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart, Plus, X, TrendingUp, TrendingDown, Minus, ArrowLeft, Calendar } from "lucide-react";
+import { BarChart, Plus, X, TrendingUp, TrendingDown, Minus, ArrowLeft, Calendar, Menu } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -70,6 +71,7 @@ const PriceComparison = () => {
   const { user, isPremium } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const commodityCounts = {
     energy: 0, metals: 0, grains: 0, livestock: 0, softs: 0, other: 0
@@ -274,34 +276,34 @@ const PriceComparison = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="flex h-screen bg-background">
         <CommoditySidebar 
-          activeGroup={activeGroup}
+          activeGroup={activeGroup} 
           onGroupSelect={setActiveGroup}
           commodityCounts={commodityCounts}
         />
-        <SidebarInset className="flex-1">
-          <header className="flex h-16 shrink-0 items-center border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
+        
+        <SidebarInset className="flex-1 flex flex-col min-w-0">
+          <header className="flex h-14 lg:h-16 shrink-0 items-center gap-2 border-b px-3 lg:px-6">
+            <SidebarTrigger className="p-2 hover:bg-muted rounded-lg lg:hidden">
+              <Menu className="h-5 w-5" />
+            </SidebarTrigger>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {
-                console.log('Back button clicked');
-                navigate('/');
-              }}
-              className="mr-2"
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2 mr-2"
             >
               <ArrowLeft className="h-4 w-4" />
+              {!isMobile && "Back"}
             </Button>
-            <div className="flex items-center gap-2">
-              <BarChart className="h-6 w-6 text-primary" />
-              <h1 className="text-xl font-semibold">Price Comparison</h1>
+            <div className="flex items-center gap-2 px-3">
+              <BarChart className="h-5 w-5 text-primary" />
+              <h1 className="text-lg lg:text-xl font-semibold">Price Comparison</h1>
             </div>
           </header>
 
-          <main className="flex-1 p-6">
+          <main className="flex-1 p-3 lg:p-6 overflow-auto">
             <div className="max-w-7xl mx-auto space-y-6">
               <div>
                 <h2 className="text-2xl font-bold tracking-tight">
@@ -312,39 +314,39 @@ const PriceComparison = () => {
                 </p>
               </div>
 
-              <div className="grid gap-6 lg:grid-cols-4">
-                <div className="lg:col-span-3 space-y-6">
+              <div className={`grid gap-4 lg:gap-6 ${isMobile ? 'grid-cols-1' : 'lg:grid-cols-4'}`}>
+                <div className={`space-y-4 lg:space-y-6 ${isMobile ? 'order-2' : 'lg:col-span-3'}`}>
                   <Card>
                     <CardHeader>
-                      <CardTitle>Current Comparison</CardTitle>
-                      <CardDescription>
+                      <CardTitle className="text-lg lg:text-xl">Current Comparison</CardTitle>
+                      <CardDescription className="text-sm">
                         Selected commodities for side-by-side analysis
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       {selectedCommodities.length === 0 ? (
-                        <div className="text-center py-12">
-                          <BarChart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                          <h3 className="text-lg font-semibold mb-2">No commodities selected</h3>
-                          <p className="text-muted-foreground">
+                        <div className="text-center py-8 lg:py-12">
+                          <BarChart className="h-10 w-10 lg:h-12 lg:w-12 text-muted-foreground mx-auto mb-4" />
+                          <h3 className="text-base lg:text-lg font-semibold mb-2">No commodities selected</h3>
+                          <p className="text-sm text-muted-foreground">
                             Add commodities from the panel to start comparing
                           </p>
                         </div>
                       ) : (
                         <div className="space-y-4">
-                          <div className="flex flex-col sm:flex-row gap-2">
+                          <div className="flex flex-col gap-2">
                             <Input
                               placeholder="Comparison name (optional)"
                               value={comparisonName}
                               onChange={(e) => setComparisonName(e.target.value)}
                               className="flex-1"
                             />
-                            <Button onClick={saveComparison} disabled={loading}>
+                            <Button onClick={saveComparison} disabled={loading} className="w-full sm:w-auto">
                               Save Comparison
                             </Button>
                           </div>
                           
-                          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                          <div className={`grid gap-3 lg:gap-4 ${isMobile ? 'grid-cols-1 sm:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
                             {selectedCommodities.map((commodity) => (
                               <Card key={commodity.symbol} className="relative">
                                  <Button
@@ -397,10 +399,10 @@ const PriceComparison = () => {
                   )}
                 </div>
 
-                <div className="space-y-6">
+                <div className={`space-y-4 lg:space-y-6 ${isMobile ? 'order-1' : ''}`}>
                   <Card>
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
+                      <CardTitle className="text-lg lg:text-xl flex items-center gap-2">
                         <Plus className="h-5 w-5" />
                         Add Commodities
                       </CardTitle>
