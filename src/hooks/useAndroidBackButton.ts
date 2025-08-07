@@ -6,48 +6,57 @@ export const useAndroidBackButton = () => {
   const location = useLocation();
 
   useEffect(() => {
-    let removeListener: (() => void) | null = null;
+    console.log('Setting up Android back button listener...');
+    
+    const setupListener = async () => {
+      // Check if we're in a Capacitor environment
+      if (typeof window === 'undefined' || !(window as any).Capacitor) {
+        console.log('Not in Capacitor environment, skipping Android back button setup');
+        return null;
+      }
 
-    const setupBackButtonListener = async () => {
-      // Only works in Capacitor environment
-      if (typeof window !== 'undefined' && (window as any).Capacitor) {
-        try {
-          const { App } = await import('@capacitor/app');
+      try {
+        const { App } = await import('@capacitor/app');
+        console.log('Capacitor App imported successfully');
+
+        const handleBackButton = () => {
+          console.log('🔴 ANDROID BACK BUTTON PRESSED! Current path:', location.pathname);
           
-          const handleBackButton = () => {
-            console.log('Android back button pressed, current path:', location.pathname);
-            
-            // Always navigate to main dashboard instead of exiting
-            // This ensures users can navigate back to home from any page
-            if (location.pathname !== '/') {
-              console.log('Navigating back to main dashboard from:', location.pathname);
-              navigate('/', { replace: true });
-              return;
-            }
-            
-            // Only exit if user presses back again quickly on main dashboard
-            console.log('Already on main dashboard - navigating to dashboard again to prevent exit');
+          // Always navigate to home instead of exiting
+          if (location.pathname !== '/') {
+            console.log('➡️ Navigating to home from:', location.pathname);
             navigate('/', { replace: true });
-          };
+          } else {
+            console.log('➡️ Already on home, preventing app exit by staying on home');
+            // Prevent app exit by doing nothing or showing a toast
+          }
+        };
 
-          // Add the back button listener
-          const listener = await App.addListener('backButton', handleBackButton);
-          removeListener = () => listener.remove();
-          
-          console.log('Android back button listener set up successfully');
-        } catch (error) {
-          console.log('Failed to set up Android back button listener:', error);
-        }
+        console.log('Adding back button listener...');
+        const listener = await App.addListener('backButton', handleBackButton);
+        console.log('✅ Android back button listener added successfully');
+        
+        return listener;
+      } catch (error) {
+        console.error('❌ Failed to setup Android back button:', error);
+        return null;
       }
     };
 
-    setupBackButtonListener();
+    let cleanup: (() => void) | null = null;
+    
+    setupListener().then((listener) => {
+      if (listener) {
+        cleanup = () => {
+          console.log('🧹 Removing Android back button listener');
+          listener.remove();
+        };
+      }
+    });
 
-    // Cleanup function
     return () => {
-      if (removeListener) {
-        removeListener();
-        console.log('Android back button listener removed');
+      if (cleanup) {
+        cleanup();
       }
     };
   }, [navigate, location.pathname]);
