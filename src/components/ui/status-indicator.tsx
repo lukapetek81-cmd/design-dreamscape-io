@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Activity, AlertCircle } from 'lucide-react';
 
 interface StatusIndicatorProps {
@@ -86,13 +85,9 @@ export const StatusIndicator: React.FC<StatusIndicatorProps> = ({
 
   if (animated && status === 'live') {
     return (
-      <motion.div
-        initial={{ opacity: 0.5 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, repeat: Infinity, repeatType: 'reverse' }}
-      >
+      <div className="animate-pulse">
         {content}
-      </motion.div>
+      </div>
     );
   }
 
