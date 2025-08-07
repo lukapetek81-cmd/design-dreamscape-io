@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import CommodityCard from './CommodityCard';
+import OptimizedCommodityCard from './OptimizedCommodityCard';
 import { Commodity } from '@/hooks/useCommodityData';
 import { 
   Zap, 
@@ -185,7 +185,7 @@ const CommodityGroupSection = React.memo(({
                 className="animate-slide-up"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
-                <CommodityCard
+                <OptimizedCommodityCard
                   name={commodity.name}
                   symbol={commodity.symbol}
                   price={commodity.price}
