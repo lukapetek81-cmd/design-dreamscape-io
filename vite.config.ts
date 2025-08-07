@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     rollupOptions: {
-      external: ['@capacitor/app']
+      external: ['@capacitor/app', '@capacitor/haptics']
     }
   }
 }));
