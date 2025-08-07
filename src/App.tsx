@@ -8,8 +8,11 @@ import { RealtimeDataProvider } from "@/contexts/RealtimeDataContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { createOptimizedQueryClient, queryClientConfigs } from "@/lib/queryClient";
 import { useIsMobile } from "@/hooks/use-mobile";
-
+import SplashScreen from "@/components/mobile/SplashScreen";
+import { AppToastProvider } from "@/components/mobile/AppToast";
+import React, { useState, useEffect } from 'react';
 import { useAndroidBackButton } from "@/hooks/useAndroidBackButton";
+import { PWAInstallPrompt } from "@/components/mobile/PWAComponents";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
@@ -48,9 +51,36 @@ const queryClient = getQueryClient();
 
 const AppRoutes = () => {
   useAndroidBackButton();
+  const [showSplash, setShowSplash] = useState(true);
+  const isMobile = useIsMobile();
+
+  useEffect(() => {
+    // Show splash screen only on mobile and only on first load
+    if (!isMobile) {
+      setShowSplash(false);
+      return;
+    }
+
+    // Auto-hide splash after 3 seconds as fallback
+    const fallbackTimer = setTimeout(() => {
+      setShowSplash(false);
+    }, 3000);
+
+    return () => clearTimeout(fallbackTimer);
+  }, [isMobile]);
+
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+  };
   
   return (
-    <Routes>
+    <>
+      <SplashScreen 
+        isVisible={showSplash} 
+        onComplete={handleSplashComplete} 
+      />
+      
+      <Routes>
       <Route path="/" element={<Dashboard />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/auth" element={<Auth />} />
@@ -76,7 +106,8 @@ const AppRoutes = () => {
       <Route path="/market-status" element={<MarketStatus />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
-    </Routes>
+      </Routes>
+    </>
   );
 };
 
@@ -85,15 +116,18 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <RealtimeDataProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <ErrorBoundary fallback={<div>Something went wrong with routing</div>}>
-                <AppRoutes />
-              </ErrorBoundary>
-            </BrowserRouter>
-          </TooltipProvider>
+          <AppToastProvider position="top">
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <ErrorBoundary fallback={<div>Something went wrong with routing</div>}>
+                  <AppRoutes />
+                  <PWAInstallPrompt />
+                </ErrorBoundary>
+              </BrowserRouter>
+            </TooltipProvider>
+          </AppToastProvider>
         </RealtimeDataProvider>
       </AuthProvider>
     </QueryClientProvider>

@@ -8,6 +8,10 @@ import { StatusIndicator } from '@/components/ui/status-indicator';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { MobileHeader } from '@/components/mobile/MobileComponents';
 import { PullToRefresh } from '@/components/mobile/PullToRefresh';
+import SwipeNavigation from '@/components/mobile/SwipeNavigation';
+import ResponsiveContainer from '@/components/mobile/ResponsiveContainer';
+import HapticButton from '@/components/mobile/HapticButton';
+import { useAppToast } from '@/components/mobile/AppToast';
 import { DataErrorFallback, CommodityDataFallback } from '@/components/DataErrorFallback';
 import { OfflineIndicator } from '@/components/OfflineIndicator';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -27,6 +31,7 @@ import { Button } from '@/components/ui/button';
 
 const Dashboard = () => {
   const [activeGroup, setActiveGroup] = React.useState("energy");
+  const { success: showSuccessToast } = useAppToast();
   
   const isMobile = useIsMobile();
   const { isGuest, profile, loading: authLoading } = useAuth();
@@ -38,11 +43,12 @@ const Dashboard = () => {
       // Trigger proper data refetch instead of page reload
       if (refetchCommodities) {
         await refetchCommodities();
+        showSuccessToast('Markets refreshed', 'Latest data has been loaded');
       }
     } catch (error) {
       console.error('Failed to refresh data:', error);
     }
-  }, [refetchCommodities]);
+  }, [refetchCommodities, showSuccessToast]);
   const { connected: realtimeConnected, lastUpdate, error: realtimeError, delayStatus } = useRealtimeDataContext();
 
   // Show loading screen while auth is checking
@@ -110,7 +116,7 @@ const DashboardContent = ({
   const [touchEnd, setTouchEnd] = React.useState<number | null>(null);
   const [isLandscape, setIsLandscape] = React.useState(false);
 
-  // Enhanced swipe gesture for mobile navigation
+  // Enhanced swipe gesture for mobile navigation with haptic feedback
   const swipeHandlers = useSwipeGesture({
     onSwipeRight: () => {
       if (isMobile && !isLandscape) {
@@ -125,6 +131,18 @@ const DashboardContent = ({
     threshold: 75,
     enabled: isMobile,
   });
+
+  // Commodity group navigation with swipe gestures
+  const handleGroupSwipe = React.useCallback((direction: 'left' | 'right') => {
+    const groups = ['energy', 'metals', 'grains', 'livestock', 'softs', 'other'];
+    const currentIndex = groups.indexOf(activeGroup);
+    
+    if (direction === 'left' && currentIndex < groups.length - 1) {
+      setActiveGroup(groups[currentIndex + 1]);
+    } else if (direction === 'right' && currentIndex > 0) {
+      setActiveGroup(groups[currentIndex - 1]);
+    }
+  }, [activeGroup]);
 
   // Handle swipe detection
   const minSwipeDistance = 50;
@@ -243,12 +261,17 @@ const DashboardContent = ({
   }, [commodities]);
 
   return (
-    <div 
+    <ResponsiveContainer 
       className="min-h-screen flex w-full bg-gradient-to-br from-background via-background to-muted/20"
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
+      mobileClassName="overflow-hidden"
+      enableAnimations={!isLandscape}
     >
+      <SwipeNavigation 
+        onSwipeRight={() => swipeHandlers.onTouchStart && handleGroupSwipe('right')}
+        onSwipeLeft={() => swipeHandlers.onTouchStart && handleGroupSwipe('left')}
+        className="flex w-full"
+        {...swipeHandlers}
+      >
       <CommoditySidebar 
         activeGroup={activeGroup} 
         onGroupSelect={setActiveGroup}
@@ -489,12 +512,18 @@ const DashboardContent = ({
           </main>
           </PullToRefresh>
           
-          {/* Floating Menu Button for Mobile - Bottom Left */}
-          <SidebarTrigger className="fixed left-4 bottom-20 z-50 w-16 h-16 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl active:scale-95 touch-manipulation transition-all duration-200 flex items-center justify-center md:hidden">
+          {/* Enhanced Floating Menu Button for Mobile */}
+          <HapticButton
+            onClick={() => setOpenMobile(true)}
+            className="fixed left-4 bottom-20 z-50 w-16 h-16 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl md:hidden"
+            hapticType="medium"
+            variant="primary"
+          >
             <Menu className="w-6 h-6" />
-          </SidebarTrigger>
-      </div>
-    </div>
+          </HapticButton>
+        </div>
+      </SwipeNavigation>
+    </ResponsiveContainer>
   );
 };
 
