@@ -2,8 +2,23 @@ import React, { useMemo, useState, useEffect } from 'react';
 import CommodityCard from './CommodityCard';
 import { Commodity } from '@/hooks/useCommodityData';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { SkeletonCard } from '@/components/ui/enhanced-skeleton';
 import { FadeInAnimation, StaggeredAnimation } from '@/components/animations/Animations';
+
+interface FuturesContract {
+  name: string;
+  symbol: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  volume?: number;
+  expirationDate: string;
+  contractSize?: string;
+  venue?: string;
+}
 
 interface VirtualizedCommodityListProps {
   commodities: Commodity[];
@@ -15,8 +30,26 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
   loading = false 
 }) => {
   const isMobile = useIsMobile();
+  const { isPremium } = useAuth();
   const [visibleItems, setVisibleItems] = useState(10); // Start with 10 items
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Fetch IBKR futures contracts for premium users
+  const useFuturesContracts = (commodityName: string) => {
+    return useQuery({
+      queryKey: ['ibkr-futures', commodityName],
+      queryFn: async () => {
+        const { data, error } = await supabase.functions.invoke('fetch-ibkr-futures', {
+          body: { commodity: commodityName }
+        });
+        
+        if (error) throw new Error(error.message);
+        return data.contracts as FuturesContract[];
+      },
+      enabled: !!commodityName && isPremium,
+      staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    });
+  };
 
   // Increase visible items when scrolling near bottom
   useEffect(() => {
@@ -72,19 +105,26 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
   return (
     <div className="space-y-4">
       <StaggeredAnimation staggerDelay={0.05} className="grid gap-3 sm:gap-4 lg:gap-6">
-        {visibleCommodities.map((commodity, index) => (
-          <div key={`${commodity.symbol}-${index}`}>
-            <CommodityCard
-              name={commodity.name}
-              price={commodity.price}
-              change={commodity.change || 0}
-              changePercent={commodity.changePercent}
-              symbol={commodity.symbol}
-              venue={commodity.venue}
-              contractSize={commodity.contractSize}
-            />
-          </div>
-        ))}
+        {visibleCommodities.map((commodity, index) => {
+          // Only fetch futures contracts for premium users and supported commodities
+          const contractsQuery = useFuturesContracts(commodity.name);
+          const availableContracts = isPremium ? contractsQuery.data : undefined;
+
+          return (
+            <div key={`${commodity.symbol}-${index}`}>
+              <CommodityCard
+                name={commodity.name}
+                price={commodity.price}
+                change={commodity.change || 0}
+                changePercent={commodity.changePercent}
+                symbol={commodity.symbol}
+                venue={commodity.venue}
+                contractSize={commodity.contractSize}
+                availableContracts={availableContracts}
+              />
+            </div>
+          );
+        })}
       </StaggeredAnimation>
       
       {/* Enhanced Loading indicator for additional items */}
