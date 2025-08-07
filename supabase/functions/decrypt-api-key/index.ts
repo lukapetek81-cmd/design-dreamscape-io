@@ -5,28 +5,72 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Simple decryption function (this should match the encryption logic in your frontend)
-const decrypt = (encryptedKey: string): string => {
-  try {
-    // Based on the data I saw in the database, it looks like the key might be base64 encoded
-    // Let's try to decode it and extract the apiKey
-    try {
-      const decoded = atob(encryptedKey);
-      // If it contains JSON, parse it
-      if (decoded.includes('{') && decoded.includes('apiKey')) {
-        const parsed = JSON.parse(decoded.split('ibkr-creds-key-2024')[1].split('ibkr-creds-key-2024')[0]);
-        return parsed.apiKey;
-      }
-    } catch (e) {
-      // If decoding fails, maybe it's already the plain key
-    }
-    
-    // If all else fails, return as-is (might be already decrypted)
-    return encryptedKey;
-  } catch (error) {
-    throw new Error('Failed to decrypt API key');
+// Secure decryption using AES-GCM (matching the frontend encryption)
+class SecureCredentialDecryptor {
+  private static readonly ALGORITHM = 'AES-GCM';
+  private static readonly KEY_LENGTH = 256;
+  private static readonly IV_LENGTH = 12;
+
+  // Derive a key from a password (user session-based)
+  private static async deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+    const encoder = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(password),
+      'PBKDF2',
+      false,
+      ['deriveKey']
+    );
+
+    return await crypto.subtle.deriveKey(
+      {
+        name: 'PBKDF2',
+        salt: salt,
+        iterations: 100000,
+        hash: 'SHA-256',
+      },
+      keyMaterial,
+      { name: this.ALGORITHM, length: this.KEY_LENGTH },
+      false,
+      ['encrypt', 'decrypt']
+    );
   }
-};
+
+  // Decrypt credentials using user-specific key
+  static async decryptCredential(encryptedText: string, userSecret: string): Promise<string> {
+    try {
+      // Decode from base64
+      const encryptedData = new Uint8Array(
+        atob(encryptedText).split('').map(char => char.charCodeAt(0))
+      );
+
+      // Extract salt, iv, and encrypted data
+      const salt = encryptedData.slice(0, 16);
+      const iv = encryptedData.slice(16, 16 + this.IV_LENGTH);
+      const data = encryptedData.slice(16 + this.IV_LENGTH);
+
+      // Derive key from user secret
+      const key = await this.deriveKey(userSecret, salt);
+
+      // Decrypt the data
+      const decryptedData = await crypto.subtle.decrypt(
+        {
+          name: this.ALGORITHM,
+          iv: iv,
+        },
+        key,
+        data
+      );
+
+      // Convert back to string
+      const decoder = new TextDecoder();
+      return decoder.decode(decryptedData);
+    } catch (error) {
+      console.error('Decryption error:', error);
+      throw new Error('Failed to decrypt credential');
+    }
+  }
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -34,16 +78,25 @@ serve(async (req) => {
   }
 
   try {
-    const { encryptedKey } = await req.json();
+    const { encryptedKey, userSecret } = await req.json();
     
-    if (!encryptedKey) {
+    if (!encryptedKey || !userSecret) {
       return new Response(
-        JSON.stringify({ error: 'No encrypted key provided' }),
+        JSON.stringify({ error: 'Missing encrypted key or user secret' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const decryptedKey = decrypt(encryptedKey);
+    // Get the master decryption key from environment (Supabase secret)
+    const masterSecret = Deno.env.get('CREDENTIAL_MASTER_KEY');
+    if (!masterSecret) {
+      throw new Error('Master decryption key not configured');
+    }
+
+    // Combine user secret with master secret for additional security
+    const combinedSecret = `${userSecret}-${masterSecret}`;
+    
+    const decryptedKey = await SecureCredentialDecryptor.decryptCredential(encryptedKey, combinedSecret);
     
     return new Response(
       JSON.stringify({ key: decryptedKey }),
@@ -53,7 +106,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error decrypting API key:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: 'Failed to decrypt credentials' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
