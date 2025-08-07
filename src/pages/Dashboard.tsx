@@ -469,6 +469,11 @@ const DashboardContent = ({
               )}
             </div>
           </main>
+          
+          {/* Floating Menu Button for Mobile - Bottom Left */}
+          <SidebarTrigger className="fixed left-4 bottom-20 z-50 w-16 h-16 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl active:scale-95 touch-manipulation transition-all duration-200 flex items-center justify-center md:hidden">
+            <Menu className="w-6 h-6" />
+          </SidebarTrigger>
       </div>
     </div>
   );
