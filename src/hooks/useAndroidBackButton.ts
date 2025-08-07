@@ -7,21 +7,25 @@ export const useAndroidBackButton = () => {
 
   useEffect(() => {
     const handleBackButton = async () => {
+      console.log('Android back button pressed, current path:', location.pathname);
+      
       // Only works in Capacitor environment
       if (typeof window !== 'undefined' && (window as any).Capacitor) {
         try {
           const { App } = await import('@capacitor/app');
           
-          // If we're not on the main page, go back to main page (like the in-app back button)
+          // If we're not on the main page, navigate to main page (like the in-app back button)
           if (location.pathname !== '/') {
+            console.log('Navigating back to main dashboard');
             navigate('/', { replace: true });
             return;
           }
           
           // If we're already on the main page, let the app exit
+          console.log('On main page, exiting app');
           App.exitApp();
         } catch (error) {
-          console.log('Capacitor App plugin not available');
+          console.log('Capacitor App plugin not available:', error);
         }
       }
     };
@@ -29,13 +33,16 @@ export const useAndroidBackButton = () => {
     // Only add listener in Capacitor environment
     if (typeof window !== 'undefined' && (window as any).Capacitor) {
       import('@capacitor/app').then(({ App }) => {
-        const removeListener = App.addListener('backButton', handleBackButton);
+        console.log('Setting up Android back button listener');
+        App.addListener('backButton', handleBackButton);
         
+        // Return cleanup function
         return () => {
-          removeListener.then(remove => remove.remove());
+          console.log('Cleaning up Android back button listener');
+          App.removeAllListeners();
         };
-      }).catch(() => {
-        console.log('Capacitor App plugin not available');
+      }).catch((error) => {
+        console.log('Capacitor App plugin not available during setup:', error);
       });
     }
   }, [navigate, location.pathname]);
