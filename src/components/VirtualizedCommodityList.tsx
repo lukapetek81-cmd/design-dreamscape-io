@@ -34,22 +34,35 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
   const [visibleItems, setVisibleItems] = useState(10); // Start with 10 items
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  // Fetch IBKR futures contracts for premium users
-  const useFuturesContracts = (commodityName: string) => {
-    return useQuery({
-      queryKey: ['ibkr-futures', commodityName],
-      queryFn: async () => {
-        const { data, error } = await supabase.functions.invoke('fetch-ibkr-futures', {
-          body: { commodity: commodityName }
-        });
-        
-        if (error) throw new Error(error.message);
-        return data.contracts as FuturesContract[];
-      },
-      enabled: !!commodityName && isPremium,
-      staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-    });
-  };
+  // Fetch IBKR futures contracts for all commodities at once for premium users
+  const commodityNames = commodities.map(c => c.name);
+  const futuresQuery = useQuery({
+    queryKey: ['ibkr-futures-bulk', commodityNames],
+    queryFn: async () => {
+      if (!isPremium) return {};
+      
+      const contractsMap: Record<string, FuturesContract[]> = {};
+      
+      // Fetch contracts for each commodity
+      for (const commodityName of commodityNames.slice(0, visibleItems)) {
+        try {
+          const { data, error } = await supabase.functions.invoke('fetch-ibkr-futures', {
+            body: { commodity: commodityName }
+          });
+          
+          if (!error && data?.contracts) {
+            contractsMap[commodityName] = data.contracts;
+          }
+        } catch (error) {
+          console.error(`Error fetching contracts for ${commodityName}:`, error);
+        }
+      }
+      
+      return contractsMap;
+    },
+    enabled: isPremium && commodityNames.length > 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   // Increase visible items when scrolling near bottom
   useEffect(() => {
@@ -106,9 +119,8 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
     <div className="space-y-4">
       <StaggeredAnimation staggerDelay={0.05} className="grid gap-3 sm:gap-4 lg:gap-6">
         {visibleCommodities.map((commodity, index) => {
-          // Only fetch futures contracts for premium users and supported commodities
-          const contractsQuery = useFuturesContracts(commodity.name);
-          const availableContracts = isPremium ? contractsQuery.data : undefined;
+          // Get futures contracts for this specific commodity from the bulk query
+          const availableContracts = isPremium ? futuresQuery.data?.[commodity.name] : undefined;
 
           return (
             <div key={`${commodity.symbol}-${index}`}>
