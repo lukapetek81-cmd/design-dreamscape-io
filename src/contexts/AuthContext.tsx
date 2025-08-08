@@ -2,6 +2,8 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { validateFormData } from '@/utils/validation';
+import { authRateLimiter } from '@/utils/security';
 
 interface Profile {
   id: string;
@@ -136,15 +138,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     try {
+      // Rate limiting check
+      const rateCheck = authRateLimiter.check('signup');
+      if (!rateCheck.allowed) {
+        const error = new Error('Too many signup attempts. Please wait before trying again.');
+        toast({
+          title: "Rate Limit Exceeded",
+          description: error.message,
+          variant: "destructive",
+        });
+        return { error };
+      }
+
+      // Input validation
+      const emailValidation = validateFormData.email(email);
+      const passwordValidation = validateFormData.password(password);
+      const nameValidation = fullName ? validateFormData.name(fullName) : null;
+
       const redirectUrl = `${window.location.origin}/`;
       
       const { error } = await supabase.auth.signUp({
-        email,
-        password,
+        email: emailValidation,
+        password: passwordValidation,
         options: {
           emailRedirectTo: redirectUrl,
           data: {
-            full_name: fullName || email.split('@')[0]
+            full_name: nameValidation || emailValidation.split('@')[0]
           }
         }
       });
@@ -164,7 +183,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return { error };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      const errorMessage = error instanceof Error ? error.message : 'Invalid input provided';
       toast({
         title: "Sign Up Error",
         description: errorMessage,
@@ -176,8 +195,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
+      // Rate limiting check
+      const rateCheck = authRateLimiter.check('signin');
+      if (!rateCheck.allowed) {
+        const error = new Error('Too many signin attempts. Please wait before trying again.');
+        toast({
+          title: "Rate Limit Exceeded",
+          description: error.message,
+          variant: "destructive",
+        });
+        return { error };
+      }
+
+      // Input validation
+      const emailValidation = validateFormData.email(email);
+      
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: emailValidation,
         password,
       });
 
@@ -196,7 +230,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return { error };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      const errorMessage = error instanceof Error ? error.message : 'Invalid input provided';
       toast({
         title: "Sign In Error",
         description: errorMessage,
@@ -266,7 +300,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resetPassword = async (email: string) => {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      // Rate limiting check
+      const rateCheck = authRateLimiter.check('reset');
+      if (!rateCheck.allowed) {
+        const error = new Error('Too many reset attempts. Please wait before trying again.');
+        toast({
+          title: "Rate Limit Exceeded",
+          description: error.message,
+          variant: "destructive",
+        });
+        return { error };
+      }
+
+      // Input validation
+      const emailValidation = validateFormData.email(email);
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(emailValidation, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
@@ -285,7 +334,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return { error };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      const errorMessage = error instanceof Error ? error.message : 'Invalid input provided';
       toast({
         title: "Reset Password Error",
         description: errorMessage,
