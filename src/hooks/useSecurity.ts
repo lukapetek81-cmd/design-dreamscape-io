@@ -145,7 +145,7 @@ export const useSecurity = (config: SecurityConfig = {}): SecurityHook => {
     try {
       if (type in validateFormData) {
         const validator = validateFormData[type as keyof typeof validateFormData];
-        const validatedValue = validator(value as any);
+        const validatedValue = (validator as any)(value);
         return { isValid: true, value: validatedValue };
       }
       return { isValid: false, error: 'Unknown validation type' };
@@ -192,13 +192,11 @@ export const withSecurity = (
     }, [security]);
 
     if (!security.isSessionActive) {
-      return (
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center space-y-4">
-            <h2 className="text-xl font-semibold">Session Expired</h2>
-            <p className="text-muted-foreground">Please sign in again to continue.</p>
-          </div>
-        </div>
+      return React.createElement('div', { className: 'min-h-screen flex items-center justify-center' },
+        React.createElement('div', { className: 'text-center space-y-4' },
+          React.createElement('h2', { className: 'text-xl font-semibold' }, 'Session Expired'),
+          React.createElement('p', { className: 'text-muted-foreground' }, 'Please sign in again to continue.')
+        )
       );
     }
 
