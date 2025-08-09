@@ -1,3 +1,4 @@
+import React, { Suspense, useEffect, useState } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,34 +9,16 @@ import { RealtimeDataProvider } from "@/contexts/RealtimeDataContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { createOptimizedQueryClient, queryClientConfigs } from "@/lib/queryClient";
 import { useIsMobile } from "@/hooks/use-mobile";
-import SplashScreen from "@/components/mobile/SplashScreen";
 import { AppToastProvider } from "@/components/mobile/AppToast";
-import React, { useState, useEffect } from 'react';
 import { useAndroidBackButton } from "@/hooks/useAndroidBackButton";
 import { PWAInstallPrompt } from "@/components/mobile/PWAComponents";
-import Dashboard from "./pages/Dashboard";
-import Auth from "./pages/Auth";
-import ResetPassword from "./pages/ResetPassword";
-import RecentActivity from "./pages/RecentActivity";
-import Favorites from "./pages/Favorites";
-import PriceComparison from "./pages/PriceComparison";
-import MarketStatus from "./pages/MarketStatus";
-
-import Portfolio from "./pages/Portfolio";
-import NewsSettingsPage from "./pages/NewsSettings";
-import Billing from "./pages/Billing";
-import Watchlists from "./pages/Watchlists";
-import MarketScreener from "./pages/MarketScreener";
-import EconomicCalendar from "./pages/EconomicCalendar";
-import RiskCalculator from "./pages/RiskCalculator";
-import MarketCorrelation from "./pages/MarketCorrelation";
-import TradingCommunity from "./pages/TradingCommunity";
-import ExpertInsights from "./pages/ExpertInsights";
-import LearningHub from "./pages/LearningHub";
-import MarketSentiment from "./pages/MarketSentiment";
-
-import APIComparison from "./pages/APIComparison";
-import NotFound from "./pages/NotFound";
+import { LoadingProvider } from "@/components/loading/LoadingProvider";
+import { SecurityProvider } from "@/components/security/SecurityProvider";
+import { LazyRoutes, addResourceHints } from "@/utils/bundleSplitting";
+import { useServiceWorker } from "@/hooks/useServiceWorker";
+import { DashboardSkeleton } from "@/components/loading/LoadingSkeletons";
+import SplashScreen from "@/components/mobile/SplashScreen";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
 
 // Create optimized query client with mobile-aware configuration
 const getQueryClient = () => {
@@ -80,58 +63,71 @@ const AppRoutes = () => {
         onComplete={handleSplashComplete} 
       />
       
-      <Routes>
-      <Route path="/" element={<Dashboard />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/auth" element={<Auth />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      
-      <Route path="/portfolio" element={<Portfolio />} />
-      
-      <Route path="/news-settings" element={<NewsSettingsPage />} />
-      <Route path="/billing" element={<Billing />} />
-      <Route path="/correlation" element={<MarketCorrelation />} />
-      <Route path="/watchlists" element={<Watchlists />} />
-      <Route path="/screener" element={<MarketScreener />} />
-      <Route path="/calendar" element={<EconomicCalendar />} />
-      <Route path="/risk-calculator" element={<RiskCalculator />} />
-      <Route path="/community" element={<TradingCommunity />} />
-      <Route path="/insights" element={<ExpertInsights />} />
-      <Route path="/learning" element={<LearningHub />} />
-      <Route path="/sentiment" element={<MarketSentiment />} />
-      <Route path="/recent-activity" element={<RecentActivity />} />
-      <Route path="/favorites" element={<Favorites />} />
-      <Route path="/price-comparison" element={<PriceComparison />} />
-      <Route path="/api-comparison" element={<APIComparison />} />
-      <Route path="/market-status" element={<MarketStatus />} />
-      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-      <Route path="*" element={<NotFound />} />
-      </Routes>
+      <Suspense fallback={<DashboardSkeleton />}>
+        <Routes>
+          <Route path="/" element={<LazyRoutes.Dashboard />} />
+          <Route path="/dashboard" element={<LazyRoutes.Dashboard />} />
+          <Route path="/auth" element={<LazyRoutes.Auth />} />
+          <Route path="/reset-password" element={<LazyRoutes.ResetPassword />} />
+          <Route path="/portfolio" element={<LazyRoutes.Portfolio />} />
+          <Route path="/news-settings" element={<LazyRoutes.NewsSettings />} />
+          <Route path="/billing" element={<LazyRoutes.Billing />} />
+          <Route path="/correlation" element={<LazyRoutes.MarketCorrelation />} />
+          <Route path="/watchlists" element={<LazyRoutes.Watchlists />} />
+          <Route path="/screener" element={<LazyRoutes.MarketScreener />} />
+          <Route path="/calendar" element={<LazyRoutes.EconomicCalendar />} />
+          <Route path="/risk-calculator" element={<LazyRoutes.RiskCalculator />} />
+          <Route path="/community" element={<LazyRoutes.TradingCommunity />} />
+          <Route path="/insights" element={<LazyRoutes.ExpertInsights />} />
+          <Route path="/learning" element={<LazyRoutes.LearningHub />} />
+          <Route path="/sentiment" element={<LazyRoutes.MarketSentiment />} />
+          <Route path="/recent-activity" element={<LazyRoutes.RecentActivity />} />
+          <Route path="/favorites" element={<LazyRoutes.Favorites />} />
+          <Route path="/price-comparison" element={<LazyRoutes.PriceComparison />} />
+          <Route path="/api-comparison" element={<LazyRoutes.APIComparison />} />
+          <Route path="/market-status" element={<LazyRoutes.MarketStatus />} />
+          <Route path="*" element={<LazyRoutes.NotFound />} />
+        </Routes>
+      </Suspense>
     </>
   );
 };
 
-const App = () => (
-  <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <RealtimeDataProvider>
-          <AppToastProvider position="top">
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <ErrorBoundary fallback={<div>Something went wrong with routing</div>}>
-                  <AppRoutes />
-                  <PWAInstallPrompt />
-                </ErrorBoundary>
-              </BrowserRouter>
-            </TooltipProvider>
-          </AppToastProvider>
-        </RealtimeDataProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  </ErrorBoundary>
-);
+const App = () => {
+  const { isOnline } = useServiceWorker();
+
+  useEffect(() => {
+    // Add resource hints for better performance
+    addResourceHints();
+  }, []);
+
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <LoadingProvider>
+          <SecurityProvider>
+            <AuthProvider>
+              <RealtimeDataProvider>
+                <AppToastProvider position="top">
+                  <TooltipProvider>
+                    <Toaster />
+                    <Sonner />
+                    {!isOnline && <OfflineIndicator />}
+                    <BrowserRouter>
+                      <ErrorBoundary fallback={<div>Something went wrong with routing</div>}>
+                        <AppRoutes />
+                        <PWAInstallPrompt />
+                      </ErrorBoundary>
+                    </BrowserRouter>
+                  </TooltipProvider>
+                </AppToastProvider>
+              </RealtimeDataProvider>
+            </AuthProvider>
+          </SecurityProvider>
+        </LoadingProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  );
+};
 
 export default App;
