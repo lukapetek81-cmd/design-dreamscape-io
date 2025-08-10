@@ -59,17 +59,45 @@ export const dynamicImport = async <T>(
   }
 };
 
+// Import functions for preloading
+const importFunctions = {
+  Dashboard: () => import('@/pages/Dashboard'),
+  Portfolio: () => import('@/pages/Portfolio'),
+  MarketScreener: () => import('@/pages/MarketScreener'),
+  MarketSentiment: () => import('@/pages/MarketSentiment'),
+  MarketCorrelation: () => import('@/pages/MarketCorrelation'),
+  PriceComparison: () => import('@/pages/PriceComparison'),
+  EconomicCalendar: () => import('@/pages/EconomicCalendar'),
+  ExpertInsights: () => import('@/pages/ExpertInsights'),
+  LearningHub: () => import('@/pages/LearningHub'),
+  TradingCommunity: () => import('@/pages/TradingCommunity'),
+  RiskCalculator: () => import('@/pages/RiskCalculator'),
+  Watchlists: () => import('@/pages/Watchlists'),
+  Favorites: () => import('@/pages/Favorites'),
+  MarketStatus: () => import('@/pages/MarketStatus'),
+  RecentActivity: () => import('@/pages/RecentActivity'),
+  APIComparison: () => import('@/pages/APIComparison'),
+  Billing: () => import('@/pages/Billing'),
+  Auth: () => import('@/pages/Auth'),
+  ResetPassword: () => import('@/pages/ResetPassword'),
+  NotFound: () => import('@/pages/NotFound'),
+  NewsSettings: () => import('@/pages/NewsSettings'),
+};
+
 // Preload important chunks
 export const preloadChunks = {
-  dashboard: () => import('@/pages/Dashboard'),
-  portfolio: () => import('@/pages/Portfolio'),
+  dashboard: importFunctions.Dashboard,
+  portfolio: importFunctions.Portfolio,
   charts: () => import('@/components/CandlestickChart'),
   
   // Preload on user interaction
   preloadOnHover: (componentName: keyof typeof LazyRoutes) => {
     return () => {
-      // Simple preload by calling the import function
-      LazyRoutes[componentName]();
+      // Preload by calling the import function directly
+      const importFn = importFunctions[componentName];
+      if (importFn) {
+        importFn().catch(console.error);
+      }
     };
   },
   
@@ -84,7 +112,10 @@ export const preloadChunks = {
     
     const nextRoutes = routePredictions[currentRoute] || [];
     nextRoutes.forEach(componentName => {
-      LazyRoutes[componentName]();
+      const importFn = importFunctions[componentName];
+      if (importFn) {
+        importFn().catch(console.error);
+      }
     });
   }
 };
