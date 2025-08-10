@@ -19,6 +19,10 @@ import { useServiceWorker } from "@/hooks/useServiceWorker";
 import { DashboardSkeleton } from "@/components/loading/LoadingSkeletons";
 import SplashScreen from "@/components/mobile/SplashScreen";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
+import OnboardingFlow from "@/components/onboarding/OnboardingFlow";
+import { useOnboarding } from "@/hooks/useOnboarding";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import KeyboardShortcutsHelp from "@/components/ui/keyboard-shortcuts-help";
 
 // Create optimized query client with mobile-aware configuration
 const getQueryClient = () => {
@@ -36,6 +40,8 @@ const AppRoutes = () => {
   useAndroidBackButton();
   const [showSplash, setShowSplash] = useState(true);
   const isMobile = useIsMobile();
+  const { showOnboarding, completeOnboarding, skipOnboarding } = useOnboarding();
+  const { showHelp, closeHelp, getShortcutsByCategory } = useKeyboardShortcuts();
 
   useEffect(() => {
     // Show splash screen only on mobile and only on first load
@@ -58,6 +64,19 @@ const AppRoutes = () => {
   
   return (
     <>
+      {showOnboarding && (
+        <OnboardingFlow
+          onComplete={completeOnboarding}
+          onSkip={skipOnboarding}
+        />
+      )}
+      
+      <KeyboardShortcutsHelp
+        isOpen={showHelp}
+        onClose={closeHelp}
+        shortcuts={getShortcutsByCategory()}
+      />
+      
       <SplashScreen 
         isVisible={showSplash} 
         onComplete={handleSplashComplete} 

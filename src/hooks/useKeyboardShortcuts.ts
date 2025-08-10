@@ -1,5 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
+// Keep existing simple hook for backwards compatibility
 interface UseKeyboardShortcutOptions {
   preventDefault?: boolean;
   stopPropagation?: boolean;
@@ -57,4 +60,233 @@ export const useArrowNavigation = (
   useKeyboardShortcut('ArrowDown', onDown, { enabled });
   if (onLeft) useKeyboardShortcut('ArrowLeft', onLeft, { enabled });
   if (onRight) useKeyboardShortcut('ArrowRight', onRight, { enabled });
+};
+
+// Advanced keyboard shortcuts system
+interface ShortcutAction {
+  description: string;
+  action: () => void;
+  category?: string;
+}
+
+interface KeyboardShortcuts {
+  [key: string]: ShortcutAction;
+}
+
+export const useKeyboardShortcuts = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { toast } = useToast();
+  const [showHelp, setShowHelp] = useState(false);
+
+  const shortcuts: KeyboardShortcuts = {
+    // Navigation shortcuts
+    'g d': {
+      description: 'Go to Dashboard',
+      action: () => navigate('/dashboard'),
+      category: 'Navigation'
+    },
+    'g p': {
+      description: 'Go to Portfolio',
+      action: () => navigate('/portfolio'),
+      category: 'Navigation'
+    },
+    'g s': {
+      description: 'Go to Market Screener',
+      action: () => navigate('/screener'),
+      category: 'Navigation'
+    },
+    'g w': {
+      description: 'Go to Watchlists',
+      action: () => navigate('/watchlists'),
+      category: 'Navigation'
+    },
+    'g f': {
+      description: 'Go to Favorites',
+      action: () => navigate('/favorites'),
+      category: 'Navigation'
+    },
+    'g c': {
+      description: 'Go to Calendar',
+      action: () => navigate('/calendar'),
+      category: 'Navigation'
+    },
+    'g i': {
+      description: 'Go to Insights',
+      action: () => navigate('/insights'),
+      category: 'Navigation'
+    },
+    'g l': {
+      description: 'Go to Learning Hub',
+      action: () => navigate('/learning'),
+      category: 'Navigation'
+    },
+    
+    // Action shortcuts
+    '/': {
+      description: 'Focus search',
+      action: () => {
+        const searchInput = document.querySelector('input[type="search"], input[placeholder*="search" i]') as HTMLInputElement;
+        if (searchInput) {
+          searchInput.focus();
+          searchInput.select();
+        } else {
+          toast({
+            title: 'Search not available',
+            description: 'No search input found on this page',
+          });
+        }
+      },
+      category: 'Actions'
+    },
+    
+    'r': {
+      description: 'Refresh data',
+      action: () => {
+        window.location.reload();
+      },
+      category: 'Actions'
+    },
+    
+    'Escape': {
+      description: 'Close modals/dialogs',
+      action: () => {
+        const activeElement = document.activeElement as HTMLElement;
+        if (activeElement && activeElement.blur) {
+          activeElement.blur();
+        }
+        
+        // Close any open dialogs or modals
+        const closeButtons = document.querySelectorAll('[data-dialog-close], [aria-label="Close"]');
+        if (closeButtons.length > 0) {
+          (closeButtons[0] as HTMLElement).click();
+        }
+      },
+      category: 'Actions'
+    },
+    
+    // Theme shortcuts
+    't': {
+      description: 'Toggle theme',
+      action: () => {
+        const themeToggle = document.querySelector('[data-theme-toggle]') as HTMLElement;
+        if (themeToggle) {
+          themeToggle.click();
+        } else {
+          // Fallback theme toggle
+          const currentTheme = localStorage.getItem('theme') || 'system';
+          const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+          localStorage.setItem('theme', newTheme);
+          document.documentElement.classList.toggle('dark', newTheme === 'dark');
+          toast({
+            title: 'Theme changed',
+            description: `Switched to ${newTheme} mode`,
+          });
+        }
+      },
+      category: 'Appearance'
+    },
+    
+    // Help shortcuts
+    '?': {
+      description: 'Show keyboard shortcuts',
+      action: () => setShowHelp(true),
+      category: 'Help'
+    },
+    
+    'h': {
+      description: 'Show help',
+      action: () => setShowHelp(true),
+      category: 'Help'
+    }
+  };
+
+  const [pressedKeys, setPressedKeys] = useState<string[]>([]);
+  const [keySequence, setKeySequence] = useState<string>('');
+
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    // Don't trigger shortcuts when typing in inputs
+    const target = event.target as HTMLElement;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.contentEditable === 'true') {
+      // Allow Escape to work everywhere
+      if (event.key === 'Escape') {
+        shortcuts['Escape'].action();
+      }
+      return;
+    }
+
+    // Handle modifier keys differently
+    if (event.ctrlKey || event.metaKey || event.altKey) {
+      return;
+    }
+
+    event.preventDefault();
+    
+    const key = event.key.toLowerCase();
+    
+    // Handle single key shortcuts
+    if (shortcuts[key]) {
+      shortcuts[key].action();
+      return;
+    }
+    
+    // Handle key sequences (like "g d" for go to dashboard)
+    if (key === 'g') {
+      setKeySequence('g');
+      setPressedKeys(['g']);
+      
+      // Clear sequence after 2 seconds
+      setTimeout(() => {
+        setKeySequence('');
+        setPressedKeys([]);
+      }, 2000);
+      
+      return;
+    }
+    
+    // Check for two-key sequences
+    if (keySequence === 'g') {
+      const sequence = `g ${key}`;
+      if (shortcuts[sequence]) {
+        shortcuts[sequence].action();
+        setKeySequence('');
+        setPressedKeys([]);
+        return;
+      }
+    }
+    
+    // Reset sequence if no match
+    setKeySequence('');
+    setPressedKeys([]);
+  }, [keySequence, shortcuts, navigate, toast]);
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
+
+  const closeHelp = () => setShowHelp(false);
+
+  const getShortcutsByCategory = () => {
+    const categorized: { [category: string]: { [key: string]: ShortcutAction } } = {};
+    
+    Object.entries(shortcuts).forEach(([key, action]) => {
+      const category = action.category || 'Other';
+      if (!categorized[category]) {
+        categorized[category] = {};
+      }
+      categorized[category][key] = action;
+    });
+    
+    return categorized;
+  };
+
+  return {
+    shortcuts,
+    showHelp,
+    closeHelp,
+    getShortcutsByCategory,
+    currentKeySequence: keySequence,
+    pressedKeys
+  };
 };
