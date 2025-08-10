@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
 // Keep existing simple hook for backwards compatibility
@@ -29,8 +29,6 @@ export const useKeyboardShortcut = (
     const handleKeyPress = (event: KeyboardEvent) => {
       const keys = Array.isArray(key) ? key : [key];
       const pressedKey = event.key.toLowerCase();
-      
-      const modifierPressed = event.ctrlKey || event.metaKey || event.altKey || event.shiftKey;
       
       if (keys.some(k => k.toLowerCase() === pressedKey)) {
         if (preventDefault) event.preventDefault();
@@ -73,11 +71,12 @@ interface KeyboardShortcuts {
   [key: string]: ShortcutAction;
 }
 
-export const useKeyboardShortcuts = () => {
+export function useKeyboardShortcuts() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
   const [showHelp, setShowHelp] = useState(false);
+  const [pressedKeys, setPressedKeys] = useState<string[]>([]);
+  const [keySequence, setKeySequence] = useState<string>('');
 
   const shortcuts: KeyboardShortcuts = {
     // Navigation shortcuts
@@ -201,9 +200,6 @@ export const useKeyboardShortcuts = () => {
     }
   };
 
-  const [pressedKeys, setPressedKeys] = useState<string[]>([]);
-  const [keySequence, setKeySequence] = useState<string>('');
-
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     // Don't trigger shortcuts when typing in inputs
     const target = event.target as HTMLElement;
@@ -289,4 +285,4 @@ export const useKeyboardShortcuts = () => {
     currentKeySequence: keySequence,
     pressedKeys
   };
-};
+}
