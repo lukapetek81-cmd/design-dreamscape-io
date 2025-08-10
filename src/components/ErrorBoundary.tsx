@@ -2,6 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { monitoringService } from '@/services/monitoringService';
 
 interface Props {
   children: ReactNode;
@@ -27,6 +28,18 @@ export class ErrorBoundary extends Component<Props, State> {
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     this.setState({ error, errorInfo });
+    
+    // Report crash to monitoring service
+    monitoringService.reportCrash(
+      error,
+      errorInfo.componentStack,
+      'ErrorBoundary',
+      {
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+        timestamp: Date.now()
+      }
+    );
   }
 
   private handleReload = () => {

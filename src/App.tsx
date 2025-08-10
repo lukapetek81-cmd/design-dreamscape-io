@@ -23,6 +23,8 @@ import OnboardingFlow from "@/components/onboarding/OnboardingFlow";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import KeyboardShortcutsHelp from "@/components/ui/keyboard-shortcuts-help";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { monitoringService } from "@/services/monitoringService";
 
 // Create optimized query client with mobile-aware configuration
 const getQueryClient = () => {
@@ -42,6 +44,20 @@ const AppRoutes = () => {
   const isMobile = useIsMobile();
   const { showOnboarding, completeOnboarding, skipOnboarding } = useOnboarding();
   const { showHelp, closeHelp, getShortcutsByCategory } = useKeyboardShortcuts();
+  const analytics = useAnalytics();
+
+  // Initialize monitoring service with user data when available
+  useEffect(() => {
+    // You can set user ID here when authentication is available
+    // monitoringService.setUserId(user?.id);
+    
+    // Track app start
+    analytics.trackCustomEvent('app_start', {
+      timestamp: Date.now(),
+      userAgent: navigator.userAgent,
+      platform: navigator.platform
+    });
+  }, [analytics]);
 
   useEffect(() => {
     // Show splash screen only on mobile and only on first load
