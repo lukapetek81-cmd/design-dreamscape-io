@@ -147,25 +147,25 @@ const App = () => {
       <QueryClientProvider client={queryClient}>
         <LoadingProvider>
           <SecurityProvider>
-            <AccessibilityProvider>
-              <AuthProvider>
-                <RealtimeDataProvider>
-                  <AppToastProvider position="top">
-                    <TooltipProvider>
-                      <Toaster />
-                      <Sonner />
-                      {!isOnline && <OfflineIndicator />}
-                      <BrowserRouter>
+            <AuthProvider>
+              <RealtimeDataProvider>
+                <AppToastProvider position="top">
+                  <TooltipProvider>
+                    <Toaster />
+                    <Sonner />
+                    {!isOnline && <OfflineIndicator />}
+                    <BrowserRouter>
+                      <AccessibilityProvider>
                         <ErrorBoundary fallback={<div role="alert">Something went wrong with routing</div>}>
                           <AppRoutes />
                           <PWAInstallPrompt />
                         </ErrorBoundary>
-                      </BrowserRouter>
-                    </TooltipProvider>
-                  </AppToastProvider>
-                </RealtimeDataProvider>
-              </AuthProvider>
-            </AccessibilityProvider>
+                      </AccessibilityProvider>
+                    </BrowserRouter>
+                  </TooltipProvider>
+                </AppToastProvider>
+              </RealtimeDataProvider>
+            </AuthProvider>
           </SecurityProvider>
         </LoadingProvider>
       </QueryClientProvider>
