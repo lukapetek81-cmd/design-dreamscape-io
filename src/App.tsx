@@ -25,6 +25,8 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import KeyboardShortcutsHelp from "@/components/ui/keyboard-shortcuts-help";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { monitoringService } from "@/services/monitoringService";
+import { AccessibilityProvider } from "@/components/AccessibilityProvider";
+import SEOHead from "@/components/SEOHead";
 
 // Create optimized query client with mobile-aware configuration
 const getQueryClient = () => {
@@ -80,6 +82,8 @@ const AppRoutes = () => {
   
   return (
     <>
+      <SEOHead />
+      
       {showOnboarding && (
         <OnboardingFlow
           onComplete={completeOnboarding}
@@ -98,32 +102,34 @@ const AppRoutes = () => {
         onComplete={handleSplashComplete} 
       />
       
-      <Suspense fallback={<DashboardSkeleton />}>
-        <Routes>
-          <Route path="/" element={<LazyRoutes.Dashboard />} />
-          <Route path="/dashboard" element={<LazyRoutes.Dashboard />} />
-          <Route path="/auth" element={<LazyRoutes.Auth />} />
-          <Route path="/reset-password" element={<LazyRoutes.ResetPassword />} />
-          <Route path="/portfolio" element={<LazyRoutes.Portfolio />} />
-          <Route path="/news-settings" element={<LazyRoutes.NewsSettings />} />
-          <Route path="/billing" element={<LazyRoutes.Billing />} />
-          <Route path="/correlation" element={<LazyRoutes.MarketCorrelation />} />
-          <Route path="/watchlists" element={<LazyRoutes.Watchlists />} />
-          <Route path="/screener" element={<LazyRoutes.MarketScreener />} />
-          <Route path="/calendar" element={<LazyRoutes.EconomicCalendar />} />
-          <Route path="/risk-calculator" element={<LazyRoutes.RiskCalculator />} />
-          <Route path="/community" element={<LazyRoutes.TradingCommunity />} />
-          <Route path="/insights" element={<LazyRoutes.ExpertInsights />} />
-          <Route path="/learning" element={<LazyRoutes.LearningHub />} />
-          <Route path="/sentiment" element={<LazyRoutes.MarketSentiment />} />
-          <Route path="/recent-activity" element={<LazyRoutes.RecentActivity />} />
-          <Route path="/favorites" element={<LazyRoutes.Favorites />} />
-          <Route path="/price-comparison" element={<LazyRoutes.PriceComparison />} />
-          <Route path="/api-comparison" element={<LazyRoutes.APIComparison />} />
-          <Route path="/market-status" element={<LazyRoutes.MarketStatus />} />
-          <Route path="*" element={<LazyRoutes.NotFound />} />
-        </Routes>
-      </Suspense>
+      <main id="main-content" role="main" tabIndex={-1}>
+        <Suspense fallback={<DashboardSkeleton />}>
+          <Routes>
+            <Route path="/" element={<LazyRoutes.Dashboard />} />
+            <Route path="/dashboard" element={<LazyRoutes.Dashboard />} />
+            <Route path="/auth" element={<LazyRoutes.Auth />} />
+            <Route path="/reset-password" element={<LazyRoutes.ResetPassword />} />
+            <Route path="/portfolio" element={<LazyRoutes.Portfolio />} />
+            <Route path="/news-settings" element={<LazyRoutes.NewsSettings />} />
+            <Route path="/billing" element={<LazyRoutes.Billing />} />
+            <Route path="/correlation" element={<LazyRoutes.MarketCorrelation />} />
+            <Route path="/watchlists" element={<LazyRoutes.Watchlists />} />
+            <Route path="/screener" element={<LazyRoutes.MarketScreener />} />
+            <Route path="/calendar" element={<LazyRoutes.EconomicCalendar />} />
+            <Route path="/risk-calculator" element={<LazyRoutes.RiskCalculator />} />
+            <Route path="/community" element={<LazyRoutes.TradingCommunity />} />
+            <Route path="/insights" element={<LazyRoutes.ExpertInsights />} />
+            <Route path="/learning" element={<LazyRoutes.LearningHub />} />
+            <Route path="/sentiment" element={<LazyRoutes.MarketSentiment />} />
+            <Route path="/recent-activity" element={<LazyRoutes.RecentActivity />} />
+            <Route path="/favorites" element={<LazyRoutes.Favorites />} />
+            <Route path="/price-comparison" element={<LazyRoutes.PriceComparison />} />
+            <Route path="/api-comparison" element={<LazyRoutes.APIComparison />} />
+            <Route path="/market-status" element={<LazyRoutes.MarketStatus />} />
+            <Route path="*" element={<LazyRoutes.NotFound />} />
+          </Routes>
+        </Suspense>
+      </main>
     </>
   );
 };
@@ -141,23 +147,25 @@ const App = () => {
       <QueryClientProvider client={queryClient}>
         <LoadingProvider>
           <SecurityProvider>
-            <AuthProvider>
-              <RealtimeDataProvider>
-                <AppToastProvider position="top">
-                  <TooltipProvider>
-                    <Toaster />
-                    <Sonner />
-                    {!isOnline && <OfflineIndicator />}
-                    <BrowserRouter>
-                      <ErrorBoundary fallback={<div>Something went wrong with routing</div>}>
-                        <AppRoutes />
-                        <PWAInstallPrompt />
-                      </ErrorBoundary>
-                    </BrowserRouter>
-                  </TooltipProvider>
-                </AppToastProvider>
-              </RealtimeDataProvider>
-            </AuthProvider>
+            <AccessibilityProvider>
+              <AuthProvider>
+                <RealtimeDataProvider>
+                  <AppToastProvider position="top">
+                    <TooltipProvider>
+                      <Toaster />
+                      <Sonner />
+                      {!isOnline && <OfflineIndicator />}
+                      <BrowserRouter>
+                        <ErrorBoundary fallback={<div role="alert">Something went wrong with routing</div>}>
+                          <AppRoutes />
+                          <PWAInstallPrompt />
+                        </ErrorBoundary>
+                      </BrowserRouter>
+                    </TooltipProvider>
+                  </AppToastProvider>
+                </RealtimeDataProvider>
+              </AuthProvider>
+            </AccessibilityProvider>
           </SecurityProvider>
         </LoadingProvider>
       </QueryClientProvider>
