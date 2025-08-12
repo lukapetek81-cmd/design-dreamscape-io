@@ -1,4 +1,4 @@
-import { performance } from 'perf_hooks'
+import React from 'react'
 
 export interface PerformanceBenchmark {
   name: string
@@ -254,20 +254,21 @@ export const withPerformanceMonitoring = <P extends object>(
   Component: React.ComponentType<P>,
   name: string
 ) => {
-  return React.forwardRef<any, P>((props, ref) => {
+  const PerformanceWrapper = (props: P) => {
     const startTime = performance.now()
     
     React.useEffect(() => {
       const endTime = performance.now()
-      performanceMonitor.addBenchmark({
-        name: `component-${name}`,
-        duration: endTime - startTime,
-        timestamp: startTime,
+      performanceMonitor.benchmark(`component-${name}`, () => {
+        return endTime - startTime
       })
     })
 
-    return React.createElement(Component, { ...props, ref })
-  })
+    return React.createElement(Component, props)
+  }
+
+  PerformanceWrapper.displayName = `withPerformanceMonitoring(${name})`
+  return PerformanceWrapper
 }
 
 // Performance testing for React hooks
@@ -277,10 +278,8 @@ export const usePerformanceTest = (name: string, dependencies: any[] = []) => {
     
     return () => {
       const end = performance.now()
-      performanceMonitor.addBenchmark({
-        name: `hook-${name}`,
-        duration: end - start,
-        timestamp: start,
+      performanceMonitor.benchmark(`hook-${name}`, () => {
+        return end - start
       })
     }
   }, dependencies)

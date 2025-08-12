@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { performanceMonitor } from '@/test/performance'
 
 describe('Performance Benchmarks', () => {
@@ -50,11 +50,13 @@ describe('Performance Benchmarks', () => {
   it('should calculate percentiles correctly', () => {
     // Add benchmarks with known durations
     const durations = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-    durations.forEach((duration, index) => {
-      performanceMonitor['addBenchmark']({
-        name: 'percentile-test',
-        duration,
-        timestamp: index,
+    durations.forEach((duration) => {
+      performanceMonitor.benchmark('percentile-test', () => {
+        // Simulate work that takes the specified duration
+        const start = performance.now()
+        while (performance.now() - start < duration) {
+          // Busy wait
+        }
       })
     })
 

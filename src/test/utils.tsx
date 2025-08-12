@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react'
+import { render } from '@testing-library/react'
+import { screen } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
 import { vi } from 'vitest'
 import React, { ReactElement } from 'react'
@@ -108,7 +109,7 @@ export const measurePerformance = async (fn: () => Promise<void> | void) => {
 }
 
 // Accessibility testing utilities
-export const checkAccessibility = async (element: HTMLElement) => {
+export const checkAccessibility = (element: HTMLElement): string[] => {
   const issues: string[] = []
 
   // Check for missing alt text on images
@@ -166,4 +167,4 @@ export const customMatchers = {
 
 // Re-export testing library utilities
 export * from '@testing-library/react'
-export { userEvent, vi }
+export { userEvent, vi, screen }
