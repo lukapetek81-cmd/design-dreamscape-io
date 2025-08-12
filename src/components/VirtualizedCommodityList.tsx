@@ -117,7 +117,7 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-8">
       <StaggeredAnimation staggerDelay={0.05} className="grid gap-3 sm:gap-4 lg:gap-6">
         {visibleCommodities.map((commodity, index) => {
           // Get futures contracts for this specific commodity from the bulk query

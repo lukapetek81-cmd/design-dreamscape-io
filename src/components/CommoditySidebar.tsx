@@ -50,7 +50,7 @@ const CommoditySidebar = React.memo(({ activeGroup, onGroupSelect, commodityCoun
         </div>
       </SidebarHeader>
       
-      <SidebarContent className={`${isMobile ? 'p-4 bg-background' : 'p-2'} overflow-y-auto`}>
+      <SidebarContent className={`${isMobile ? 'p-4 bg-background' : 'p-2'} overflow-y-auto custom-scrollbar h-full pb-4`}>
         {/* Commodity Groups Section - Always at top */}
         <CommodityGroupsList 
           activeGroup={activeGroup}

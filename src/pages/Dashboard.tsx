@@ -383,7 +383,7 @@ const DashboardContent = ({
 
           {/* Enhanced Responsive Main Content */}
           <PullToRefresh onRefresh={handleRefresh} enabled={isMobile}>
-            <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 xl:p-10 overflow-x-hidden">
+            <main className="flex-1 p-2 sm:p-3 md:p-4 lg:p-6 xl:p-8 overflow-x-hidden pb-20 sm:pb-8">
             <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 lg:space-y-8">
               {/* View Toggle Header */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 rounded-2xl bg-gradient-to-r from-card/50 to-muted/30 border border-border/50 shadow-soft hover:shadow-medium transition-shadow duration-300 space-y-3 sm:space-y-0">

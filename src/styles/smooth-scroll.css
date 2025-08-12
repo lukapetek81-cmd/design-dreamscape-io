@@ -1,0 +1,91 @@
+/* Smooth scrolling enhancements */
+* {
+  scroll-behavior: smooth;
+}
+
+/* Enhanced scroll handling */
+.custom-scrollbar {
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+}
+
+/* Improve momentum scrolling on mobile */
+@media (max-width: 768px) {
+  .custom-scrollbar {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    /* Improved scroll physics */
+    scroll-snap-type: none;
+    overscroll-behavior-y: contain;
+  }
+  
+  /* Better scroll deceleration */
+  .scroll-container {
+    scroll-snap-type: y proximity;
+    scroll-padding: 1rem;
+  }
+  
+  /* Prevent jerky direction changes */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+    transition: scroll-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* Enhanced scrollbar appearance */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background-clip: content-box;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+  background-clip: content-box;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:active {
+  background: hsl(var(--muted-foreground) / 0.7);
+  background-clip: content-box;
+}
+
+/* Mobile-specific scroll improvements */
+@media (max-width: 640px) {
+  /* Ensure scrollable areas extend full height */
+  .sidebar-content {
+    height: calc(100vh - 160px);
+    overflow-y: auto;
+    scroll-padding-bottom: 2rem;
+  }
+  
+  /* Better touch scrolling */
+  .touch-scroll {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    scroll-snap-type: y proximity;
+  }
+}
+
+/* Remove jerky scroll transitions */
+@media (prefers-reduced-motion: no-preference) {
+  .smooth-scroll-container {
+    scroll-behavior: smooth;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .momentum-scroll {
+    scroll-behavior: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}

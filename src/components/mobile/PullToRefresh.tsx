@@ -75,22 +75,22 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative overflow-y-auto custom-scrollbar ${className}`}
+      className={`relative overflow-y-auto custom-scrollbar smooth-scroll-container ${className}`}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       style={{
-        transform: isPulling ? `translateY(${Math.min(pullDistance * 0.5, 40)}px)` : 'translateY(0)',
-        transition: isPulling ? 'none' : 'transform 0.3s ease-out',
+        transform: isPulling ? `translateY(${Math.min(pullDistance * 0.4, 30)}px)` : 'translateY(0)',
+        transition: isPulling ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
     >
       {/* Pull to refresh indicator */}
       {showRefreshIndicator && (
         <div
-          className="absolute top-0 left-0 right-0 flex items-center justify-center py-4 bg-background/90 backdrop-blur-sm border-b border-border/50 z-10"
+          className="absolute top-16 left-0 right-0 flex items-center justify-center py-3 bg-background/95 backdrop-blur-md border-b border-border/50 z-50 shadow-lg rounded-b-lg mx-2"
           style={{
-            transform: `translateY(${isPulling ? -60 + (pullDistance * 0.8) : 0}px)`,
-            transition: isPulling ? 'none' : 'transform 0.3s ease-out',
+            transform: `translateY(${isPulling ? -50 + (pullDistance * 0.6) : 0}px)`,
+            transition: isPulling ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
           <div className="flex items-center gap-2 text-muted-foreground">
