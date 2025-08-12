@@ -50,21 +50,25 @@ const CommoditySidebar = React.memo(({ activeGroup, onGroupSelect, commodityCoun
         </div>
       </SidebarHeader>
       
-      <SidebarContent className={`${isMobile ? 'p-4 bg-background' : 'p-2'}`}>
+      <SidebarContent className={`${isMobile ? 'p-4 bg-background' : 'p-2'} overflow-y-auto`}>
+        {/* Commodity Groups Section - Always at top */}
         <CommodityGroupsList 
           activeGroup={activeGroup}
           onGroupSelect={onGroupSelect}
           commodityCounts={commodityCounts}
         />
         
+        {/* Market Tools Section - Always in middle */}
         <MarketToolsList />
         
+        {/* Upgrade Box Section - Always before footer */}
         <div className="mt-8">
           <UpgradeBox />
         </div>
       </SidebarContent>
 
-      <SidebarFooter className={`${isMobile ? 'p-4 bg-background' : 'p-2'}`}>
+      {/* Theme Switcher - Always at bottom */}
+      <SidebarFooter className={`${isMobile ? 'p-4 bg-background' : 'p-2'} border-t`}>
         <ThemeSwitcher />
       </SidebarFooter>
     </Sidebar>
