@@ -22,10 +22,18 @@ interface CommoditySidebarProps {
 }
 
 const CommoditySidebar = React.memo(({ activeGroup, onGroupSelect, commodityCounts }: CommoditySidebarProps) => {
-  const { state } = useSidebar();
+  const { state, openMobile } = useSidebar();
   const { profile } = useAuth();
   const isMobile = useIsMobile();
   const collapsed = state === "collapsed";
+  const contentRef = React.useRef<HTMLDivElement>(null);
+
+  // Reset scroll position when sidebar opens
+  React.useEffect(() => {
+    if (openMobile && contentRef.current) {
+      contentRef.current.scrollTop = 0;
+    }
+  }, [openMobile]);
 
   // Memoize premium status check
   const isPremiumUser = React.useMemo(() => 
@@ -50,7 +58,14 @@ const CommoditySidebar = React.memo(({ activeGroup, onGroupSelect, commodityCoun
         </div>
       </SidebarHeader>
       
-      <SidebarContent className={`${isMobile ? 'p-4 bg-background' : 'p-2'} overflow-y-auto custom-scrollbar h-full pb-4`}>
+      <SidebarContent 
+        ref={contentRef}
+        className={`${isMobile ? 'p-4 bg-background' : 'p-2'} overflow-y-auto custom-scrollbar flex-1 min-h-0`}
+        style={{ 
+          maxHeight: isMobile ? 'calc(100vh - 160px)' : 'calc(100vh - 120px)',
+          scrollBehavior: 'smooth'
+        }}
+      >
         {/* Commodity Groups Section - Always at top */}
         <CommodityGroupsList 
           activeGroup={activeGroup}
@@ -62,7 +77,7 @@ const CommoditySidebar = React.memo(({ activeGroup, onGroupSelect, commodityCoun
         <MarketToolsList />
         
         {/* Upgrade Box Section - Always before footer */}
-        <div className="mt-8">
+        <div className="mt-8 mb-4">
           <UpgradeBox />
         </div>
       </SidebarContent>
