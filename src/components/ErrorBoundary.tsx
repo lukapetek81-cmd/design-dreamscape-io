@@ -2,7 +2,6 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { monitoringService } from '@/services/monitoringService';
 
 interface Props {
   children: ReactNode;
@@ -29,17 +28,15 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     this.setState({ error, errorInfo });
     
-    // Report crash to monitoring service
-    monitoringService.reportCrash(
-      error,
-      errorInfo.componentStack,
-      'ErrorBoundary',
-      {
-        url: window.location.href,
-        userAgent: navigator.userAgent,
-        timestamp: Date.now()
-      }
-    );
+    // Log error to console for debugging
+    console.error('Error details:', {
+      error: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack,
+      url: window.location.href,
+      userAgent: navigator.userAgent,
+      timestamp: Date.now()
+    });
   }
 
   private handleReload = () => {
@@ -47,7 +44,15 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   private handleGoHome = () => {
-    window.location.href = '/';
+    // Use React Router navigation instead of window.location
+    const event = new CustomEvent('navigate-home');
+    window.dispatchEvent(event);
+    // Fallback to window.location if custom event doesn't work
+    setTimeout(() => {
+      if (window.location.pathname !== '/') {
+        window.location.href = '/';
+      }
+    }, 100);
   };
 
   private handleRetry = () => {

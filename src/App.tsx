@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { RealtimeDataProvider } from "@/contexts/RealtimeDataContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -47,7 +47,20 @@ const AppRoutes = () => {
   const { showOnboarding, completeOnboarding, skipOnboarding } = useOnboarding();
   const { showHelp, closeHelp, getShortcutsByCategory } = useKeyboardShortcuts();
   const analytics = useAnalytics();
-  const { isOnline } = useServiceWorker(); // Move the useServiceWorker hook here
+  const { isOnline } = useServiceWorker();
+  const navigate = useNavigate();
+
+  // Listen for custom navigation events from ErrorBoundary
+  useEffect(() => {
+    const handleNavigateHome = () => {
+      navigate('/', { replace: true });
+    };
+
+    window.addEventListener('navigate-home', handleNavigateHome);
+    return () => {
+      window.removeEventListener('navigate-home', handleNavigateHome);
+    };
+  }, [navigate]);
 
   // Initialize monitoring service with user data when available
   useEffect(() => {
@@ -156,7 +169,7 @@ const App = () => {
                     <Sonner />
                     <BrowserRouter>
                       <AccessibilityProvider>
-                        <ErrorBoundary fallback={<div role="alert">Something went wrong with routing</div>}>
+                        <ErrorBoundary fallback={<div role="alert" className="min-h-screen flex items-center justify-center p-4"><div className="text-center"><h2 className="text-xl font-semibold mb-2">Navigation Error</h2><p className="text-muted-foreground">Something went wrong with page navigation. Please try refreshing the page.</p></div></div>}>
                           <AppRoutes />
                           <PWAInstallPrompt />
                         </ErrorBoundary>
