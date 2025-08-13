@@ -47,6 +47,7 @@ const AppRoutes = () => {
   const { showOnboarding, completeOnboarding, skipOnboarding } = useOnboarding();
   const { showHelp, closeHelp, getShortcutsByCategory } = useKeyboardShortcuts();
   const analytics = useAnalytics();
+  const { isOnline } = useServiceWorker(); // Move the useServiceWorker hook here
 
   // Initialize monitoring service with user data when available
   useEffect(() => {
@@ -102,6 +103,8 @@ const AppRoutes = () => {
         onComplete={handleSplashComplete} 
       />
       
+      {!isOnline && <OfflineIndicator />}
+      
       <main id="main-content" role="main" tabIndex={-1}>
         <Suspense fallback={<DashboardSkeleton />}>
           <Routes>
@@ -135,8 +138,6 @@ const AppRoutes = () => {
 };
 
 const App = () => {
-  const { isOnline } = useServiceWorker();
-
   useEffect(() => {
     // Add resource hints for better performance
     addResourceHints();
@@ -153,7 +154,6 @@ const App = () => {
                   <TooltipProvider>
                     <Toaster />
                     <Sonner />
-                    {!isOnline && <OfflineIndicator />}
                     <BrowserRouter>
                       <AccessibilityProvider>
                         <ErrorBoundary fallback={<div role="alert">Something went wrong with routing</div>}>
