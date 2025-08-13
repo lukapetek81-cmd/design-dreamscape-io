@@ -128,7 +128,7 @@ const DashboardContent = ({
         setOpenMobile(false);
       }
     },
-    threshold: 75,
+    threshold: 50,
     enabled: isMobile,
   });
 
@@ -267,10 +267,19 @@ const DashboardContent = ({
       enableAnimations={!isLandscape}
     >
       <SwipeNavigation 
-        onSwipeRight={() => swipeHandlers.onTouchStart && handleGroupSwipe('right')}
-        onSwipeLeft={() => swipeHandlers.onTouchStart && handleGroupSwipe('left')}
+        onSwipeRight={() => {
+          if (isMobile && !isLandscape) {
+            setOpenMobile(true);
+          }
+        }}
+        onSwipeLeft={() => {
+          if (isMobile) {
+            setOpenMobile(false);
+          }
+        }}
         className="flex w-full"
-        {...swipeHandlers}
+        threshold={50}
+        enableHaptics={true}
       >
       <CommoditySidebar 
         activeGroup={activeGroup} 
@@ -292,10 +301,12 @@ const DashboardContent = ({
             <div className="container flex h-16 sm:h-20 items-center justify-between px-3 sm:px-4 md:px-6">
               {/* Mobile Layout - Better spacing to prevent overlap */}
               <div className="flex sm:hidden w-full items-center justify-between gap-2">
-                {/* Mobile Sidebar Trigger */}
-                <SidebarTrigger className="p-2 w-10 h-10 rounded-lg hover:bg-muted transition-colors">
-                  <Menu className="w-5 h-5" />
-                </SidebarTrigger>
+                {/* Mobile Sidebar Trigger - Hidden on mobile, use swipe instead */}
+                <div className="opacity-30 pointer-events-none">
+                  <div className="p-2 w-10 h-10 rounded-lg">
+                    <Menu className="w-5 h-5" />
+                  </div>
+                </div>
                 <div className="text-left space-y-0.5 min-w-0 flex-1">
                   <p className="text-2xs text-muted-foreground font-medium tracking-wide truncate">
                     {delayStatus.delayText} data

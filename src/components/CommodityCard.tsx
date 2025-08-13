@@ -130,7 +130,7 @@ const CommodityCard = React.memo<CommodityCardProps>(({
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <div className="w-full">
-        <Card className="group relative overflow-hidden card-hover-effect border-0 bg-gradient-to-r from-card via-card to-card/80 backdrop-blur-sm shadow-soft transition-all duration-200 rounded-xl">
+        <Card className="group relative overflow-hidden card-hover-effect border-0 bg-gradient-to-r from-card via-card to-card/80 backdrop-blur-sm shadow-soft transition-all duration-200 rounded-2xl">
           {/* Enhanced Background Pattern */}
           <div className={`absolute inset-0 bg-gradient-to-r from-primary/3 via-accent/2 to-transparent transition-all duration-500 ${
             isOpen ? 'opacity-100' : 'opacity-0'
