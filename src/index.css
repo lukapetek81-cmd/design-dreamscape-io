@@ -378,3 +378,29 @@
     image-rendering: crisp-edges;
   }
 }
+
+/* Enhanced swipe gesture styles for fluid mobile interactions */
+.swipe-feedback {
+  transition: transform 75ms cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 75ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gesture-overlay {
+  transition: opacity 75ms ease-out, background 75ms ease-out;
+}
+
+/* Smooth sidebar animations */
+.sidebar-transition {
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Improved touch responsiveness */
+@media (hover: none) and (pointer: coarse) {
+  .touch-optimized {
+    transition: transform 150ms ease-out;
+  }
+  
+  .touch-optimized:active {
+    transform: scale(0.98);
+  }
+}

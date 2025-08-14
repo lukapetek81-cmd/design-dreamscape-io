@@ -267,6 +267,7 @@ const DashboardContent = ({
       enableAnimations={!isLandscape}
     >
       <SwipeNavigation 
+        className="min-h-screen flex w-full bg-gradient-to-br from-background via-background to-muted/20"
         onSwipeRight={() => {
           if (isMobile && !isLandscape) {
             setOpenMobile(true);
@@ -277,9 +278,8 @@ const DashboardContent = ({
             setOpenMobile(false);
           }
         }}
-        className="flex w-full"
-        threshold={50}
-        enableHaptics={true}
+        threshold={30}
+        showVisualFeedback={true}
       >
       <CommoditySidebar 
         activeGroup={activeGroup} 
