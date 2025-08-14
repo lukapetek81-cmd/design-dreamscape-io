@@ -523,15 +523,6 @@ const DashboardContent = ({
           </main>
           </PullToRefresh>
           
-          {/* Enhanced Floating Menu Button for Mobile */}
-          <HapticButton
-            onClick={() => setOpenMobile(true)}
-            className="hidden"
-            hapticType="medium"
-            variant="primary"
-          >
-            <Menu className="w-6 h-6" />
-          </HapticButton>
         </div>
       </SwipeNavigation>
     </ResponsiveContainer>
