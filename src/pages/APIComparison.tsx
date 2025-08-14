@@ -31,9 +31,6 @@ const APIComparison = () => {
           commodityCounts={commodityCounts}
         />
         
-        <SidebarTrigger className="fixed left-4 bottom-20 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl active:scale-95 touch-manipulation transition-all duration-200 flex items-center justify-center md:hidden">
-          <Menu className="w-6 h-6" />
-        </SidebarTrigger>
         
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}

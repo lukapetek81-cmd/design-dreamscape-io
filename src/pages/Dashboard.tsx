@@ -526,7 +526,7 @@ const DashboardContent = ({
           {/* Enhanced Floating Menu Button for Mobile */}
           <HapticButton
             onClick={() => setOpenMobile(true)}
-            className="fixed left-4 bottom-20 z-50 w-16 h-16 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl md:hidden"
+            className="hidden"
             hapticType="medium"
             variant="primary"
           >
