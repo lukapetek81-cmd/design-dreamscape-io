@@ -25,12 +25,12 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
   const formatKeySequence = (key: string) => {
     if (key.includes(' ')) {
       return key.split(' ').map((k, index) => (
-        <React.Fragment key={`${k}-${index}`}>
+        <span key={`${k}-${index}`} className="inline-flex items-center">
           {index > 0 && <span className="text-muted-foreground mx-1">then</span>}
           <kbd className="px-2 py-1 text-xs font-semibold text-muted-foreground bg-muted border border-border rounded">
             {k.toUpperCase()}
           </kbd>
-        </React.Fragment>
+        </span>
       ));
     }
     
