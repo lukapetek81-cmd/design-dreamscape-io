@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useHaptics } from '@/hooks/useHaptics';
 
@@ -15,124 +14,143 @@ const AppIcon: React.FC<AppIconProps> = ({
   animated = false 
 }) => {
   return (
-    <motion.div
-      className={`relative ${className}`}
+    <div
+      className={`relative ${className} ${animated ? 'animate-pulse' : ''}`}
       style={{ width: size, height: size }}
-      initial={{ scale: 0 }}
-      animate={{ scale: 1 }}
-      whileHover={animated ? { scale: 1.05 } : {}}
-      whileTap={animated ? { scale: 0.95 } : {}}
     >
-      <div className="w-full h-full bg-gradient-to-br from-primary via-primary/90 to-primary/80 rounded-3xl flex items-center justify-center shadow-lg">
-        <svg
-          width={size * 0.6}
-          height={size * 0.6}
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="text-white"
-        >
-          <path
-            d="M3 3L21 21M3 12L12 3L21 12M7 17L17 7"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+      <div 
+        className="w-full h-full bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center shadow-lg"
+      >
+        <div className="text-white font-bold text-lg">CH</div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
 interface PWAInstallPromptProps {
-  onInstall?: () => void;
-  onDismiss?: () => void;
+  className?: string;
 }
 
-const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ 
-  onInstall, 
-  onDismiss 
+export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ 
+  className = '' 
 }) => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showPrompt, setShowPrompt] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
   const isMobile = useIsMobile();
-  const { vibrateSelection } = useHaptics();
+  const { vibrateSuccess } = useHaptics();
 
   useEffect(() => {
+    // Check if app is already installed
+    const checkInstalled = () => {
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+      const isInWebAppiOS = (window.navigator as any).standalone === true;
+      setIsInstalled(isStandalone || isInWebAppiOS);
+    };
+
+    checkInstalled();
+
+    // Listen for install prompt
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setShowPrompt(true);
+      
+      // Show prompt after a delay if user is on mobile and app isn't installed
+      if (isMobile && !isInstalled) {
+        setTimeout(() => setShowPrompt(true), 3000);
+      }
+    };
+
+    // Listen for app installed
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setShowPrompt(false);
+      setDeferredPrompt(null);
+      vibrateSuccess();
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, []);
+  }, [isMobile, isInstalled, vibrateSuccess]);
 
   const handleInstall = async () => {
     if (!deferredPrompt) return;
 
-    vibrateSelection();
-    setShowPrompt(false);
-    
-    deferredPrompt.prompt();
-    const result = await deferredPrompt.userChoice;
-    
-    if (result.outcome === 'accepted') {
-      onInstall?.();
+    try {
+      await deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      
+      if (outcome === 'accepted') {
+        setShowPrompt(false);
+        vibrateSuccess();
+      }
+    } catch (error) {
+      console.error('Installation failed:', error);
     }
-    
+
     setDeferredPrompt(null);
   };
 
-  const handleDismiss = () => {
+  const dismissPrompt = () => {
     setShowPrompt(false);
-    setDeferredPrompt(null);
-    onDismiss?.();
+    // Don't show again for this session
+    sessionStorage.setItem('pwa-prompt-dismissed', 'true');
   };
 
-  if (!showPrompt || !isMobile) return null;
+  // Don't show if already installed, not mobile, or dismissed this session
+  if (isInstalled || !isMobile || !showPrompt || sessionStorage.getItem('pwa-prompt-dismissed')) {
+    return null;
+  }
 
   return (
-    <motion.div
-      className="fixed bottom-4 left-4 right-4 z-50 p-4 bg-card border rounded-xl shadow-lg backdrop-blur-sm"
-      initial={{ y: 100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: 100, opacity: 0 }}
+    <div
+      className={`
+        fixed bottom-4 left-4 right-4 z-50 
+        bg-card border border-border rounded-xl shadow-lg
+        p-4 animate-fade-in
+        ${className}
+      `}
     >
       <div className="flex items-start gap-3">
-        <AppIcon size={48} />
+        <AppIcon size={48} animated />
         
-        <div className="flex-1">
-          <h3 className="font-semibold text-sm mb-1">
-            Install Commodity Hub
-          </h3>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-sm mb-1">Install Commodity Hub</h3>
           <p className="text-xs text-muted-foreground mb-3">
-            Add to your home screen for quick access to market data
+            Get faster access and offline support by adding to your home screen
           </p>
           
           <div className="flex gap-2">
             <button
               onClick={handleInstall}
-              className="px-3 py-1.5 bg-primary text-primary-foreground text-xs font-medium rounded-lg"
+              className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium transition-colors"
             >
               Install
             </button>
             <button
-              onClick={handleDismiss}
-              className="px-3 py-1.5 text-muted-foreground text-xs font-medium"
+              onClick={dismissPrompt}
+              className="px-3 py-1.5 bg-muted text-muted-foreground rounded-lg text-xs font-medium transition-colors"
             >
               Not now
             </button>
           </div>
         </div>
+        
+        <button
+          onClick={dismissPrompt}
+          className="p-1 rounded-full hover:bg-muted transition-colors"
+          aria-label="Close"
+        >
+          ×
+        </button>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
-export { AppIcon, PWAInstallPrompt };
+export default AppIcon;
