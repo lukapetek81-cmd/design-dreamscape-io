@@ -7,7 +7,6 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { SkeletonCard } from '@/components/ui/enhanced-skeleton';
 import { usePerformanceOptimizer } from '@/hooks/usePerformanceOptimizer';
-import { FadeInAnimation, StaggeredAnimation } from '@/components/animations/Animations';
 
 interface FuturesContract {
   name: string;
@@ -102,7 +101,7 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
     return (
       <div className="grid gap-3 sm:gap-4 lg:gap-6">
         {Array.from({ length: isMobile ? 3 : 6 }).map((_, index) => (
-          <FadeInAnimation key={index} delay={index * 0.1}>
+          <div key={index} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
             <SkeletonCard 
               showImage={false}
               showTitle={true}
@@ -110,7 +109,7 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
               showActions={false}
               lines={3}
             />
-          </FadeInAnimation>
+          </div>
         ))}
       </div>
     );
@@ -118,13 +117,17 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
 
   return (
     <div className="space-y-4 pb-8">
-      <StaggeredAnimation staggerDelay={0.05} className="grid gap-3 sm:gap-4 lg:gap-6">
+      <div className="grid gap-3 sm:gap-4 lg:gap-6">
         {visibleCommodities.map((commodity, index) => {
           // Get futures contracts for this specific commodity from the bulk query
           const availableContracts = isPremium ? futuresQuery.data?.[commodity.name] : undefined;
 
           return (
-            <div key={`${commodity.symbol}-${index}`}>
+            <div 
+              key={`${commodity.symbol}-${index}`}
+              className="animate-fade-in"
+              style={{ animationDelay: `${index * 0.05}s` }}
+            >
               <CommodityCard
                 name={commodity.name}
                 price={commodity.price}
@@ -138,23 +141,23 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
             </div>
           );
         })}
-      </StaggeredAnimation>
+      </div>
       
-      {/* Enhanced Loading indicator for additional items */}
+      {/* Loading indicator for additional items */}
       {isLoadingMore && (
-        <FadeInAnimation>
+        <div className="animate-fade-in">
           <div className="flex justify-center py-6">
             <div className="flex items-center gap-3 px-4 py-2 bg-muted/50 rounded-full">
               <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-transparent"></div>
               <span className="text-sm text-muted-foreground font-medium">Loading more commodities...</span>
             </div>
           </div>
-        </FadeInAnimation>
+        </div>
       )}
       
-      {/* Enhanced Load more indicator */}
+      {/* Load more indicator */}
       {visibleItems < commodities.length && !isLoadingMore && (
-        <FadeInAnimation>
+        <div className="animate-fade-in">
           <div className="text-center py-6">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-card border border-border/50 rounded-full shadow-sm">
               <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
@@ -166,7 +169,7 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
               </div>
             </div>
           </div>
-        </FadeInAnimation>
+        </div>
       )}
     </div>
   );
