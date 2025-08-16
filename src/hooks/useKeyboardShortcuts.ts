@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState, useRef } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
@@ -20,10 +20,10 @@ export const useKeyboardShortcut = (
     enabled = true,
   } = options;
 
-  const callbackRef = useRef(callback);
+  const callbackRef = React.useRef(callback);
   callbackRef.current = callback;
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!enabled) return;
 
     const handleKeyPress = (event: KeyboardEvent) => {
@@ -74,9 +74,9 @@ interface KeyboardShortcuts {
 export function useKeyboardShortcuts() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [showHelp, setShowHelp] = useState(false);
-  const [pressedKeys, setPressedKeys] = useState<string[]>([]);
-  const [keySequence, setKeySequence] = useState<string>('');
+  const [showHelp, setShowHelp] = React.useState(false);
+  const [pressedKeys, setPressedKeys] = React.useState<string[]>([]);
+  const [keySequence, setKeySequence] = React.useState<string>('');
 
   const shortcuts: KeyboardShortcuts = {
     // Navigation shortcuts
@@ -200,7 +200,7 @@ export function useKeyboardShortcuts() {
     }
   };
 
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+  const handleKeyDown = React.useCallback((event: KeyboardEvent) => {
     // Don't trigger shortcuts when typing in inputs
     const target = event.target as HTMLElement;
     if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.contentEditable === 'true') {
@@ -256,7 +256,7 @@ export function useKeyboardShortcuts() {
     setPressedKeys([]);
   }, [keySequence, shortcuts, navigate, toast]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 interface UseOfflineStatusReturn {
@@ -8,11 +8,11 @@ interface UseOfflineStatusReturn {
 }
 
 export function useOfflineStatus(): UseOfflineStatusReturn {
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [wasOffline, setWasOffline] = useState(false);
+  const [isOnline, setIsOnline] = React.useState(navigator.onLine);
+  const [wasOffline, setWasOffline] = React.useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
+  React.useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
       if (wasOffline) {

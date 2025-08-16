@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React from 'react';
 
 interface UseIntersectionObserverOptions {
   threshold?: number;
@@ -10,11 +10,11 @@ export const useIntersectionObserver = (
   options: UseIntersectionObserverOptions = {}
 ) => {
   const { threshold = 0.1, rootMargin = '0px', triggerOnce = true } = options;
-  const [isIntersecting, setIsIntersecting] = useState(false);
-  const [hasTriggered, setHasTriggered] = useState(false);
-  const elementRef = useRef<Element | null>(null);
+  const [isIntersecting, setIsIntersecting] = React.useState(false);
+  const [hasTriggered, setHasTriggered] = React.useState(false);
+  const elementRef = React.useRef<Element | null>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const element = elementRef.current;
     if (!element) return;
 

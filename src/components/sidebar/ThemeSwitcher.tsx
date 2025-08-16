@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React from "react";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -14,10 +14,10 @@ const ThemeSwitcher = () => {
   const { state, setOpenMobile } = useSidebar();
   const isMobile = useIsMobile();
   const collapsed = state === "collapsed";
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
+  const [theme, setTheme] = React.useState<'light' | 'dark' | 'system'>('system');
 
   // Initialize theme from localStorage or system preference
-  useEffect(() => {
+  React.useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | 'system' | null;
     if (savedTheme) {
       setTheme(savedTheme);

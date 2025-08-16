@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
 import CommoditySidebar from "@/components/CommoditySidebar";
@@ -25,9 +25,9 @@ interface ExpertInsight {
 }
 
 const ExpertInsights = () => {
-  const [activeGroup, setActiveGroup] = useState("energy");
-  const [insights, setInsights] = useState<ExpertInsight[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [activeGroup, setActiveGroup] = React.useState("energy");
+  const [insights, setInsights] = React.useState<ExpertInsight[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -35,7 +35,7 @@ const ExpertInsights = () => {
     energy: 0, metals: 0, grains: 0, livestock: 0, softs: 0, other: 0
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     fetchInsights();
   }, [activeGroup]);
 

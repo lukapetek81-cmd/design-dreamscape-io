@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ServiceWorkerState {
@@ -19,7 +19,7 @@ interface ServiceWorkerActions {
 
 export const useServiceWorker = (): ServiceWorkerState & ServiceWorkerActions => {
   const { toast } = useToast();
-  const [state, setState] = useState<ServiceWorkerState>({
+  const [state, setState] = React.useState<ServiceWorkerState>({
     isSupported: 'serviceWorker' in navigator,
     isRegistered: false,
     isOnline: navigator.onLine,
@@ -27,10 +27,10 @@ export const useServiceWorker = (): ServiceWorkerState & ServiceWorkerActions =>
     isUpdating: false,
   });
 
-  const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  const [registration, setRegistration] = React.useState<ServiceWorkerRegistration | null>(null);
 
   // Register service worker
-  const register = useCallback(async () => {
+  const register = React.useCallback(async () => {
     if (!state.isSupported) {
       console.warn('Service Worker not supported');
       return;
@@ -73,7 +73,7 @@ export const useServiceWorker = (): ServiceWorkerState & ServiceWorkerActions =>
   }, [state.isSupported, toast]);
 
   // Update service worker
-  const update = useCallback(async () => {
+  const update = React.useCallback(async () => {
     if (!registration) return;
 
     setState(prev => ({ ...prev, isUpdating: true }));
@@ -99,14 +99,14 @@ export const useServiceWorker = (): ServiceWorkerState & ServiceWorkerActions =>
   }, [registration, toast]);
 
   // Skip waiting and activate new service worker
-  const skipWaiting = useCallback(() => {
+  const skipWaiting = React.useCallback(() => {
     if (registration?.waiting) {
       registration.waiting.postMessage({ type: 'SKIP_WAITING' });
     }
   }, [registration]);
 
   // Unregister service worker
-  const unregister = useCallback(async () => {
+  const unregister = React.useCallback(async () => {
     if (registration) {
       await registration.unregister();
       setRegistration(null);
@@ -115,7 +115,7 @@ export const useServiceWorker = (): ServiceWorkerState & ServiceWorkerActions =>
   }, [registration]);
 
   // Clear cache
-  const clearCache = useCallback(async () => {
+  const clearCache = React.useCallback(async () => {
     if ('caches' in window) {
       const cacheNames = await caches.keys();
       await Promise.all(
@@ -130,7 +130,7 @@ export const useServiceWorker = (): ServiceWorkerState & ServiceWorkerActions =>
   }, [toast]);
 
   // Listen to online/offline events
-  useEffect(() => {
+  React.useEffect(() => {
     const handleOnline = () => {
       setState(prev => ({ ...prev, isOnline: true }));
       toast({
@@ -158,7 +158,7 @@ export const useServiceWorker = (): ServiceWorkerState & ServiceWorkerActions =>
   }, [toast]);
 
   // Listen to service worker messages
-  useEffect(() => {
+  React.useEffect(() => {
     if (!state.isSupported) return;
 
     const handleMessage = (event: MessageEvent) => {
@@ -175,7 +175,7 @@ export const useServiceWorker = (): ServiceWorkerState & ServiceWorkerActions =>
   }, [state.isSupported]);
 
   // Auto-register on mount
-  useEffect(() => {
+  React.useEffect(() => {
     if (state.isSupported && !state.isRegistered) {
       register();
     }

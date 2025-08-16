@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -17,11 +17,11 @@ interface IBKRCredentials {
 export const useIBKRCredentials = () => {
   const { user, isPremium } = useAuth();
   const { toast } = useToast();
-  const [credentials, setCredentials] = useState<IBKRCredentials | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [credentials, setCredentials] = React.useState<IBKRCredentials | null>(null);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (user && isPremium) {
       loadCredentials();
     }

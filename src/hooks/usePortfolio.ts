@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -25,9 +25,9 @@ export interface PositionWithCurrentPrice extends PortfolioPosition {
 }
 
 export const usePortfolio = () => {
-  const [positions, setPositions] = useState<PositionWithCurrentPrice[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [positions, setPositions] = React.useState<PositionWithCurrentPrice[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
   const { isPremium } = useDelayedData();
@@ -215,7 +215,7 @@ export const usePortfolio = () => {
     positionCount: positions.length
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     fetchPositions();
   }, [user]);
 

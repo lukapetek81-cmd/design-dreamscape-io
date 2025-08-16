@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
 import CommoditySidebar from "@/components/CommoditySidebar";
@@ -35,10 +35,10 @@ const POPULAR_COMMODITIES = [
 ];
 
 const Favorites = () => {
-  const [activeGroup, setActiveGroup] = useState("energy");
-  const [favorites, setFavorites] = useState<Favorite[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [activeGroup, setActiveGroup] = React.useState("energy");
+  const [favorites, setFavorites] = React.useState<Favorite[]>([]);
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [loading, setLoading] = React.useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -47,7 +47,7 @@ const Favorites = () => {
     energy: 0, metals: 0, grains: 0, livestock: 0, softs: 0, other: 0
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (user) {
       fetchFavorites();
     }

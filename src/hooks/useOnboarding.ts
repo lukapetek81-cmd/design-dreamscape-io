@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React from 'react';
 
 const ONBOARDING_KEY = 'commodityflow_onboarding_completed';
 const ONBOARDING_VERSION = '1.0';
@@ -11,14 +11,14 @@ interface OnboardingState {
 }
 
 export const useOnboarding = () => {
-  const [state, setState] = useState<OnboardingState>({
+  const [state, setState] = React.useState<OnboardingState>({
     isFirstTime: true,
     showOnboarding: false,
     currentStep: 0,
     hasCompletedOnboarding: false,
   });
 
-  useEffect(() => {
+  React.useEffect(() => {
     const completedVersion = localStorage.getItem(ONBOARDING_KEY);
     const hasCompleted = completedVersion === ONBOARDING_VERSION;
     

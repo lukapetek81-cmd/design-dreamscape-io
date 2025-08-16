@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import React from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 interface UseRetryOptions {
@@ -25,13 +25,13 @@ export function useRetry<T = any>(options: UseRetryOptions = {}): UseRetryReturn
     onMaxRetriesReached,
   } = options;
 
-  const [isRetrying, setIsRetrying] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = React.useState(false);
+  const [retryCount, setRetryCount] = React.useState(0);
   const { toast } = useToast();
 
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-  const execute = useCallback(async (fn: () => Promise<T>): Promise<T> => {
+  const execute = React.useCallback(async (fn: () => Promise<T>): Promise<T> => {
     let lastError: Error;
     
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -73,7 +73,7 @@ export function useRetry<T = any>(options: UseRetryOptions = {}): UseRetryReturn
     throw lastError!;
   }, [maxRetries, retryDelay, exponentialBackoff, onRetry, onMaxRetriesReached, toast]);
 
-  const reset = useCallback(() => {
+  const reset = React.useCallback(() => {
     setIsRetrying(false);
     setRetryCount(0);
   }, []);
