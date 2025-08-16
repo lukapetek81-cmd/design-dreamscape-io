@@ -24,28 +24,28 @@ export const useLoading = () => {
 };
 
 export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [loadingStates, setLoadingStates] = useState<LoadingState>({});
+  const [loadingStates, setLoadingStates] = React.useState<LoadingState>({});
 
-  const isLoading = useCallback((key: string): boolean => {
+  const isLoading = React.useCallback((key: string): boolean => {
     return loadingStates[key] || false;
   }, [loadingStates]);
 
-  const setLoading = useCallback((key: string, loading: boolean) => {
+  const setLoading = React.useCallback((key: string, loading: boolean) => {
     setLoadingStates(prev => ({
       ...prev,
       [key]: loading
     }));
   }, []);
 
-  const startLoading = useCallback((key: string) => {
+  const startLoading = React.useCallback((key: string) => {
     setLoading(key, true);
   }, [setLoading]);
 
-  const stopLoading = useCallback((key: string) => {
+  const stopLoading = React.useCallback((key: string) => {
     setLoading(key, false);
   }, [setLoading]);
 
-  const clearAllLoading = useCallback(() => {
+  const clearAllLoading = React.useCallback(() => {
     setLoadingStates({});
   }, []);
 
