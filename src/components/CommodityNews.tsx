@@ -21,11 +21,11 @@ interface CommodityNewsProps {
 }
 
 const CommodityNews = ({ commodity }: CommodityNewsProps) => {
-  const [news, setNews] = useState<EnhancedNewsItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [news, setNews] = React.useState<EnhancedNewsItem[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const fetchNews = async () => {
       try {
         setLoading(true);
