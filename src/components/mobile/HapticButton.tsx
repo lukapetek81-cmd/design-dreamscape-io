@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -92,16 +91,13 @@ const HapticButton: React.FC<HapticButtonProps> = ({
   };
 
   return (
-    <motion.button
-      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+    <button
+      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className} transform active:scale-95 hover:scale-105 transition-transform duration-200`}
       onClick={handleClick}
       disabled={disabled}
-      whileTap={{ scale: disabled ? 1 : 0.95 }}
-      whileHover={{ scale: disabled ? 1 : 1.02 }}
-      transition={{ type: "spring", stiffness: 400, damping: 17 }}
     >
       {children}
-    </motion.button>
+    </button>
   );
 };
 

@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   Dialog,
   DialogContent,
@@ -58,11 +57,9 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
         
         <div className="space-y-6">
           {Object.entries(shortcuts).map(([category, categoryShortcuts]) => (
-            <motion.div
+            <div
               key={category}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-3"
+              className="space-y-3 animate-fade-in-up"
             >
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold text-lg">{category}</h3>
@@ -88,7 +85,7 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
               {category !== Object.keys(shortcuts)[Object.keys(shortcuts).length - 1] && (
                 <Separator className="my-4" />
               )}
-            </motion.div>
+            </div>
           ))}
           
           <div className="p-4 rounded-lg bg-muted/30 border border-dashed">

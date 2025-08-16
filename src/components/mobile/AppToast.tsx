@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -84,65 +83,52 @@ const AppToast: React.FC<AppToastProps> = ({
     }
   };
 
+  if (!isVisible) return null;
+
   return (
-    <AnimatePresence>
-      {isVisible && (
-        <motion.div
-          initial={{ 
-            opacity: 0, 
-            x: position === 'top' ? 300 : 0,
-            y: position === 'bottom' ? 100 : -100 
-          }}
-          animate={{ 
-            opacity: 1, 
-            x: 0, 
-            y: 0 
-          }}
-          exit={{ 
-            opacity: 0, 
-            x: 300,
-            scale: 0.95 
-          }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className={`
-            ${getStyles()}
-            border rounded-lg p-4 shadow-lg backdrop-blur-sm
-            max-w-sm w-full pointer-events-auto
-            ${isMobile ? 'mx-4' : ''}
-          `}
+    <div
+      className={`
+        ${getStyles()}
+        border rounded-lg p-4 shadow-lg backdrop-blur-sm
+        max-w-sm w-full pointer-events-auto
+        ${isMobile ? 'mx-4' : ''}
+        animate-slide-in-right
+      `}
+      style={{
+        animation: `slideInRight 0.3s ease-out`
+      }}
+    >
+      <div className="flex items-start gap-3">
+        {getIcon()}
+        
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-foreground">
+            {title}
+          </p>
+          {description && (
+            <p className="text-xs text-muted-foreground mt-1">
+              {description}
+            </p>
+          )}
+        </div>
+
+        <button
+          onClick={handleClose}
+          className="p-1 rounded-full hover:bg-background/50 transition-colors"
         >
-          <div className="flex items-start gap-3">
-            {getIcon()}
-            
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground">
-                {title}
-              </p>
-              {description && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  {description}
-                </p>
-              )}
-            </div>
+          <X className="w-4 h-4 text-muted-foreground" />
+        </button>
+      </div>
 
-            <button
-              onClick={handleClose}
-              className="p-1 rounded-full hover:bg-background/50 transition-colors"
-            >
-              <X className="w-4 h-4 text-muted-foreground" />
-            </button>
-          </div>
-
-          {/* Progress bar */}
-          <motion.div
-            className="absolute bottom-0 left-0 h-1 bg-primary/30 rounded-b-lg"
-            initial={{ width: "100%" }}
-            animate={{ width: "0%" }}
-            transition={{ duration: duration / 1000, ease: "linear" }}
-          />
-        </motion.div>
-      )}
-    </AnimatePresence>
+      {/* Progress bar */}
+      <div
+        className="absolute bottom-0 left-0 h-1 bg-primary/30 rounded-b-lg"
+        style={{
+          width: '100%',
+          animation: `shrinkWidth ${duration / 1000}s linear forwards`
+        }}
+      />
+    </div>
   );
 };
 
