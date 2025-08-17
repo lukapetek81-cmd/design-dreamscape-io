@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,12 +11,12 @@ import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 
 const ResetPassword = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isResetMode, setIsResetMode] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [formData, setFormData] = useState({
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+  const [isResetMode, setIsResetMode] = React.useState(false);
+  const [success, setSuccess] = React.useState(false);
+  const [formData, setFormData] = React.useState({
     password: '',
     confirmPassword: ''
   });
@@ -25,7 +25,7 @@ const ResetPassword = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  useEffect(() => {
+  React.useEffect(() => {
     // Check if we have password reset tokens in the URL
     const urlParams = new URLSearchParams(window.location.search);
     const accessToken = urlParams.get('access_token');

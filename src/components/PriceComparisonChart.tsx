@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,11 +44,11 @@ const TIMEFRAMES = [
 ];
 
 export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ commodities }) => {
-  const [timeframe, setTimeframe] = useState('1D');
-  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [failedCommodities, setFailedCommodities] = useState<string[]>([]);
-  const [useLogScale, setUseLogScale] = useState(false);
+  const [timeframe, setTimeframe] = React.useState('1D');
+  const [chartData, setChartData] = React.useState<ChartDataPoint[]>([]);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [failedCommodities, setFailedCommodities] = React.useState<string[]>([]);
+  const [useLogScale, setUseLogScale] = React.useState(false);
   const { prices, connected, lastUpdate, isLiveData } = useRealtimeDataContext();
   const isMobile = useIsMobile();
 
@@ -68,7 +68,7 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
     .join('|');
 
   // Process and combine historical data
-  useEffect(() => {
+  React.useEffect(() => {
     if (commodities.length === 0) {
       setChartData([]);
       return;
@@ -142,7 +142,7 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
   }, [commodities, timeframe, dataVersionKey]);
 
   // Update chart with real-time data
-  useEffect(() => {
+  React.useEffect(() => {
     if (!connected || !lastUpdate || chartData.length === 0) return;
 
     const now = new Date();

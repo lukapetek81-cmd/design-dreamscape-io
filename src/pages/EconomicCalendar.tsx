@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,9 +26,9 @@ interface EconomicEvent {
 const EconomicCalendar = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [selectedImpact, setSelectedImpact] = useState('all');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedDate, setSelectedDate] = React.useState(new Date().toISOString().split('T')[0]);
+  const [selectedImpact, setSelectedImpact] = React.useState('all');
+  const [selectedCategory, setSelectedCategory] = React.useState('all');
 
   // Mock economic events data
   const events: EconomicEvent[] = [

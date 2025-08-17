@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React from 'react';
 import CommodityCard from './CommodityCard';
 import { Commodity } from '@/hooks/useCommodityData';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -31,8 +31,8 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const { isPremium } = useAuth();
-  const [visibleItems, setVisibleItems] = useState(10); // Start with 10 items
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [visibleItems, setVisibleItems] = React.useState(10); // Start with 10 items
+  const [isLoadingMore, setIsLoadingMore] = React.useState(false);
 
   // Fetch IBKR futures contracts for all commodities at once for premium users
   const commodityNames = commodities.map(c => c.name);
@@ -65,7 +65,7 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
   });
 
   // Increase visible items when scrolling near bottom
-  useEffect(() => {
+  React.useEffect(() => {
     const handleScroll = () => {
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
       const windowHeight = window.innerHeight;
@@ -88,11 +88,11 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
   }, [commodities.length, visibleItems, isLoadingMore, isMobile]);
 
   // Reset visible items when commodities change
-  useEffect(() => {
+  React.useEffect(() => {
     setVisibleItems(isMobile ? 5 : 10);
   }, [commodities, isMobile]);
 
-  const visibleCommodities = useMemo(() => 
+  const visibleCommodities = React.useMemo(() => 
     commodities.slice(0, visibleItems), 
     [commodities, visibleItems]
   );

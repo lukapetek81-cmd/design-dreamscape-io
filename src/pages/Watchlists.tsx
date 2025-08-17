@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,14 +33,14 @@ const Watchlists = () => {
   const navigate = useNavigate();
   const { data: commodities } = useAvailableCommodities();
   const { profile } = useAuth();
-  const [selectedWatchlist, setSelectedWatchlist] = useState<string | null>(null);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [newWatchlistName, setNewWatchlistName] = useState('');
-  const [newWatchlistDescription, setNewWatchlistDescription] = useState('');
-  const [newWatchlistColor, setNewWatchlistColor] = useState('blue');
+  const [selectedWatchlist, setSelectedWatchlist] = React.useState<string | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
+  const [newWatchlistName, setNewWatchlistName] = React.useState('');
+  const [newWatchlistDescription, setNewWatchlistDescription] = React.useState('');
+  const [newWatchlistColor, setNewWatchlistColor] = React.useState('blue');
 
   // Mock watchlists data
-  const [watchlists, setWatchlists] = useState<Watchlist[]>([
+  const [watchlists, setWatchlists] = React.useState<Watchlist[]>([
     {
       id: '1',
       name: 'Energy Focus',

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,8 +26,8 @@ const MarketScreener = () => {
   const { data: commodities, isLoading, error } = useAvailableCommodities();
   const { profile } = useAuth();
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState<ScreenerFilters>({
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [filters, setFilters] = React.useState<ScreenerFilters>({
     category: 'all',
     priceRange: [0, 5000],
     changeRange: [-10, 10],
@@ -38,11 +38,11 @@ const MarketScreener = () => {
   });
 
   // Commodities now come with enhanced data from API
-  const enhancedCommodities = useMemo(() => {
+  const enhancedCommodities = React.useMemo(() => {
     return commodities || [];
   }, [commodities]);
 
-  const filteredCommodities = useMemo(() => {
+  const filteredCommodities = React.useMemo(() => {
     let result = enhancedCommodities;
 
     // Search filter

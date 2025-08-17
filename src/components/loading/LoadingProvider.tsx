@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React from 'react';
 
 interface LoadingState {
   [key: string]: boolean;
@@ -13,10 +13,10 @@ interface LoadingContextType {
   globalLoading: boolean;
 }
 
-const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
+const LoadingContext = React.createContext<LoadingContextType | undefined>(undefined);
 
 export const useLoading = () => {
-  const context = useContext(LoadingContext);
+  const context = React.useContext(LoadingContext);
   if (!context) {
     throw new Error('useLoading must be used within a LoadingProvider');
   }

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,18 +24,18 @@ const RiskCalculator = () => {
   const { profile } = useAuth();
   const { data: commodities } = useAvailableCommodities();
 
-  const [accountBalance, setAccountBalance] = useState('10000');
-  const [riskPercentage, setRiskPercentage] = useState([2]);
-  const [selectedCommodity, setSelectedCommodity] = useState('Crude Oil');
-  const [entryPrice, setEntryPrice] = useState('');
-  const [stopLossPrice, setStopLossPrice] = useState('');
-  const [targetPrice, setTargetPrice] = useState('');
-  const [contractSize, setContractSize] = useState('1000');
-  const [marginPercentage, setMarginPercentage] = useState([10]);
+  const [accountBalance, setAccountBalance] = React.useState('10000');
+  const [riskPercentage, setRiskPercentage] = React.useState([2]);
+  const [selectedCommodity, setSelectedCommodity] = React.useState('Crude Oil');
+  const [entryPrice, setEntryPrice] = React.useState('');
+  const [stopLossPrice, setStopLossPrice] = React.useState('');
+  const [targetPrice, setTargetPrice] = React.useState('');
+  const [contractSize, setContractSize] = React.useState('1000');
+  const [marginPercentage, setMarginPercentage] = React.useState([10]);
 
   const selectedCommodityData = commodities.find(c => c.name === selectedCommodity);
 
-  const calculations: RiskCalculation = useMemo(() => {
+  const calculations: RiskCalculation = React.useMemo(() => {
     const balance = parseFloat(accountBalance) || 0;
     const risk = riskPercentage[0] / 100;
     const entry = parseFloat(entryPrice) || (selectedCommodityData?.price || 0);

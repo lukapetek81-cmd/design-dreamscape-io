@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -22,11 +22,11 @@ const AppToast: React.FC<AppToastProps> = ({
   onClose,
   position = 'top',
 }) => {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = React.useState(true);
   const { vibrateSuccess, vibrateError, vibrate } = useHaptics();
   const isMobile = useIsMobile();
 
-  useEffect(() => {
+  React.useEffect(() => {
     // Trigger haptic feedback based on toast type
     if (isMobile) {
       switch (type) {
@@ -149,7 +149,7 @@ export const AppToastProvider: React.FC<AppToastProviderProps> = ({
   children, 
   position = 'top' 
 }) => {
-  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [toasts, setToasts] = React.useState<Toast[]>([]);
 
   const addToast = (toast: Omit<Toast, 'id'>) => {
     const id = Date.now().toString();
@@ -161,7 +161,7 @@ export const AppToastProvider: React.FC<AppToastProviderProps> = ({
   };
 
   // Expose toast functions globally
-  useEffect(() => {
+  React.useEffect(() => {
     (window as any).showToast = addToast;
   }, []);
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,8 +10,8 @@ import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const MarketCorrelation = () => {
-  const [timeframe, setTimeframe] = useState('30d');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [timeframe, setTimeframe] = React.useState('30d');
+  const [selectedCategory, setSelectedCategory] = React.useState('all');
   const { data: commodities } = useAvailableCommodities();
   const { profile } = useAuth();
   const navigate = useNavigate();
