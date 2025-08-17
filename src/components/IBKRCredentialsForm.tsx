@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,19 +22,19 @@ interface IBKRCredentials {
 export const IBKRCredentialsForm: React.FC = () => {
   const { user, isPremium } = useAuth();
   const { toast } = useToast();
-  const [credentials, setCredentials] = useState<IBKRCredentials>({
+  const [credentials, setCredentials] = React.useState<IBKRCredentials>({
     username: '',
     password: '',
     gateway: 'paper', // Default to paper trading
     is_active: true
   });
-  const [existingCredentials, setExistingCredentials] = useState<IBKRCredentials | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [existingCredentials, setExistingCredentials] = React.useState<IBKRCredentials | null>(null);
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
 
   // Load existing credentials
-  useEffect(() => {
+  React.useEffect(() => {
     if (user && isPremium) {
       loadCredentials();
     }

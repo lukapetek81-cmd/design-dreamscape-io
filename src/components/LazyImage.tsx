@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 import { Skeleton } from '@/components/ui/enhanced-skeleton';
 
@@ -23,9 +23,9 @@ const LazyImage: React.FC<LazyImageProps> = ({
   width,
   height,
 }) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
-  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [imageLoaded, setImageLoaded] = React.useState(false);
+  const [imageError, setImageError] = React.useState(false);
+  const [imageSrc, setImageSrc] = React.useState<string | null>(null);
 
   const { elementRef, isIntersecting } = useIntersectionObserver({
     rootMargin: '100px', // Load images when they're 100px away from viewport

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -74,9 +74,9 @@ interface BillingInfo {
 }
 
 const CustomerPortal = () => {
-  const [billingInfo, setBillingInfo] = useState<BillingInfo | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [canceling, setCanceling] = useState(false);
+  const [billingInfo, setBillingInfo] = React.useState<BillingInfo | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [canceling, setCanceling] = React.useState(false);
   const { user, profile } = useAuth();
   const { toast } = useToast();
 
@@ -151,7 +151,7 @@ const CustomerPortal = () => {
     }
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     fetchBillingInfo();
   }, [user]);
 

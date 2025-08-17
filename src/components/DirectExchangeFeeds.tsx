@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -38,9 +38,9 @@ interface DirectExchangeData {
 }
 
 export const DirectExchangeFeeds: React.FC = () => {
-  const [data, setData] = useState<DirectExchangeData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = React.useState<DirectExchangeData | null>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
   const { profile } = useAuth();
 
   const fetchExchangeFeeds = async () => {

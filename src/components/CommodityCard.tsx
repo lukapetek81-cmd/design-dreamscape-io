@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React from 'react';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
@@ -51,8 +51,8 @@ const CommodityCard = React.memo<CommodityCardProps>(({
   category,
   availableContracts
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedContract, setSelectedContract] = useState(symbol);
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [selectedContract, setSelectedContract] = React.useState(symbol);
   const isMobile = useIsMobile();
   const { vibrateTouch } = useHaptics();
   const { profile } = useAuth();
@@ -60,20 +60,20 @@ const CommodityCard = React.memo<CommodityCardProps>(({
   const marketStatus = getMarketStatus(name);
 
   // Get current price data for selected contract
-  const selectedContractData = useMemo(() => {
+  const selectedContractData = React.useMemo(() => {
     if (!availableContracts) return null;
     return availableContracts.find(contract => contract.symbol === selectedContract) || null;
   }, [availableContracts, selectedContract]);
 
   // Price display logic
-  const displayPrice = useMemo(() => {
+  const displayPrice = React.useMemo(() => {
     if (selectedContractData) {
       return selectedContractData.price;
     }
     return price;
   }, [selectedContractData, price]);
 
-  const currentChange = useMemo(() => {
+  const currentChange = React.useMemo(() => {
     if (selectedContractData) {
       return selectedContractData.changePercent;
     }
@@ -83,7 +83,7 @@ const CommodityCard = React.memo<CommodityCardProps>(({
   const isPositive = currentChange >= 0;
 
   // Format price for display
-  const formatPrice = useCallback((priceValue: number): string => {
+  const formatPrice = React.useCallback((priceValue: number): string => {
     if (priceValue >= 1000) {
       return priceValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
@@ -91,7 +91,7 @@ const CommodityCard = React.memo<CommodityCardProps>(({
   }, []);
 
   // Get price units helper
-  const getPriceUnits = useCallback((commodityName: string): string => {
+  const getPriceUnits = React.useCallback((commodityName: string): string => {
     if (commodityName.toLowerCase().includes('oil') || commodityName.toLowerCase().includes('gasoline')) {
       return '$/barrel';
     }
@@ -108,12 +108,12 @@ const CommodityCard = React.memo<CommodityCardProps>(({
   }, []);
 
   // Contract change handler
-  const handleContractChange = useCallback((value: string) => {
+  const handleContractChange = React.useCallback((value: string) => {
     setSelectedContract(value);
   }, []);
 
   // Toggle handler
-  const handleToggle = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+  const handleToggle = React.useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
     vibrateTouch();
@@ -121,7 +121,7 @@ const CommodityCard = React.memo<CommodityCardProps>(({
   }, [vibrateTouch, isOpen]);
 
   // Generate expiration date helper
-  const getExpirationDate = useCallback((contractSymbol: string): Date => {
+  const getExpirationDate = React.useCallback((contractSymbol: string): Date => {
     const now = new Date();
     const futureMonths = Math.floor(Math.random() * 12) + 1;
     return new Date(now.getFullYear(), now.getMonth() + futureMonths, 15);

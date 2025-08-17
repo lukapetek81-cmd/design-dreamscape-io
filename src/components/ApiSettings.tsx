@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,15 +8,15 @@ import { Settings, Key, Save, Eye, EyeOff, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 
 const ApiSettings = () => {
-  const [fmpApiKey, setFmpApiKey] = useState('');
-  const [newsApiKey, setNewsApiKey] = useState('');
-  const [alphaVantageApiKey, setAlphaVantageApiKey] = useState('');
-  const [showFmp, setShowFmp] = useState(false);
-  const [showNews, setShowNews] = useState(false);
-  const [showAlpha, setShowAlpha] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
+  const [fmpApiKey, setFmpApiKey] = React.useState('');
+  const [newsApiKey, setNewsApiKey] = React.useState('');
+  const [alphaVantageApiKey, setAlphaVantageApiKey] = React.useState('');
+  const [showFmp, setShowFmp] = React.useState(false);
+  const [showNews, setShowNews] = React.useState(false);
+  const [showAlpha, setShowAlpha] = React.useState(false);
+  const [isOpen, setIsOpen] = React.useState(false);
 
-  useEffect(() => {
+  React.useEffect(() => {
     // Load saved API keys from localStorage
     const savedFmp = localStorage.getItem('fmpApiKey');
     const savedNews = localStorage.getItem('newsApiKey');

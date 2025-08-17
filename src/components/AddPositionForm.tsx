@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -34,14 +34,14 @@ interface AddPositionFormProps {
 }
 
 const AddPositionForm: React.FC<AddPositionFormProps> = ({ onSuccess }) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = React.useState({
     commodity_name: '',
     quantity: '',
     entry_price: '',
     entry_date: new Date().toISOString().split('T')[0],
     notes: ''
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const { addPosition } = usePortfolio();
 
   const handleSubmit = async (e: React.FormEvent) => {

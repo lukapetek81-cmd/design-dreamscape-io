@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,15 +11,15 @@ import { useToast } from '@/hooks/use-toast';
 
 const NewsSettings: React.FC = () => {
   const { toast } = useToast();
-  const [apiKeys, setApiKeys] = useState({
+  const [apiKeys, setApiKeys] = React.useState({
     marketauxApiKey: '',
     fmpApiKey: ''
   });
   
-  const [testResults, setTestResults] = useState<Record<string, boolean>>({});
-  const [testing, setTesting] = useState<Record<string, boolean>>({});
+  const [testResults, setTestResults] = React.useState<Record<string, boolean>>({});
+  const [testing, setTesting] = React.useState<Record<string, boolean>>({});
 
-  useEffect(() => {
+  React.useEffect(() => {
     // Load existing API keys from localStorage
     setApiKeys({
       marketauxApiKey: localStorage.getItem('marketauxApiKey') || '',
