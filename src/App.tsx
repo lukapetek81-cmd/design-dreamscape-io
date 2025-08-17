@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -42,7 +42,7 @@ const queryClient = getQueryClient();
 
 const AppRoutes = () => {
   useAndroidBackButton();
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = React.useState(true);
   const isMobile = useIsMobile();
   const { showOnboarding, completeOnboarding, skipOnboarding } = useOnboarding();
   const { showHelp, closeHelp, getShortcutsByCategory } = useKeyboardShortcuts();
@@ -51,7 +51,7 @@ const AppRoutes = () => {
   const navigate = useNavigate();
 
   // Listen for custom navigation events from ErrorBoundary
-  useEffect(() => {
+  React.useEffect(() => {
     const handleNavigateHome = () => {
       navigate('/', { replace: true });
     };
@@ -63,7 +63,7 @@ const AppRoutes = () => {
   }, [navigate]);
 
   // Initialize monitoring service with user data when available
-  useEffect(() => {
+  React.useEffect(() => {
     // You can set user ID here when authentication is available
     // monitoringService.setUserId(user?.id);
     
@@ -75,7 +75,7 @@ const AppRoutes = () => {
     });
   }, [analytics]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     // Show splash screen only on mobile and only on first load
     if (!isMobile) {
       setShowSplash(false);
@@ -151,7 +151,7 @@ const AppRoutes = () => {
 };
 
 const App = () => {
-  useEffect(() => {
+  React.useEffect(() => {
     // Add resource hints for better performance
     addResourceHints();
   }, []);
