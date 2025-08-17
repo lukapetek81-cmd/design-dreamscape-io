@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, ReactNode } from 'react';
+import React from 'react';
 import { useFocusManagement } from '@/hooks/useFocusManagement';
 import { 
   announceToScreenReader, 
@@ -11,16 +11,16 @@ interface AccessibilityContextType {
   focusManagement: ReturnType<typeof useFocusManagement>;
 }
 
-const AccessibilityContext = createContext<AccessibilityContextType | null>(null);
+const AccessibilityContext = React.createContext<AccessibilityContextType | null>(null);
 
 interface AccessibilityProviderProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
 export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({ children }) => {
   const focusManagement = useFocusManagement();
 
-  useEffect(() => {
+  React.useEffect(() => {
     // Set up accessibility features
     setupHighContrastMode();
     setupReducedMotion();
@@ -58,7 +58,7 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({ ch
 };
 
 export const useAccessibility = (): AccessibilityContextType => {
-  const context = useContext(AccessibilityContext);
+  const context = React.useContext(AccessibilityContext);
   if (!context) {
     throw new Error('useAccessibility must be used within an AccessibilityProvider');
   }

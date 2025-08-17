@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React from 'react';
 import { useSecurity } from '@/hooks/useSecurity';
 import { useToast } from '@/hooks/use-toast';
 
@@ -10,10 +10,10 @@ interface SecurityContextType {
   refreshCsrfToken: () => void;
 }
 
-const SecurityContext = createContext<SecurityContextType | undefined>(undefined);
+const SecurityContext = React.createContext<SecurityContextType | undefined>(undefined);
 
 export const useSecurityContext = () => {
-  const context = useContext(SecurityContext);
+  const context = React.useContext(SecurityContext);
   if (!context) {
     throw new Error('useSecurityContext must be used within SecurityProvider');
   }
@@ -33,7 +33,7 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({
   children, 
   config = {} 
 }) => {
-  const [isSecure, setIsSecure] = useState(false);
+  const [isSecure, setIsSecure] = React.useState(false);
   const { toast } = useToast();
   
   const security = useSecurity({
@@ -43,7 +43,7 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({
   });
 
   // Initialize security features
-  useEffect(() => {
+  React.useEffect(() => {
     // Check if browser supports required security features
     const hasRequiredFeatures = [
       'crypto',
@@ -76,7 +76,7 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({
   }, [toast]);
 
   // Monitor for security violations
-  useEffect(() => {
+  React.useEffect(() => {
     const handleSecurityViolation = (event: SecurityPolicyViolationEvent) => {
       console.warn('Content Security Policy violation:', event);
       toast({

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+import React from 'react';
 import { CommodityPrice, useAvailableCommodities } from '@/hooks/useCommodityData';
 import { useDelayedData } from '@/hooks/useDelayedData';
 
@@ -18,10 +18,10 @@ interface RealtimeDataContextType {
   };
 }
 
-const RealtimeDataContext = createContext<RealtimeDataContextType | undefined>(undefined);
+const RealtimeDataContext = React.createContext<RealtimeDataContextType | undefined>(undefined);
 
 export const useRealtimeDataContext = () => {
-  const context = useContext(RealtimeDataContext);
+  const context = React.useContext(RealtimeDataContext);
   if (context === undefined) {
     throw new Error('useRealtimeDataContext must be used within a RealtimeDataProvider');
   }
@@ -29,7 +29,7 @@ export const useRealtimeDataContext = () => {
 };
 
 interface RealtimeDataProviderProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
 export const RealtimeDataProvider: React.FC<RealtimeDataProviderProps> = ({ children }) => {
