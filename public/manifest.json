@@ -1,0 +1,57 @@
+{
+  "name": "Commodity Hub - Professional Trading Analytics",
+  "short_name": "Commodity Hub",
+  "description": "Advanced commodity trading platform with real-time data, analytics, and portfolio management tools for professional traders.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#8B5CF6",
+  "theme_color": "#8B5CF6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "144x144",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "96x96",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "72x72",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "48x48",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "business", "productivity"],
+  "screenshots": [
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "form_factor": "wide"
+    }
+  ]
+}

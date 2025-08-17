@@ -20,8 +20,18 @@ const config: CapacitorConfig = {
     compileSdkVersion: 35,
     minSdkVersion: 22,
     targetSdkVersion: 35,
-    iconDensity: 'mdpi'
-  }
+    iconDensity: 'mdpi',
+    adaptiveIcon: {
+      foreground: 'icon.png',
+      background: '#8B5CF6'
+    }
+  },
+  ios: {
+    contentInset: 'automatic',
+    icon: 'icon.png'
+  },
+  // Global icon configuration
+  icon: 'icon.png'
 };
 
 export default config;
