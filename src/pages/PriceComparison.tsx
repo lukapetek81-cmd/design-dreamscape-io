@@ -285,8 +285,8 @@ const PriceComparison = () => {
         
         <SidebarInset className="flex-1 flex flex-col min-w-0">
           <header className="flex h-14 lg:h-16 shrink-0 items-center gap-2 border-b px-3 lg:px-6">
-            <SidebarTrigger className="p-2 hover:bg-muted rounded-lg lg:hidden">
-              <Menu className="h-5 w-5" />
+            <SidebarTrigger className="p-3 hover:bg-muted rounded-lg lg:hidden min-h-[48px] min-w-[48px]">
+              <Menu className="h-6 w-6" />
             </SidebarTrigger>
             <Button
               variant="ghost"

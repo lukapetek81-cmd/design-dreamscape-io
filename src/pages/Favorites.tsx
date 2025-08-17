@@ -179,7 +179,7 @@ const Favorites = () => {
         />
         <SidebarInset className="flex-1">
           <header className="flex h-16 shrink-0 items-center border-b px-4">
-            <SidebarTrigger className="-ml-1" />
+            <SidebarTrigger className="p-2 min-h-[48px] min-w-[48px]" />
             <Separator orientation="vertical" className="mr-2 h-4" />
             <Button
               variant="ghost"
