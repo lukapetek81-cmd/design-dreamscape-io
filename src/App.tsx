@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -119,7 +119,7 @@ const AppRoutes = () => {
       {!isOnline && <OfflineIndicator />}
       
       <main id="main-content" role="main" tabIndex={-1}>
-        <Suspense fallback={<DashboardSkeleton />}>
+        <React.Suspense fallback={<DashboardSkeleton />}>
           <Routes>
             <Route path="/" element={<LazyRoutes.Dashboard />} />
             <Route path="/dashboard" element={<LazyRoutes.Dashboard />} />
@@ -144,7 +144,7 @@ const AppRoutes = () => {
             <Route path="/market-status" element={<LazyRoutes.MarketStatus />} />
             <Route path="*" element={<LazyRoutes.NotFound />} />
           </Routes>
-        </Suspense>
+        </React.Suspense>
       </main>
     </>
   );

@@ -1,10 +1,10 @@
-import React, { lazy, Suspense } from 'react';
+import React from 'react';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 import { Skeleton } from '@/components/ui/enhanced-skeleton';
 import { Card } from '@/components/ui/card';
 import { BarChart3 } from 'lucide-react';
 
-const CommodityChart = lazy(() => import('./CommodityChart'));
+const CommodityChart = React.lazy(() => import('./CommodityChart'));
 
 interface LazyChartProps {
   name: string;
@@ -68,14 +68,14 @@ const LazyChart: React.FC<LazyChartProps> = ({
   return (
     <div ref={elementRef as React.RefObject<HTMLDivElement>} className={className}>
       {isIntersecting ? (
-        <Suspense fallback={<ChartSkeleton />}>
+        <React.Suspense fallback={<ChartSkeleton />}>
           <CommodityChart
             name={name}
             basePrice={basePrice}
             selectedContract={selectedContract}
             contractData={contractData}
           />
-        </Suspense>
+        </React.Suspense>
       ) : (
         <ChartSkeleton />
       )}

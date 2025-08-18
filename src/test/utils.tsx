@@ -2,7 +2,7 @@ import { render } from '@testing-library/react'
 import { screen } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
 import { vi } from 'vitest'
-import React, { ReactElement } from 'react'
+import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -24,7 +24,7 @@ export const createTestQueryClient = () => {
 
 // Custom render with providers
 export const renderWithProviders = (
-  ui: ReactElement,
+  ui: React.ReactElement,
   options: {
     queryClient?: QueryClient
     initialEntries?: string[]

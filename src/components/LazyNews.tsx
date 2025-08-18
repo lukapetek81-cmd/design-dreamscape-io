@@ -1,10 +1,10 @@
-import React, { lazy, Suspense } from 'react';
+import React from 'react';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 import { Skeleton } from '@/components/ui/enhanced-skeleton';
 import { Card } from '@/components/ui/card';
 import { Newspaper } from 'lucide-react';
 
-const CommodityNews = lazy(() => import('./CommodityNews'));
+const CommodityNews = React.lazy(() => import('./CommodityNews'));
 
 interface LazyNewsProps {
   commodity: string;
@@ -54,9 +54,9 @@ const LazyNews: React.FC<LazyNewsProps> = ({ commodity, className = '' }) => {
   return (
     <div ref={elementRef as React.RefObject<HTMLDivElement>} className={className}>
       {isIntersecting ? (
-        <Suspense fallback={<NewsSkeleton />}>
+        <React.Suspense fallback={<NewsSkeleton />}>
           <CommodityNews commodity={commodity} />
-        </Suspense>
+        </React.Suspense>
       ) : (
         <NewsSkeleton />
       )}
