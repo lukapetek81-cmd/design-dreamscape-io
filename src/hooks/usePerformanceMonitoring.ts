@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React from 'react';
 import { monitoringService } from '@/services/monitoringService';
 
 interface PerformanceMonitoringOptions {

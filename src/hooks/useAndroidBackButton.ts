@@ -1,11 +1,11 @@
-import { useEffect } from 'react';
+import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 export const useAndroidBackButton = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
+  React.useEffect(() => {
     console.log('🚀 Setting up Android back button with priority handling...');
     
     // Method 1: Using document event listener with priority

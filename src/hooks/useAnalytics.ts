@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { monitoringService } from '@/services/monitoringService';
 
@@ -6,7 +6,7 @@ export function useAnalytics() {
   const location = useLocation();
 
   // Track page views
-  useEffect(() => {
+  React.useEffect(() => {
     monitoringService.trackUserEvent('page_view', {
       path: location.pathname,
       search: location.search,
@@ -16,7 +16,7 @@ export function useAnalytics() {
   }, [location]);
 
   // Track user interactions
-  const trackClick = useCallback((element: string, context?: Record<string, any>) => {
+  const trackClick = React.useCallback((element: string, context?: Record<string, any>) => {
     monitoringService.trackUserEvent('click', {
       element,
       path: location.pathname,
@@ -24,7 +24,7 @@ export function useAnalytics() {
     });
   }, [location.pathname]);
 
-  const trackFormSubmit = useCallback((formName: string, success: boolean, context?: Record<string, any>) => {
+  const trackFormSubmit = React.useCallback((formName: string, success: boolean, context?: Record<string, any>) => {
     monitoringService.trackUserEvent('form_submit', {
       formName,
       success,
@@ -33,7 +33,7 @@ export function useAnalytics() {
     });
   }, [location.pathname]);
 
-  const trackSearch = useCallback((query: string, results?: number, context?: Record<string, any>) => {
+  const trackSearch = React.useCallback((query: string, results?: number, context?: Record<string, any>) => {
     monitoringService.trackUserEvent('search', {
       query,
       results,
@@ -42,7 +42,7 @@ export function useAnalytics() {
     });
   }, [location.pathname]);
 
-  const trackFeatureUsage = useCallback((feature: string, context?: Record<string, any>) => {
+  const trackFeatureUsage = React.useCallback((feature: string, context?: Record<string, any>) => {
     monitoringService.trackUserEvent('feature_usage', {
       feature,
       path: location.pathname,
@@ -50,7 +50,7 @@ export function useAnalytics() {
     });
   }, [location.pathname]);
 
-  const trackError = useCallback((error: string | Error, context?: Record<string, any>) => {
+  const trackError = React.useCallback((error: string | Error, context?: Record<string, any>) => {
     const errorMessage = typeof error === 'string' ? error : error.message;
     const stack = typeof error === 'object' ? error.stack : undefined;
     
@@ -65,14 +65,14 @@ export function useAnalytics() {
     });
   }, [location.pathname]);
 
-  const trackTiming = useCallback((name: string, duration: number, context?: Record<string, any>) => {
+  const trackTiming = React.useCallback((name: string, duration: number, context?: Record<string, any>) => {
     monitoringService.reportPerformance(name, duration, 'ms', {
       path: location.pathname,
       ...context
     });
   }, [location.pathname]);
 
-  const trackCustomEvent = useCallback((event: string, properties?: Record<string, any>) => {
+  const trackCustomEvent = React.useCallback((event: string, properties?: Record<string, any>) => {
     monitoringService.trackUserEvent(event, {
       path: location.pathname,
       ...properties

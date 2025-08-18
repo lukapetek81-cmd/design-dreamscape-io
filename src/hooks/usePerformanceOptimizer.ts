@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useMemo } from 'react';
+import React from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface PerformanceConfig {

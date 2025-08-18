@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { TrendingUp, Zap, BarChart3, Coins } from 'lucide-react';
 
 interface SplashScreenProps {
@@ -7,7 +7,7 @@ interface SplashScreenProps {
 }
 
 const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete, isVisible }) => {
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = React.useState(0);
   
   const steps = [
     { icon: TrendingUp, text: "Loading Markets", color: "text-blue-500" },
@@ -16,7 +16,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete, isVisible }) =>
     { icon: Zap, text: "Ready to Trade", color: "text-purple-500" },
   ];
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!isVisible) return;
 
     const timer = setInterval(() => {

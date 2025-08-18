@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { CommodityPrice } from './useCommodityData';
 import { supabase } from '@/integrations/supabase/client';
