@@ -13,11 +13,11 @@ interface SecurityCheck {
 }
 
 export const SecurityStatus: React.FC = () => {
-  const [securityChecks, setSecurityChecks] = useState<SecurityCheck[]>([]);
-  const [isVisible, setIsVisible] = useState(false);
+  const [securityChecks, setSecurityChecks] = React.useState<SecurityCheck[]>([]);
+  const [isVisible, setIsVisible] = React.useState(false);
   const { isSecure, csrfToken } = useSecurityContext();
 
-  useEffect(() => {
+  React.useEffect(() => {
     const checks: SecurityCheck[] = [
       {
         name: 'HTTPS Connection',

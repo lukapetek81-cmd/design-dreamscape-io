@@ -61,9 +61,9 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   onLoad,
   onError,
 }) => {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [isError, setIsError] = useState(false);
-  const [currentSrc, setCurrentSrc] = useState<string | null>(priority ? src : null);
+  const [isLoaded, setIsLoaded] = React.useState(false);
+  const [isError, setIsError] = React.useState(false);
+  const [currentSrc, setCurrentSrc] = React.useState<string | null>(priority ? src : null);
 
   const { elementRef, isIntersecting } = useIntersectionObserver({
     rootMargin: '50px',
@@ -72,18 +72,18 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   });
 
   // Load image when in viewport or if priority
-  useEffect(() => {
+  React.useEffect(() => {
     if ((isIntersecting || priority) && !currentSrc && !isError) {
       setCurrentSrc(getOptimizedImageUrl(src, quality, supportsWebP ? 'webp' : undefined));
     }
   }, [isIntersecting, priority, src, quality, currentSrc, isError]);
 
-  const handleLoad = useCallback(() => {
+  const handleLoad = React.useCallback(() => {
     setIsLoaded(true);
     onLoad?.();
   }, [onLoad]);
 
-  const handleError = useCallback(() => {
+  const handleError = React.useCallback(() => {
     setIsError(true);
     onError?.();
   }, [onError]);
@@ -158,14 +158,14 @@ export const ProgressiveImage: React.FC<OptimizedImageProps & {
   onError,
   ...props
 }) => {
-  const [lowQualityLoaded, setLowQualityLoaded] = useState(false);
-  const [highQualityLoaded, setHighQualityLoaded] = useState(false);
+  const [lowQualityLoaded, setLowQualityLoaded] = React.useState(false);
+  const [highQualityLoaded, setHighQualityLoaded] = React.useState(false);
 
-  const handleLowQualityLoad = useCallback(() => {
+  const handleLowQualityLoad = React.useCallback(() => {
     setLowQualityLoaded(true);
   }, []);
 
-  const handleHighQualityLoad = useCallback(() => {
+  const handleHighQualityLoad = React.useCallback(() => {
     setHighQualityLoaded(true);
     onLoad?.();
   }, [onLoad]);

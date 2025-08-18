@@ -12,13 +12,13 @@ interface GlobalRealtimeDataHook {
 
 export const useGlobalRealtimeData = (commodities: string[]): GlobalRealtimeDataHook => {
   const { user, profile } = useAuth();
-  const [prices, setPrices] = useState<Record<string, CommodityPrice>>({});
-  const [connected, setConnected] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const reconnectAttempts = useRef(0);
+  const [prices, setPrices] = React.useState<Record<string, CommodityPrice>>({});
+  const [connected, setConnected] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [lastUpdate, setLastUpdate] = React.useState<Date | null>(null);
+  const wsRef = React.useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const reconnectAttempts = React.useRef(0);
 
   const isPremium = profile?.subscription_active && 
     (profile?.subscription_tier === 'premium' || profile?.subscription_tier === 'pro');
@@ -116,7 +116,7 @@ export const useGlobalRealtimeData = (commodities: string[]): GlobalRealtimeData
     }
   }, [user, isPremium, commodities.join(',')]); // Use string instead of array to prevent infinite re-renders
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (isPremium && commodities.length > 0) {
       connect();
     } else {
@@ -140,7 +140,7 @@ export const useGlobalRealtimeData = (commodities: string[]): GlobalRealtimeData
   }, [connect]);
 
   // Cleanup on unmount
-  useEffect(() => {
+  React.useEffect(() => {
     return () => {
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);

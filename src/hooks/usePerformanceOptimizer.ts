@@ -19,12 +19,12 @@ export const usePerformanceOptimizer = (config: PerformanceConfig = {}) => {
   } = config;
 
   const isMobile = useIsMobile();
-  const debounceTimeoutRef = useRef<NodeJS.Timeout>();
-  const throttleTimeoutRef = useRef<NodeJS.Timeout>();
-  const lastExecRef = useRef<number>(0);
+  const debounceTimeoutRef = React.useRef<NodeJS.Timeout>();
+  const throttleTimeoutRef = React.useRef<NodeJS.Timeout>();
+  const lastExecRef = React.useRef<number>(0);
 
   // Debounce function
-  const debounce = useCallback((func: (...args: any[]) => void, delay: number = debounceDelay) => {
+  const debounce = React.useCallback((func: (...args: any[]) => void, delay: number = debounceDelay) => {
     return (...args: any[]) => {
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
@@ -34,7 +34,7 @@ export const usePerformanceOptimizer = (config: PerformanceConfig = {}) => {
   }, [debounceDelay]);
 
   // Throttle function
-  const throttle = useCallback((func: (...args: any[]) => void, delay: number = throttleDelay) => {
+  const throttle = React.useCallback((func: (...args: any[]) => void, delay: number = throttleDelay) => {
     return (...args: any[]) => {
       const now = Date.now();
       if (now - lastExecRef.current > delay) {
@@ -51,7 +51,7 @@ export const usePerformanceOptimizer = (config: PerformanceConfig = {}) => {
   }, [throttleDelay]);
 
   // Optimize for mobile performance
-  const mobileOptimizations = useMemo(() => ({
+  const mobileOptimizations = React.useMemo(() => ({
     // Reduce animation complexity on mobile
     reduceMotion: isMobile,
     // Use smaller image sizes on mobile
@@ -63,7 +63,7 @@ export const usePerformanceOptimizer = (config: PerformanceConfig = {}) => {
   }), [isMobile]);
 
   // Performance monitoring
-  const measurePerformance = useCallback((name: string, fn: () => void) => {
+  const measurePerformance = React.useCallback((name: string, fn: () => void) => {
     if (typeof performance !== 'undefined' && performance.mark) {
       performance.mark(`${name}-start`);
       fn();
@@ -75,7 +75,7 @@ export const usePerformanceOptimizer = (config: PerformanceConfig = {}) => {
   }, []);
 
   // Batch DOM updates
-  const batchUpdates = useCallback((updates: (() => void)[]) => {
+  const batchUpdates = React.useCallback((updates: (() => void)[]) => {
     if (typeof requestAnimationFrame !== 'undefined') {
       requestAnimationFrame(() => {
         updates.forEach(update => update());
@@ -86,7 +86,7 @@ export const usePerformanceOptimizer = (config: PerformanceConfig = {}) => {
   }, []);
 
   // Memory management
-  const cleanupRefs = useCallback(() => {
+  const cleanupRefs = React.useCallback(() => {
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
     }
@@ -96,18 +96,18 @@ export const usePerformanceOptimizer = (config: PerformanceConfig = {}) => {
   }, []);
 
   // Cleanup on unmount
-  useEffect(() => {
+  React.useEffect(() => {
     return cleanupRefs;
   }, [cleanupRefs]);
 
   // Intersection observer options optimized for performance
-  const intersectionOptions = useMemo(() => ({
+  const intersectionOptions = React.useMemo(() => ({
     rootMargin: isMobile ? '50px' : '100px',
     threshold: isMobile ? 0.05 : 0.1,
   }), [isMobile]);
 
   // Image loading strategy
-  const imageLoadingStrategy = useMemo(() => ({
+  const imageLoadingStrategy = React.useMemo(() => ({
     loading: enableImageLazyLoading ? 'lazy' as const : 'eager' as const,
     decoding: 'async' as const,
     fetchPriority: 'low' as const,

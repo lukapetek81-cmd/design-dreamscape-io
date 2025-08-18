@@ -33,7 +33,7 @@ export const useCacheOptimization = (options: PerformanceOptions = {}) => {
   const isMobile = useIsMobile();
 
   // Cache metrics calculation
-  const getCacheMetrics = useCallback((): CacheMetrics => {
+  const getCacheMetrics = React.useCallback((): CacheMetrics => {
     const cache = queryClient.getQueryCache();
     const queries = cache.getAll();
     
@@ -62,7 +62,7 @@ export const useCacheOptimization = (options: PerformanceOptions = {}) => {
   }, [queryClient]);
 
   // Automatic cache cleanup
-  const performCacheCleanup = useCallback(async () => {
+  const performCacheCleanup = React.useCallback(async () => {
     const metrics = getCacheMetrics();
     
     // Clean up if cache is too large
@@ -95,7 +95,7 @@ export const useCacheOptimization = (options: PerformanceOptions = {}) => {
   }, [queryClient, maxCacheSize, getCacheMetrics]);
 
   // Predictive prefetching based on user behavior
-  const predictivePrefetch = useCallback(async (commodityName: string) => {
+  const predictivePrefetch = React.useCallback(async (commodityName: string) => {
     if (!enablePredictivePrefetch || !isOnline) return;
 
     // Prefetch related timeframes when user views a commodity
@@ -124,7 +124,7 @@ export const useCacheOptimization = (options: PerformanceOptions = {}) => {
   }, [queryClient, enablePredictivePrefetch, isOnline]);
 
   // Optimize query settings based on device and connection
-  const getOptimizedQuerySettings = useCallback((queryType: 'price' | 'historical' | 'news') => {
+  const getOptimizedQuerySettings = React.useCallback((queryType: 'price' | 'historical' | 'news') => {
     const baseSettings = {
       price: {
         staleTime: isMobile ? 2 * 60 * 1000 : 1 * 60 * 1000, // 2min mobile, 1min desktop
@@ -147,7 +147,7 @@ export const useCacheOptimization = (options: PerformanceOptions = {}) => {
   }, [isMobile, isOnline]);
 
   // Set up automatic cleanup interval
-  useEffect(() => {
+  React.useEffect(() => {
     if (!enableAutomaticCleanup) return;
 
     const cleanupInterval = setInterval(() => {
@@ -167,7 +167,7 @@ export const useCacheOptimization = (options: PerformanceOptions = {}) => {
   });
 
   // Manual cache optimization trigger
-  const optimizeCache = useCallback(async () => {
+  const optimizeCache = React.useCallback(async () => {
     await performCacheCleanup();
     
     // Reset failed queries

@@ -36,13 +36,13 @@ export const useSecurity = (config: SecurityConfig = {}): SecurityHook => {
     sessionTimeoutMinutes = 30
   } = config;
 
-  const [csrfToken, setCsrfToken] = useState<string>('');
-  const [isSessionActive, setIsSessionActive] = useState(true);
-  const [sessionManager, setSessionManager] = useState<SessionManager | null>(null);
+  const [csrfToken, setCsrfToken] = React.useState<string>('');
+  const [isSessionActive, setIsSessionActive] = React.useState(true);
+  const [sessionManager, setSessionManager] = React.useState<SessionManager | null>(null);
   const { toast } = useToast();
 
   // Initialize CSRF token
-  useEffect(() => {
+  React.useEffect(() => {
     if (enableCsrfProtection) {
       let token = getCsrfToken();
       if (!token) {
@@ -54,7 +54,7 @@ export const useSecurity = (config: SecurityConfig = {}): SecurityHook => {
   }, [enableCsrfProtection]);
 
   // Initialize session manager
-  useEffect(() => {
+  React.useEffect(() => {
     const manager = new SessionManager(
       sessionTimeoutMinutes,
       () => {
@@ -73,7 +73,7 @@ export const useSecurity = (config: SecurityConfig = {}): SecurityHook => {
     };
   }, [sessionTimeoutMinutes, toast]);
 
-  const checkRateLimit = useCallback((
+  const checkRateLimit = React.useCallback((
     type: 'api' | 'auth' | 'upload', 
     identifier: string = 'default'
   ): boolean => {
@@ -116,7 +116,7 @@ export const useSecurity = (config: SecurityConfig = {}): SecurityHook => {
     return true;
   }, [enableRateLimit, toast]);
 
-  const validateCsrf = useCallback((token: string): boolean => {
+  const validateCsrf = React.useCallback((token: string): boolean => {
     if (!enableCsrfProtection) return true;
     
     const isValid = validateCsrfToken(token);
@@ -130,7 +130,7 @@ export const useSecurity = (config: SecurityConfig = {}): SecurityHook => {
     return isValid;
   }, [enableCsrfProtection, toast]);
 
-  const refreshCsrfToken = useCallback(() => {
+  const refreshCsrfToken = React.useCallback(() => {
     if (enableCsrfProtection) {
       const newToken = generateCsrfToken();
       storeCsrfToken(newToken);
@@ -138,7 +138,7 @@ export const useSecurity = (config: SecurityConfig = {}): SecurityHook => {
     }
   }, [enableCsrfProtection]);
 
-  const validateInput = useCallback((
+  const validateInput = React.useCallback((
     type: string,
     value: any
   ): { isValid: boolean; error?: string; value?: any } => {
@@ -155,14 +155,14 @@ export const useSecurity = (config: SecurityConfig = {}): SecurityHook => {
     }
   }, []);
 
-  const getSecurityHeaders = useCallback(() => ({
+  const getSecurityHeaders = React.useCallback(() => ({
     'X-CSRF-Token': csrfToken,
     'X-Requested-With': 'XMLHttpRequest',
     'X-Frame-Options': 'DENY',
     'X-Content-Type-Options': 'nosniff'
   }), [csrfToken]);
 
-  const extendSession = useCallback(() => {
+  const extendSession = React.useCallback(() => {
     if (sessionManager && isSessionActive) {
       setIsSessionActive(true);
     }
@@ -187,7 +187,7 @@ export const withSecurity = (
   return (props: any) => {
     const security = useSecurity(securityConfig);
     
-    useEffect(() => {
+    React.useEffect(() => {
       security.extendSession();
     }, [security]);
 

@@ -7,18 +7,18 @@ interface FocusOptions {
 }
 
 export const useFocusManagement = () => {
-  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const previousFocusRef = React.useRef<HTMLElement | null>(null);
   const location = useLocation();
 
   // Store the previously focused element
-  const storePreviousFocus = useCallback(() => {
+  const storePreviousFocus = React.useCallback(() => {
     if (document.activeElement && document.activeElement !== document.body) {
       previousFocusRef.current = document.activeElement as HTMLElement;
     }
   }, []);
 
   // Restore focus to the previously focused element
-  const restorePreviousFocus = useCallback((options: FocusOptions = {}) => {
+  const restorePreviousFocus = React.useCallback((options: FocusOptions = {}) => {
     if (previousFocusRef.current && options.restoreFocus !== false) {
       previousFocusRef.current.focus({ 
         preventScroll: options.preventScroll 
@@ -27,7 +27,7 @@ export const useFocusManagement = () => {
   }, []);
 
   // Focus the first focusable element in a container
-  const focusFirst = useCallback((container?: HTMLElement | null, options: FocusOptions = {}) => {
+  const focusFirst = React.useCallback((container?: HTMLElement | null, options: FocusOptions = {}) => {
     const focusableElements = getFocusableElements(container || document.body);
     if (focusableElements.length > 0) {
       focusableElements[0].focus({ 
@@ -37,7 +37,7 @@ export const useFocusManagement = () => {
   }, []);
 
   // Focus the last focusable element in a container
-  const focusLast = useCallback((container?: HTMLElement | null, options: FocusOptions = {}) => {
+  const focusLast = React.useCallback((container?: HTMLElement | null, options: FocusOptions = {}) => {
     const focusableElements = getFocusableElements(container || document.body);
     if (focusableElements.length > 0) {
       focusableElements[focusableElements.length - 1].focus({ 
@@ -47,7 +47,7 @@ export const useFocusManagement = () => {
   }, []);
 
   // Focus an element by selector or element reference
-  const focusElement = useCallback((target: string | HTMLElement | null, options: FocusOptions = {}) => {
+  const focusElement = React.useCallback((target: string | HTMLElement | null, options: FocusOptions = {}) => {
     let element: HTMLElement | null = null;
     
     if (typeof target === 'string') {
@@ -64,7 +64,7 @@ export const useFocusManagement = () => {
   }, []);
 
   // Trap focus within a container (useful for modals, dialogs)
-  const trapFocus = useCallback((container: HTMLElement) => {
+  const trapFocus = React.useCallback((container: HTMLElement) => {
     const focusableElements = getFocusableElements(container);
     
     if (focusableElements.length === 0) return;
@@ -102,7 +102,7 @@ export const useFocusManagement = () => {
   }, []);
 
   // Handle focus on route changes
-  useEffect(() => {
+  React.useEffect(() => {
     // Focus the main content area or first heading on route change
     const mainContent = document.querySelector('main') || 
                        document.querySelector('[role="main"]') || 
@@ -118,7 +118,7 @@ export const useFocusManagement = () => {
   }, [location.pathname]);
 
   // Skip link functionality
-  const createSkipLink = useCallback((targetSelector: string, text: string = 'Skip to main content') => {
+  const createSkipLink = React.useCallback((targetSelector: string, text: string = 'Skip to main content') => {
     let skipLink = document.querySelector('#skip-link') as HTMLAnchorElement;
     
     if (!skipLink) {
