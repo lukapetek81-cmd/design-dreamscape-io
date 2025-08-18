@@ -15,7 +15,7 @@ export const useQueryInvalidation = () => {
   const isMobile = useIsMobile();
 
   // Invalidate commodity-related queries
-  const invalidateCommodityQueries = useCallback(async (
+  const invalidateCommodityQueries = React.useCallback(async (
     commodityName?: string,
     options: QueryInvalidationOptions = {}
   ) => {
@@ -34,7 +34,7 @@ export const useQueryInvalidation = () => {
   }, [queryClient, isOnline]);
 
   // Invalidate news queries
-  const invalidateNewsQueries = useCallback(async (
+  const invalidateNewsQueries = React.useCallback(async (
     commodityName?: string,
     options: QueryInvalidationOptions = {}
   ) => {
@@ -47,7 +47,7 @@ export const useQueryInvalidation = () => {
   }, [queryClient, isOnline]);
 
   // Invalidate portfolio queries
-  const invalidatePortfolioQueries = useCallback(async (
+  const invalidatePortfolioQueries = React.useCallback(async (
     options: QueryInvalidationOptions = {}
   ) => {
     const { refetchActive = true } = options;
@@ -59,7 +59,7 @@ export const useQueryInvalidation = () => {
   }, [queryClient, isOnline]);
 
   // Smart refresh - optimized for mobile/offline conditions
-  const smartRefresh = useCallback(async () => {
+  const smartRefresh = React.useCallback(async () => {
     if (!isOnline) {
       console.log('Skipping refresh - offline');
       return;
@@ -88,7 +88,7 @@ export const useQueryInvalidation = () => {
   }, [queryClient, isOnline, isMobile, invalidateCommodityQueries, invalidatePortfolioQueries, invalidateNewsQueries]);
 
   // Prefetch important queries
-  const prefetchCommodityData = useCallback(async (commodityName: string) => {
+  const prefetchCommodityData = React.useCallback(async (commodityName: string) => {
     if (!isOnline) return;
 
     // Prefetch price data
@@ -107,7 +107,7 @@ export const useQueryInvalidation = () => {
   }, [queryClient, isOnline]);
 
   // Clear cache selectively
-  const clearCache = useCallback(async (type?: 'all' | 'commodity' | 'news' | 'portfolio') => {
+  const clearCache = React.useCallback(async (type?: 'all' | 'commodity' | 'news' | 'portfolio') => {
     switch (type) {
       case 'commodity':
         queryClient.removeQueries({
@@ -137,7 +137,7 @@ export const useQueryInvalidation = () => {
   }, [queryClient]);
 
   // Get cache statistics
-  const getCacheStats = useCallback(() => {
+  const getCacheStats = React.useCallback(() => {
     const cache = queryClient.getQueryCache();
     const queries = cache.getAll();
     

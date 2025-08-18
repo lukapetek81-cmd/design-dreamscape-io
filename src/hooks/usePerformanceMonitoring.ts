@@ -16,13 +16,13 @@ export function usePerformanceMonitoring(options: PerformanceMonitoringOptions =
     componentName = 'UnnamedComponent'
   } = options;
 
-  const mountStartTime = useRef<number>();
-  const renderStartTime = useRef<number>();
-  const updateCount = useRef(0);
-  const renderCount = useRef(0);
+  const mountStartTime = React.useRef<number>();
+  const renderStartTime = React.useRef<number>();
+  const updateCount = React.useRef(0);
+  const renderCount = React.useRef(0);
 
   // Track component mount time
-  useEffect(() => {
+  React.useEffect(() => {
     if (trackMounts) {
       const mountTime = Date.now() - (mountStartTime.current || Date.now());
       monitoringService.reportPerformance(`component_mount_${componentName}`, mountTime, 'ms');
@@ -44,7 +44,7 @@ export function usePerformanceMonitoring(options: PerformanceMonitoringOptions =
   }, [trackMounts, componentName]);
 
   // Track renders
-  useEffect(() => {
+  React.useEffect(() => {
     if (trackRenders) {
       renderCount.current += 1;
       
@@ -56,7 +56,7 @@ export function usePerformanceMonitoring(options: PerformanceMonitoringOptions =
   });
 
   // Track updates
-  useEffect(() => {
+  React.useEffect(() => {
     if (trackUpdates && renderCount.current > 1) {
       updateCount.current += 1;
       
@@ -68,14 +68,14 @@ export function usePerformanceMonitoring(options: PerformanceMonitoringOptions =
   });
 
   // Start render timing
-  const startRenderTiming = useCallback(() => {
+  const startRenderTiming = React.useCallback(() => {
     if (trackRenders) {
       renderStartTime.current = performance.now();
     }
   }, [trackRenders]);
 
   // Mark mount start
-  useEffect(() => {
+  React.useEffect(() => {
     mountStartTime.current = Date.now();
   }, []);
 
