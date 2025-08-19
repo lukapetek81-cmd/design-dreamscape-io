@@ -1,45 +1,45 @@
-import { lazy } from 'react';
+import React from 'react';
 
 // Route-based code splitting
 export const LazyRoutes = {
-  Dashboard: lazy(() => import('@/pages/Dashboard')),
-  Portfolio: lazy(() => import('@/pages/Portfolio')),
-  MarketScreener: lazy(() => import('@/pages/MarketScreener')),
-  MarketSentiment: lazy(() => import('@/pages/MarketSentiment')),
-  MarketCorrelation: lazy(() => import('@/pages/MarketCorrelation')),
-  PriceComparison: lazy(() => import('@/pages/PriceComparison')),
-  EconomicCalendar: lazy(() => import('@/pages/EconomicCalendar')),
-  ExpertInsights: lazy(() => import('@/pages/ExpertInsights')),
-  LearningHub: lazy(() => import('@/pages/LearningHub')),
-  TradingCommunity: lazy(() => import('@/pages/TradingCommunity')),
-  RiskCalculator: lazy(() => import('@/pages/RiskCalculator')),
-  Watchlists: lazy(() => import('@/pages/Watchlists')),
-  Favorites: lazy(() => import('@/pages/Favorites')),
-  MarketStatus: lazy(() => import('@/pages/MarketStatus')),
-  RecentActivity: lazy(() => import('@/pages/RecentActivity')),
-  APIComparison: lazy(() => import('@/pages/APIComparison')),
-  Billing: lazy(() => import('@/pages/Billing')),
-  Auth: lazy(() => import('@/pages/Auth')),
-  ResetPassword: lazy(() => import('@/pages/ResetPassword')),
-  NotFound: lazy(() => import('@/pages/NotFound')),
-  NewsSettings: lazy(() => import('@/pages/NewsSettings')),
+  Dashboard: React.lazy(() => import('@/pages/Dashboard')),
+  Portfolio: React.lazy(() => import('@/pages/Portfolio')),
+  MarketScreener: React.lazy(() => import('@/pages/MarketScreener')),
+  MarketSentiment: React.lazy(() => import('@/pages/MarketSentiment')),
+  MarketCorrelation: React.lazy(() => import('@/pages/MarketCorrelation')),
+  PriceComparison: React.lazy(() => import('@/pages/PriceComparison')),
+  EconomicCalendar: React.lazy(() => import('@/pages/EconomicCalendar')),
+  ExpertInsights: React.lazy(() => import('@/pages/ExpertInsights')),
+  LearningHub: React.lazy(() => import('@/pages/LearningHub')),
+  TradingCommunity: React.lazy(() => import('@/pages/TradingCommunity')),
+  RiskCalculator: React.lazy(() => import('@/pages/RiskCalculator')),
+  Watchlists: React.lazy(() => import('@/pages/Watchlists')),
+  Favorites: React.lazy(() => import('@/pages/Favorites')),
+  MarketStatus: React.lazy(() => import('@/pages/MarketStatus')),
+  RecentActivity: React.lazy(() => import('@/pages/RecentActivity')),
+  APIComparison: React.lazy(() => import('@/pages/APIComparison')),
+  Billing: React.lazy(() => import('@/pages/Billing')),
+  Auth: React.lazy(() => import('@/pages/Auth')),
+  ResetPassword: React.lazy(() => import('@/pages/ResetPassword')),
+  NotFound: React.lazy(() => import('@/pages/NotFound')),
+  NewsSettings: React.lazy(() => import('@/pages/NewsSettings')),
 };
 
 // Component-based code splitting for heavy components
 export const LazyComponents = {
-  CandlestickChart: lazy(() => import('@/components/CandlestickChart')),
-  CommodityChart: lazy(() => import('@/components/CommodityChart')),
-  CommodityNews: lazy(() => import('@/components/CommodityNews')),
-  VirtualizedCommodityList: lazy(() => import('@/components/VirtualizedCommodityList')),
-  CustomerPortal: lazy(() => import('@/components/CustomerPortal')),
-  UserProfile: lazy(() => import('@/components/UserProfile')),
-  ApiSettings: lazy(() => import('@/components/ApiSettings')),
+  CandlestickChart: React.lazy(() => import('@/components/CandlestickChart')),
+  CommodityChart: React.lazy(() => import('@/components/CommodityChart')),
+  CommodityNews: React.lazy(() => import('@/components/CommodityNews')),
+  VirtualizedCommodityList: React.lazy(() => import('@/components/VirtualizedCommodityList')),
+  CustomerPortal: React.lazy(() => import('@/components/CustomerPortal')),
+  UserProfile: React.lazy(() => import('@/components/UserProfile')),
+  ApiSettings: React.lazy(() => import('@/components/ApiSettings')),
 };
 
 // Feature-based splitting for specific functionality
 export const LazyFeatures = {
-  LazyChart: lazy(() => import('@/components/LazyChart')),
-  LazyNews: lazy(() => import('@/components/LazyNews')),
+  LazyChart: React.lazy(() => import('@/components/LazyChart')),
+  LazyNews: React.lazy(() => import('@/components/LazyNews')),
 };
 
 // Utility function for dynamic imports with error handling
