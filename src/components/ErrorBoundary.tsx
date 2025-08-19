@@ -137,13 +137,13 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
 // HOC for wrapping components with error boundary
 export function withErrorBoundary<P extends object>(
-  Component: React.ComponentType<P>,
+  WrappedComponent: React.ComponentType<P>,
   fallback?: React.ReactNode
 ) {
-  return function WrappedComponent(props: P) {
+  return function WithErrorBoundaryComponent(props: P) {
     return (
       <ErrorBoundary fallback={fallback}>
-        <Component {...props} />
+        {React.createElement(WrappedComponent, props)}
       </ErrorBoundary>
     );
   };
