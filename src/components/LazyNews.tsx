@@ -1,4 +1,5 @@
 import React from 'react';
+// Force rebuild to fix lazy import issue
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 import { Skeleton } from '@/components/ui/enhanced-skeleton';
 import { Card } from '@/components/ui/card';
