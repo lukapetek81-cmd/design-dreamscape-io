@@ -1,4 +1,5 @@
 import React from 'react';
+// Fixed Component reference errors
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
