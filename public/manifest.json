@@ -9,37 +9,37 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/icon.png",
+      "src": "/lovable-uploads/9c1e04f7-a6bb-4b14-bb88-3b5fdc39b16a",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon.png",
+      "src": "/lovable-uploads/9c1e04f7-a6bb-4b14-bb88-3b5fdc39b16a",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon.png",
+      "src": "/lovable-uploads/9c1e04f7-a6bb-4b14-bb88-3b5fdc39b16a",
       "type": "image/png",
       "sizes": "144x144",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon.png",
+      "src": "/lovable-uploads/9c1e04f7-a6bb-4b14-bb88-3b5fdc39b16a",
       "type": "image/png",
       "sizes": "96x96",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon.png",
+      "src": "/lovable-uploads/9c1e04f7-a6bb-4b14-bb88-3b5fdc39b16a",
       "type": "image/png",
       "sizes": "72x72",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon.png",
+      "src": "/lovable-uploads/9c1e04f7-a6bb-4b14-bb88-3b5fdc39b16a",
       "type": "image/png",
       "sizes": "48x48",
       "purpose": "any maskable"
@@ -48,7 +48,7 @@
   "categories": ["finance", "business", "productivity"],
   "screenshots": [
     {
-      "src": "/icon.png",
+      "src": "/lovable-uploads/9c1e04f7-a6bb-4b14-bb88-3b5fdc39b16a",
       "type": "image/png",
       "sizes": "512x512",
       "form_factor": "wide"
