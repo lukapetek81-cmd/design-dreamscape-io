@@ -1,17 +1,23 @@
 // Service Worker for offline caching and performance
-const CACHE_NAME = 'commodity-hub-v1';
-const STATIC_CACHE = 'static-v1';
-const DYNAMIC_CACHE = 'dynamic-v1';
-const API_CACHE = 'api-v1';
+const CACHE_NAME = 'commodity-hub-v2';
+const STATIC_CACHE = 'static-v2';
+const DYNAMIC_CACHE = 'dynamic-v2';
+const API_CACHE = 'api-v2';
 
-// Assets to cache immediately
-const STATIC_ASSETS = [
+// Critical assets to cache immediately for faster app startup
+const CRITICAL_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/favicon.ico',
+  // Preload critical chunks for faster initial load
+  '/assets/index.css'
+];
+
+// Additional static assets to cache on first use
+const STATIC_ASSETS = [
   '/robots.txt',
-  // Add critical CSS and JS files
+  // Add other static assets as they're discovered
 ];
 
 // API endpoints to cache
@@ -31,20 +37,28 @@ const CACHE_STRATEGIES = {
   CACHE_ONLY: 'cache-only'
 };
 
-// Install event - cache static assets
+// Install event - cache critical assets immediately
 self.addEventListener('install', event => {
-  console.log('SW: Installing service worker');
+  console.log('SW: Installing service worker v2');
   
   event.waitUntil(
-    caches.open(STATIC_CACHE)
-      .then(cache => {
-        console.log('SW: Caching static assets');
-        return cache.addAll(STATIC_ASSETS);
-      })
-      .then(() => {
-        // Take control of all clients immediately
-        return self.skipWaiting();
-      })
+    Promise.all([
+      // Cache critical assets first for fastest startup
+      caches.open(STATIC_CACHE)
+        .then(cache => {
+          console.log('SW: Caching critical assets');
+          return cache.addAll(CRITICAL_ASSETS);
+        }),
+      // Preload additional static assets in background
+      caches.open(DYNAMIC_CACHE)
+        .then(cache => {
+          return cache.addAll(STATIC_ASSETS.slice(0, 5)); // Limit initial cache size
+        })
+    ])
+    .then(() => {
+      // Take control immediately for faster performance
+      return self.skipWaiting();
+    })
   );
 });
 
