@@ -60,7 +60,7 @@ const CommoditySidebar = React.memo(({ activeGroup, onGroupSelect, commodityCoun
       
       <SidebarContent 
         ref={contentRef}
-        className={`${isMobile ? 'p-4 bg-background' : 'p-2'} overflow-y-auto custom-scrollbar flex-1 min-h-0`}
+        className={`${isMobile ? 'bg-background' : ''} overflow-y-auto custom-scrollbar flex-1 min-h-0`}
         style={{ 
           maxHeight: isMobile ? 'calc(100vh - 160px)' : 'calc(100vh - 120px)',
           scrollBehavior: 'smooth'
@@ -77,13 +77,13 @@ const CommoditySidebar = React.memo(({ activeGroup, onGroupSelect, commodityCoun
         <MarketToolsList />
         
         {/* Upgrade Box Section - Always before footer */}
-        <div className="mt-8 mb-4">
+        <div className={`mt-8 mb-4 ${isMobile ? 'px-4' : 'px-2'}`}>
           <UpgradeBox />
         </div>
       </SidebarContent>
 
       {/* Theme Switcher - Always at bottom */}
-      <SidebarFooter className={`${isMobile ? 'p-4 bg-background' : 'p-2'} border-t`}>
+      <SidebarFooter className={`${isMobile ? 'px-4 py-4 bg-background' : 'p-2'} border-t`}>
         <ThemeSwitcher />
       </SidebarFooter>
     </Sidebar>

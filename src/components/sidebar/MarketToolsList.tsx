@@ -29,7 +29,7 @@ const MarketToolsList = () => {
         key={tool.id}
         className={`rounded-lg ${tool.color} border cursor-pointer transition-all duration-200 ${
           isMobile 
-            ? 'p-6 min-h-[72px] active:scale-95 touch-manipulation mx-2' 
+            ? 'p-6 min-h-[72px] active:scale-95 touch-manipulation' 
             : 'p-3'
         }`}
         onClick={() => handleNavigate(tool.path)}
@@ -49,32 +49,32 @@ const MarketToolsList = () => {
   return (
     <>
       <SidebarGroup className="mt-8">
-        <SidebarGroupLabel className={`font-bold text-muted-foreground uppercase tracking-wider ${isMobile ? 'text-sm px-6 py-4' : 'text-xs px-4 py-3'}`}>
+        <SidebarGroupLabel className={`font-bold text-muted-foreground uppercase tracking-wider ${isMobile ? 'text-sm px-4 py-4' : 'text-xs px-2 py-3'}`}>
           Market Tools
         </SidebarGroupLabel>
         <SidebarGroupContent>
-          <div className={`space-y-4 ${isMobile ? 'px-6 py-3' : 'px-4 py-3'}`}>
+          <div className={`space-y-4 ${isMobile ? 'px-4 py-3' : 'px-2 py-3'}`}>
             {MARKET_TOOLS.map(renderToolButton)}
           </div>
         </SidebarGroupContent>
       </SidebarGroup>
       
       <SidebarGroup className="mt-8">
-        <SidebarGroupLabel className={`font-bold text-muted-foreground uppercase tracking-wider ${isMobile ? 'text-sm px-6 py-4' : 'text-xs px-4 py-3'}`}>
+        <SidebarGroupLabel className={`font-bold text-muted-foreground uppercase tracking-wider ${isMobile ? 'text-sm px-4 py-4' : 'text-xs px-2 py-3'}`}>
           Community & Learning
         </SidebarGroupLabel>
         <SidebarGroupContent>
-          <div className={`space-y-4 ${isMobile ? 'px-6 py-3' : 'px-4 py-3'}`}>
+          <div className={`space-y-4 ${isMobile ? 'px-4 py-3' : 'px-2 py-3'}`}>
             {COMMUNITY_TOOLS.map(renderToolButton)}
           </div>
         </SidebarGroupContent>
       </SidebarGroup>
       <SidebarGroup className="mt-8">
-        <SidebarGroupLabel className={`font-bold text-muted-foreground uppercase tracking-wider ${isMobile ? 'text-sm px-6 py-4' : 'text-xs px-4 py-3'}`}>
+        <SidebarGroupLabel className={`font-bold text-muted-foreground uppercase tracking-wider ${isMobile ? 'text-sm px-4 py-4' : 'text-xs px-2 py-3'}`}>
           Activity & Tracking
         </SidebarGroupLabel>
         <SidebarGroupContent>
-          <div className={`space-y-4 ${isMobile ? 'px-6 py-3' : 'px-4 py-3'}`}>
+          <div className={`space-y-4 ${isMobile ? 'px-4 py-3' : 'px-2 py-3'}`}>
             {ACTIVITY_TOOLS.map(renderToolButton)}
           </div>
         </SidebarGroupContent>

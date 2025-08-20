@@ -43,11 +43,11 @@ const CommodityGroupsList = ({ activeGroup, onGroupSelect, commodityCounts }: Co
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel className={`font-bold text-muted-foreground uppercase tracking-wider ${isMobile ? 'text-sm px-6 py-4' : 'text-xs px-4 py-3'}`}>
+      <SidebarGroupLabel className={`font-bold text-muted-foreground uppercase tracking-wider ${isMobile ? 'text-sm px-4 py-4' : 'text-xs px-2 py-3'}`}>
         Commodity Groups
       </SidebarGroupLabel>
       <SidebarGroupContent>
-        <SidebarMenu className={`space-y-2 ${isMobile ? 'px-2' : ''}`}>
+        <SidebarMenu className={`space-y-2 ${isMobile ? 'px-4' : 'px-2'}`}>
           {COMMODITY_GROUPS.map((group) => {
             const Icon = group.icon;
             const isActive = activeGroup === group.id;

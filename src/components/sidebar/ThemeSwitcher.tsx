@@ -81,7 +81,7 @@ const ThemeSwitcher = () => {
 
   return (
     <SidebarGroup>
-      <SidebarGroupContent>
+      <SidebarGroupContent className={`${isMobile ? 'px-4' : 'px-2'}`}>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
