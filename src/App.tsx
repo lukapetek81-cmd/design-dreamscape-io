@@ -58,7 +58,6 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <SEOHead />
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <AppContent 
@@ -69,7 +68,6 @@ function App() {
           />
         </BrowserRouter>
       </QueryClientProvider>
-      <Toaster />
     </ErrorBoundary>
   );
 }
@@ -86,58 +84,62 @@ function AppContent({ activeGroup, setActiveGroup, commodityCounts, setCommodity
   }, []);
 
   return (
-    <AuthProvider>
-      <SecurityProvider>
-        <LoadingProvider>
-          <AccessibilityProvider>
-            <ToastProvider>
-              <RealtimeDataProvider>
-                <TooltipProvider>
-                  <SidebarProvider>
-                    <div className="min-h-screen flex w-full bg-background">
-                      <CommoditySidebar 
-                        activeGroup={activeGroup}
-                        onGroupSelect={setActiveGroup}
-                        commodityCounts={commodityCounts}
-                      />
-                      <main className="flex-1 overflow-hidden">
-                        <PullToRefresh onRefresh={handleRefresh}>
-                          <Routes>
-                            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                            <Route path="/dashboard" element={<Dashboard />} />
-                            <Route path="/auth" element={<Auth />} />
-                            <Route path="/reset-password" element={<ResetPassword />} />
-                            <Route path="/portfolio" element={<Portfolio />} />
-                            <Route path="/market-screener" element={<MarketScreener />} />
-                            <Route path="/economic-calendar" element={<EconomicCalendar />} />
-                            <Route path="/trading-community" element={<TradingCommunity />} />
-                            <Route path="/learning-hub" element={<LearningHub />} />
-                            <Route path="/expert-insights" element={<ExpertInsights />} />
-                            <Route path="/market-sentiment" element={<MarketSentiment />} />
-                            <Route path="/risk-calculator" element={<RiskCalculator />} />
-                            <Route path="/market-correlation" element={<MarketCorrelation />} />
-                            <Route path="/price-comparison" element={<PriceComparison />} />
-                            <Route path="/watchlists" element={<Watchlists />} />
-                            <Route path="/favorites" element={<Favorites />} />
-                            <Route path="/recent-activity" element={<RecentActivity />} />
-                            <Route path="/market-status" element={<MarketStatus />} />
-                            <Route path="/api-comparison" element={<APIComparison />} />
-                            <Route path="/billing" element={<Billing />} />
-                            <Route path="/news-settings" element={<NewsSettings />} />
-                            <Route path="*" element={<NotFound />} />
-                          </Routes>
-                        </PullToRefresh>
-                      </main>
-                    </div>
-                    <OfflineIndicator />
-                  </SidebarProvider>
-                </TooltipProvider>
-              </RealtimeDataProvider>
-            </ToastProvider>
-          </AccessibilityProvider>
-        </LoadingProvider>
-      </SecurityProvider>
-    </AuthProvider>
+    <>
+      <SEOHead />
+      <AuthProvider>
+        <SecurityProvider>
+          <LoadingProvider>
+            <AccessibilityProvider>
+              <ToastProvider>
+                <RealtimeDataProvider>
+                  <TooltipProvider>
+                    <SidebarProvider>
+                      <div className="min-h-screen flex w-full bg-background">
+                        <CommoditySidebar 
+                          activeGroup={activeGroup}
+                          onGroupSelect={setActiveGroup}
+                          commodityCounts={commodityCounts}
+                        />
+                        <main className="flex-1 overflow-hidden">
+                          <PullToRefresh onRefresh={handleRefresh}>
+                            <Routes>
+                              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                              <Route path="/dashboard" element={<Dashboard />} />
+                              <Route path="/auth" element={<Auth />} />
+                              <Route path="/reset-password" element={<ResetPassword />} />
+                              <Route path="/portfolio" element={<Portfolio />} />
+                              <Route path="/market-screener" element={<MarketScreener />} />
+                              <Route path="/economic-calendar" element={<EconomicCalendar />} />
+                              <Route path="/trading-community" element={<TradingCommunity />} />
+                              <Route path="/learning-hub" element={<LearningHub />} />
+                              <Route path="/expert-insights" element={<ExpertInsights />} />
+                              <Route path="/market-sentiment" element={<MarketSentiment />} />
+                              <Route path="/risk-calculator" element={<RiskCalculator />} />
+                              <Route path="/market-correlation" element={<MarketCorrelation />} />
+                              <Route path="/price-comparison" element={<PriceComparison />} />
+                              <Route path="/watchlists" element={<Watchlists />} />
+                              <Route path="/favorites" element={<Favorites />} />
+                              <Route path="/recent-activity" element={<RecentActivity />} />
+                              <Route path="/market-status" element={<MarketStatus />} />
+                              <Route path="/api-comparison" element={<APIComparison />} />
+                              <Route path="/billing" element={<Billing />} />
+                              <Route path="/news-settings" element={<NewsSettings />} />
+                              <Route path="*" element={<NotFound />} />
+                            </Routes>
+                          </PullToRefresh>
+                        </main>
+                      </div>
+                      <OfflineIndicator />
+                      <Toaster />
+                    </SidebarProvider>
+                  </TooltipProvider>
+                </RealtimeDataProvider>
+              </ToastProvider>
+            </AccessibilityProvider>
+          </LoadingProvider>
+        </SecurityProvider>
+      </AuthProvider>
+    </>
   );
 }
 
