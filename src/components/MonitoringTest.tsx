@@ -9,11 +9,7 @@ export function MonitoringTest() {
   const analytics = useAnalytics();
   const monitoring = useMonitoring();
   
-  usePerformanceMonitoring({
-    componentName: 'MonitoringTest',
-    trackRenders: true,
-    trackMounts: true
-  });
+  usePerformanceMonitoring();
 
   const handleTestError = () => {
     monitoring.reportError(new Error('Test error for monitoring'));

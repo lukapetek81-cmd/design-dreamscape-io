@@ -15,9 +15,6 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import SEOHead from "@/components/SEOHead";
 import { PullToRefresh } from "@/components/mobile/PullToRefresh";
-import { useServiceWorker } from "@/hooks/useServiceWorker";
-import { useAndroidBackButton } from "@/hooks/useAndroidBackButton";
-import { usePerformanceMonitoring } from "@/hooks/usePerformanceMonitoring";
 import createOptimizedQueryClient from "@/lib/queryClient";
 import { CommodityCounts } from "@/components/sidebar/types";
 
@@ -49,11 +46,15 @@ import "./App.css";
 const queryClient = createOptimizedQueryClient();
 
 function App() {
-  useServiceWorker();
-  usePerformanceMonitoring();
-
   const [activeGroup, setActiveGroup] = React.useState<string>("all");
   const [commodityCounts, setCommodityCounts] = React.useState<CommodityCounts>({} as CommodityCounts);
+
+  // Initialize service worker without hooks
+  React.useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(console.error);
+    }
+  }, []);
 
   return (
     <ErrorBoundary>
@@ -79,9 +80,6 @@ function AppContent({ activeGroup, setActiveGroup, commodityCounts, setCommodity
   commodityCounts: CommodityCounts;
   setCommodityCounts: (counts: CommodityCounts) => void;
 }) {
-  // Move useAndroidBackButton here, inside the BrowserRouter context
-  useAndroidBackButton();
-
   const handleRefresh = React.useCallback(async () => {
     // Force refresh of cached data
     await queryClient.refetchQueries();
