@@ -79,6 +79,7 @@ function AppContent({ activeGroup, setActiveGroup, commodityCounts, setCommodity
   commodityCounts: CommodityCounts;
   setCommodityCounts: (counts: CommodityCounts) => void;
 }) {
+  // Move useAndroidBackButton here, inside the BrowserRouter context
   useAndroidBackButton();
 
   const handleRefresh = React.useCallback(async () => {
