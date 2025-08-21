@@ -1,279 +1,145 @@
 import React from 'react';
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { RealtimeDataProvider } from "@/contexts/RealtimeDataContext";
+import { ToastProvider } from "@/contexts/ToastContext";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import CommoditySidebar from "@/components/CommoditySidebar";
+import { AccessibilityProvider } from "@/components/AccessibilityProvider";
+import { SecurityProvider } from "@/components/security/SecurityProvider";
+import { LoadingProvider } from "@/components/loading/LoadingProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { createOptimizedQueryClient, queryClientConfigs } from "@/lib/queryClient";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { LazyRoutes, addResourceHints } from "@/utils/bundleSplitting";
-import { DashboardSkeleton } from "@/components/loading/LoadingSkeletons";
-import { useDeferredProviders } from "@/hooks/useDeferredProviders";
-import AppShell from "@/components/AppShell";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
 import SEOHead from "@/components/SEOHead";
+import { PullToRefresh } from "@/components/mobile/PullToRefresh";
+import { useServiceWorker } from "@/hooks/useServiceWorker";
+import { useAndroidBackButton } from "@/hooks/useAndroidBackButton";
+import { usePerformanceMonitoring } from "@/hooks/usePerformanceMonitoring";
+import createOptimizedQueryClient from "@/lib/queryClient";
+import { CommodityCounts } from "@/components/sidebar/types";
 
-// Lazy load non-critical components for better initial bundle size
-const Toaster = React.lazy(() => import("@/components/ui/toaster").then(m => ({ default: m.Toaster })));
-const Sonner = React.lazy(() => import("@/components/ui/sonner").then(m => ({ default: m.Toaster })));
-const TooltipProvider = React.lazy(() => import("@/components/ui/tooltip").then(m => ({ default: m.TooltipProvider })));
-const RealtimeDataProvider = React.lazy(() => import("@/contexts/RealtimeDataContext").then(m => ({ default: m.RealtimeDataProvider })));
-const AppToastProvider = React.lazy(() => import("@/components/mobile/AppToast").then(m => ({ default: m.AppToastProvider })));
-const LoadingProvider = React.lazy(() => import("@/components/loading/LoadingProvider").then(m => ({ default: m.LoadingProvider })));
-const SecurityProvider = React.lazy(() => import("@/components/security/SecurityProvider").then(m => ({ default: m.SecurityProvider })));
-const AccessibilityProvider = React.lazy(() => import("@/components/AccessibilityProvider").then(m => ({ default: m.AccessibilityProvider })));
-const SplashScreen = React.lazy(() => import("@/components/mobile/SplashScreen"));
-const OfflineIndicator = React.lazy(() => import("@/components/OfflineIndicator").then(m => ({ default: m.OfflineIndicator })));
-const OnboardingFlow = React.lazy(() => import("@/components/onboarding/OnboardingFlow"));
-const KeyboardShortcutsHelp = React.lazy(() => import("@/components/ui/keyboard-shortcuts-help"));
-const PWAInstallPrompt = React.lazy(() => import("@/components/mobile/PWAComponents").then(m => ({ default: m.PWAInstallPrompt })));
+// Import pages directly for faster initial load
+import Dashboard from "@/pages/Dashboard";
+import Auth from "@/pages/Auth";
+import ResetPassword from "@/pages/ResetPassword";
+import Portfolio from "@/pages/Portfolio";
+import MarketScreener from "@/pages/MarketScreener";
+import EconomicCalendar from "@/pages/EconomicCalendar";
+import TradingCommunity from "@/pages/TradingCommunity";
+import LearningHub from "@/pages/LearningHub";
+import ExpertInsights from "@/pages/ExpertInsights";
+import MarketSentiment from "@/pages/MarketSentiment";
+import RiskCalculator from "@/pages/RiskCalculator";
+import MarketCorrelation from "@/pages/MarketCorrelation";
+import PriceComparison from "@/pages/PriceComparison";
+import Watchlists from "@/pages/Watchlists";
+import Favorites from "@/pages/Favorites";
+import RecentActivity from "@/pages/RecentActivity";
+import MarketStatus from "@/pages/MarketStatus";
+import APIComparison from "@/pages/APIComparison";
+import Billing from "@/pages/Billing";
+import NewsSettings from "@/pages/NewsSettings";
+import NotFound from "@/pages/NotFound";
+import "./App.css";
 
-// Lazy load hooks for non-critical functionality
-const useAndroidBackButton = () => {
-  React.useEffect(() => {
-    import("@/hooks/useAndroidBackButton").then(m => m.useAndroidBackButton());
-  }, []);
-};
+// Create query client instance
+const queryClient = createOptimizedQueryClient();
 
-const useServiceWorker = () => {
-  const [isOnline, setIsOnline] = React.useState(true);
-  
-  React.useEffect(() => {
-    import("@/hooks/useServiceWorker").then(m => {
-      const { useServiceWorker } = m;
-      // Initialize service worker hook
-    });
-  }, []);
-  
-  return { isOnline };
-};
+function App() {
+  useServiceWorker();
+  usePerformanceMonitoring();
 
-const useOnboarding = () => {
-  const [showOnboarding, setShowOnboarding] = React.useState(false);
-  
-  React.useEffect(() => {
-    import("@/hooks/useOnboarding").then(m => {
-      // Initialize onboarding hook
-    });
-  }, []);
-  
-  return {
-    showOnboarding,
-    completeOnboarding: () => setShowOnboarding(false),
-    skipOnboarding: () => setShowOnboarding(false)
-  };
-};
+  const [activeGroup, setActiveGroup] = React.useState<string>("all");
+  const [commodityCounts, setCommodityCounts] = React.useState<CommodityCounts>({} as CommodityCounts);
 
-const useKeyboardShortcuts = () => {
-  const [showHelp, setShowHelp] = React.useState(false);
-  
-  React.useEffect(() => {
-    import("@/hooks/useKeyboardShortcuts").then(m => {
-      // Initialize keyboard shortcuts hook
-    });
-  }, []);
-  
-  return {
-    showHelp,
-    closeHelp: () => setShowHelp(false),
-    getShortcutsByCategory: () => ({})
-  };
-};
-
-const useAnalytics = () => {
-  React.useEffect(() => {
-    import("@/hooks/useAnalytics").then(m => {
-      // Initialize analytics hook
-    });
-  }, []);
-  
-  return {
-    trackCustomEvent: (_event: string, _data?: any) => {}
-  };
-};
-
-// Create optimized query client with mobile-aware configuration
-const getQueryClient = () => {
-  const isMobileDevice = typeof window !== 'undefined' && window.innerWidth < 768;
-  
-  // Use mobile-optimized config for mobile devices
-  const config = isMobileDevice ? queryClientConfigs.mobile : queryClientConfigs.standard;
-  
-  return createOptimizedQueryClient(config);
-};
-
-const queryClient = getQueryClient();
-
-const AppRoutes = () => {
-  useAndroidBackButton();
-  const [showSplash, setShowSplash] = React.useState(true);
-  const isMobile = useIsMobile();
-  const { showOnboarding, completeOnboarding, skipOnboarding } = useOnboarding();
-  const { showHelp, closeHelp, getShortcutsByCategory } = useKeyboardShortcuts();
-  const analytics = useAnalytics();
-  const { isOnline } = useServiceWorker();
-  const navigate = useNavigate();
-  const shouldLoadProviders = useDeferredProviders();
-
-  // Listen for custom navigation events from ErrorBoundary
-  React.useEffect(() => {
-    const handleNavigateHome = () => {
-      navigate('/', { replace: true });
-    };
-
-    window.addEventListener('navigate-home', handleNavigateHome);
-    return () => {
-      window.removeEventListener('navigate-home', handleNavigateHome);
-    };
-  }, [navigate]);
-
-  // Initialize monitoring service with user data when available
-  React.useEffect(() => {
-    if (shouldLoadProviders) {
-      import("@/services/monitoringService").then(m => {
-        // Initialize monitoring service
-      });
-      
-      // Track app start
-      analytics.trackCustomEvent('app_start', {
-        timestamp: Date.now(),
-        userAgent: navigator.userAgent,
-        platform: navigator.platform
-      });
-    }
-  }, [analytics, shouldLoadProviders]);
-
-  React.useEffect(() => {
-    // Show splash screen only on mobile and only on first load
-    if (!isMobile) {
-      setShowSplash(false);
-      return;
-    }
-
-    // Auto-hide splash after 2 seconds for faster perceived performance
-    const fallbackTimer = setTimeout(() => {
-      setShowSplash(false);
-    }, 2000);
-
-    return () => clearTimeout(fallbackTimer);
-  }, [isMobile]);
-
-  const handleSplashComplete = () => {
-    setShowSplash(false);
-  };
-  
   return (
-    <>
+    <ErrorBoundary>
       <SEOHead />
-      
-      {shouldLoadProviders && showOnboarding && (
-        <React.Suspense fallback={null}>
-          <OnboardingFlow
-            onComplete={completeOnboarding}
-            onSkip={skipOnboarding}
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <AppContent 
+            activeGroup={activeGroup}
+            setActiveGroup={setActiveGroup}
+            commodityCounts={commodityCounts}
+            setCommodityCounts={setCommodityCounts}
           />
-        </React.Suspense>
-      )}
-      
-      {shouldLoadProviders && (
-        <React.Suspense fallback={null}>
-          <KeyboardShortcutsHelp
-            isOpen={showHelp}
-            onClose={closeHelp}
-            shortcuts={getShortcutsByCategory()}
-          />
-        </React.Suspense>
-      )}
-      
-      {shouldLoadProviders && (
-        <React.Suspense fallback={null}>
-          <SplashScreen 
-            isVisible={showSplash} 
-            onComplete={handleSplashComplete} 
-          />
-        </React.Suspense>
-      )}
-      
-      {shouldLoadProviders && !isOnline && (
-        <React.Suspense fallback={null}>
-          <OfflineIndicator />
-        </React.Suspense>
-      )}
-      
-      <main id="main-content" role="main" tabIndex={-1}>
-        <React.Suspense fallback={<DashboardSkeleton />}>
-          <Routes>
-            <Route path="/" element={<LazyRoutes.Dashboard />} />
-            <Route path="/dashboard" element={<LazyRoutes.Dashboard />} />
-            <Route path="/auth" element={<LazyRoutes.Auth />} />
-            <Route path="/reset-password" element={<LazyRoutes.ResetPassword />} />
-            <Route path="/portfolio" element={<LazyRoutes.Portfolio />} />
-            <Route path="/news-settings" element={<LazyRoutes.NewsSettings />} />
-            <Route path="/billing" element={<LazyRoutes.Billing />} />
-            <Route path="/correlation" element={<LazyRoutes.MarketCorrelation />} />
-            <Route path="/watchlists" element={<LazyRoutes.Watchlists />} />
-            <Route path="/screener" element={<LazyRoutes.MarketScreener />} />
-            <Route path="/calendar" element={<LazyRoutes.EconomicCalendar />} />
-            <Route path="/risk-calculator" element={<LazyRoutes.RiskCalculator />} />
-            <Route path="/community" element={<LazyRoutes.TradingCommunity />} />
-            <Route path="/insights" element={<LazyRoutes.ExpertInsights />} />
-            <Route path="/learning" element={<LazyRoutes.LearningHub />} />
-            <Route path="/sentiment" element={<LazyRoutes.MarketSentiment />} />
-            <Route path="/recent-activity" element={<LazyRoutes.RecentActivity />} />
-            <Route path="/favorites" element={<LazyRoutes.Favorites />} />
-            <Route path="/price-comparison" element={<LazyRoutes.PriceComparison />} />
-            <Route path="/api-comparison" element={<LazyRoutes.APIComparison />} />
-            <Route path="/market-status" element={<LazyRoutes.MarketStatus />} />
-            <Route path="*" element={<LazyRoutes.NotFound />} />
-          </Routes>
-        </React.Suspense>
-      </main>
-    </>
+        </BrowserRouter>
+      </QueryClientProvider>
+      <Toaster />
+    </ErrorBoundary>
   );
-};
+}
 
-const App = () => {
-  const shouldLoadProviders = useDeferredProviders();
+function AppContent({ activeGroup, setActiveGroup, commodityCounts, setCommodityCounts }: {
+  activeGroup: string;
+  setActiveGroup: (group: string) => void;
+  commodityCounts: CommodityCounts;
+  setCommodityCounts: (counts: CommodityCounts) => void;
+}) {
+  useAndroidBackButton();
 
-  React.useEffect(() => {
-    // Add resource hints for better performance
-    addResourceHints();
+  const handleRefresh = React.useCallback(async () => {
+    // Force refresh of cached data
+    await queryClient.refetchQueries();
   }, []);
 
   return (
-    <AppShell>
-      <ErrorBoundary>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <BrowserRouter>
-              <ErrorBoundary fallback={<div role="alert" className="min-h-screen flex items-center justify-center p-4"><div className="text-center"><h2 className="text-xl font-semibold mb-2">Navigation Error</h2><p className="text-muted-foreground">Something went wrong with page navigation. Please try refreshing the page.</p></div></div>}>
-                {shouldLoadProviders ? (
-                  <React.Suspense fallback={<DashboardSkeleton />}>
-                    <LoadingProvider>
-                      <SecurityProvider>
-                        <RealtimeDataProvider>
-                          <AppToastProvider position="top">
-                            <TooltipProvider>
-                              <Toaster />
-                              <Sonner />
-                              <AccessibilityProvider>
-                                <AppRoutes />
-                                <PWAInstallPrompt />
-                              </AccessibilityProvider>
-                            </TooltipProvider>
-                          </AppToastProvider>
-                        </RealtimeDataProvider>
-                      </SecurityProvider>
-                    </LoadingProvider>
-                  </React.Suspense>
-                ) : (
-                  <AppRoutes />
-                )}
-              </ErrorBoundary>
-            </BrowserRouter>
-          </AuthProvider>
-        </QueryClientProvider>
-      </ErrorBoundary>
-    </AppShell>
+    <AuthProvider>
+      <SecurityProvider>
+        <LoadingProvider>
+          <AccessibilityProvider>
+            <ToastProvider>
+              <RealtimeDataProvider>
+                <TooltipProvider>
+                  <SidebarProvider>
+                    <div className="min-h-screen flex w-full bg-background">
+                      <CommoditySidebar 
+                        activeGroup={activeGroup}
+                        onGroupSelect={setActiveGroup}
+                        commodityCounts={commodityCounts}
+                      />
+                      <main className="flex-1 overflow-hidden">
+                        <PullToRefresh onRefresh={handleRefresh}>
+                          <Routes>
+                            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                            <Route path="/dashboard" element={<Dashboard />} />
+                            <Route path="/auth" element={<Auth />} />
+                            <Route path="/reset-password" element={<ResetPassword />} />
+                            <Route path="/portfolio" element={<Portfolio />} />
+                            <Route path="/market-screener" element={<MarketScreener />} />
+                            <Route path="/economic-calendar" element={<EconomicCalendar />} />
+                            <Route path="/trading-community" element={<TradingCommunity />} />
+                            <Route path="/learning-hub" element={<LearningHub />} />
+                            <Route path="/expert-insights" element={<ExpertInsights />} />
+                            <Route path="/market-sentiment" element={<MarketSentiment />} />
+                            <Route path="/risk-calculator" element={<RiskCalculator />} />
+                            <Route path="/market-correlation" element={<MarketCorrelation />} />
+                            <Route path="/price-comparison" element={<PriceComparison />} />
+                            <Route path="/watchlists" element={<Watchlists />} />
+                            <Route path="/favorites" element={<Favorites />} />
+                            <Route path="/recent-activity" element={<RecentActivity />} />
+                            <Route path="/market-status" element={<MarketStatus />} />
+                            <Route path="/api-comparison" element={<APIComparison />} />
+                            <Route path="/billing" element={<Billing />} />
+                            <Route path="/news-settings" element={<NewsSettings />} />
+                            <Route path="*" element={<NotFound />} />
+                          </Routes>
+                        </PullToRefresh>
+                      </main>
+                    </div>
+                    <OfflineIndicator />
+                  </SidebarProvider>
+                </TooltipProvider>
+              </RealtimeDataProvider>
+            </ToastProvider>
+          </AccessibilityProvider>
+        </LoadingProvider>
+      </SecurityProvider>
+    </AuthProvider>
   );
-};
+}
 
 export default App;
