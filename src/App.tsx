@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -46,11 +46,11 @@ import "./App.css";
 const queryClient = createOptimizedQueryClient();
 
 function App() {
-  const [activeGroup, setActiveGroup] = React.useState<string>("all");
-  const [commodityCounts, setCommodityCounts] = React.useState<CommodityCounts>({} as CommodityCounts);
+  const [activeGroup, setActiveGroup] = useState<string>("all");
+  const [commodityCounts, setCommodityCounts] = useState<CommodityCounts>({} as CommodityCounts);
 
   // Initialize service worker without hooks
-  React.useEffect(() => {
+  useEffect(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(console.error);
     }
@@ -78,7 +78,7 @@ function AppContent({ activeGroup, setActiveGroup, commodityCounts, setCommodity
   commodityCounts: CommodityCounts;
   setCommodityCounts: (counts: CommodityCounts) => void;
 }) {
-  const handleRefresh = React.useCallback(async () => {
+  const handleRefresh = useCallback(async () => {
     // Force refresh of cached data
     await queryClient.refetchQueries();
   }, []);
