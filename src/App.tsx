@@ -89,42 +89,34 @@ function AppContent({ activeGroup, setActiveGroup, commodityCounts, setCommodity
                 <RealtimeDataProvider>
                   <TooltipProvider>
                     <SidebarProvider>
-                      <div className="min-h-screen flex w-full bg-background">
-                        <CommoditySidebar 
-                          activeGroup={activeGroup}
-                          onGroupSelect={setActiveGroup}
-                          commodityCounts={commodityCounts}
-                        />
-                        
-                        <PullToRefresh onRefresh={handleRefresh}>
-                          <main className="flex-1 min-w-0 overflow-auto">
-                            <Routes>
-                              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                              <Route path="/dashboard" element={<Dashboard />} />
-                              <Route path="/auth" element={<Auth />} />
-                              <Route path="/reset-password" element={<ResetPassword />} />
-                              <Route path="/portfolio" element={<Portfolio />} />
-                              <Route path="/screener" element={<MarketScreener />} />
-                              <Route path="/calendar" element={<EconomicCalendar />} />
-                              <Route path="/community" element={<TradingCommunity />} />
-                              <Route path="/learning" element={<LearningHub />} />
-                              <Route path="/insights" element={<ExpertInsights />} />
-                              <Route path="/sentiment" element={<MarketSentiment />} />
-                              <Route path="/risk-calculator" element={<RiskCalculator />} />
-                              <Route path="/correlation" element={<MarketCorrelation />} />
-                              <Route path="/price-comparison" element={<PriceComparison />} />
-                              <Route path="/watchlists" element={<Watchlists />} />
-                              <Route path="/favorites" element={<Favorites />} />
-                              <Route path="/recent-activity" element={<RecentActivity />} />
-                              <Route path="/market-status" element={<MarketStatus />} />
-                              <Route path="/api-comparison" element={<APIComparison />} />
-                              <Route path="/billing" element={<Billing />} />
-                              <Route path="/news-settings" element={<NewsSettings />} />
-                              <Route path="*" element={<NotFound />} />
-                            </Routes>
-                          </main>
-                        </PullToRefresh>
-                      </div>
+                      <PullToRefresh onRefresh={handleRefresh}>
+                        <main className="min-h-screen w-full">
+                          <Routes>
+                            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                            <Route path="/dashboard" element={<Dashboard />} />
+                            <Route path="/auth" element={<Auth />} />
+                            <Route path="/reset-password" element={<ResetPassword />} />
+                            <Route path="/portfolio" element={<Portfolio />} />
+                            <Route path="/screener" element={<MarketScreener />} />
+                            <Route path="/calendar" element={<EconomicCalendar />} />
+                            <Route path="/community" element={<TradingCommunity />} />
+                            <Route path="/learning" element={<LearningHub />} />
+                            <Route path="/insights" element={<ExpertInsights />} />
+                            <Route path="/sentiment" element={<MarketSentiment />} />
+                            <Route path="/risk-calculator" element={<RiskCalculator />} />
+                            <Route path="/correlation" element={<MarketCorrelation />} />
+                            <Route path="/price-comparison" element={<PriceComparison />} />
+                            <Route path="/watchlists" element={<Watchlists />} />
+                            <Route path="/favorites" element={<Favorites />} />
+                            <Route path="/recent-activity" element={<RecentActivity />} />
+                            <Route path="/market-status" element={<MarketStatus />} />
+                            <Route path="/api-comparison" element={<APIComparison />} />
+                            <Route path="/billing" element={<Billing />} />
+                            <Route path="/news-settings" element={<NewsSettings />} />
+                            <Route path="*" element={<NotFound />} />
+                          </Routes>
+                        </main>
+                      </PullToRefresh>
                       
                       <OfflineIndicator />
                       <Toaster />

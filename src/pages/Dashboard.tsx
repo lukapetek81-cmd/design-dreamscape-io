@@ -3,7 +3,8 @@ import { Navigate } from 'react-router-dom';
 import CommodityCard from '@/components/CommodityCard';
 import VirtualizedCommodityList from '@/components/VirtualizedCommodityList';
 import UserProfile from '@/components/UserProfile';
-import { useSidebar } from "@/components/ui/sidebar";
+import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
+import CommoditySidebar from '@/components/CommoditySidebar';
 import { BarChart3, Menu, Loader, Zap, Coins, Wheat, Beef, Coffee, Package } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,16 +32,18 @@ const Dashboard = () => {
   }
 
   return (
-    <DashboardContent 
-      activeGroup={activeGroup}
-      setActiveGroup={setActiveGroup}
-      isMobile={isMobile}
-      profile={profile}
-      commodities={commodities || []}
-      loading={commoditiesLoading}
-      error={commoditiesError?.message || null}
-      onRetry={() => refetchCommodities()}
-    />
+    <SidebarProvider>
+      <DashboardContent 
+        activeGroup={activeGroup}
+        setActiveGroup={setActiveGroup}
+        isMobile={isMobile}
+        profile={profile}
+        commodities={commodities || []}
+        loading={commoditiesLoading}
+        error={commoditiesError?.message || null}
+        onRetry={() => refetchCommodities()}
+      />
+    </SidebarProvider>
   );
 };
 
@@ -108,10 +111,24 @@ const DashboardContent = ({
 
   return (
     <div 
-      className="flex-1 flex flex-col min-w-0"
+      className="min-h-screen flex w-full"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
+      <CommoditySidebar 
+        activeGroup={activeGroup} 
+        onGroupSelect={setActiveGroup}
+        commodityCounts={{
+          energy: getCommodityCount('energy'),
+          metals: getCommodityCount('metals'),
+          grains: getCommodityCount('grains'),
+          livestock: getCommodityCount('livestock'),
+          softs: getCommodityCount('softs'),
+          other: getCommodityCount('other')
+        }}
+      />
+      
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Simplified Header */}
         <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-xl">
           <div className="container flex h-16 items-center justify-between px-4">
@@ -217,6 +234,7 @@ const DashboardContent = ({
             )}
           </div>
         </main>
+      </div>
     </div>
   );
 };
