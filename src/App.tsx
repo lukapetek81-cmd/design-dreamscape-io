@@ -1,134 +1,21 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClientProvider } from "@tanstack/react-query";
+import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { RealtimeDataProvider } from "@/contexts/RealtimeDataContext";
-import { ToastProvider } from "@/contexts/ToastContext";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import CommoditySidebar from "@/components/CommoditySidebar";
-import { AccessibilityProvider } from "@/components/AccessibilityProvider";
-import { SecurityProvider } from "@/components/security/SecurityProvider";
-import { LoadingProvider } from "@/components/loading/LoadingProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { OfflineIndicator } from "@/components/OfflineIndicator";
-import SEOHead from "@/components/SEOHead";
-import { PullToRefresh } from "@/components/mobile/PullToRefresh";
-import createOptimizedQueryClient from "@/lib/queryClient";
-import { CommodityCounts } from "@/components/sidebar/types";
-
-// Import pages directly for faster initial load
 import Dashboard from "@/pages/Dashboard";
-import Auth from "@/pages/Auth";
-import ResetPassword from "@/pages/ResetPassword";
-import Portfolio from "@/pages/Portfolio";
-import MarketScreener from "@/pages/MarketScreener";
-import EconomicCalendar from "@/pages/EconomicCalendar";
-import TradingCommunity from "@/pages/TradingCommunity";
-import LearningHub from "@/pages/LearningHub";
-import ExpertInsights from "@/pages/ExpertInsights";
-import MarketSentiment from "@/pages/MarketSentiment";
-import RiskCalculator from "@/pages/RiskCalculator";
-import MarketCorrelation from "@/pages/MarketCorrelation";
-import PriceComparison from "@/pages/PriceComparison";
-import Watchlists from "@/pages/Watchlists";
-import Favorites from "@/pages/Favorites";
-import RecentActivity from "@/pages/RecentActivity";
-import MarketStatus from "@/pages/MarketStatus";
-import APIComparison from "@/pages/APIComparison";
-import Billing from "@/pages/Billing";
-import NewsSettings from "@/pages/NewsSettings";
-import NotFound from "@/pages/NotFound";
 import "./App.css";
 
-// Create query client instance
-const queryClient = createOptimizedQueryClient();
-
+// Minimal App component to test React loading
 function App() {
-  const [activeGroup, setActiveGroup] = useState("all");
-  const [commodityCounts, setCommodityCounts] = useState({});
-
-  // Initialize service worker
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(console.error);
-    }
-  }, []);
-
   return (
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <AppContent 
-            activeGroup={activeGroup}
-            setActiveGroup={setActiveGroup}
-            commodityCounts={commodityCounts}
-            setCommodityCounts={setCommodityCounts}
-          />
-        </BrowserRouter>
-      </QueryClientProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="*" element={<div>Page not found</div>} />
+        </Routes>
+      </BrowserRouter>
     </ErrorBoundary>
-  );
-}
-
-function AppContent({ activeGroup, setActiveGroup, commodityCounts, setCommodityCounts }) {
-  const handleRefresh = useCallback(async () => {
-    // Force refresh of cached data
-    await queryClient.refetchQueries();
-  }, []);
-
-  return (
-    <>
-      <SEOHead />
-      <AuthProvider>
-        <SecurityProvider>
-          <LoadingProvider>
-            <AccessibilityProvider>
-              <ToastProvider>
-                <RealtimeDataProvider>
-                  <TooltipProvider>
-                    <SidebarProvider>
-                      <PullToRefresh onRefresh={handleRefresh}>
-                        <main className="min-h-screen w-full">
-                          <Routes>
-                            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                            <Route path="/dashboard" element={<Dashboard />} />
-                            <Route path="/auth" element={<Auth />} />
-                            <Route path="/reset-password" element={<ResetPassword />} />
-                            <Route path="/portfolio" element={<Portfolio />} />
-                            <Route path="/screener" element={<MarketScreener />} />
-                            <Route path="/calendar" element={<EconomicCalendar />} />
-                            <Route path="/community" element={<TradingCommunity />} />
-                            <Route path="/learning" element={<LearningHub />} />
-                            <Route path="/insights" element={<ExpertInsights />} />
-                            <Route path="/sentiment" element={<MarketSentiment />} />
-                            <Route path="/risk-calculator" element={<RiskCalculator />} />
-                            <Route path="/correlation" element={<MarketCorrelation />} />
-                            <Route path="/price-comparison" element={<PriceComparison />} />
-                            <Route path="/watchlists" element={<Watchlists />} />
-                            <Route path="/favorites" element={<Favorites />} />
-                            <Route path="/recent-activity" element={<RecentActivity />} />
-                            <Route path="/market-status" element={<MarketStatus />} />
-                            <Route path="/api-comparison" element={<APIComparison />} />
-                            <Route path="/billing" element={<Billing />} />
-                            <Route path="/news-settings" element={<NewsSettings />} />
-                            <Route path="*" element={<NotFound />} />
-                          </Routes>
-                        </main>
-                      </PullToRefresh>
-                      
-                      <OfflineIndicator />
-                      <Toaster />
-                    </SidebarProvider>
-                  </TooltipProvider>
-                </RealtimeDataProvider>
-              </ToastProvider>
-            </AccessibilityProvider>
-          </LoadingProvider>
-        </SecurityProvider>
-      </AuthProvider>
-    </>
   );
 }
 
