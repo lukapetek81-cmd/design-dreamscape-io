@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -46,11 +46,11 @@ import "./App.css";
 const queryClient = createOptimizedQueryClient();
 
 function App() {
-  const [activeGroup, setActiveGroup] = React.useState<string>("all");
-  const [commodityCounts, setCommodityCounts] = React.useState<CommodityCounts>({} as CommodityCounts);
+  const [activeGroup, setActiveGroup] = useState("all");
+  const [commodityCounts, setCommodityCounts] = useState({});
 
-  // Initialize service worker without hooks
-  React.useEffect(() => {
+  // Initialize service worker
+  useEffect(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(console.error);
     }
@@ -72,13 +72,8 @@ function App() {
   );
 }
 
-function AppContent({ activeGroup, setActiveGroup, commodityCounts, setCommodityCounts }: {
-  activeGroup: string;
-  setActiveGroup: (group: string) => void;
-  commodityCounts: CommodityCounts;
-  setCommodityCounts: (counts: CommodityCounts) => void;
-}) {
-  const handleRefresh = React.useCallback(async () => {
+function AppContent({ activeGroup, setActiveGroup, commodityCounts, setCommodityCounts }) {
+  const handleRefresh = useCallback(async () => {
     // Force refresh of cached data
     await queryClient.refetchQueries();
   }, []);
@@ -100,22 +95,23 @@ function AppContent({ activeGroup, setActiveGroup, commodityCounts, setCommodity
                           onGroupSelect={setActiveGroup}
                           commodityCounts={commodityCounts}
                         />
-                        <main className="flex-1 overflow-hidden">
-                          <PullToRefresh onRefresh={handleRefresh}>
+                        
+                        <PullToRefresh onRefresh={handleRefresh}>
+                          <main className="flex-1 min-w-0 overflow-auto">
                             <Routes>
                               <Route path="/" element={<Navigate to="/dashboard" replace />} />
                               <Route path="/dashboard" element={<Dashboard />} />
                               <Route path="/auth" element={<Auth />} />
                               <Route path="/reset-password" element={<ResetPassword />} />
                               <Route path="/portfolio" element={<Portfolio />} />
-                              <Route path="/market-screener" element={<MarketScreener />} />
-                              <Route path="/economic-calendar" element={<EconomicCalendar />} />
-                              <Route path="/trading-community" element={<TradingCommunity />} />
-                              <Route path="/learning-hub" element={<LearningHub />} />
-                              <Route path="/expert-insights" element={<ExpertInsights />} />
-                              <Route path="/market-sentiment" element={<MarketSentiment />} />
+                              <Route path="/screener" element={<MarketScreener />} />
+                              <Route path="/calendar" element={<EconomicCalendar />} />
+                              <Route path="/community" element={<TradingCommunity />} />
+                              <Route path="/learning" element={<LearningHub />} />
+                              <Route path="/insights" element={<ExpertInsights />} />
+                              <Route path="/sentiment" element={<MarketSentiment />} />
                               <Route path="/risk-calculator" element={<RiskCalculator />} />
-                              <Route path="/market-correlation" element={<MarketCorrelation />} />
+                              <Route path="/correlation" element={<MarketCorrelation />} />
                               <Route path="/price-comparison" element={<PriceComparison />} />
                               <Route path="/watchlists" element={<Watchlists />} />
                               <Route path="/favorites" element={<Favorites />} />
@@ -126,9 +122,10 @@ function AppContent({ activeGroup, setActiveGroup, commodityCounts, setCommodity
                               <Route path="/news-settings" element={<NewsSettings />} />
                               <Route path="*" element={<NotFound />} />
                             </Routes>
-                          </PullToRefresh>
-                        </main>
+                          </main>
+                        </PullToRefresh>
                       </div>
+                      
                       <OfflineIndicator />
                       <Toaster />
                     </SidebarProvider>
