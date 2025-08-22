@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 // Fixed Component reference errors
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
