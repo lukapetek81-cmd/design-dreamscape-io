@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { EnhancedToast, type ToastType } from '@/components/ui/enhanced-toast';
 

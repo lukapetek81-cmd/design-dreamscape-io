@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { useSecurity } from '@/hooks/useSecurity';
 import { useToast } from '@/hooks/use-toast';
 

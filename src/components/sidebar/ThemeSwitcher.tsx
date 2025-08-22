@@ -86,11 +86,18 @@ const ThemeSwitcher = () => {
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={toggleTheme}
-              size={isMobile ? "lg" : "default"}
-              className="w-full justify-start gap-3"
+              data-theme-toggle
+              className={`flex items-center gap-3 rounded-lg transition-all duration-200 ${
+                isMobile 
+                  ? 'px-6 py-6 min-h-[72px] active:scale-95 touch-manipulation text-base' 
+                  : 'px-3 py-2'
+              }`}
             >
-              <div className="flex items-center justify-center w-5 h-5 rounded bg-sidebar-accent text-sidebar-accent-foreground">
-                {React.createElement(getThemeIcon(), { className: "w-3 h-3" })}
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-muted/50 text-muted-foreground">
+                {(() => {
+                  const ThemeIcon = getThemeIcon();
+                  return <ThemeIcon className="w-4 h-4" />;
+                })()}
               </div>
               {!collapsed && (
                 <div className="flex-1 min-w-0">

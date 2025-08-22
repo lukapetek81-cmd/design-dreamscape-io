@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { CommodityPrice, useAvailableCommodities } from '@/hooks/useCommodityData';
 import { useDelayedData } from '@/hooks/useDelayedData';
 
