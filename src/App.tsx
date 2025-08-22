@@ -26,69 +26,12 @@ const OnboardingFlow = React.lazy(() => import("@/components/onboarding/Onboardi
 const KeyboardShortcutsHelp = React.lazy(() => import("@/components/ui/keyboard-shortcuts-help"));
 const PWAInstallPrompt = React.lazy(() => import("@/components/mobile/PWAComponents").then(m => ({ default: m.PWAInstallPrompt })));
 
-// Lazy load hooks for non-critical functionality
-const useAndroidBackButton = () => {
-  React.useEffect(() => {
-    import("@/hooks/useAndroidBackButton").then(m => m.useAndroidBackButton());
-  }, []);
-};
-
-const useServiceWorker = () => {
-  const [isOnline, setIsOnline] = React.useState(true);
-  
-  React.useEffect(() => {
-    import("@/hooks/useServiceWorker").then(m => {
-      const { useServiceWorker } = m;
-      // Initialize service worker hook
-    });
-  }, []);
-  
-  return { isOnline };
-};
-
-const useOnboarding = () => {
-  const [showOnboarding, setShowOnboarding] = React.useState(false);
-  
-  React.useEffect(() => {
-    import("@/hooks/useOnboarding").then(m => {
-      // Initialize onboarding hook
-    });
-  }, []);
-  
-  return {
-    showOnboarding,
-    completeOnboarding: () => setShowOnboarding(false),
-    skipOnboarding: () => setShowOnboarding(false)
-  };
-};
-
-const useKeyboardShortcuts = () => {
-  const [showHelp, setShowHelp] = React.useState(false);
-  
-  React.useEffect(() => {
-    import("@/hooks/useKeyboardShortcuts").then(m => {
-      // Initialize keyboard shortcuts hook
-    });
-  }, []);
-  
-  return {
-    showHelp,
-    closeHelp: () => setShowHelp(false),
-    getShortcutsByCategory: () => ({})
-  };
-};
-
-const useAnalytics = () => {
-  React.useEffect(() => {
-    import("@/hooks/useAnalytics").then(m => {
-      // Initialize analytics hook
-    });
-  }, []);
-  
-  return {
-    trackCustomEvent: (_event: string, _data?: any) => {}
-  };
-};
+// Simplified hooks for MVP
+const useSimpleAnalytics = () => ({
+  trackCustomEvent: (_event: string, _data?: any) => {
+    console.log('Analytics event:', _event, _data);
+  }
+});
 
 // Create optimized query client with mobile-aware configuration
 const getQueryClient = () => {
@@ -103,13 +46,9 @@ const getQueryClient = () => {
 const queryClient = getQueryClient();
 
 const AppRoutes = () => {
-  useAndroidBackButton();
-  const [showSplash, setShowSplash] = React.useState(true);
+  const [showSplash, setShowSplash] = React.useState(false); // Disabled for MVP
   const isMobile = useIsMobile();
-  const { showOnboarding, completeOnboarding, skipOnboarding } = useOnboarding();
-  const { showHelp, closeHelp, getShortcutsByCategory } = useKeyboardShortcuts();
-  const analytics = useAnalytics();
-  const { isOnline } = useServiceWorker();
+  const analytics = useSimpleAnalytics();
   const navigate = useNavigate();
   const shouldLoadProviders = useDeferredProviders();
 
@@ -125,36 +64,12 @@ const AppRoutes = () => {
     };
   }, [navigate]);
 
-  // Initialize monitoring service with user data when available
+  // Track app start
   React.useEffect(() => {
-    if (shouldLoadProviders) {
-      import("@/services/monitoringService").then(m => {
-        // Initialize monitoring service
-      });
-      
-      // Track app start
-      analytics.trackCustomEvent('app_start', {
-        timestamp: Date.now(),
-        userAgent: navigator.userAgent,
-        platform: navigator.platform
-      });
-    }
-  }, [analytics, shouldLoadProviders]);
-
-  React.useEffect(() => {
-    // Show splash screen only on mobile and only on first load
-    if (!isMobile) {
-      setShowSplash(false);
-      return;
-    }
-
-    // Auto-hide splash after 2 seconds for faster perceived performance
-    const fallbackTimer = setTimeout(() => {
-      setShowSplash(false);
-    }, 2000);
-
-    return () => clearTimeout(fallbackTimer);
-  }, [isMobile]);
+    analytics.trackCustomEvent('app_start', {
+      timestamp: Date.now()
+    });
+  }, [analytics]);
 
   const handleSplashComplete = () => {
     setShowSplash(false);
@@ -163,40 +78,6 @@ const AppRoutes = () => {
   return (
     <>
       <SEOHead />
-      
-      {shouldLoadProviders && showOnboarding && (
-        <React.Suspense fallback={null}>
-          <OnboardingFlow
-            onComplete={completeOnboarding}
-            onSkip={skipOnboarding}
-          />
-        </React.Suspense>
-      )}
-      
-      {shouldLoadProviders && (
-        <React.Suspense fallback={null}>
-          <KeyboardShortcutsHelp
-            isOpen={showHelp}
-            onClose={closeHelp}
-            shortcuts={getShortcutsByCategory()}
-          />
-        </React.Suspense>
-      )}
-      
-      {shouldLoadProviders && (
-        <React.Suspense fallback={null}>
-          <SplashScreen 
-            isVisible={showSplash} 
-            onComplete={handleSplashComplete} 
-          />
-        </React.Suspense>
-      )}
-      
-      {shouldLoadProviders && !isOnline && (
-        <React.Suspense fallback={null}>
-          <OfflineIndicator />
-        </React.Suspense>
-      )}
       
       <main id="main-content" role="main" tabIndex={-1}>
         <React.Suspense fallback={<DashboardSkeleton />}>
@@ -245,28 +126,13 @@ const App = () => {
           <AuthProvider>
             <BrowserRouter>
               <ErrorBoundary fallback={<div role="alert" className="min-h-screen flex items-center justify-center p-4"><div className="text-center"><h2 className="text-xl font-semibold mb-2">Navigation Error</h2><p className="text-muted-foreground">Something went wrong with page navigation. Please try refreshing the page.</p></div></div>}>
-                {shouldLoadProviders ? (
-                  <React.Suspense fallback={<DashboardSkeleton />}>
-                    <LoadingProvider>
-                      <SecurityProvider>
-                        <RealtimeDataProvider>
-                          <AppToastProvider position="top">
-                            <TooltipProvider>
-                              <Toaster />
-                              <Sonner />
-                              <AccessibilityProvider>
-                                <AppRoutes />
-                                <PWAInstallPrompt />
-                              </AccessibilityProvider>
-                            </TooltipProvider>
-                          </AppToastProvider>
-                        </RealtimeDataProvider>
-                      </SecurityProvider>
-                    </LoadingProvider>
-                  </React.Suspense>
-                ) : (
-                  <AppRoutes />
-                )}
+                <React.Suspense fallback={<DashboardSkeleton />}>
+                  <RealtimeDataProvider>
+                    <TooltipProvider>
+                      <AppRoutes />
+                    </TooltipProvider>
+                  </RealtimeDataProvider>
+                </React.Suspense>
               </ErrorBoundary>
             </BrowserRouter>
           </AuthProvider>
