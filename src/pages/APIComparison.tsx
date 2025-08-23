@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState } from 'react';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import CommoditySidebar from '@/components/CommoditySidebar';
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import UserProfile from '@/components/UserProfile';
 
 const APIComparison = () => {
-  const [activeGroup, setActiveGroup] = React.useState("energy");
+  const [activeGroup, setActiveGroup] = useState("energy");
   const isMobile = useIsMobile();
   const { profile } = useAuth();
 

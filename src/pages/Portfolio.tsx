@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,12 +12,12 @@ import { MobilePageHeader } from '@/components/mobile/MobilePageHeader';
 
 import { PremiumGate } from '@/components/PremiumGate';
 
-const Portfolio: React.FC = () => {
+const Portfolio = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { positions, loading, portfolioSummary, deletePosition } = usePortfolio();
-  const [showAddForm, setShowAddForm] = React.useState(false);
-  const [editingPosition, setEditingPosition] = React.useState<PositionWithCurrentPrice | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingPosition, setEditingPosition] = useState<PositionWithCurrentPrice | null>(null);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {

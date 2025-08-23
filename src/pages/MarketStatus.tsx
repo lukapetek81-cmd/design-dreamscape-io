@@ -1,4 +1,4 @@
-import React from "react";
+import { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
 import CommoditySidebar from "@/components/CommoditySidebar";
@@ -32,11 +32,11 @@ interface MarketStatus {
 }
 
 const MarketStatus = () => {
-  const [activeGroup, setActiveGroup] = React.useState("energy");
-  const [marketConfigs, setMarketConfigs] = React.useState<MarketConfig[]>([]);
-  const [marketStatuses, setMarketStatuses] = React.useState<MarketStatus[]>([]);
-  const [currentTime, setCurrentTime] = React.useState(new Date());
-  const [loading, setLoading] = React.useState(true);
+  const [activeGroup, setActiveGroup] = useState("energy");
+  const [marketConfigs, setMarketConfigs] = useState<MarketConfig[]>([]);
+  const [marketStatuses, setMarketStatuses] = useState<MarketStatus[]>([]);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -44,7 +44,7 @@ const MarketStatus = () => {
     energy: 0, metals: 0, grains: 0, livestock: 0, softs: 0, other: 0
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchMarketConfigs();
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -53,7 +53,7 @@ const MarketStatus = () => {
     return () => clearInterval(timer);
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (marketConfigs.length > 0) {
       updateMarketStatuses();
     }
