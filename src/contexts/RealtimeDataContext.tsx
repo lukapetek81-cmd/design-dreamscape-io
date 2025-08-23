@@ -1,7 +1,6 @@
-import React from 'react';
+import { createContext, useContext, useMemo, ReactNode } from 'react';
 import { CommodityPrice, useAvailableCommodities } from '@/hooks/useCommodityData';
 import { useDelayedData } from '@/hooks/useDelayedData';
-
 
 interface RealtimeDataContextType {
   prices: Record<string, CommodityPrice>;
@@ -18,27 +17,23 @@ interface RealtimeDataContextType {
   };
 }
 
-const RealtimeDataContext = React.createContext<RealtimeDataContextType | undefined>(undefined);
+const RealtimeDataContext = createContext<RealtimeDataContextType | undefined>(undefined);
 
 export const useRealtimeDataContext = () => {
-  const context = React.useContext(RealtimeDataContext);
+  const context = useContext(RealtimeDataContext);
   if (context === undefined) {
     throw new Error('useRealtimeDataContext must be used within a RealtimeDataProvider');
   }
   return context;
 };
 
-interface RealtimeDataProviderProps {
-  children: React.ReactNode;
-}
-
-export const RealtimeDataProvider: React.FC<RealtimeDataProviderProps> = ({ children }) => {
+export const RealtimeDataProvider = ({ children }: { children: ReactNode }) => {
   const { data: commodities } = useAvailableCommodities();
   const { shouldDelayData, isPremium, getDelayStatus } = useDelayedData();
   const delayStatus = getDelayStatus();
   
   // For now, use empty prices object since we removed CommodityPriceAPI
-  const prices = React.useMemo(() => {
+  const prices = useMemo(() => {
     const convertedPrices: Record<string, CommodityPrice> = {};
     
     // Return empty prices for now - could integrate with FMP API directly here in the future
