@@ -2,7 +2,20 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 export const usePremiumGating = () => {
-  const { user, profile, isGuest, isPremium } = useAuth();
+  const auth = useAuth();
+  
+  // Handle case where auth is not yet available
+  if (!auth) {
+    return {
+      isPremium: false,
+      isGuest: true,
+      canAccessFeature: () => false,
+      requiresPremiumUpgrade: () => true,
+      showUpgradePrompt: () => {}
+    };
+  }
+  
+  const { user, profile, isGuest, isPremium } = auth;
   const navigate = useNavigate();
 
   const requireLogin = (redirectToAuth = true) => {

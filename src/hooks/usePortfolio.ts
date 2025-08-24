@@ -28,9 +28,12 @@ export const usePortfolio = () => {
   const [positions, setPositions] = React.useState<PositionWithCurrentPrice[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const { user } = useAuth();
+  const auth = useAuth();
   const { toast } = useToast();
   const { isPremium } = useDelayedData();
+
+  // Handle case where auth is not yet available
+  const user = auth?.user || null;
 
   // Fetch positions from database
   const fetchPositions = async () => {

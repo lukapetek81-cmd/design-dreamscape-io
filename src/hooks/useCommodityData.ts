@@ -127,9 +127,12 @@ export const useCommodityPrice = (commodityName: string) => {
 };
 
 export const useCommodityHistoricalData = (commodityName: string, timeframe: string, chartType: string = 'line', contractSymbol?: string) => {
-  const { profile } = useAuth();
+  const auth = useAuth();
   const { getDataDelay, shouldDelayData } = useDelayedData();
   const { getOptimizedQuerySettings } = useCacheOptimization();
+  
+  // Handle case where auth is not yet available
+  const profile = auth?.profile || null;
   
   // Get optimized settings for historical data
   const optimizedSettings = getOptimizedQuerySettings('historical');

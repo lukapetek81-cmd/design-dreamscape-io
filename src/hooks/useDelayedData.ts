@@ -1,7 +1,20 @@
 import { useAuth } from '@/contexts/AuthContext';
 
 export const useDelayedData = () => {
-  const { profile, isGuest } = useAuth();
+  const auth = useAuth();
+  
+  // Add null check to prevent errors during initial render
+  if (!auth) {
+    return {
+      isPremium: false,
+      shouldDelayData: true,
+      getDelayedTimestamp: (timestamp?: number) => timestamp,
+      getDataDelay: () => '15min',
+      getDelayStatus: () => ({ isDelayed: true, delayText: '15-min delayed', statusText: 'Loading...' })
+    };
+  }
+  
+  const { profile, isGuest } = auth;
   
   const isPremium = profile?.subscription_active && profile?.subscription_tier !== 'free';
   const shouldDelayData = isGuest || !isPremium;
