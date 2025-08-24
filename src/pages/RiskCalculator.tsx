@@ -33,7 +33,7 @@ const RiskCalculator = () => {
   const [contractSize, setContractSize] = React.useState('1000');
   const [marginPercentage, setMarginPercentage] = React.useState([10]);
 
-  const selectedCommodityData = commodities.find(c => c.name === selectedCommodity);
+  const selectedCommodityData = commodities?.find(c => c.name === selectedCommodity);
 
   const calculations: RiskCalculation = React.useMemo(() => {
     const balance = parseFloat(accountBalance) || 0;
@@ -147,11 +147,11 @@ const RiskCalculator = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {commodities.map(commodity => (
+                    {commodities?.map(commodity => (
                       <SelectItem key={commodity.name} value={commodity.name}>
                         {commodity.name} - ${commodity.price.toFixed(2)}
                       </SelectItem>
-                    ))}
+                    )) || []}
                   </SelectContent>
                 </Select>
               </div>
