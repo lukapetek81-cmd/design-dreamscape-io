@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useMemo, ReactNode } from 'react';
 import { CommodityPrice, useAvailableCommodities } from '@/hooks/useCommodityData';
 import { useDelayedData } from '@/hooks/useDelayedData';
 
