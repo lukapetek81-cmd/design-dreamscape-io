@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 // Hook to defer loading of non-critical providers
 export const useDeferredProviders = () => {

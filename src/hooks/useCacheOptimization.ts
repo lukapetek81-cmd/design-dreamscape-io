@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useOfflineStatus } from './useOfflineStatus';
 import { useIsMobile } from './use-mobile';
 
