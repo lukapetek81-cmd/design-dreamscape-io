@@ -133,7 +133,6 @@ const Watchlists = () => {
       <MobilePageHeader
         title="Watchlists"
         subtitle="Create and manage custom commodity watchlists with drag-and-drop sorting"
-        onBack={() => navigate('/')}
       >
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>

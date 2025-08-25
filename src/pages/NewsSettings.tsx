@@ -12,7 +12,6 @@ const NewsSettingsPage: React.FC = () => {
       <MobilePageHeader
         title="News Configuration"
         subtitle="Configure API keys and settings for enhanced news coverage across multiple sources"
-        onBack={() => navigate('/')}
       />
       
       <div className="container mx-auto px-4 py-6 max-w-4xl">

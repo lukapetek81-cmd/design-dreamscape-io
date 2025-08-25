@@ -71,17 +71,6 @@ const MarketCorrelation = () => {
       {/* Header */}
       <div className="space-y-4">
         <div>
-          <div className="flex items-center gap-4 mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </Button>
-          </div>
           <h1 className="text-2xl lg:text-3xl font-bold text-foreground flex items-center gap-2">
             <BarChart3 className="w-6 h-6 lg:w-8 lg:h-8 text-primary" />
             Market Correlation

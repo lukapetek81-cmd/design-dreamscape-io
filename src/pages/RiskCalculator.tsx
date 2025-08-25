@@ -75,18 +75,6 @@ const RiskCalculator = () => {
     <div className="container mx-auto p-4 space-y-6">
       {/* Header */}
       <div className="space-y-4">
-        <div className="flex items-center gap-4 mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </Button>
-        </div>
-        
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
             <Calculator className="w-8 h-8 text-primary" />

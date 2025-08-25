@@ -155,7 +155,6 @@ const EconomicCalendar = () => {
       <MobilePageHeader
         title="Economic Calendar"
         subtitle="Track key economic events and their potential impact on commodity markets"
-        onBack={() => navigate('/')}
       />
       
         <div className="container mx-auto p-4 space-y-6">

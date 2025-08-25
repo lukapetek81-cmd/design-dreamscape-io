@@ -148,7 +148,6 @@ const MarketScreener = () => {
       <MobilePageHeader
         title="Market Screener"
         subtitle="Filter and analyze commodities by performance, volume, and other key metrics"
-        onBack={() => navigate('/')}
       >
         <div className="text-xs text-muted-foreground hidden sm:block">
           Last updated: {new Date().toLocaleTimeString()}

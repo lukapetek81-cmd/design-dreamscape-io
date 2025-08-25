@@ -165,14 +165,6 @@ const RecentActivity = () => {
           <header className="flex h-16 shrink-0 items-center border-b px-4">
             <SidebarTrigger className="p-2 min-h-[48px] min-w-[48px]" />
             <Separator orientation="vertical" className="mr-2 h-4" />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/')}
-              className="mr-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
             <div className="flex items-center gap-2">
               <Clock className="h-6 w-6 text-primary" />
               <h1 className="text-xl font-semibold">Recent Activity</h1>

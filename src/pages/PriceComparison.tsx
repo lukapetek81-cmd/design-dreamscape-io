@@ -289,15 +289,6 @@ const PriceComparison = () => {
               <SidebarTrigger className="p-2 hover:bg-muted rounded-lg lg:hidden">
                 <Menu className="h-5 w-5" />
               </SidebarTrigger>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/')}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                <span className="hidden sm:inline">Back</span>
-              </Button>
             </div>
             <div className="flex items-center gap-2">
               <BarChart className="h-5 w-5 text-primary" />

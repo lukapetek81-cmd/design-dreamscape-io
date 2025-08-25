@@ -50,7 +50,6 @@ const Portfolio = () => {
         <MobilePageHeader
           title="My Portfolio"
           subtitle="Track your commodity positions and performance"
-          onBack={() => navigate('/')}
         >
           <Button 
             onClick={() => setShowAddForm(true)} 
