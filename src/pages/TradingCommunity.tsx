@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
 import CommoditySidebar from "@/components/CommoditySidebar";
@@ -42,10 +42,10 @@ const COMMODITY_GROUPS = [
 ];
 
 const TradingCommunity = () => {
-  const [activeGroup, setActiveGroup] = React.useState("energy");
-  const [forums, setForums] = React.useState<Forum[]>([]);
-  const [topics, setTopics] = React.useState<ForumTopic[]>([]);
-  const [loading, setLoading] = React.useState(true);
+  const [activeGroup, setActiveGroup] = useState("energy");
+  const [forums, setForums] = useState<Forum[]>([]);
+  const [topics, setTopics] = useState<ForumTopic[]>([]);
+  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -54,11 +54,11 @@ const TradingCommunity = () => {
     energy: 0, metals: 0, grains: 0, livestock: 0, softs: 0, other: 0
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchForums();
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (forums.length > 0) {
       fetchTopics();
     }

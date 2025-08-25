@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
 import CommoditySidebar from "@/components/CommoditySidebar";
@@ -39,14 +39,14 @@ const POPULAR_COMMODITIES = [
 ];
 
 const MarketSentiment = () => {
-  const [activeGroup, setActiveGroup] = React.useState("energy");
-  const [sentimentData, setSentimentData] = React.useState<SentimentAggregate[]>([]);
-  const [userVote, setUserVote] = React.useState<SentimentVote | null>(null);
-  const [selectedCommodity, setSelectedCommodity] = React.useState("");
-  const [selectedSentiment, setSelectedSentiment] = React.useState<'bullish' | 'bearish'>('bullish');
-  const [confidence, setConfidence] = React.useState(3);
-  const [reasoning, setReasoning] = React.useState("");
-  const [loading, setLoading] = React.useState(true);
+  const [activeGroup, setActiveGroup] = useState("energy");
+  const [sentimentData, setSentimentData] = useState<SentimentAggregate[]>([]);
+  const [userVote, setUserVote] = useState<SentimentVote | null>(null);
+  const [selectedCommodity, setSelectedCommodity] = useState("");
+  const [selectedSentiment, setSelectedSentiment] = useState<'bullish' | 'bearish'>('bullish');
+  const [confidence, setConfidence] = useState(3);
+  const [reasoning, setReasoning] = useState("");
+  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -55,7 +55,7 @@ const MarketSentiment = () => {
     energy: 0, metals: 0, grains: 0, livestock: 0, softs: 0, other: 0
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchSentimentData();
   }, []);
 

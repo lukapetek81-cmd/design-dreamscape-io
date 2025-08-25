@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
 import CommoditySidebar from "@/components/CommoditySidebar";
@@ -61,13 +61,13 @@ const SAMPLE_COMMODITIES: Commodity[] = [
 ];
 
 const PriceComparison = () => {
-  const [activeGroup, setActiveGroup] = React.useState("energy");
-  const [selectedCommodities, setSelectedCommodities] = React.useState<Commodity[]>([]);
-  const [availableCommodities] = React.useState<Commodity[]>(SAMPLE_COMMODITIES);
-  const [comparisonName, setComparisonName] = React.useState("");
-  const [savedComparisons, setSavedComparisons] = React.useState<ComparisonSession[]>([]);
-  const [loading, setLoading] = React.useState(false);
-  const [showContracts, setShowContracts] = React.useState<Record<string, boolean>>({});
+  const [activeGroup, setActiveGroup] = useState("energy");
+  const [selectedCommodities, setSelectedCommodities] = useState<Commodity[]>([]);
+  const [availableCommodities] = useState<Commodity[]>(SAMPLE_COMMODITIES);
+  const [comparisonName, setComparisonName] = useState("");
+  const [savedComparisons, setSavedComparisons] = useState<ComparisonSession[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showContracts, setShowContracts] = useState<Record<string, boolean>>({});
   const { user, isPremium } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -96,7 +96,7 @@ const PriceComparison = () => {
     });
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (user) {
       fetchSavedComparisons();
     }

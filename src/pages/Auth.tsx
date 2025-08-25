@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,15 +11,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 
 const Auth = () => {
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [showPassword, setShowPassword] = React.useState(false);
-  const [formData, setFormData] = React.useState({
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
     email: '',
     password: '',
     fullName: '',
     confirmPassword: ''
   });
-  const [showForgotPassword, setShowForgotPassword] = React.useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const { user, signIn, signUp, signInWithGoogle, resetPassword, loading: authLoading } = useAuth();
 

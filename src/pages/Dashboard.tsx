@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import CommodityCard from '@/components/CommodityCard';
 import VirtualizedCommodityList from '@/components/VirtualizedCommodityList';
@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { OfflineIndicator } from '@/components/OfflineIndicator';
 
 const Dashboard = () => {
-  const [activeGroup, setActiveGroup] = React.useState("energy");
+  const [activeGroup, setActiveGroup] = useState("energy");
   const isMobile = useIsMobile();
   const { isGuest, profile, loading: authLoading } = useAuth();
   const { data: commodities, isLoading: commoditiesLoading, error: commoditiesError, refetch: refetchCommodities } = useAvailableCommodities();
@@ -70,7 +70,7 @@ const DashboardContent = ({
   const { connected: realtimeConnected, delayStatus } = useRealtimeDataContext();
 
   // Simple swipe handler for mobile sidebar
-  const [touchStart, setTouchStart] = React.useState<number | null>(null);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.targetTouches[0].clientX);

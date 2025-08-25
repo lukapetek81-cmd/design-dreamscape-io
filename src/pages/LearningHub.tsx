@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
 import CommoditySidebar from "@/components/CommoditySidebar";
@@ -41,15 +41,15 @@ interface GlossaryTerm {
 }
 
 const LearningHub = () => {
-  const [activeGroup, setActiveGroup] = React.useState("energy");
-  const [categories, setCategories] = React.useState<TutorialCategory[]>([]);
-  const [tutorials, setTutorials] = React.useState<Tutorial[]>([]);
-  const [glossaryTerms, setGlossaryTerms] = React.useState<GlossaryTerm[]>([]);
-  const [searchTerm, setSearchTerm] = React.useState("");
-  const [selectedCategory, setSelectedCategory] = React.useState<string>("all");
-  const [loading, setLoading] = React.useState(true);
-  const [selectedTutorial, setSelectedTutorial] = React.useState<Tutorial | null>(null);
-  const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [activeGroup, setActiveGroup] = useState("energy");
+  const [categories, setCategories] = useState<TutorialCategory[]>([]);
+  const [tutorials, setTutorials] = useState<Tutorial[]>([]);
+  const [glossaryTerms, setGlossaryTerms] = useState<GlossaryTerm[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [loading, setLoading] = useState(true);
+  const [selectedTutorial, setSelectedTutorial] = useState<Tutorial | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -57,7 +57,7 @@ const LearningHub = () => {
     energy: 0, metals: 0, grains: 0, livestock: 0, softs: 0, other: 0
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchData();
   }, []);
 
