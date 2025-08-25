@@ -51,8 +51,15 @@ const App = () => {
                 <Route path="/expert-insights" element={<ExpertInsights />} />
                 <Route path="/learning-hub" element={<LearningHub />} />
                 <Route path="/market-correlation" element={<MarketCorrelation />} />
+                <Route path="/correlation" element={<MarketCorrelation />} />
                 <Route path="/market-screener" element={<MarketScreener />} />
+                <Route path="/screener" element={<MarketScreener />} />
                 <Route path="/market-sentiment" element={<MarketSentiment />} />
+                <Route path="/sentiment" element={<MarketSentiment />} />
+                <Route path="/insights" element={<ExpertInsights />} />
+                <Route path="/learning" element={<LearningHub />} />
+                <Route path="/community" element={<TradingCommunity />} />
+                <Route path="/calendar" element={<EconomicCalendar />} />
                 <Route path="/news-settings" element={<NewsSettings />} />
                 <Route path="/price-comparison" element={<PriceComparison />} />
                 <Route path="/recent-activity" element={<RecentActivity />} />
