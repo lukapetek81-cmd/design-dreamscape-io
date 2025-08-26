@@ -1,6 +1,5 @@
-import React from 'react';
-import { QueryClient, QueryClientConfig, defaultShouldDehydrateQuery, QueryCache } from '@tanstack/react-query';
-import { isServer } from '@tanstack/react-query';
+
+import { QueryClient, QueryClientConfig, defaultShouldDehydrateQuery } from '@tanstack/react-query';
 
 interface QueryConfig {
   defaultStaleTime?: number;
