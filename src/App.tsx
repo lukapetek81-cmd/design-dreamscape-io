@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -31,7 +31,7 @@ import Watchlists from '@/pages/Watchlists';
 
 const App = () => {
   // Create QueryClient inside component to ensure React is available
-  const queryClient = React.useMemo(() => createOptimizedQueryClient(), []);
+  const queryClient = useMemo(() => createOptimizedQueryClient(), []);
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
