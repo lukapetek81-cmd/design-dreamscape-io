@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 const ONBOARDING_KEY = 'commodityflow_onboarding_completed';
