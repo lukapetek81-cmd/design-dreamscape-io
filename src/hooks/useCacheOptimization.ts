@@ -1,5 +1,5 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useOfflineStatus } from './useOfflineStatus';
 import { useIsMobile } from './use-mobile';
 
@@ -129,7 +129,7 @@ export const useCacheOptimization = (options: PerformanceOptions = {}) => {
       price: {
         staleTime: isMobile ? 2 * 60 * 1000 : 1 * 60 * 1000, // 2min mobile, 1min desktop
         gcTime: isMobile ? 5 * 60 * 1000 : 10 * 60 * 1000,   // 5min mobile, 10min desktop
-        refetchInterval: isOnline ? (isMobile ? 60000 : 30000) : false as const, // 1min mobile, 30s desktop
+        refetchInterval: (isOnline ? (isMobile ? 60000 : 30000) : false) as number | false, // 1min mobile, 30s desktop
       },
       historical: {
         staleTime: isMobile ? 10 * 60 * 1000 : 5 * 60 * 1000, // 10min mobile, 5min desktop
@@ -139,7 +139,7 @@ export const useCacheOptimization = (options: PerformanceOptions = {}) => {
       news: {
         staleTime: 15 * 60 * 1000, // 15 minutes for all devices
         gcTime: 30 * 60 * 1000,    // 30 minutes for all devices
-        refetchInterval: isOnline ? 15 * 60 * 1000 : false as const, // 15min when online
+        refetchInterval: (isOnline ? 15 * 60 * 1000 : false) as number | false, // 15min when online
       },
     };
 
