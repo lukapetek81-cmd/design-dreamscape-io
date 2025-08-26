@@ -29,9 +29,9 @@ import RiskCalculator from '@/pages/RiskCalculator';
 import TradingCommunity from '@/pages/TradingCommunity';
 import Watchlists from '@/pages/Watchlists';
 
-const queryClient = createOptimizedQueryClient();
-
 const App = () => {
+  // Create QueryClient inside component to ensure React is available
+  const queryClient = React.useMemo(() => createOptimizedQueryClient(), []);
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
