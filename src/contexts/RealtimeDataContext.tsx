@@ -33,7 +33,7 @@ export const RealtimeDataProvider = ({ children }: { children: ReactNode }) => {
   const delayStatus = getDelayStatus();
   
   // For now, use empty prices object since we removed CommodityPriceAPI
-  const prices = useMemo(() => {
+  const prices = React.useMemo(() => {
     const convertedPrices: Record<string, CommodityPrice> = {};
     
     // Return empty prices for now - could integrate with FMP API directly here in the future

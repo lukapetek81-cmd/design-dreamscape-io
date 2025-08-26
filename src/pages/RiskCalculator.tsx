@@ -35,7 +35,7 @@ const RiskCalculator = () => {
 
   const selectedCommodityData = commodities?.find(c => c.name === selectedCommodity);
 
-  const calculations: RiskCalculation = useMemo(() => {
+  const calculations: RiskCalculation = React.useMemo(() => {
     const balance = parseFloat(accountBalance) || 0;
     const risk = riskPercentage[0] / 100;
     const entry = parseFloat(entryPrice) || (selectedCommodityData?.price || 0);

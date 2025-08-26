@@ -38,11 +38,11 @@ const MarketScreener = () => {
   });
 
   // Commodities now come with enhanced data from API
-  const enhancedCommodities = useMemo(() => {
+  const enhancedCommodities = React.useMemo(() => {
     return commodities || [];
   }, [commodities]);
 
-  const filteredCommodities = useMemo(() => {
+  const filteredCommodities = React.useMemo(() => {
     let result = enhancedCommodities;
 
     // Search filter
