@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -30,8 +30,8 @@ import TradingCommunity from '@/pages/TradingCommunity';
 import Watchlists from '@/pages/Watchlists';
 
 const App = () => {
-  // Create QueryClient inside component to ensure React is available
-  const queryClient = useMemo(() => createOptimizedQueryClient(), []);
+  // Create QueryClient directly without useMemo to avoid React hooks issues
+  const queryClient = createOptimizedQueryClient();
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
