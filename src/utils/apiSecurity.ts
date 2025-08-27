@@ -48,7 +48,7 @@ export const secureApiCall = async <T = any>(
           if (typeof payload[key] === 'string') {
             payload[key] = payload[key].trim();
             // Remove potentially dangerous characters
-            payload[key] = payload[key].replace(/[<>\"']/g, '');
+            payload[key] = payload[key].replace(/[<>"']/g, '');
           }
         });
       }

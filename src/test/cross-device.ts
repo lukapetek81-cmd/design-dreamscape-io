@@ -302,7 +302,7 @@ export class CrossDeviceTestRunner {
     const avgLoadTime = this.results.reduce((sum, r) => sum + r.performanceMetrics.loadTime, 0) / totalTests
     const avgAccessibilityScore = this.results.reduce((sum, r) => sum + r.accessibilityScore, 0) / totalTests
 
-    let report = `
+    const report = `
 Cross-Device Testing Report
 ===========================
 Total Tests: ${totalTests}

@@ -504,7 +504,7 @@ export class CommodityApiService {
 
     const apiKey = getFmpApiKey();
     let endpoint = '';
-    let dataLimit = this.getTimeframeDays(timeframe);
+    const dataLimit = this.getTimeframeDays(timeframe);
     
     if (timeframe === '1d') {
       endpoint = `https://financialmodelingprep.com/api/v3/historical-chart/15min/${symbols.fmp}?apikey=${apiKey}`;

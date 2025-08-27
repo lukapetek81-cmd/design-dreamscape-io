@@ -27,6 +27,9 @@ export default tseslint.config(
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-empty-object-type": "off",
       "@typescript-eslint/no-require-imports": "off",
+      "react-refresh/only-export-components": "off", // Too noisy for existing codebase
+      "prefer-const": "error",
+      "no-useless-escape": "error",
     },
   }
 );

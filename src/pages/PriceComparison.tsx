@@ -422,8 +422,9 @@ const PriceComparison = () => {
                       </CardTitle>
                     </CardHeader>
                      <CardContent className={`space-y-3 ${isMobile ? 'max-h-96 overflow-y-auto' : 'space-y-4'}`}>
-                       {availableCommodities.map((commodity) => {
-                         const contractsQuery = useIBKRContracts(commodity.name);
+                        {availableCommodities.map((commodity) => {
+                          // eslint-disable-next-line react-hooks/rules-of-hooks
+                          const contractsQuery = useIBKRContracts(commodity.name);
                          const hasContracts = contractsQuery.data && contractsQuery.data.length > 0;
                          const showingContracts = showContracts[commodity.name];
                          

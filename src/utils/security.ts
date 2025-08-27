@@ -119,7 +119,7 @@ export const getSecurityHeaders = () => ({
 // Input sanitization
 export const sanitizeInput = (input: string): string => {
   return input
-    .replace(/[<>\"']/g, '') // Remove HTML/script injection characters
+    .replace(/[<>"']/g, '') // Remove HTML/script injection characters
     .replace(/javascript:/gi, '') // Remove javascript protocol
     .replace(/on\w+=/gi, '') // Remove event handlers
     .trim();

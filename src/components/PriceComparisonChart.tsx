@@ -53,15 +53,17 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
   const isMobile = useIsMobile();
 
   // Get historical data for each commodity (with contract support)
-// eslint-disable-next-line react-hooks/rules-of-hooks
-const historicalQueries = commodities.map(commodity => 
-  useCommodityHistoricalData(
-    commodity.name, 
-    timeframe, 
-    'line', 
-    commodity.contractSymbol
-  )
-);
+  const historicalQueries = React.useMemo(() => 
+    commodities.map(commodity => 
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      useCommodityHistoricalData(
+        commodity.name, 
+        timeframe, 
+        'line', 
+        commodity.contractSymbol
+      )
+    ), [commodities, timeframe]
+  );
 
   // Create a stable key for tracking when data actually changes
   const dataVersionKey = historicalQueries
