@@ -2,21 +2,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 export const usePremiumGating = () => {
-  const auth = useAuth();
-  
-  // Handle case where auth is not yet available
-  if (!auth) {
-    return {
-      isPremium: false,
-      isGuest: true,
-      canAccessFeature: () => false,
-      requiresPremiumUpgrade: () => true,
-      showUpgradePrompt: () => {}
-    };
-  }
-  
-  const { user, profile, isGuest, isPremium } = auth;
   const navigate = useNavigate();
+  const auth = useAuth();
+
+  // Derive safe fallbacks when auth is not yet available
+  const isGuest = auth?.isGuest ?? true;
+  const isPremium = auth?.isPremium ?? false;
 
   const requireLogin = (redirectToAuth = true) => {
     if (isGuest) {
@@ -35,14 +26,14 @@ export const usePremiumGating = () => {
       }
       return false;
     }
-    
+
     if (!isPremium) {
       if (redirectToAuth) {
         navigate('/billing');
       }
       return false;
     }
-    
+
     return true;
   };
 
@@ -51,11 +42,7 @@ export const usePremiumGating = () => {
     isPremium,
     requireLogin,
     requirePremium,
-    canAccessFeature: (requiresPremium: boolean = false) => {
-      if (requiresPremium) {
-        return !isGuest && isPremium;
-      }
-      return !isGuest;
-    }
+    canAccessFeature: (requiresPremium: boolean = false) =>
+      requiresPremium ? !isGuest && isPremium : !isGuest,
   };
 };

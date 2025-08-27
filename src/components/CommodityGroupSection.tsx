@@ -23,8 +23,8 @@ interface CommodityGroupSectionProps {
   onToggle?: () => void;
 }
 
-// Memoize icon and color functions for better performance
-const getGroupIcon = React.useMemo(() => (category: string) => {
+// Helper functions for group icon and color
+const getGroupIcon = (category: string) => {
   switch (category) {
     case 'metals':
       return <Coins className="w-5 h-5" />;
@@ -39,9 +39,9 @@ const getGroupIcon = React.useMemo(() => (category: string) => {
     default:
       return <Zap className="w-5 h-5" />;
   }
-}, []);
+};
 
-const getGroupColor = React.useMemo(() => (category: string) => {
+const getGroupColor = (category: string) => {
   switch (category) {
     case 'energy':
       return 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400';
@@ -58,7 +58,7 @@ const getGroupColor = React.useMemo(() => (category: string) => {
     default:
       return 'bg-primary/10 text-primary';
   }
-}, []);
+};
 
 const CommodityGroupSection = React.memo(({ 
   title, 

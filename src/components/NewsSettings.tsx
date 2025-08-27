@@ -46,14 +46,16 @@ const NewsSettings: React.FC = () => {
       
       // Simple validation tests for each API
       switch (keyName) {
-        case 'fmpApiKey':
+        case 'fmpApiKey': {
           const fmpResponse = await fetch(`https://financialmodelingprep.com/api/v3/profile/AAPL?apikey=${apiKey}`);
           isValid = fmpResponse.ok;
           break;
-        case 'marketauxApiKey':
+        }
+        case 'marketauxApiKey': {
           const marketauxResponse = await fetch(`https://api.marketaux.com/v1/news/all?api_token=${apiKey}&limit=1`);
           isValid = marketauxResponse.ok;
           break;
+        }
       }
       
       setTestResults(prev => ({ ...prev, [keyName]: isValid }));

@@ -54,10 +54,11 @@ export const useArrowNavigation = (
   onRight?: () => void,
   enabled = true
 ) => {
+  const noop = () => {};
   useKeyboardShortcut('ArrowUp', onUp, { enabled });
   useKeyboardShortcut('ArrowDown', onDown, { enabled });
-  if (onLeft) useKeyboardShortcut('ArrowLeft', onLeft, { enabled });
-  if (onRight) useKeyboardShortcut('ArrowRight', onRight, { enabled });
+  useKeyboardShortcut('ArrowLeft', onLeft ?? noop, { enabled: enabled && !!onLeft });
+  useKeyboardShortcut('ArrowRight', onRight ?? noop, { enabled: enabled && !!onRight });
 };
 
 // Advanced keyboard shortcuts system

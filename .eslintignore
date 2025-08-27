@@ -1,0 +1,9 @@
+# Ignore build outputs and generated files
+node_modules/**
+dist/**
+build/**
+android/**
+android/app/build/**
+coverage/**
+.vscode/**
+.idea/**
