@@ -248,7 +248,7 @@ self.addEventListener('push', event => {
   const data = event.data.json();
   const options = {
     body: data.body,
-    icon: '/icon-192.png',
+    icon: '/icon.png',
     badge: '/badge-72.png',
     tag: data.tag || 'default',
     requireInteraction: true,
@@ -256,12 +256,12 @@ self.addEventListener('push', event => {
       {
         action: 'view',
         title: 'View',
-        icon: '/icon-view.png'
+        icon: '/icon.png'
       },
       {
         action: 'dismiss',
         title: 'Dismiss',
-        icon: '/icon-dismiss.png'
+        icon: '/icon.png'
       }
     ]
   };

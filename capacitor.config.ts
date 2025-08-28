@@ -12,8 +12,16 @@ const config: CapacitorConfig = {
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
-      backgroundColor: "#663399",
-      showSpinner: false
+      backgroundColor: "#8B5CF6",
+      androidScaleType: "CENTER_CROP",
+      showSpinner: false,
+      androidSpinnerStyle: "large",
+      iosSpinnerStyle: "small",
+      spinnerColor: "#ffffff"
+    },
+    StatusBar: {
+      style: "DARK",
+      backgroundColor: "#8B5CF6"
     }
   },
   android: {
@@ -24,11 +32,16 @@ const config: CapacitorConfig = {
     adaptiveIcon: {
       foreground: 'icon.png',
       background: '#8B5CF6'
-    }
+    },
+    allowMixedContent: true,
+    captureInput: true,
+    webContentsDebuggingEnabled: true
   },
   ios: {
     contentInset: 'automatic',
-    icon: 'icon.png'
+    icon: 'icon.png',
+    scheme: 'Commodity Hub',
+    allowsLinkPreview: false
   },
   // Global icon configuration
   icon: 'icon.png'
