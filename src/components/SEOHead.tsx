@@ -11,7 +11,7 @@ interface SEOHeadProps {
   author?: string;
   keywords?: string[];
   noIndex?: boolean;
-  structuredData?: Record<string, any>;
+  structuredData?: Record<string, unknown>;
 }
 
 const SEOHead: React.FC<SEOHeadProps> = ({

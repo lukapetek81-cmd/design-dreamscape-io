@@ -11,6 +11,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { encryptCredential } from '@/lib/encryption';
 import { useToast } from '@/hooks/use-toast';
 
+interface DBCredentials {
+  id: string;
+  username_encrypted: string;
+  password_encrypted: string;
+  gateway: string;
+  is_active: boolean;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface IBKRCredentials {
   id?: string;
   username: string;
@@ -28,54 +39,51 @@ export const IBKRCredentialsForm: React.FC = () => {
     gateway: 'paper', // Default to paper trading
     is_active: true
   });
-  const [existingCredentials, setExistingCredentials] = React.useState<IBKRCredentials | null>(null);
+  const [existingCredentials, setExistingCredentials] = React.useState<DBCredentials | null>(null);
   const [showPassword, setShowPassword] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const loadCredentials = React.useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const { data, error } = await supabase
+        .from('ibkr_credentials')
+        .select('*')
+        .eq('user_id', user?.id)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (error) throw error;
+      
+      if (data) {
+        setExistingCredentials(data as DBCredentials);
+        setCredentials(prev => ({
+          ...prev,
+          gateway: data.gateway,
+          is_active: data.is_active,
+          username: '***masked***',
+          password: '***masked***'
+        }));
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load IBKR credentials';
+      setError(errorMessage);
+      console.error('Error loading IBKR credentials:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user?.id]);
 
   // Load existing credentials
   React.useEffect(() => {
     if (user && isPremium) {
       loadCredentials();
     }
-  }, [user, isPremium]);
-
-  const loadCredentials = async () => {
-    try {
-      setIsLoading(true);
-      const { data, error } = await supabase
-        .from('ibkr_credentials')
-        .select('*')
-        .eq('user_id', user?.id)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (data) {
-        setExistingCredentials({
-          id: data.id,
-          username: '***masked***',
-          password: '***masked***',
-          gateway: data.gateway,
-          is_active: data.is_active
-        });
-        setCredentials(prev => ({
-          ...prev,
-          gateway: data.gateway,
-          is_active: data.is_active
-        }));
-      }
-    } catch (error) {
-      console.error('Error loading credentials:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load IBKR credentials",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [user, isPremium, loadCredentials]);
 
   const saveCredentials = async () => {
     if (!user || !isPremium) return;

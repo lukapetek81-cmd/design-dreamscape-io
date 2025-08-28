@@ -7,11 +7,26 @@ import { BarChart3 } from 'lucide-react';
 
 const CommodityChart = React.lazy(() => import('./CommodityChart'));
 
+interface FuturesContract {
+  name: string;
+  symbol: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  volume: number;
+  category: string;
+  contractSize: string;
+  venue: string;
+  supportedByFMP: boolean;
+  expirationDate?: string;
+  source?: string;
+}
+
 interface LazyChartProps {
   name: string;
   basePrice: number;
   selectedContract?: string;
-  contractData?: any;
+  contractData?: FuturesContract | null;
   className?: string;
 }
 

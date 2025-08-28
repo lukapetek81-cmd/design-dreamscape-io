@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const checkSubscriptionStatus = async (userId: string) => {
+  const checkSubscriptionStatus = React.useCallback(async (userId: string) => {
     try {
       // Check subscription status after login
       const session = await supabase.auth.getSession();
@@ -88,7 +88,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Error checking subscription status:', error);
     }
-  };
+  }, []);
 
   const refreshProfile = async () => {
     if (user) {

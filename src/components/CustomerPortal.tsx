@@ -80,28 +80,32 @@ const CustomerPortal = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
 
-  const fetchBillingInfo = async () => {
-    if (!user) return;
-
+  const fetchBillingInfo = React.useCallback(async () => {
+    if (!user?.id) return;
+    
     try {
       setLoading(true);
-      const { data, error } = await supabase.functions.invoke('get-billing-info');
+      
+      const { data, error } = await supabase.functions.invoke('get-billing-info', {
+        body: { userId: user.id }
+      });
 
       if (error) throw error;
+
       setBillingInfo(data);
     } catch (error) {
       console.error('Error fetching billing info:', error);
       toast({
         title: "Error",
         description: "Failed to load billing information",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id, toast]);
 
-  const handleCancelSubscription = async (subscriptionId: string, cancelAtPeriodEnd: boolean = true) => {
+  const handleCancelSubscription = React.useCallback(async (subscriptionId: string, cancelAtPeriodEnd: boolean = true) => {
     if (!user) return;
 
     try {
@@ -131,9 +135,9 @@ const CustomerPortal = () => {
     } finally {
       setCanceling(false);
     }
-  };
+  }, [user, toast, fetchBillingInfo]);
 
-  const openCustomerPortal = async () => {
+  const openCustomerPortal = React.useCallback(async () => {
     if (!user) return;
 
     try {
@@ -149,11 +153,7 @@ const CustomerPortal = () => {
         variant: "destructive",
       });
     }
-  };
-
-  React.useEffect(() => {
-    fetchBillingInfo();
-  }, [user]);
+  }, [user, toast]);
 
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat('en-US', {

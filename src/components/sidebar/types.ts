@@ -10,14 +10,14 @@ export interface CommodityCounts {
 export interface CommodityGroup {
   id: string;
   label: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
 }
 
 export interface MarketTool {
   id: string;
   label: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
   path: string;
 }
