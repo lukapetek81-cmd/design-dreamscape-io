@@ -101,11 +101,6 @@ export function useKeyboardShortcuts() {
       action: () => navigate('/watchlists'),
       category: 'Navigation'
     },
-    'g f': {
-      description: 'Go to Favorites',
-      action: () => navigate('/favorites'),
-      category: 'Navigation'
-    },
     'g c': {
       description: 'Go to Calendar',
       action: () => navigate('/calendar'),

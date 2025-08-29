@@ -9,7 +9,6 @@ import { createOptimizedQueryClient } from '@/lib/queryClient';
 import SEOHead from '@/components/SEOHead';
 import Dashboard from '@/pages/Dashboard';
 import Auth from '@/pages/Auth';
-import Favorites from '@/pages/Favorites';
 import Billing from '@/pages/Billing';
 import NotFound from '@/pages/NotFound';
 import Portfolio from '@/pages/Portfolio';
@@ -23,7 +22,6 @@ import MarketScreener from '@/pages/MarketScreener';
 import MarketSentiment from '@/pages/MarketSentiment';
 import NewsSettings from '@/pages/NewsSettings';
 import PriceComparison from '@/pages/PriceComparison';
-import RecentActivity from '@/pages/RecentActivity';
 import ResetPassword from '@/pages/ResetPassword';
 import RiskCalculator from '@/pages/RiskCalculator';
 import TradingCommunity from '@/pages/TradingCommunity';
@@ -43,7 +41,7 @@ const App = () => {
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/favorites" element={<Favorites />} />
+                
                 <Route path="/billing" element={<Billing />} />
                 <Route path="/portfolio" element={<Portfolio />} />
                 <Route path="/market-status" element={<MarketStatus />} />
@@ -63,7 +61,7 @@ const App = () => {
                 <Route path="/calendar" element={<EconomicCalendar />} />
                 <Route path="/news-settings" element={<NewsSettings />} />
                 <Route path="/price-comparison" element={<PriceComparison />} />
-                <Route path="/recent-activity" element={<RecentActivity />} />
+                
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/risk-calculator" element={<RiskCalculator />} />
                 <Route path="/trading-community" element={<TradingCommunity />} />
