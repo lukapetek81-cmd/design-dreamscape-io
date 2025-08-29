@@ -106,5 +106,40 @@ export function usePerformanceMonitoring(options: PerformanceMonitoringOptions =
   };
 }
 
+// Production monitoring integration
+export const useProductionMonitoring = () => {
+  const trackUserAction = React.useCallback((action: string, metadata?: Record<string, any>) => {
+    monitoringService.trackUserEvent(action, metadata);
+  }, []);
+
+  const trackAPICall = React.useCallback(async <T>(
+    apiName: string,
+    apiCall: () => Promise<T>
+  ): Promise<T> => {
+    const startTime = performance.now();
+    try {
+      const result = await apiCall();
+      const endTime = performance.now();
+      monitoringService.reportPerformance(`api_${apiName}`, endTime - startTime, 'ms');
+      return result;
+    } catch (error) {
+      const endTime = performance.now();
+      monitoringService.reportPerformance(`api_${apiName}_error`, endTime - startTime, 'ms');
+      throw error;
+    }
+  }, []);
+
+  const trackError = React.useCallback((error: Error, context?: string) => {
+    monitoringService.reportError({
+      message: error.message,
+      stack: error.stack,
+      context: { component: context },
+      severity: 'medium'
+    });
+  }, []);
+
+  return { trackUserAction, trackAPICall, trackError };
+};
+
 // HOC placeholder - implementation simplified for compatibility  
 export const withPerformanceMonitoring = (Component: any, componentName?: string) => Component;

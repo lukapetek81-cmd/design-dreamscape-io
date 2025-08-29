@@ -7,6 +7,53 @@ export const corsHeaders: CorsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
 };
 
+// Performance monitoring integration
+export class EdgePerformanceMonitor {
+  private metrics: Array<{
+    name: string;
+    duration: number;
+    timestamp: number;
+    metadata?: Record<string, any>;
+  }> = [];
+
+  startTimer(name: string): () => void {
+    const startTime = Date.now();
+    return () => {
+      const duration = Date.now() - startTime;
+      this.recordMetric(name, duration);
+    };
+  }
+
+  recordMetric(name: string, duration: number, metadata?: Record<string, any>) {
+    this.metrics.push({
+      name,
+      duration,
+      timestamp: Date.now(),
+      metadata,
+    });
+
+    // Keep only last 100 metrics to prevent memory leaks
+    if (this.metrics.length > 100) {
+      this.metrics = this.metrics.slice(-100);
+    }
+
+    // Log slow operations
+    if (duration > 5000) {
+      console.warn(`Slow operation detected: ${name} took ${duration}ms`);
+    }
+  }
+
+  getMetrics() {
+    return [...this.metrics];
+  }
+
+  getAverageTime(operationName: string): number {
+    const relevant = this.metrics.filter(m => m.name === operationName);
+    if (relevant.length === 0) return 0;
+    return relevant.reduce((sum, m) => sum + m.duration, 0) / relevant.length;
+  }
+}
+
 // Enhanced logging utility for edge functions
 export class EdgeLogger {
   private context: LogContext;
