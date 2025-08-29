@@ -22,10 +22,13 @@ const Dashboard = () => {
   // Show loading screen while auth is checking
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4 p-8">
           <Loader className="w-8 h-8 animate-spin text-primary mx-auto" />
-          <p className="text-sm text-muted-foreground">Loading...</p>
+          <p className="text-sm text-muted-foreground">Loading application...</p>
+          <p className="text-xs text-muted-foreground/60">
+            If this takes too long, try refreshing the page
+          </p>
         </div>
       </div>
     );

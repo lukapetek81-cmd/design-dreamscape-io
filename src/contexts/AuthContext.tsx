@@ -97,9 +97,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   React.useEffect(() => {
+    // Add timeout to prevent infinite loading on mobile
+    const loadingTimeout = setTimeout(() => {
+      console.warn('Auth loading timeout - forcing loading to false');
+      setLoading(false);
+    }, 5000);
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.email || 'no user');
+        clearTimeout(loadingTimeout);
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -120,21 +128,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        setTimeout(() => {
-          fetchProfile(session.user.id);
-        }, 0);
-      }
-      
-      setLoading(false);
-    });
+    // Check for existing session with error handling
+    supabase.auth.getSession()
+      .then(({ data: { session }, error }) => {
+        console.log('Initial session check:', session?.user?.email || 'no user', error);
+        clearTimeout(loadingTimeout);
+        
+        if (error) {
+          console.error('Session check error:', error);
+          // Still proceed with no session to avoid infinite loading
+        }
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          setTimeout(() => {
+            fetchProfile(session.user.id);
+          }, 0);
+        }
+        
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error('Failed to get session:', error);
+        clearTimeout(loadingTimeout);
+        // Fail gracefully - proceed without authentication
+        setLoading(false);
+      });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(loadingTimeout);
+    };
   }, [checkSubscriptionStatus]);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
