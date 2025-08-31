@@ -107,7 +107,7 @@ const Trading: React.FC = () => {
                       <Button 
                         onClick={() => setShowCredentialsForm(true)}
                         size="lg"
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        className="bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black text-white shadow-lg hover:shadow-xl transition-all duration-200"
                       >
                         <Settings className="w-5 h-5 mr-2" />
                         Add IBKR Account
@@ -131,7 +131,7 @@ const Trading: React.FC = () => {
                       onClick={connect} 
                       disabled={isConnecting}
                       size="lg"
-                      className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-4 text-lg h-auto"
+                      className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-12 py-6 text-lg h-auto shadow-lg hover:shadow-xl transition-all duration-200 border-0"
                     >
                       <div className="flex items-center gap-3">
                         <IBKRLogo className="h-6 w-auto" />
