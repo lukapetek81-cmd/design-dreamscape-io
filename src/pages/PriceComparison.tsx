@@ -348,7 +348,7 @@ const PriceComparison = () => {
                             <Button 
                               onClick={saveComparison} 
                               disabled={loading} 
-                              className={`${isMobile ? 'w-full h-12 text-base' : 'w-auto'}`}
+                              className={`${isMobile ? 'w-full h-12 text-base touch-target mobile-button' : 'w-auto'}`}
                             >
                               Save Comparison
                             </Button>
@@ -358,13 +358,13 @@ const PriceComparison = () => {
                             {selectedCommodities.map((commodity) => (
                               <Card key={commodity.symbol} className="relative">
                                  <Button
-                                   variant="ghost"
-                                   size="sm"
-                                   className={`absolute top-2 right-2 ${isMobile ? 'h-8 w-8' : 'h-6 w-6'} p-0 z-10`}
-                                   onClick={() => removeCommodity(commodity.symbol, commodity.contractSymbol)}
-                                 >
-                                   <X className="h-4 w-4" />
-                                 </Button>
+                                    variant="ghost"
+                                    size="sm"
+                                    className={`absolute top-2 right-2 ${isMobile ? 'h-10 w-10 touch-target mobile-button' : 'h-6 w-6'} p-0 z-10`}
+                                    onClick={() => removeCommodity(commodity.symbol, commodity.contractSymbol)}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
                                  <CardContent className={`${isMobile ? 'p-4' : 'p-4'}`}>
                                    <div className="space-y-2">
                                      <div className="flex items-start gap-2 pr-8">
@@ -421,7 +421,7 @@ const PriceComparison = () => {
                         Add Commodities
                       </CardTitle>
                     </CardHeader>
-                     <CardContent className={`space-y-3 ${isMobile ? 'max-h-96 overflow-y-auto' : 'space-y-4'}`}>
+                     <CardContent className={`space-y-3 ${isMobile ? 'max-h-96 overflow-y-auto custom-scrollbar' : 'space-y-4'}`}>
                         {availableCommodities.map((commodity) => {
                           // eslint-disable-next-line react-hooks/rules-of-hooks
                           const contractsQuery = useIBKRContracts(commodity.name);
@@ -441,25 +441,25 @@ const PriceComparison = () => {
                                   </div>
                                  </div>
                                  <div className="flex items-center gap-1 ml-2">
-                                   {isPremium && hasContracts && (
-                                     <Button
-                                       variant="ghost"
-                                       size="sm"
-                                       onClick={() => toggleContractsView(commodity.name)}
-                                       className={isMobile ? 'h-9 w-9 p-0' : ''}
-                                     >
-                                       <Calendar className="h-4 w-4" />
-                                     </Button>
-                                   )}
-                                   <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => addCommodity(commodity)}
-                                    disabled={selectedCommodities.some(c => c.symbol === commodity.symbol && !c.contractSymbol)}
-                                    className={isMobile ? 'h-9 w-9 p-0' : ''}
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                  </Button>
+                                  {isPremium && hasContracts && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => toggleContractsView(commodity.name)}
+                                        className={isMobile ? 'h-11 w-11 p-0 touch-target mobile-button' : ''}
+                                      >
+                                        <Calendar className="h-4 w-4" />
+                                      </Button>
+                                    )}
+                                    <Button
+                                     variant="ghost"
+                                     size="sm"
+                                     onClick={() => addCommodity(commodity)}
+                                     disabled={selectedCommodities.some(c => c.symbol === commodity.symbol && !c.contractSymbol)}
+                                     className={isMobile ? 'h-11 w-11 p-0 touch-target mobile-button' : ''}
+                                   >
+                                     <Plus className="h-4 w-4" />
+                                   </Button>
                                 </div>
                               </div>
                               
@@ -486,18 +486,19 @@ const PriceComparison = () => {
                                           </div>
                                         </div>
                                        <Button
-                                         variant="ghost"
-                                         size="sm"
-                                         onClick={() => addCommodity({
-                                           ...commodity,
-                                           price: contract.price,
-                                           change: contract.change,
-                                           changePercent: contract.changePercent
-                                         }, contract.symbol)}
-                                         disabled={isSelected}
-                                       >
-                                         <Plus className="h-4 w-4" />
-                                       </Button>
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => addCommodity({
+                                            ...commodity,
+                                            price: contract.price,
+                                            change: contract.change,
+                                            changePercent: contract.changePercent
+                                          }, contract.symbol)}
+                                          disabled={isSelected}
+                                          className={isMobile ? 'h-10 w-10 p-0 touch-target mobile-button' : ''}
+                                        >
+                                          <Plus className="h-4 w-4" />
+                                        </Button>
                                      </div>
                                    );
                                  })}
@@ -524,7 +525,7 @@ const PriceComparison = () => {
                        <CardHeader className={isMobile ? 'pb-3' : ''}>
                          <CardTitle className={isMobile ? 'text-base' : 'text-lg'}>Saved Comparisons</CardTitle>
                        </CardHeader>
-                       <CardContent className={`space-y-2 ${isMobile ? 'max-h-64 overflow-y-auto' : ''}`}>
+                       <CardContent className={`space-y-2 ${isMobile ? 'max-h-64 overflow-y-auto custom-scrollbar' : ''}`}>
                          {savedComparisons.map((comparison) => (
                            <div key={comparison.id} className={`flex items-center justify-between ${isMobile ? 'p-3' : 'p-2'} border rounded`}>
                              <div className="flex-1 min-w-0">
@@ -534,22 +535,22 @@ const PriceComparison = () => {
                                </div>
                              </div>
                              <div className="flex gap-1 ml-2">
-                               <Button
-                                 variant="ghost"
-                                 size="sm"
-                                 onClick={() => loadComparison(comparison)}
-                                 className={isMobile ? 'text-xs px-2' : ''}
-                               >
-                                 Load
-                               </Button>
-                               <Button
-                                 variant="ghost"
-                                 size="sm"
-                                 onClick={() => deleteComparison(comparison.id)}
-                                 className={isMobile ? 'h-8 w-8 p-0' : ''}
-                               >
-                                 <X className="h-4 w-4" />
-                               </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => loadComparison(comparison)}
+                                  className={isMobile ? 'text-xs px-3 h-10 touch-target mobile-button' : ''}
+                                >
+                                  Load
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => deleteComparison(comparison.id)}
+                                  className={isMobile ? 'h-10 w-10 p-0 touch-target mobile-button' : ''}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
                              </div>
                            </div>
                          ))}
