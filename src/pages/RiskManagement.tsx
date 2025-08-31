@@ -506,9 +506,9 @@ const RiskManagement = () => {
                     {advancedMetrics.sharpeRatio > 1 ? 'Good' : advancedMetrics.sharpeRatio > 0.5 ? 'Fair' : 'Poor'} Performance
                   </p>
                   <div className="mt-4 space-y-2 text-xs text-muted-foreground">
-                    <p>• {'>'}1.0: Good risk-adjusted returns</p>
+                    <p>• &gt;1.0: Good risk-adjusted returns</p>
                     <p>• 0.5-1.0: Acceptable returns</p>
-                    <p>• {'<'}0.5: Poor risk adjustment</p>
+                    <p>• &lt;0.5: Poor risk adjustment</p>
                   </div>
                 </div>
               </CardContent>
