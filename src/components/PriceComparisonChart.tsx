@@ -211,28 +211,32 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className={`flex ${isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
           <div>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-lg' : ''}`}>
               <TrendingUp className="w-5 h-5" />
-              Price Movement Comparison
+              {isMobile ? 'Price Chart' : 'Price Movement Comparison'}
             </CardTitle>
-            <CardDescription>
-              Real-time price movements across selected commodities
-            </CardDescription>
+            {!isMobile && (
+              <CardDescription>
+                Real-time price movements across selected commodities
+              </CardDescription>
+            )}
           </div>
-          <div className="flex items-center gap-2">
-            {getConnectionStatus()}
-            <Button
-              variant={useLogScale ? "default" : "outline"}
-              size="sm"
-              onClick={() => setUseLogScale(!useLogScale)}
-              className="whitespace-nowrap"
-            >
-              Log Scale
-            </Button>
+          <div className={`flex ${isMobile ? 'flex-col gap-2' : 'items-center gap-2'}`}>
+            <div className="flex items-center gap-2">
+              {getConnectionStatus()}
+              <Button
+                variant={useLogScale ? "default" : "outline"}
+                size="sm"
+                onClick={() => setUseLogScale(!useLogScale)}
+                className={`${isMobile ? 'touch-target mobile-button h-10' : ''} whitespace-nowrap`}
+              >
+                Log Scale
+              </Button>
+            </div>
             <Select value={timeframe} onValueChange={setTimeframe}>
-              <SelectTrigger className="w-[120px]">
+              <SelectTrigger className={`${isMobile ? 'w-full h-10' : 'w-[120px]'}`}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -247,7 +251,7 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
         </div>
       </CardHeader>
       <CardContent>
-        <div className="h-[400px] w-full">
+        <div className={`${isMobile ? 'h-[300px]' : 'h-[400px]'} w-full`}>
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
@@ -264,19 +268,28 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <LineChart data={chartData} margin={{ 
+                top: 5, 
+                right: isMobile ? 10 : 30, 
+                left: isMobile ? 10 : 20, 
+                bottom: 5 
+              }}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                 <XAxis 
                   dataKey="date" 
                   tickFormatter={formatAxisLabel}
-                  tick={{ fontSize: 12 }}
-                  interval="preserveStartEnd"
+                  tick={{ fontSize: isMobile ? 10 : 12 }}
+                  interval={isMobile ? "preserveStartEnd" : "preserveStartEnd"}
+                  angle={isMobile ? -45 : 0}
+                  textAnchor={isMobile ? "end" : "middle"}
+                  height={isMobile ? 60 : 30}
                 />
                 <YAxis 
                   scale={useLogScale ? "log" : "linear"}
                   domain={useLogScale ? ['dataMin', 'dataMax'] : ['auto', 'auto']}
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: isMobile ? 10 : 12 }}
                   tickFormatter={(value) => `$${value.toFixed(0)}`}
+                  width={isMobile ? 50 : 60}
                 />
                 <Tooltip
                   formatter={formatTooltipValue}
@@ -330,9 +343,9 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
         )}
         
         {connected && lastUpdate && (
-          <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
+          <div className={`mt-4 ${isMobile ? 'space-y-2' : 'flex items-center justify-between'} text-sm text-muted-foreground`}>
             <span>Last update: {lastUpdate.toLocaleTimeString()}</span>
-            <div className="flex items-center gap-4">
+            <div className={`flex ${isMobile ? 'flex-col gap-2' : 'items-center gap-4'}`}>
               {commodities.map((commodity) => {
                 const displaySymbol = commodity.contractSymbol || commodity.symbol;
                 const livePrice = prices[commodity.name];
@@ -341,9 +354,9 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
                 return (
                   <div key={displaySymbol} className="flex items-center gap-1">
                     <span className={`w-2 h-2 rounded-full ${hasLiveData ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
-                    <span>{displaySymbol}</span>
+                    <span className={isMobile ? 'text-xs' : ''}>{displaySymbol}</span>
                     {livePrice && (
-                      <span className={livePrice.change >= 0 ? 'text-green-600' : 'text-red-600'}>
+                      <span className={`${livePrice.change >= 0 ? 'text-green-600' : 'text-red-600'} ${isMobile ? 'text-xs font-medium' : ''}`}>
                         ${livePrice.price.toFixed(2)}
                       </span>
                     )}
