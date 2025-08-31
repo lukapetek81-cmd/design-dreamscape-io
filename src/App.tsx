@@ -23,7 +23,7 @@ import MarketSentiment from '@/pages/MarketSentiment';
 import NewsSettings from '@/pages/NewsSettings';
 import PriceComparison from '@/pages/PriceComparison';
 import ResetPassword from '@/pages/ResetPassword';
-import RiskCalculator from '@/pages/RiskCalculator';
+import RiskManagement from '@/pages/RiskManagement';
 import TradingCommunity from '@/pages/TradingCommunity';
 import Watchlists from '@/pages/Watchlists';
 import Trading from '@/pages/Trading';
@@ -64,7 +64,8 @@ const App = () => {
                 <Route path="/price-comparison" element={<PriceComparison />} />
                 <Route path="/portfolio" element={<Portfolio />} />
                 
-                <Route path="/risk-calculator" element={<RiskCalculator />} />
+                <Route path="/risk-calculator" element={<RiskManagement />} />
+                <Route path="/risk-management" element={<RiskManagement />} />
                 <Route path="/trading-community" element={<TradingCommunity />} />
                 <Route path="/watchlists" element={<Watchlists />} />
                 <Route path="*" element={<NotFound />} />
