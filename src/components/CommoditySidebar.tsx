@@ -83,7 +83,7 @@ const CommoditySidebar = React.memo(({ activeGroup, onGroupSelect, commodityCoun
       </SidebarContent>
 
       {/* Theme Switcher - Always at bottom */}
-      <SidebarFooter className={`${isMobile ? 'px-4 py-4 bg-background' : 'p-2'} border-t`}>
+      <SidebarFooter className={`${isMobile ? 'px-4 py-2 bg-background' : 'p-2'} border-t flex-shrink-0`}>
         <ThemeSwitcher />
       </SidebarFooter>
     </Sidebar>
