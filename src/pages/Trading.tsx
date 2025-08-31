@@ -49,27 +49,13 @@ const Trading: React.FC = () => {
     );
   }
 
-  // If connected, show the full trading dashboard
-  if (isConnected) {
-    return (
-      <>
-        <SEOHead 
-          title="Trading Dashboard - IBKR Integration"
-          description="Professional trading dashboard with Interactive Brokers integration. Live market data, advanced order types, risk management, and comprehensive trading history."
-          keywords={["IBKR trading", "Interactive Brokers", "commodity trading", "futures trading", "live market data", "trading dashboard"]}
-        />
-        <TradingDashboard />
-      </>
-    );
-  }
-
-  // Main connection interface
+  // Coming soon for premium users
   return (
     <>
       <SEOHead 
-        title="Trading Dashboard - IBKR Integration"
-        description="Professional trading dashboard with Interactive Brokers integration. Live market data, advanced order types, risk management, and comprehensive trading history."
-        keywords={["IBKR trading", "Interactive Brokers", "commodity trading", "futures trading", "live market data", "trading dashboard"]}
+        title="Trading Dashboard - Coming Soon"
+        description="Professional trading dashboard with Interactive Brokers integration. Coming soon for premium subscribers."
+        keywords={["IBKR trading", "Interactive Brokers", "commodity trading", "premium features"]}
       />
       <div className="min-h-screen bg-background">
         <div className="max-w-4xl mx-auto px-6 py-12 space-y-8">
@@ -77,122 +63,59 @@ const Trading: React.FC = () => {
           <div className="text-center space-y-4">
             <h1 className="text-4xl font-bold tracking-tight">Professional Trading</h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Connect your Interactive Brokers account to start trading commodities
+              Interactive Brokers integration coming soon
             </p>
           </div>
 
-          {/* Main Connect Section */}
+          {/* Coming Soon Section */}
           <Card className="border-2">
             <CardHeader className="text-center pb-6">
               <div className="flex justify-center mb-4">
                 <IBKRLogo className="h-12 w-auto" />
               </div>
-              <CardTitle className="text-2xl">Connect to Interactive Brokers</CardTitle>
+              <CardTitle className="text-2xl">Coming Soon</CardTitle>
               <CardDescription className="text-base">
-                Access live trading, real-time data, and professional order management
+                We're working on bringing you professional trading capabilities
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {!hasActiveCredentials() ? (
-                <div className="space-y-4">
-                  <Alert>
-                    <Shield className="h-4 w-4" />
-                    <AlertDescription>
-                      Enter your IBKR credentials to get started
-                    </AlertDescription>
-                  </Alert>
-                  
-                  {!showCredentialsForm ? (
-                    <div className="text-center">
-                      <Button 
-                        onClick={() => setShowCredentialsForm(true)}
-                        size="lg"
-                        className="bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                      >
-                        <Settings className="w-5 h-5 mr-2" />
-                        Add IBKR Account
-                      </Button>
-                    </div>
-                  ) : (
-                    <IBKRCredentialsForm />
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <div className="flex items-center justify-center gap-2 mb-4">
-                      <CheckCircle className="h-5 w-5 text-emerald-500" />
-                      <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
-                        Ready to connect
-                      </span>
-                    </div>
-                    
-                    <Button 
-                      onClick={connect} 
-                      disabled={isConnecting}
-                      size="lg"
-                      className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-12 py-6 text-lg h-auto shadow-lg hover:shadow-xl transition-all duration-200 border-0"
-                    >
-                      <div className="flex items-center gap-3">
-                        <IBKRLogo className="h-6 w-auto" variant="white" />
-                        {isConnecting ? (
-                          <>
-                            <RefreshCw className="w-5 h-5 animate-spin" />
-                            Connecting to IBKR...
-                          </>
-                        ) : (
-                          <>
-                            <Activity className="w-5 h-5" />
-                            Connect to IBKR
-                          </>
-                        )}
-                      </div>
-                    </Button>
-                  </div>
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  IBKR trading integration is currently under development. We're finalizing our official partnership with Interactive Brokers to bring you the best trading experience possible.
+                </AlertDescription>
+              </Alert>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                    <div className="p-4 rounded-lg bg-muted/50">
-                      <Activity className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-                      <h3 className="font-semibold">Live Trading</h3>
-                      <p className="text-sm text-muted-foreground">Real-time order execution</p>
-                    </div>
-                    <div className="p-4 rounded-lg bg-muted/50">
-                      <CheckCircle className="h-8 w-8 mx-auto mb-2 text-emerald-600" />
-                      <h3 className="font-semibold">Market Data</h3>
-                      <p className="text-sm text-muted-foreground">Professional-grade feeds</p>
-                    </div>
-                    <div className="p-4 rounded-lg bg-muted/50">
-                      <Shield className="h-8 w-8 mx-auto mb-2 text-purple-600" />
-                      <h3 className="font-semibold">Risk Management</h3>
-                      <p className="text-sm text-muted-foreground">Advanced portfolio tools</p>
-                    </div>
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                <div className="p-4 rounded-lg bg-muted/50">
+                  <Activity className="h-8 w-8 mx-auto mb-2 text-blue-600" />
+                  <h3 className="font-semibold">Live Trading</h3>
+                  <p className="text-sm text-muted-foreground">Real-time order execution</p>
                 </div>
-              )}
+                <div className="p-4 rounded-lg bg-muted/50">
+                  <CheckCircle className="h-8 w-8 mx-auto mb-2 text-emerald-600" />
+                  <h3 className="font-semibold">Market Data</h3>
+                  <p className="text-sm text-muted-foreground">Professional-grade feeds</p>
+                </div>
+                <div className="p-4 rounded-lg bg-muted/50">
+                  <Shield className="h-8 w-8 mx-auto mb-2 text-purple-600" />
+                  <h3 className="font-semibold">Risk Management</h3>
+                  <p className="text-sm text-muted-foreground">Advanced portfolio tools</p>
+                </div>
+              </div>
+
+              <div className="text-center p-6 bg-muted/30 rounded-lg">
+                <h4 className="font-semibold mb-2">What to expect:</h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• Direct connection to Interactive Brokers</li>
+                  <li>• Real-time commodity futures trading</li>
+                  <li>• Professional order management tools</li>
+                  <li>• Advanced risk management features</li>
+                  <li>• Comprehensive portfolio analytics</li>
+                </ul>
+              </div>
             </CardContent>
           </Card>
-
-          {/* Connection Status */}
-          {session && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-emerald-500" />
-                  Connection Active
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium">Account ID:</span> {session.accountId}
-                  </div>
-                  <div>
-                    <span className="font-medium">Session:</span> {session.sessionId.substring(0, 8)}...
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
     </>
