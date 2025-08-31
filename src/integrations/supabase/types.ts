@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action_type: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: unknown | null
+          new_values: Json | null
+          old_values: Json | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       expert_insights: {
         Row: {
           bullish_bearish: string | null
@@ -300,6 +342,45 @@ export type Database = {
         }
         Relationships: []
       }
+      portfolio_snapshots: {
+        Row: {
+          buying_power: number
+          created_at: string
+          id: string
+          net_liquidation: number
+          positions: Json
+          realized_pnl: number
+          snapshot_date: string
+          total_cash_value: number
+          unrealized_pnl: number
+          user_id: string
+        }
+        Insert: {
+          buying_power: number
+          created_at?: string
+          id?: string
+          net_liquidation: number
+          positions?: Json
+          realized_pnl?: number
+          snapshot_date: string
+          total_cash_value: number
+          unrealized_pnl?: number
+          user_id: string
+        }
+        Update: {
+          buying_power?: number
+          created_at?: string
+          id?: string
+          net_liquidation?: number
+          positions?: Json
+          realized_pnl?: number
+          snapshot_date?: string
+          total_cash_value?: number
+          unrealized_pnl?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       price_comparisons: {
         Row: {
           commodities: Json
@@ -396,6 +477,54 @@ export type Database = {
         }
         Relationships: []
       }
+      risk_metrics: {
+        Row: {
+          beta: number | null
+          created_at: string
+          id: string
+          max_drawdown: number | null
+          metric_date: string
+          portfolio_value: number
+          position_concentration: Json | null
+          risk_score: number | null
+          sector_allocation: Json | null
+          sharpe_ratio: number | null
+          user_id: string
+          var_1day: number | null
+          var_5day: number | null
+        }
+        Insert: {
+          beta?: number | null
+          created_at?: string
+          id?: string
+          max_drawdown?: number | null
+          metric_date: string
+          portfolio_value: number
+          position_concentration?: Json | null
+          risk_score?: number | null
+          sector_allocation?: Json | null
+          sharpe_ratio?: number | null
+          user_id: string
+          var_1day?: number | null
+          var_5day?: number | null
+        }
+        Update: {
+          beta?: number | null
+          created_at?: string
+          id?: string
+          max_drawdown?: number | null
+          metric_date?: string
+          portfolio_value?: number
+          position_concentration?: Json | null
+          risk_score?: number | null
+          sector_allocation?: Json | null
+          sharpe_ratio?: number | null
+          user_id?: string
+          var_1day?: number | null
+          var_5day?: number | null
+        }
+        Relationships: []
+      }
       sentiment_aggregates: {
         Row: {
           average_confidence: number | null
@@ -489,6 +618,167 @@ export type Database = {
           subscription_tier?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      trade_executions: {
+        Row: {
+          commission: number
+          created_at: string
+          executed_at: string
+          execution_id: string
+          id: string
+          order_id: string
+          price: number
+          quantity: number
+          side: string
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          commission?: number
+          created_at?: string
+          executed_at?: string
+          execution_id: string
+          id?: string
+          order_id: string
+          price: number
+          quantity: number
+          side: string
+          symbol: string
+          user_id: string
+        }
+        Update: {
+          commission?: number
+          created_at?: string
+          executed_at?: string
+          execution_id?: string
+          id?: string
+          order_id?: string
+          price?: number
+          quantity?: number
+          side?: string
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trade_executions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "trading_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trading_orders: {
+        Row: {
+          avg_fill_price: number | null
+          commission: number | null
+          created_at: string
+          error_message: string | null
+          filled_at: string | null
+          filled_quantity: number | null
+          ibkr_order_id: number | null
+          id: string
+          order_ref: string | null
+          order_type: string
+          parent_order_id: string | null
+          price: number | null
+          quantity: number
+          side: string
+          status: string
+          stop_price: number | null
+          submitted_at: string | null
+          symbol: string
+          tif: string
+          trail_amount: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avg_fill_price?: number | null
+          commission?: number | null
+          created_at?: string
+          error_message?: string | null
+          filled_at?: string | null
+          filled_quantity?: number | null
+          ibkr_order_id?: number | null
+          id?: string
+          order_ref?: string | null
+          order_type: string
+          parent_order_id?: string | null
+          price?: number | null
+          quantity: number
+          side: string
+          status?: string
+          stop_price?: number | null
+          submitted_at?: string | null
+          symbol: string
+          tif?: string
+          trail_amount?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avg_fill_price?: number | null
+          commission?: number | null
+          created_at?: string
+          error_message?: string | null
+          filled_at?: string | null
+          filled_quantity?: number | null
+          ibkr_order_id?: number | null
+          id?: string
+          order_ref?: string | null
+          order_type?: string
+          parent_order_id?: string | null
+          price?: number | null
+          quantity?: number
+          side?: string
+          status?: string
+          stop_price?: number | null
+          submitted_at?: string | null
+          symbol?: string
+          tif?: string
+          trail_amount?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trading_sessions: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          error_message: string | null
+          gateway: string
+          id: string
+          session_id: string
+          started_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          error_message?: string | null
+          gateway: string
+          id?: string
+          session_id: string
+          started_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          error_message?: string | null
+          gateway?: string
+          id?: string
+          session_id?: string
+          started_at?: string
+          status?: string
+          user_id?: string
         }
         Relationships: []
       }
