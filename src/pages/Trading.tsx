@@ -134,7 +134,7 @@ const Trading: React.FC = () => {
                       className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-4 text-lg h-auto"
                     >
                       <div className="flex items-center gap-3">
-                        <IBKRLogo className="h-6 w-auto" variant="light" />
+                        <IBKRLogo className="h-6 w-auto" />
                         {isConnecting ? (
                           <>
                             <RefreshCw className="w-5 h-5 animate-spin" />
