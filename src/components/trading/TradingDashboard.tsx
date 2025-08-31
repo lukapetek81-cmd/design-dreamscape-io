@@ -17,7 +17,8 @@ import {
 import { useIBKRTrading } from '@/hooks/useIBKRTrading';
 import { usePremiumGating } from '@/hooks/usePremiumGating';
 import { OrderEntry } from './OrderEntry';
-import { PositionsList } from './PositionsList';
+import { RiskManager } from './RiskManager';
+import { TradeHistory } from './TradeHistory';
 import { AccountSummary } from './AccountSummary';
 
 export const TradingDashboard: React.FC = () => {
@@ -222,6 +223,11 @@ export const TradingDashboard: React.FC = () => {
               </p>
             </CardContent>
           </Card>
+          
+          {/* Trade History Section */}
+          <div className="mt-8">
+            <TradeHistory />
+          </div>
         </div>
       )}
     </div>

@@ -13,6 +13,7 @@ interface IBKRSession {
   accountId?: string;
   server?: string;
   expires?: number;
+  gatewayUrl?: string;
 }
 
 interface IBKROrder {
@@ -20,10 +21,13 @@ interface IBKROrder {
   symbol: string;
   side: 'BUY' | 'SELL';
   quantity: number;
-  orderType: 'MKT' | 'LMT' | 'STP';
+  orderType: 'MKT' | 'LMT' | 'STP' | 'STP_LMT' | 'TRAIL';
   price?: number;
   stopPrice?: number;
+  trailAmount?: number;
   tif: 'GTC' | 'DAY' | 'IOC' | 'FOK';
+  parentOrderId?: number;
+  orderRef?: string;
 }
 
 interface IBKRPosition {
@@ -34,13 +38,46 @@ interface IBKRPosition {
   marketPrice: number;
   unrealizedPnl: number;
   realizedPnl: number;
+  contractId?: number;
+  exchange?: string;
 }
 
-// IBKR Client Portal API base URL (paper trading)
-const IBKR_BASE_URL = 'https://localhost:5000/v1/api';
+interface IBKRAccountSummary {
+  accountId: string;
+  netLiquidation: number;
+  totalCashValue: number;
+  buyingPower: number;
+  dayTradesRemaining: number;
+  currency: string;
+  availableFunds: number;
+  excessLiquidity: number;
+  initialMargin: number;
+  maintenanceMargin: number;
+}
 
-// Session management
+interface IBKRMarketData {
+  symbol: string;
+  bid: number;
+  ask: number;
+  last: number;
+  volume: number;
+  change: number;
+  changePercent: number;
+  timestamp: string;
+}
+
+// IBKR Client Portal API URLs (dynamic based on gateway)
+const getIBKRBaseUrl = (gateway: string) => {
+  return gateway === 'paper' 
+    ? 'https://localhost:5000/v1/api' // Paper trading
+    : 'https://localhost:5000/v1/api'; // Live trading (same endpoint, different account)
+};
+
+// Session management with proper storage
 const activeSessions = new Map<string, IBKRSession>();
+
+// Real-time WebSocket connections for market data
+const marketDataSockets = new Map<string, WebSocket>();
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -67,10 +104,22 @@ serve(async (req) => {
         return await handleOrders(req, supabase);
       case 'place-order':
         return await handlePlaceOrder(req, supabase);
+      case 'cancel-order':
+        return await handleCancelOrder(req, supabase);
+      case 'modify-order':
+        return await handleModifyOrder(req, supabase);
       case 'market-data':
         return await handleMarketData(req, supabase);
+      case 'market-data-stream':
+        return await handleMarketDataStream(req, supabase);
       case 'account-info':
         return await handleAccountInfo(req, supabase);
+      case 'account-summary':
+        return await handleAccountSummary(req, supabase);
+      case 'order-history':
+        return await handleOrderHistory(req, supabase);
+      case 'disconnect':
+        return await handleDisconnect(req, supabase);
       default:
         return new Response(JSON.stringify({ error: 'Invalid endpoint' }), {
           status: 400,
@@ -137,13 +186,16 @@ async function handleConnect(req: Request, supabase: any) {
 
     if (passwordError) throw new Error('Failed to decrypt password');
 
-    // Connect to IBKR Client Portal API
-    // Note: In production, this would connect to the actual IBKR API
-    const connectionResult = await connectToIBKR({
+    // Real IBKR API connection
+    const connectionResult = await connectToIBKRAPI({
       username: usernameData.key,
       password: passwordData.key,
       gateway: credentials.gateway
     });
+
+    if (!connectionResult.success) {
+      throw new Error(connectionResult.error || 'Failed to connect to IBKR');
+    }
 
     const session: IBKRSession = {
       sessionId: `session_${Date.now()}_${user.id}`,
@@ -151,16 +203,26 @@ async function handleConnect(req: Request, supabase: any) {
       userId: user.id,
       accountId: connectionResult.accountId,
       server: connectionResult.server,
+      gatewayUrl: getIBKRBaseUrl(credentials.gateway),
       expires: Date.now() + (4 * 60 * 60 * 1000) // 4 hours
     };
 
     activeSessions.set(session.sessionId, session);
+
+    // Log session start
+    await supabase.from('trading_sessions').insert({
+      user_id: user.id,
+      session_id: session.sessionId,
+      gateway: credentials.gateway,
+      status: 'active'
+    });
 
     return new Response(JSON.stringify({
       success: true,
       sessionId: session.sessionId,
       accountId: session.accountId,
       authenticated: session.authenticated,
+      gateway: credentials.gateway,
       message: 'Connected to IBKR Client Portal'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -266,22 +328,97 @@ async function handlePlaceOrder(req: Request, supabase: any) {
       throw new Error('Invalid or expired session');
     }
 
-    // Validate order
+    // Get user ID from session
+    const authHeader = req.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '');
+    const { data: { user } } = await supabase.auth.getUser(token);
+
+    // Validate order parameters
     if (!order.symbol || !order.side || !order.quantity || !order.orderType) {
       throw new Error('Invalid order parameters');
     }
 
-    // Place order with IBKR
-    const orderResult = await placeIBKROrder(session.accountId!, order);
-    
-    return new Response(JSON.stringify({
-      success: true,
-      orderId: orderResult.orderId,
-      status: orderResult.status,
-      message: 'Order placed successfully'
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    // Additional validation for order types
+    if ((order.orderType === 'LMT' || order.orderType === 'STP_LMT') && !order.price) {
+      throw new Error('Price required for limit orders');
+    }
+    if ((order.orderType === 'STP' || order.orderType === 'STP_LMT') && !order.stopPrice) {
+      throw new Error('Stop price required for stop orders');
+    }
+
+    // Store order in database first
+    const { data: dbOrder, error: dbError } = await supabase
+      .from('trading_orders')
+      .insert({
+        user_id: user.id,
+        symbol: order.symbol,
+        side: order.side,
+        quantity: order.quantity,
+        order_type: order.orderType,
+        price: order.price,
+        stop_price: order.stopPrice,
+        trail_amount: order.trailAmount,
+        tif: order.tif || 'DAY',
+        order_ref: order.orderRef,
+        parent_order_id: order.parentOrderId,
+        status: 'PendingSubmit'
+      })
+      .select()
+      .single();
+
+    if (dbError) {
+      console.error('[IBKR-CLIENT-PORTAL] Database error:', dbError);
+      throw new Error('Failed to store order in database');
+    }
+
+    try {
+      // Place order with real IBKR API
+      const orderResult = await placeIBKROrderAPI(session, order);
+      
+      if (orderResult.success) {
+        // Update order with IBKR order ID and status
+        await supabase
+          .from('trading_orders')
+          .update({
+            ibkr_order_id: orderResult.orderId,
+            status: orderResult.status || 'Submitted',
+            submitted_at: new Date().toISOString()
+          })
+          .eq('id', dbOrder.id);
+
+        return new Response(JSON.stringify({
+          success: true,
+          orderId: orderResult.orderId,
+          internalOrderId: dbOrder.id,
+          status: orderResult.status,
+          message: 'Order placed successfully'
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else {
+        // Update order status to rejected
+        await supabase
+          .from('trading_orders')
+          .update({
+            status: 'Rejected',
+            error_message: orderResult.error
+          })
+          .eq('id', dbOrder.id);
+
+        throw new Error(orderResult.error || 'Order was rejected by IBKR');
+      }
+    } catch (ibkrError) {
+      // Update order status to rejected with error
+      await supabase
+        .from('trading_orders')
+        .update({
+          status: 'Rejected',
+          error_message: ibkrError.message
+        })
+        .eq('id', dbOrder.id);
+
+      throw ibkrError;
+    }
 
   } catch (error) {
     console.error('[IBKR-CLIENT-PORTAL] Order error:', error);
@@ -363,18 +500,94 @@ async function handleAccountInfo(req: Request, supabase: any) {
   }
 }
 
-// Helper functions for IBKR API integration
-async function connectToIBKR(credentials: { username: string; password: string; gateway: string }) {
-  // In a real implementation, this would connect to IBKR Client Portal
-  // For now, simulate a successful connection
-  console.log(`[IBKR] Connecting to ${credentials.gateway} trading...`);
+// Real IBKR API integration functions
+async function connectToIBKRAPI(credentials: { username: string; password: string; gateway: string }) {
+  const baseUrl = getIBKRBaseUrl(credentials.gateway);
   
-  return {
-    success: true,
-    accountId: credentials.gateway === 'paper' ? 'DU123456' : 'U123456',
-    server: credentials.gateway === 'paper' ? 'paper-api' : 'live-api',
-    message: 'Connected successfully'
-  };
+  try {
+    // Step 1: Initialize session
+    const initResponse = await fetch(`${baseUrl}/sso/validate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: credentials.username,
+        password: credentials.password
+      })
+    });
+
+    if (!initResponse.ok) {
+      throw new Error('Failed to authenticate with IBKR');
+    }
+
+    const initData = await initResponse.json();
+    
+    // Step 2: Get account info
+    const accountResponse = await fetch(`${baseUrl}/accounts`, {
+      method: 'GET',
+      headers: { 'Cookie': initResponse.headers.get('set-cookie') || '' }
+    });
+
+    const accounts = await accountResponse.json();
+    const primaryAccount = accounts[0];
+
+    return {
+      success: true,
+      accountId: primaryAccount.accountId,
+      server: credentials.gateway === 'paper' ? 'paper-api' : 'live-api',
+      sessionCookie: initResponse.headers.get('set-cookie')
+    };
+  } catch (error) {
+    console.error('[IBKR-API] Connection error:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+async function placeIBKROrderAPI(session: IBKRSession, order: IBKROrder) {
+  try {
+    const baseUrl = session.gatewayUrl;
+    
+    // Convert our order format to IBKR format
+    const ibkrOrder = {
+      side: order.side,
+      quantity: order.quantity,
+      orderType: order.orderType,
+      price: order.price,
+      stopPrice: order.stopPrice,
+      trailAmount: order.trailAmount,
+      tif: order.tif,
+      parentId: order.parentOrderId,
+      orderRef: order.orderRef
+    };
+
+    const response = await fetch(`${baseUrl}/iserver/orders/${session.accountId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(ibkrOrder)
+    });
+
+    const result = await response.json();
+    
+    if (response.ok && result.length > 0) {
+      return {
+        success: true,
+        orderId: result[0].order_id,
+        status: result[0].order_status || 'Submitted'
+      };
+    } else {
+      return {
+        success: false,
+        error: result.error || 'Order rejected by IBKR'
+      };
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
 }
 
 async function validateIBKRSession(sessionId: string) {
