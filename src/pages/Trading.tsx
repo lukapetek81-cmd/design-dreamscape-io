@@ -2,21 +2,22 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIBKRTrading } from '@/hooks/useIBKRTrading';
 import { useIBKRCredentials } from '@/hooks/useIBKRCredentials';
 import { IBKRCredentialsForm } from '@/components/IBKRCredentialsForm';
-import { IBKRSetupGuide } from '@/components/IBKRSetupGuide';
 import { TradingDashboard } from '@/components/trading/TradingDashboard';
+import { TSPDisclaimer } from '@/components/TSPDisclaimer';
 import SEOHead from '@/components/SEOHead';
-import { AlertTriangle, CheckCircle, Settings, Activity } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Settings, Activity, Shield, RefreshCw } from 'lucide-react';
+import { IBKRLogo } from '@/components/IBKRLogo';
 
 const Trading: React.FC = () => {
   const { isPremium } = useAuth();
   const { isConnected, isConnecting, connect, disconnect, session } = useIBKRTrading();
   const { hasActiveCredentials } = useIBKRCredentials();
+  const [showCredentialsForm, setShowCredentialsForm] = useState(false);
 
   if (!isPremium) {
     return (
@@ -48,6 +49,21 @@ const Trading: React.FC = () => {
     );
   }
 
+  // If connected, show the full trading dashboard
+  if (isConnected) {
+    return (
+      <>
+        <SEOHead 
+          title="Trading Dashboard - IBKR Integration"
+          description="Professional trading dashboard with Interactive Brokers integration. Live market data, advanced order types, risk management, and comprehensive trading history."
+          keywords={["IBKR trading", "Interactive Brokers", "commodity trading", "futures trading", "live market data", "trading dashboard"]}
+        />
+        <TradingDashboard />
+      </>
+    );
+  }
+
+  // Main connection interface
   return (
     <>
       <SEOHead 
@@ -55,113 +71,131 @@ const Trading: React.FC = () => {
         description="Professional trading dashboard with Interactive Brokers integration. Live market data, advanced order types, risk management, and comprehensive trading history."
         keywords={["IBKR trading", "Interactive Brokers", "commodity trading", "futures trading", "live market data", "trading dashboard"]}
       />
-      <div className="min-h-screen bg-background p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">Commodity Trading Platform</h1>
-              <p className="text-muted-foreground">
-                Technology Service Provider platform delivering professional trading services through Interactive Brokers
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              {isConnected && (
-                <Badge variant="default" className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4" />
-                  Connected
-                </Badge>
-              )}
-            </div>
+      <div className="min-h-screen bg-background">
+        <div className="max-w-4xl mx-auto px-6 py-12 space-y-8">
+          {/* Header */}
+          <div className="text-center space-y-4">
+            <h1 className="text-4xl font-bold tracking-tight">Professional Commodity Trading</h1>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Technology Service Provider platform delivering institutional-grade trading through Interactive Brokers
+            </p>
           </div>
 
-          <Tabs defaultValue={isConnected ? "trading" : "setup"} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="setup">Setup Guide</TabsTrigger>
-              <TabsTrigger value="credentials">Credentials</TabsTrigger>
-              <TabsTrigger value="connect">Connect</TabsTrigger>
-              <TabsTrigger value="trading" disabled={!isConnected}>
-                Trading
-              </TabsTrigger>
-            </TabsList>
+          {/* TSP Info */}
+          <TSPDisclaimer />
 
-            <TabsContent value="setup" className="space-y-4">
-              <IBKRSetupGuide />
-            </TabsContent>
-
-            <TabsContent value="credentials" className="space-y-4">
-              <IBKRCredentialsForm />
-            </TabsContent>
-
-            <TabsContent value="connect" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Activity className="h-5 w-5" />
-                    IBKR Connection
-                  </CardTitle>
-                  <CardDescription>
-                    Connect to Interactive Brokers for live trading
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {!hasActiveCredentials() && (
-                    <Alert>
-                      <Settings className="h-4 w-4" />
-                      <AlertDescription>
-                        Please configure your IBKR credentials first in the Credentials tab.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  <div className="flex items-center gap-4">
-                    {!isConnected ? (
+          {/* Main Connect Section */}
+          <Card className="border-2">
+            <CardHeader className="text-center pb-6">
+              <div className="flex justify-center mb-4">
+                <IBKRLogo className="h-12 w-auto" />
+              </div>
+              <CardTitle className="text-2xl">Connect Your IBKR Account</CardTitle>
+              <CardDescription className="text-base">
+                Link your Interactive Brokers account to access live trading, real-time data, and advanced order management
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {!hasActiveCredentials() ? (
+                <div className="space-y-4">
+                  <Alert>
+                    <Shield className="h-4 w-4" />
+                    <AlertDescription>
+                      First, you need to securely connect your IBKR account credentials
+                    </AlertDescription>
+                  </Alert>
+                  
+                  {!showCredentialsForm ? (
+                    <div className="text-center">
                       <Button 
-                        onClick={connect} 
-                        disabled={isConnecting || !hasActiveCredentials()}
+                        onClick={() => setShowCredentialsForm(true)}
                         size="lg"
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
                       >
-                        {isConnecting ? 'Connecting...' : 'Connect to IBKR'}
+                        <Settings className="w-5 h-5 mr-2" />
+                        Setup IBKR Credentials
                       </Button>
-                    ) : (
-                      <Button onClick={disconnect} variant="outline" size="lg">
-                        Disconnect
-                      </Button>
-                    )}
+                    </div>
+                  ) : (
+                    <IBKRCredentialsForm />
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-4">
+                      <CheckCircle className="h-5 w-5 text-emerald-500" />
+                      <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                        IBKR credentials configured
+                      </span>
+                    </div>
+                    
+                    <Button 
+                      onClick={connect} 
+                      disabled={isConnecting}
+                      size="lg"
+                      className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-4 text-lg h-auto"
+                    >
+                      <div className="flex items-center gap-3">
+                        <IBKRLogo className="h-6 w-auto" variant="light" />
+                        {isConnecting ? (
+                          <>
+                            <RefreshCw className="w-5 h-5 animate-spin" />
+                            Connecting to IBKR...
+                          </>
+                        ) : (
+                          <>
+                            <Activity className="w-5 h-5" />
+                            Connect with Interactive Brokers
+                          </>
+                        )}
+                      </div>
+                    </Button>
                   </div>
 
-                  {isConnected && session && (
-                    <div className="bg-muted/50 p-4 rounded-md">
-                      <h4 className="font-semibold mb-2">Connection Details</h4>
-                      <div className="space-y-1 text-sm">
-                        <p><span className="font-medium">Account ID:</span> {session.accountId}</p>
-                        <p><span className="font-medium">Session ID:</span> {session.sessionId}</p>
-                        <p><span className="font-medium">Status:</span> 
-                          <Badge variant="default" className="ml-2">Connected</Badge>
-                        </p>
-                      </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                    <div className="p-4 rounded-lg bg-muted/50">
+                      <Activity className="h-8 w-8 mx-auto mb-2 text-blue-600" />
+                      <h3 className="font-semibold">Live Trading</h3>
+                      <p className="text-sm text-muted-foreground">Real-time order execution</p>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="trading" className="space-y-4">
-              {isConnected ? (
-                <TradingDashboard />
-              ) : (
-                <Card>
-                  <CardContent className="pt-6">
-                    <Alert>
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription>
-                        Please connect to IBKR first to access the trading dashboard.
-                      </AlertDescription>
-                    </Alert>
-                  </CardContent>
-                </Card>
+                    <div className="p-4 rounded-lg bg-muted/50">
+                      <CheckCircle className="h-8 w-8 mx-auto mb-2 text-emerald-600" />
+                      <h3 className="font-semibold">Market Data</h3>
+                      <p className="text-sm text-muted-foreground">Professional-grade feeds</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-muted/50">
+                      <Shield className="h-8 w-8 mx-auto mb-2 text-purple-600" />
+                      <h3 className="font-semibold">Risk Management</h3>
+                      <p className="text-sm text-muted-foreground">Advanced portfolio tools</p>
+                    </div>
+                  </div>
+                </div>
               )}
-            </TabsContent>
-          </Tabs>
+            </CardContent>
+          </Card>
+
+          {/* Connection Status */}
+          {session && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-emerald-500" />
+                  Connection Active
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Account ID:</span> {session.accountId}
+                  </div>
+                  <div>
+                    <span className="font-medium">Session:</span> {session.sessionId.substring(0, 8)}...
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </>
