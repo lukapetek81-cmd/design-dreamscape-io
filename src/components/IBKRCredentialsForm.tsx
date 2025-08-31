@@ -260,20 +260,20 @@ export const IBKRCredentialsForm: React.FC = () => {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Shield className="w-5 h-5" />
-          IBKR Credentials
-        </CardTitle>
-        <CardDescription>
-          Securely store your Interactive Brokers credentials using AES-256 encryption
-        </CardDescription>
-      </CardHeader>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="w-5 h-5" />
+            IBKR Account Connection
+          </CardTitle>
+          <CardDescription>
+            Connect your Interactive Brokers account to access trading services through our Technology Service Provider platform
+          </CardDescription>
+        </CardHeader>
       <CardContent className="space-y-4">
         <Alert>
           <Shield className="h-4 w-4" />
           <AlertDescription>
-            Your credentials are encrypted with AES-256-GCM and stored securely. They cannot be accessed by third parties.
+            Your IBKR credentials are encrypted with AES-256-GCM and stored securely. Under our Technology Service Provider model, your account remains with Interactive Brokers while our platform provides the trading interface.
           </AlertDescription>
         </Alert>
 

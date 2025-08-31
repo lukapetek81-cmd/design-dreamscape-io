@@ -24,6 +24,7 @@ import { TradeHistory } from './TradeHistory';
 import { AccountSummary } from './AccountSummary';
 import { IBKRCredentialsForm } from '../IBKRCredentialsForm';
 import { useIBKRCredentials } from '@/hooks/useIBKRCredentials';
+import { TSPDisclaimer } from '../TSPDisclaimer';
 
 export const TradingDashboard: React.FC = () => {
   const { requirePremium } = usePremiumGating();
@@ -75,11 +76,14 @@ export const TradingDashboard: React.FC = () => {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      {/* TSP Disclaimer */}
+      <TSPDisclaimer />
+      
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Trading Dashboard</h1>
-          <p className="text-muted-foreground">Interactive Brokers Integration</p>
+          <p className="text-muted-foreground">Technology Service Provider Platform powered by Interactive Brokers</p>
         </div>
         
         <div className="flex items-center gap-4">
