@@ -23,6 +23,8 @@ import MarketSentiment from '@/pages/MarketSentiment';
 import NewsSettings from '@/pages/NewsSettings';
 import PriceComparison from '@/pages/PriceComparison';
 import ResetPassword from '@/pages/ResetPassword';
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import TermsOfService from "@/pages/TermsOfService";
 import RiskManagement from '@/pages/RiskManagement';
 import TradingCommunity from '@/pages/TradingCommunity';
 import Watchlists from '@/pages/Watchlists';
@@ -42,6 +44,9 @@ const App = () => {
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/terms-of-service" element={<TermsOfService />} />
                 
                 <Route path="/billing" element={<Billing />} />
                 <Route path="/trading" element={<Trading />} />

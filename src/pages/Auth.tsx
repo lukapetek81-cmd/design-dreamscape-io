@@ -429,9 +429,17 @@ const Auth = () => {
           )}
 
           <div className="mt-6 text-center">
-            <p className="text-xs text-muted-foreground">
-              By continuing, you agree to our terms of service and privacy policy.
-            </p>
+              <p className="text-xs text-muted-foreground">
+                By continuing, you agree to our{" "}
+                <a href="/terms-of-service" className="underline hover:text-primary">
+                  terms of service
+                </a>{" "}
+                and{" "}
+                <a href="/privacy-policy" className="underline hover:text-primary">
+                  privacy policy
+                </a>
+                .
+              </p>
           </div>
         </Card>
 
