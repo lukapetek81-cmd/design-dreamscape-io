@@ -75,14 +75,11 @@ const Trading: React.FC = () => {
         <div className="max-w-4xl mx-auto px-6 py-12 space-y-8">
           {/* Header */}
           <div className="text-center space-y-4">
-            <h1 className="text-4xl font-bold tracking-tight">Professional Commodity Trading</h1>
+            <h1 className="text-4xl font-bold tracking-tight">Professional Trading</h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Technology Service Provider platform delivering institutional-grade trading through Interactive Brokers
+              Connect your Interactive Brokers account to start trading commodities
             </p>
           </div>
-
-          {/* TSP Info */}
-          <TSPDisclaimer />
 
           {/* Main Connect Section */}
           <Card className="border-2">
@@ -90,9 +87,9 @@ const Trading: React.FC = () => {
               <div className="flex justify-center mb-4">
                 <IBKRLogo className="h-12 w-auto" />
               </div>
-              <CardTitle className="text-2xl">Connect Your IBKR Account</CardTitle>
+              <CardTitle className="text-2xl">Connect to Interactive Brokers</CardTitle>
               <CardDescription className="text-base">
-                Link your Interactive Brokers account to access live trading, real-time data, and advanced order management
+                Access live trading, real-time data, and professional order management
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -101,7 +98,7 @@ const Trading: React.FC = () => {
                   <Alert>
                     <Shield className="h-4 w-4" />
                     <AlertDescription>
-                      First, you need to securely connect your IBKR account credentials
+                      Enter your IBKR credentials to get started
                     </AlertDescription>
                   </Alert>
                   
@@ -113,7 +110,7 @@ const Trading: React.FC = () => {
                         className="bg-blue-600 hover:bg-blue-700 text-white"
                       >
                         <Settings className="w-5 h-5 mr-2" />
-                        Setup IBKR Credentials
+                        Add IBKR Account
                       </Button>
                     </div>
                   ) : (
@@ -126,7 +123,7 @@ const Trading: React.FC = () => {
                     <div className="flex items-center justify-center gap-2 mb-4">
                       <CheckCircle className="h-5 w-5 text-emerald-500" />
                       <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
-                        IBKR credentials configured
+                        Ready to connect
                       </span>
                     </div>
                     
@@ -146,7 +143,7 @@ const Trading: React.FC = () => {
                         ) : (
                           <>
                             <Activity className="w-5 h-5" />
-                            Connect with Interactive Brokers
+                            Connect to IBKR
                           </>
                         )}
                       </div>
