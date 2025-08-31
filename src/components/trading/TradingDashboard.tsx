@@ -12,7 +12,8 @@ import {
   Settings,
   AlertTriangle,
   CheckCircle,
-  XCircle
+  XCircle,
+  Shield
 } from 'lucide-react';
 import { useIBKRTrading } from '@/hooks/useIBKRTrading';
 import { usePremiumGating } from '@/hooks/usePremiumGating';
@@ -21,9 +22,12 @@ import { PositionsList } from './PositionsList';
 import { RiskManager } from './RiskManager';
 import { TradeHistory } from './TradeHistory';
 import { AccountSummary } from './AccountSummary';
+import { IBKRCredentialsForm } from '../IBKRCredentialsForm';
+import { useIBKRCredentials } from '@/hooks/useIBKRCredentials';
 
 export const TradingDashboard: React.FC = () => {
   const { requirePremium } = usePremiumGating();
+  const { hasActiveCredentials } = useIBKRCredentials();
   const {
     session,
     isConnected,
@@ -122,18 +126,36 @@ export const TradingDashboard: React.FC = () => {
         </div>
       </div>
 
-      {!isConnected && (
+      {!hasActiveCredentials() && (
+        <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Shield className="w-5 h-5 text-blue-600" />
+              <div>
+                <p className="font-medium text-blue-800 dark:text-blue-200">
+                  IBKR Credentials Required
+                </p>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Enter your Interactive Brokers credentials to enable trading functionality.
+                </p>
+              </div>
+            </div>
+            <IBKRCredentialsForm />
+          </CardContent>
+        </Card>
+      )}
+
+      {hasActiveCredentials() && !isConnected && (
         <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <AlertTriangle className="w-5 h-5 text-amber-600" />
               <div>
                 <p className="font-medium text-amber-800 dark:text-amber-200">
-                  IBKR Connection Required
+                  Ready to Connect
                 </p>
                 <p className="text-sm text-amber-700 dark:text-amber-300">
-                  Connect to your Interactive Brokers account to access live trading features. 
-                  Make sure you have valid IBKR credentials configured in your settings.
+                  Your IBKR credentials are configured. Click "Connect to IBKR" to start trading.
                 </p>
               </div>
             </div>
