@@ -8,10 +8,13 @@ interface IBKROrder {
   symbol: string;
   side: 'BUY' | 'SELL';
   quantity: number;
-  orderType: 'MKT' | 'LMT' | 'STP';
+  orderType: 'MKT' | 'LMT' | 'STP' | 'STP_LMT' | 'TRAIL';
   price?: number;
   stopPrice?: number;
+  trailAmount?: number;
   tif: 'GTC' | 'DAY' | 'IOC' | 'FOK';
+  parentOrderId?: number;
+  orderRef?: string;
 }
 
 interface IBKRPosition {

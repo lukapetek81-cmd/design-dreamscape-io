@@ -17,6 +17,7 @@ import {
 import { useIBKRTrading } from '@/hooks/useIBKRTrading';
 import { usePremiumGating } from '@/hooks/usePremiumGating';
 import { OrderEntry } from './OrderEntry';
+import { PositionsList } from './PositionsList';
 import { RiskManager } from './RiskManager';
 import { TradeHistory } from './TradeHistory';
 import { AccountSummary } from './AccountSummary';
@@ -145,24 +146,6 @@ export const TradingDashboard: React.FC = () => {
         <AccountSummary accountInfo={accountInfo} />
       )}
 
-      {/* Main Trading Interface */}
-      {isConnected && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Order Entry */}
-          <div className="lg:col-span-1">
-            <OrderEntry />
-          </div>
-          
-          {/* Positions */}
-          <div className="lg:col-span-2">
-            <PositionsList 
-              positions={portfolio}
-              isLoading={isLoading}
-            />
-          </div>
-        </div>
-      )}
-
       {/* Quick Stats */}
       {isConnected && portfolio.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -223,11 +206,58 @@ export const TradingDashboard: React.FC = () => {
               </p>
             </CardContent>
           </Card>
-          
-          {/* Trade History Section */}
-          <div className="mt-8">
-            <TradeHistory />
+        </div>
+      )}
+
+      {/* Main Trading Interface */}
+      {isConnected && (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          {/* Left Column - Order Entry */}
+          <div className="space-y-6">
+            <OrderEntry />
+            
+            {/* Real-time Market Data Status */}
+            {session?.sessionId && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Real-time Market Data</CardTitle>
+                  <CardDescription>Live streaming data for active positions</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                    <span className="text-sm text-muted-foreground">
+                      Streaming enabled for {portfolio.length} positions
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
+          
+          {/* Right Column - Positions and Risk */}
+          <div className="space-y-6">
+            <PositionsList 
+              positions={portfolio}
+              isLoading={isLoading}
+            />
+            
+            {/* Risk Management */}
+            {portfolio.length > 0 && accountInfo && (
+              <RiskManager 
+                portfolioValue={accountInfo.netLiquidation}
+                positions={portfolio}
+                accountInfo={accountInfo}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Trade History Section */}
+      {isConnected && (
+        <div className="mt-8">
+          <TradeHistory />
         </div>
       )}
     </div>
