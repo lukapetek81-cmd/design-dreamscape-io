@@ -103,33 +103,77 @@ export const IBKRCredentialsForm: React.FC = () => {
       // Generate user-specific secret from session
       const userSecret = user.id + user.email;
       
-      // Encrypt credentials
-      const encryptedUsername = await encryptCredential(credentials.username, userSecret);
-      const encryptedPassword = await encryptCredential(credentials.password, userSecret);
+      try {
+        // Get master secret and create combined secret (matching decryption process)
+        const { data: masterKeyData, error: masterError } = await supabase.functions.invoke('decrypt-api-key', {
+          body: { getMasterKey: true }
+        });
 
-      const credentialData = {
-        user_id: user.id,
-        username_encrypted: encryptedUsername,
-        password_encrypted: encryptedPassword,
-        gateway: credentials.gateway,
-        is_active: credentials.is_active
-      };
+        if (masterError) {
+          throw new Error('Failed to get master encryption key');
+        }
 
-      let result;
-      if (existingCredentials?.id) {
-        // Update existing
-        result = await supabase
-          .from('ibkr_credentials')
-          .update(credentialData)
-          .eq('id', existingCredentials.id);
-      } else {
-        // Insert new
-        result = await supabase
-          .from('ibkr_credentials')
-          .insert(credentialData);
+        const combinedSecret = `${userSecret}-${masterKeyData.masterKey}`;
+        
+        // Encrypt credentials
+        const encryptedUsername = await encryptCredential(credentials.username, combinedSecret);
+        const encryptedPassword = await encryptCredential(credentials.password, combinedSecret);
+        
+        const credentialData = {
+          user_id: user.id,
+          username_encrypted: encryptedUsername,
+          password_encrypted: encryptedPassword,
+          gateway: credentials.gateway,
+          is_active: credentials.is_active
+        };
+
+        let result;
+        if (existingCredentials?.id) {
+          // Update existing
+          result = await supabase
+            .from('ibkr_credentials')
+            .update(credentialData)
+            .eq('id', existingCredentials.id);
+        } else {
+          // Insert new
+          result = await supabase
+            .from('ibkr_credentials')
+            .insert(credentialData);
+        }
+
+        if (result.error) throw result.error;
+        
+      } catch (encryptionError) {
+        console.warn('New encryption method failed, falling back to legacy:', encryptionError);
+        
+        // Fallback to legacy encryption (without master key) for backwards compatibility
+        const encryptedUsername = await encryptCredential(credentials.username, userSecret);
+        const encryptedPassword = await encryptCredential(credentials.password, userSecret);
+        
+        const credentialData = {
+          user_id: user.id,
+          username_encrypted: encryptedUsername,
+          password_encrypted: encryptedPassword,
+          gateway: credentials.gateway,
+          is_active: credentials.is_active
+        };
+
+        let result;
+        if (existingCredentials?.id) {
+          // Update existing
+          result = await supabase
+            .from('ibkr_credentials')
+            .update(credentialData)
+            .eq('id', existingCredentials.id);
+        } else {
+          // Insert new
+          result = await supabase
+            .from('ibkr_credentials')
+            .insert(credentialData);
+        }
+
+        if (result.error) throw result.error;
       }
-
-      if (result.error) throw result.error;
 
       toast({
         title: "Success",

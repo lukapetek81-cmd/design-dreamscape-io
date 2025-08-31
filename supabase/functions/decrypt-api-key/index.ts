@@ -78,7 +78,25 @@ serve(async (req) => {
   }
 
   try {
-    const { encryptedKey, userSecret } = await req.json();
+    const { encryptedKey, userSecret, getMasterKey } = await req.json();
+    
+    // Handle master key request (for encryption setup)
+    if (getMasterKey) {
+      const masterSecret = Deno.env.get('CREDENTIAL_MASTER_KEY');
+      if (!masterSecret) {
+        console.error('Master key not found in environment');
+        return new Response(
+          JSON.stringify({ error: 'Master key not configured' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      console.log('Master key retrieved successfully');
+      return new Response(
+        JSON.stringify({ masterKey: masterSecret }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     if (!encryptedKey || !userSecret) {
       return new Response(
@@ -90,18 +108,37 @@ serve(async (req) => {
     // Get the master decryption key from environment (Supabase secret)
     const masterSecret = Deno.env.get('CREDENTIAL_MASTER_KEY');
     if (!masterSecret) {
+      console.error('Master decryption key not configured in environment');
       throw new Error('Master decryption key not configured');
     }
 
-    // Combine user secret with master secret for additional security
+    // Try decryption with combined secret first (new format)
     const combinedSecret = `${userSecret}-${masterSecret}`;
     
-    const decryptedKey = await SecureCredentialDecryptor.decryptCredential(encryptedKey, combinedSecret);
-    
-    return new Response(
-      JSON.stringify({ key: decryptedKey }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    try {
+      console.log('Attempting decryption with combined secret');
+      const decryptedKey = await SecureCredentialDecryptor.decryptCredential(encryptedKey, combinedSecret);
+      console.log('Decryption successful with combined secret');
+      return new Response(
+        JSON.stringify({ key: decryptedKey }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (combinedError) {
+      console.log('Combined secret decryption failed, trying user secret only (legacy format)');
+      
+      // Fallback: try with just user secret (for legacy credentials)
+      try {
+        const decryptedKey = await SecureCredentialDecryptor.decryptCredential(encryptedKey, userSecret);
+        console.log('Decryption successful with user secret only (legacy)');
+        return new Response(
+          JSON.stringify({ key: decryptedKey }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (legacyError) {
+        console.error('Both decryption methods failed:', { combinedError, legacyError });
+        throw new Error('Failed to decrypt credential with both new and legacy methods');
+      }
+    }
 
   } catch (error) {
     console.error('Error decrypting API key:', error);
