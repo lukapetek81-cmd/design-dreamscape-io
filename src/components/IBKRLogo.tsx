@@ -12,44 +12,44 @@ export const IBKRLogo: React.FC<IBKRLogoProps> = ({ className = "h-8 w-auto", va
       className={className}
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* Interactive Brokers styled logo */}
+      {/* Interactive Brokers actual brand colors - Red and Black */}
       <rect
         x="5"
-        y="10"
-        width="35"
-        height="30"
-        rx="3"
-        fill={variant === 'light' ? '#ffffff' : '#1e3a8a'}
-        stroke={variant === 'light' ? '#1e3a8a' : '#ffffff'}
-        strokeWidth="1"
+        y="8"
+        width="38"
+        height="34"
+        rx="4"
+        fill="#DC2626"
+        stroke="#1F2937"
+        strokeWidth="2"
       />
       <text
-        x="22"
-        y="28"
+        x="24"
+        y="30"
         textAnchor="middle"
-        fontSize="14"
+        fontSize="16"
         fontWeight="bold"
-        fill={variant === 'light' ? '#1e3a8a' : '#ffffff'}
+        fill="#FFFFFF"
       >
         IB
       </text>
       <text
-        x="50"
-        y="20"
-        fontSize="12"
-        fontWeight="600"
-        fill={variant === 'light' ? '#1e3a8a' : '#374151'}
+        x="52"
+        y="18"
+        fontSize="11"
+        fontWeight="700"
+        fill="#1F2937"
       >
-        Interactive
+        INTERACTIVE
       </text>
       <text
-        x="50"
-        y="35"
-        fontSize="12"
-        fontWeight="600"
-        fill={variant === 'light' ? '#1e3a8a' : '#374151'}
+        x="52"
+        y="32"
+        fontSize="11"
+        fontWeight="700"
+        fill="#DC2626"
       >
-        Brokers
+        BROKERS
       </text>
     </svg>
   );
