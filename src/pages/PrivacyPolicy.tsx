@@ -125,8 +125,9 @@ const PrivacyPolicy = () => {
                 <div className="text-muted-foreground">
                   <p>If you have questions about this Privacy Policy, please contact us at:</p>
                   <p className="mt-2">
-                    Email: privacy@commodityhub.com<br />
-                    Address: [Your Company Address]
+                    <strong>Commodity Hub Team</strong><br />
+                    Email: support@commodityhub.com<br />
+                    Address: 1234 Financial District, Suite 567, New York, NY 10004
                   </p>
                 </div>
               </section>

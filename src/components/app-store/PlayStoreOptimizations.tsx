@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { useServiceWorker } from '@/hooks/useServiceWorker';
 import { usePerformanceMonitoring } from '@/hooks/usePerformanceMonitoring';
-import { useSecurity } from '@/hooks/useSecurity';
+import { crashReporter } from '@/utils/crashReporting';
+import { networkMonitor, offlineStorage } from '@/utils/offlineOptimization';
 
 /**
  * Play Store optimizations component that handles:
@@ -13,7 +14,7 @@ import { useSecurity } from '@/hooks/useSecurity';
 export const PlayStoreOptimizations: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { register, update, needsUpdate } = useServiceWorker();  
   const { trackEvent, reportError } = usePerformanceMonitoring();
-  const { getSecurityHeaders, extendSession } = useSecurity();
+  // const { getSecurityHeaders, extendSession } = useSecurity();
 
   useEffect(() => {
     // Initialize Play Store optimizations
@@ -30,7 +31,14 @@ export const PlayStoreOptimizations: React.FC<{ children: React.ReactNode }> = (
         });
 
         // Extend user session if exists
-        extendSession();
+        // extendSession();
+
+        // Initialize offline functionality
+        await offlineStorage.init();
+        networkMonitor.init();
+
+        // Add tracking breadcrumb
+        crashReporter.trackUserAction('app_started');
 
         // Set up error reporting
         window.addEventListener('error', (event) => {
@@ -70,7 +78,7 @@ export const PlayStoreOptimizations: React.FC<{ children: React.ReactNode }> = (
     };
 
     initializeOptimizations();
-  }, [register, getSecurityHeaders, trackEvent, reportError, extendSession]);
+  }, [register, trackEvent, reportError]);
 
   // Handle service worker updates
   useEffect(() => {

@@ -149,8 +149,9 @@ const TermsOfService = () => {
                 <div className="text-muted-foreground">
                   <p>For questions about these Terms of Service, please contact us at:</p>
                   <p className="mt-2">
-                    Email: legal@commodityhub.com<br />
-                    Address: [Your Company Address]
+                    <strong>Commodity Hub Team</strong><br />
+                    Email: support@commodityhub.com<br />
+                    Address: 1234 Financial District, Suite 567, New York, NY 10004
                   </p>
                 </div>
               </section>
