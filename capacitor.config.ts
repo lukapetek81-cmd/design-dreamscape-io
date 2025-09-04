@@ -32,7 +32,7 @@ const config: CapacitorConfig = {
     iconDensity: 'mdpi',
     adaptiveIcon: {
       foreground: 'icon.png',
-      background: '#8B5CF6'
+      background: '#1e3a5f'
     },
     allowMixedContent: false, // Set to false for production
     captureInput: true,
