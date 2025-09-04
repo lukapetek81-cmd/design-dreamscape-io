@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,13 +26,13 @@ const Auth = () => {
   // Only redirect if user is authenticated and specifically came to auth page
   // Allow users to browse the app without authentication
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
-  };
+  }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,7 +143,7 @@ const Auth = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
-                    className="mobile-input transition-all duration-200 focus:scale-[1.02]"
+                    className="mobile-input"
                   />
                 </div>
 
@@ -158,7 +158,7 @@ const Auth = () => {
                       value={formData.password}
                       onChange={handleInputChange}
                       required
-                      className="pr-12 mobile-input transition-all duration-200 focus:scale-[1.02]"
+                      className="pr-12 mobile-input"
                     />
                     <Button
                       type="button"
@@ -252,7 +252,7 @@ const Auth = () => {
                     value={formData.fullName}
                     onChange={handleInputChange}
                     required
-                    className="transition-all duration-200 focus:scale-[1.02]"
+                    className="mobile-input"
                   />
                 </div>
 
@@ -266,7 +266,7 @@ const Auth = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
-                    className="transition-all duration-200 focus:scale-[1.02]"
+                    className="mobile-input"
                   />
                 </div>
 
@@ -282,7 +282,7 @@ const Auth = () => {
                       onChange={handleInputChange}
                       required
                       minLength={6}
-                      className="pr-10 transition-all duration-200 focus:scale-[1.02]"
+                      className="pr-10 mobile-input"
                     />
                     <Button
                       type="button"
@@ -310,7 +310,7 @@ const Auth = () => {
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     required
-                    className="transition-all duration-200 focus:scale-[1.02]"
+                    className="mobile-input"
                   />
                   {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
                     <p className="text-sm text-red-500">Passwords do not match</p>
@@ -394,7 +394,7 @@ const Auth = () => {
                         value={formData.email}
                         onChange={handleInputChange}
                         required
-                        className="transition-all duration-200 focus:scale-[1.02]"
+                        className="mobile-input"
                       />
                     </div>
 
