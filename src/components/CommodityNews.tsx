@@ -2,7 +2,8 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Settings } from 'lucide-react';
-import { EnhancedNewsItem, fetchNewsFromFMP, fetchNewsFromMarketaux, getFallbackNews } from '@/services/newsHelpers';
+import { supabase } from '@/integrations/supabase/client';
+import { getFallbackNews, EnhancedNewsItem } from '@/services/newsHelpers';
 import EnhancedNewsCard from './EnhancedNewsCard';
 
 interface NewsItem {
@@ -31,24 +32,32 @@ const CommodityNews = ({ commodity }: CommodityNewsProps) => {
         setLoading(true);
         setError(null);
         
-        // Use both enhanced news APIs
-        const [fmpNews, marketauxNews] = await Promise.all([
-          fetchNewsFromFMP(commodity),
-          fetchNewsFromMarketaux(commodity)
-        ]);
+        // Use enhanced edge function for better news coverage
+        const { data, error } = await supabase.functions.invoke('enhanced-commodity-news', {
+          body: { commodity, source: 'all' }
+        });
         
-        const combinedNews = [...marketauxNews, ...fmpNews];
-        
-        // If no enhanced news, use comprehensive fallback
-        if (combinedNews.length === 0) {
+        if (error || !data?.articles) {
+          console.warn('Enhanced news API failed, using fallback:', error);
           const fallbackNews = getFallbackNews(commodity);
           setNews(fallbackNews);
         } else {
-          setNews(combinedNews);
+          // Convert to enhanced news items
+          const enhancedNews = data.articles.map((article: any) => ({
+            ...article,
+            sentiment: 'neutral' as const,
+            category: article.category || 'general' as const,
+            relevanceScore: 70,
+            tags: []
+          }));
+          setNews(enhancedNews);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch news');
         console.error('Error fetching commodity news:', err);
+        // Use fallback news on error
+        const fallbackNews = getFallbackNews(commodity);
+        setNews(fallbackNews);
       } finally {
         setLoading(false);
       }

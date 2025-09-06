@@ -124,31 +124,26 @@ const calculateEnhancedRelevanceScore = (article: any, commodityName: string): n
   return score;
 };
 
-// New: Marketaux API integration (financial news aggregator)
+// Enhanced news fetching using Supabase edge function
 export const fetchNewsFromMarketaux = async (commodityName: string): Promise<EnhancedNewsItem[]> => {
-  const apiKey = localStorage.getItem('marketauxApiKey') || 'demo';
-  
   try {
-    const symbols = getCommoditySymbols(commodityName);
-    const query = buildEnhancedNewsQuery(commodityName);
-    
-    const response = await fetch(
-      `https://api.marketaux.com/v1/news/all?symbols=${symbols}&filter_entities=true&language=en&api_token=${apiKey}&limit=12`
-    );
-    
-    if (!response.ok) throw new Error(`Marketaux API error: ${response.status}`);
-    
-    const data = await response.json();
-    if (!data.data || !Array.isArray(data.data)) return [];
-    
-    return data.data.map((article: any, index: number) => ({
+    const { data, error } = await supabase.functions.invoke('fetch-commodity-news', {
+      body: { commodity: commodityName, source: 'marketaux' }
+    });
+
+    if (error || !data?.articles) {
+      console.warn('Marketaux edge function failed:', error);
+      return [];
+    }
+
+    return data.articles.map((article: any, index: number) => ({
       id: `marketaux_${commodityName}_${index}_${Date.now()}`,
       title: article.title || `${commodityName} Market Update`,
       description: article.description || article.snippet || `Latest market analysis for ${commodityName}`,
-      url: article.url || '#',
+      url: article.url || `https://www.marketwatch.com/investing/commodity/${commodityName.toLowerCase()}`,
       source: article.source || 'Marketaux',
-      publishedAt: article.published_at || new Date().toISOString(),
-      urlToImage: article.image_url,
+      publishedAt: article.publishedAt || new Date().toISOString(),
+      urlToImage: article.urlToImage,
       sentiment: analyzeSentiment(article.title, article.description),
       category: categorizeNews(article.title, article.description, commodityName),
       relevanceScore: calculateEnhancedRelevanceScore(article, commodityName),
@@ -156,7 +151,7 @@ export const fetchNewsFromMarketaux = async (commodityName: string): Promise<Enh
       author: article.author
     }));
   } catch (error) {
-    console.warn('Marketaux API failed:', error);
+    console.warn('Marketaux edge function failed:', error);
     return [];
   }
 };
@@ -314,14 +309,17 @@ const calculateRelevanceScore = (newsItem: NewsItem, commodityName: string): num
 
 export const getFallbackNews = (commodityName: string): EnhancedNewsItem[] => {
   const today = new Date();
+  const baseTime = today.getTime();
+  const commoditySlug = commodityName.toLowerCase().replace(/\s+/g, '-');
+  
   const fallbackArticles = [
     {
       id: `${commodityName}_fallback_1`,
       title: `${commodityName} prices surge amid global supply chain disruptions and economic uncertainty`,
       description: `Recent geopolitical tensions and supply chain challenges are creating significant volatility in ${commodityName} markets, with analysts predicting continued price fluctuations in the coming months.`,
-      url: 'https://www.marketwatch.com/investing/commodities',
+      url: `https://www.marketwatch.com/investing/commodity/${commoditySlug}`,
       source: 'MarketWatch',
-      publishedAt: new Date(today.getTime() - 1 * 60 * 60 * 1000).toISOString(),
+      publishedAt: new Date(baseTime - 1 * 60 * 60 * 1000).toISOString(),
       sentiment: 'positive' as const,
       category: 'supply_demand' as const,
       relevanceScore: 85,
@@ -331,9 +329,9 @@ export const getFallbackNews = (commodityName: string): EnhancedNewsItem[] => {
       id: `${commodityName}_fallback_2`,
       title: `Federal Reserve policy changes impact ${commodityName.toLowerCase()} market outlook significantly`,
       description: `Central bank monetary policy adjustments are creating new dynamics in commodity markets, with ${commodityName} showing increased sensitivity to interest rate changes and inflation expectations.`,
-      url: 'https://www.reuters.com/markets/commodities',
+      url: `https://www.reuters.com/markets/commodities/${commoditySlug}`,
       source: 'Reuters',
-      publishedAt: new Date(today.getTime() - 2 * 60 * 60 * 1000).toISOString(),
+      publishedAt: new Date(baseTime - 2 * 60 * 60 * 1000).toISOString(),
       sentiment: 'neutral' as const,
       category: 'economic' as const,
       relevanceScore: 80,
@@ -343,9 +341,9 @@ export const getFallbackNews = (commodityName: string): EnhancedNewsItem[] => {
       id: `${commodityName}_fallback_3`,
       title: `Global demand shifts create unprecedented volatility in ${commodityName.toLowerCase()} trading`,
       description: `International market dynamics and changing consumption patterns are driving significant price movements in ${commodityName}, with emerging markets playing an increasingly important role in price discovery.`,
-      url: 'https://www.bloomberg.com/markets/commodities',
+      url: `https://www.bloomberg.com/markets/commodities/${commoditySlug}`,
       source: 'Bloomberg',
-      publishedAt: new Date(today.getTime() - 3 * 60 * 60 * 1000).toISOString(),
+      publishedAt: new Date(baseTime - 3 * 60 * 60 * 1000).toISOString(),
       sentiment: 'neutral' as const,
       category: 'market_analysis' as const,
       relevanceScore: 75,
@@ -355,9 +353,9 @@ export const getFallbackNews = (commodityName: string): EnhancedNewsItem[] => {
       id: `${commodityName}_fallback_4`,
       title: `New regulatory framework could reshape ${commodityName.toLowerCase()} market structure`,
       description: `Upcoming regulatory changes and compliance requirements are expected to impact how ${commodityName} is traded and priced, with industry experts calling for enhanced market transparency.`,
-      url: 'https://www.ft.com/markets',
+      url: `https://www.ft.com/markets/${commoditySlug}`,
       source: 'Financial Times',
-      publishedAt: new Date(today.getTime() - 4 * 60 * 60 * 1000).toISOString(),
+      publishedAt: new Date(baseTime - 4 * 60 * 60 * 1000).toISOString(),
       sentiment: 'neutral' as const,
       category: 'regulatory' as const,
       relevanceScore: 70,
@@ -367,9 +365,9 @@ export const getFallbackNews = (commodityName: string): EnhancedNewsItem[] => {
       id: `${commodityName}_fallback_5`,
       title: `Technical analysis suggests ${commodityName} may break key resistance levels`,
       description: `Chart patterns and technical indicators are pointing to potential breakout scenarios for ${commodityName}, with traders closely monitoring support and resistance levels for entry signals.`,
-      url: 'https://www.marketwatch.com/investing/commodities',
-      source: 'MarketWatch',
-      publishedAt: new Date(today.getTime() - 5 * 60 * 60 * 1000).toISOString(),
+      url: `https://www.tradingview.com/symbols/${commoditySlug}`,
+      source: 'TradingView',
+      publishedAt: new Date(baseTime - 5 * 60 * 60 * 1000).toISOString(),
       sentiment: 'positive' as const,
       category: 'market_analysis' as const,
       relevanceScore: 68,

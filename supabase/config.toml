@@ -44,6 +44,9 @@ verify_jwt = false
 [functions.fetch-all-commodities-v2]
 verify_jwt = false
 
+[functions.enhanced-commodity-news]
+verify_jwt = false
+
 [functions.ibkr-fix-bridge]
 verify_jwt = false
 
