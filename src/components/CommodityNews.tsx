@@ -32,16 +32,21 @@ const CommodityNews = ({ commodity }: CommodityNewsProps) => {
         setLoading(true);
         setError(null);
         
+        console.log('Fetching news for commodity:', commodity);
+        
         // Use enhanced edge function for better news coverage
         const { data, error } = await supabase.functions.invoke('enhanced-commodity-news', {
           body: { commodity, source: 'all' }
         });
+        
+        console.log('Edge function response:', { data, error });
         
         if (error || !data?.articles) {
           console.warn('Enhanced news API failed, using fallback:', error);
           const fallbackNews = getFallbackNews(commodity);
           setNews(fallbackNews);
         } else {
+          console.log('Got news articles:', data.articles.length);
           // Convert to enhanced news items
           const enhancedNews = data.articles.map((article: any) => ({
             ...article,
