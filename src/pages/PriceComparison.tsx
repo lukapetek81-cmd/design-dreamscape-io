@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { PriceComparisonChart } from "@/components/PriceComparisonChart";
+import { CommodityList } from "@/components/CommodityList";
 import { useQuery } from "@tanstack/react-query";
 
 interface Commodity {
@@ -49,21 +50,11 @@ interface ComparisonSession {
   created_at: string;
 }
 
-const SAMPLE_COMMODITIES: Commodity[] = [
-  { name: "Crude Oil", symbol: "CL", price: 87.45, change: 1.23, changePercent: 1.43, group: "energy" },
-  { name: "Gold", symbol: "GC", price: 2045.30, change: -5.40, changePercent: -0.26, group: "metals" },
-  { name: "Silver", symbol: "SI", price: 24.78, change: 0.32, changePercent: 1.31, group: "metals" },
-  { name: "Natural Gas", symbol: "NG", price: 2.65, change: -0.08, changePercent: -2.93, group: "energy" },
-  { name: "Copper", symbol: "HG", price: 4.12, change: 0.05, changePercent: 1.23, group: "metals" },
-  { name: "Wheat", symbol: "ZW", price: 6.78, change: 0.15, changePercent: 2.26, group: "grains" },
-  { name: "Corn", symbol: "ZC", price: 4.89, change: -0.03, changePercent: -0.61, group: "grains" },
-  { name: "Coffee", symbol: "KC", price: 1.85, change: 0.07, changePercent: 3.93, group: "softs" },
-];
+// Fetch real commodity data instead of hardcoded samples
 
 const PriceComparison = () => {
   const [activeGroup, setActiveGroup] = useState("energy");
   const [selectedCommodities, setSelectedCommodities] = useState<Commodity[]>([]);
-  const [availableCommodities] = useState<Commodity[]>(SAMPLE_COMMODITIES);
   const [comparisonName, setComparisonName] = useState("");
   const [savedComparisons, setSavedComparisons] = useState<ComparisonSession[]>([]);
   const [loading, setLoading] = useState(false);
@@ -73,28 +64,39 @@ const PriceComparison = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
-  const commodityCounts = {
-    energy: 0, metals: 0, grains: 0, livestock: 0, softs: 0, other: 0
-  };
+  // Fetch available commodities from API
+  const { data: availableCommodities = [], isLoading: commoditiesLoading } = useQuery({
+    queryKey: ['all-commodities'],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('fetch-all-commodities-v2', {
+        body: { dataDelay: 'none' }
+      });
+      
+      if (error) throw new Error(error.message);
+      return data.commodities.map((item: any) => ({
+        name: item.name,
+        symbol: item.symbol,
+        price: item.price,
+        change: item.change,
+        changePercent: item.changePercent,
+        group: item.group || 'other'
+      }));
+    },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
 
-  // Fetch IBKR contracts for a specific commodity (premium users only)
-  const useIBKRContracts = (commodityName: string) => {
-    const { isPremium } = useAuth();
-    
-    return useQuery({
-      queryKey: ['ibkr-contracts', commodityName],
-      queryFn: async () => {
-        const { data, error } = await supabase.functions.invoke('fetch-ibkr-futures', {
-          body: { commodity: commodityName }
-        });
-        
-        if (error) throw new Error(error.message);
-        return data.contracts as FuturesContract[];
-      },
-      enabled: !!commodityName && showContracts[commodityName] && isPremium,
-      staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+
+  // Commodity counts by group
+  const commodityCounts = React.useMemo(() => {
+    const counts = { energy: 0, metals: 0, grains: 0, livestock: 0, softs: 0, other: 0 };
+    availableCommodities.forEach(commodity => {
+      const group = commodity.group as keyof typeof counts;
+      if (counts[group] !== undefined) {
+        counts[group]++;
+      }
     });
-  };
+    return counts;
+  }, [availableCommodities]);
 
   useEffect(() => {
     if (user) {
@@ -422,102 +424,23 @@ const PriceComparison = () => {
                       </CardTitle>
                     </CardHeader>
                      <CardContent className={`space-y-3 ${isMobile ? 'max-h-96 overflow-y-auto custom-scrollbar' : 'space-y-4'}`}>
-                        {availableCommodities.map((commodity) => {
-                          // eslint-disable-next-line react-hooks/rules-of-hooks
-                          const contractsQuery = useIBKRContracts(commodity.name);
-                         const hasContracts = contractsQuery.data && contractsQuery.data.length > 0;
-                         const showingContracts = showContracts[commodity.name];
-                         
-                         return (
-                            <div key={commodity.symbol} className="space-y-2">
-                              {/* Base Commodity */}
-                              <div className={`flex items-center justify-between ${isMobile ? 'p-3' : 'p-2'} border rounded ${
-                                selectedCommodities.some(c => c.symbol === commodity.symbol && !c.contractSymbol) ? 'bg-muted' : ''
-                              }`}>
-                                <div className="flex-1 min-w-0">
-                                  <div className={`font-medium ${isMobile ? 'text-sm' : 'text-sm'} truncate`}>{commodity.name}</div>
-                                  <div className={`${isMobile ? 'text-xs' : 'text-xs'} text-muted-foreground`}>
-                                    {commodity.symbol} - ${commodity.price.toFixed(2)}
-                                  </div>
-                                 </div>
-                                 <div className="flex items-center gap-1 ml-2">
-                                  {isPremium && hasContracts && (
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => toggleContractsView(commodity.name)}
-                                        className={isMobile ? 'h-11 w-11 p-0 touch-target mobile-button' : ''}
-                                      >
-                                        <Calendar className="h-4 w-4" />
-                                      </Button>
-                                    )}
-                                    <Button
-                                     variant="ghost"
-                                     size="sm"
-                                     onClick={() => addCommodity(commodity)}
-                                     disabled={selectedCommodities.some(c => c.symbol === commodity.symbol && !c.contractSymbol)}
-                                     className={isMobile ? 'h-11 w-11 p-0 touch-target mobile-button' : ''}
-                                   >
-                                     <Plus className="h-4 w-4" />
-                                   </Button>
-                                </div>
-                              </div>
-                              
-                              {/* Futures Contracts - Only show for premium users */}
-                              {isPremium && showingContracts && hasContracts && (
-                               <div className="ml-4 space-y-1">
-                                 {contractsQuery.data?.slice(0, 6).map((contract) => {
-                                   const isSelected = selectedCommodities.some(c => 
-                                     c.symbol === commodity.symbol && c.contractSymbol === contract.symbol
-                                   );
-                                   
-                                   return (
-                                     <div key={contract.symbol} 
-                                          className={`flex items-center justify-between p-2 border rounded text-sm ${
-                                            isSelected ? 'bg-muted' : ''
-                                          }`}>
-                                        <div className="flex-1">
-                                          <div className="font-medium flex items-center gap-2">
-                                            <span>{contract.symbol}</span>
-                                          </div>
-                                          <div className="text-xs text-muted-foreground">
-                                            ${contract.price.toFixed(2)} • Vol: {contract.volume.toLocaleString()}
-                                            {contract.expirationDate && ` • Exp: ${new Date(contract.expirationDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
-                                          </div>
-                                        </div>
-                                       <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => addCommodity({
-                                            ...commodity,
-                                            price: contract.price,
-                                            change: contract.change,
-                                            changePercent: contract.changePercent
-                                          }, contract.symbol)}
-                                          disabled={isSelected}
-                                          className={isMobile ? 'h-10 w-10 p-0 touch-target mobile-button' : ''}
-                                        >
-                                          <Plus className="h-4 w-4" />
-                                        </Button>
-                                     </div>
-                                   );
-                                 })}
-                                </div>
-                              )}
-
-                              {/* Premium upgrade prompt for futures contracts */}
-                              {!isPremium && (
-                                <div className="ml-4 mt-2 p-3 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-primary/20">
-                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <span className="inline-block w-2 h-2 bg-primary rounded-full animate-pulse"></span>
-                                    <span>Upgrade to Premium to access futures contracts</span>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                         );
-                       })}
-                     </CardContent>
+                        {commoditiesLoading ? (
+                          <div className="space-y-3">
+                            {[1,2,3,4,5].map(i => (
+                              <div key={i} className="h-16 bg-muted animate-pulse rounded" />
+                            ))}
+                          </div>
+                        ) : (
+                          <CommodityList 
+                            commodities={availableCommodities.filter(c => c.group === activeGroup)}
+                            onAddCommodity={addCommodity}
+                            showContracts={showContracts}
+                            onToggleContracts={toggleContractsView}
+                            isPremium={isPremium}
+                            isMobile={isMobile}
+                          />
+                        )}
+                      </CardContent>
                   </Card>
 
                    {savedComparisons.length > 0 && (

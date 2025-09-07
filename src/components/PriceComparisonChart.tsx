@@ -53,8 +53,9 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
   const isMobile = useIsMobile();
 
   // Get historical data for each commodity (with contract support)
-  const historicalQueries = React.useMemo(() => 
-    commodities.map(commodity => 
+  const historicalQueries = React.useMemo(() => {
+    if (commodities.length === 0) return [];
+    return commodities.map(commodity => 
       // eslint-disable-next-line react-hooks/rules-of-hooks
       useCommodityHistoricalData(
         commodity.name, 
@@ -62,35 +63,39 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
         'line', 
         commodity.contractSymbol
       )
-    ), [commodities, timeframe]
-  );
+    );
+  }, [commodities, timeframe]);
 
   // Create a stable key for tracking when data actually changes
   const dataVersionKey = historicalQueries
     .map(q => `${q.isLoading}-${q.data?.data?.length || 0}-${q.error?.message || ''}`)
     .join('|');
 
-  // Process and combine historical data
+  // Process and combine historical data with better error handling
   React.useEffect(() => {
     if (commodities.length === 0) {
       setChartData([]);
+      setFailedCommodities([]);
+      setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
     
-    // Check which queries have data (allow partial data)
-    const queriesWithData = historicalQueries.filter((query, index) => 
-      query.data && query.data.data && query.data.data.length > 0 && !query.data.error
-    );
-
-    if (queriesWithData.length === 0) {
-      console.warn('No commodity data available for chart');
-      setIsLoading(false);
-      return;
-    }
-
     try {
+      // Filter queries with valid data
+      const validQueries = historicalQueries.filter((query, index) => {
+        return query.data?.data && Array.isArray(query.data.data) && query.data.data.length > 0 && !query.data.error;
+      });
+
+      if (validQueries.length === 0) {
+        console.warn('No valid commodity data available for chart');
+        setChartData([]);
+        setFailedCommodities(commodities.map(c => c.name));
+        setIsLoading(false);
+        return;
+      }
+
       // Create a map of dates to price data
       const dateMap = new Map<string, ChartDataPoint>();
       const failed: string[] = [];
@@ -98,18 +103,19 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
       historicalQueries.forEach((query, index) => {
         const commodity = commodities[index];
         
-        // Only process successful queries
-        if (!query.data || !query.data.data || query.data.error) {
+        if (!query.data?.data || query.data.error || !Array.isArray(query.data.data)) {
           console.warn(`Skipping ${commodity.name} due to data fetch error:`, query.data?.error);
           failed.push(commodity.name);
           return;
         }
 
-        const data = query.data.data;
-
-        data.forEach((point) => {
+        query.data.data.forEach((point) => {
+          if (!point.date || point.price == null) return;
+          
           const dateKey = point.date;
           const timestamp = new Date(point.date).getTime();
+          
+          if (isNaN(timestamp)) return;
           
           if (!dateMap.has(dateKey)) {
             dateMap.set(dateKey, {
@@ -119,7 +125,6 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
           }
 
           const existing = dateMap.get(dateKey)!;
-          // Use the display symbol (contract symbol if available, otherwise base symbol)
           const displaySymbol = commodity.contractSymbol || commodity.symbol;
           existing[displaySymbol] = point.price;
         });
@@ -127,8 +132,9 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
 
       setFailedCommodities(failed);
 
-      // Convert map to array and sort by timestamp
+      // Convert to sorted array
       const combinedData = Array.from(dateMap.values())
+        .filter(point => point.timestamp && !isNaN(point.timestamp))
         .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
         .map(point => {
           const { timestamp, ...rest } = point;
@@ -139,6 +145,8 @@ export const PriceComparisonChart: React.FC<PriceComparisonChartProps> = ({ comm
       setChartData(combinedData);
     } catch (error) {
       console.error('Error processing chart data:', error);
+      setChartData([]);
+      setFailedCommodities(commodities.map(c => c.name));
     } finally {
       setIsLoading(false);
     }
