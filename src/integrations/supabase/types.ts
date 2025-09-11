@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_rate_limits: {
+        Row: {
+          api_endpoint: string
+          created_at: string | null
+          id: string
+          request_count: number | null
+          user_id: string | null
+          window_start: string | null
+        }
+        Insert: {
+          api_endpoint: string
+          created_at?: string | null
+          id?: string
+          request_count?: number | null
+          user_id?: string | null
+          window_start?: string | null
+        }
+        Update: {
+          api_endpoint?: string
+          created_at?: string | null
+          id?: string
+          request_count?: number | null
+          user_id?: string | null
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action_type: string
@@ -621,6 +648,30 @@ export type Database = {
         }
         Relationships: []
       }
+      system_metrics: {
+        Row: {
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          metric_name: string
+          metric_value: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          metric_name: string
+          metric_value: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          metric_name?: string
+          metric_value?: number
+        }
+        Relationships: []
+      }
       trade_executions: {
         Row: {
           commission: number
@@ -885,6 +936,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_old_metrics: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_current_user_profile: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -899,6 +954,26 @@ export type Database = {
           subscription_tier: string | null
           updated_at: string
         }
+      }
+      is_business_hours: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      mask_email: {
+        Args: {
+          email_address: string
+          owner_id: string
+          requesting_user_id: string
+        }
+        Returns: string
+      }
+      validate_session: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      verify_credential_owner: {
+        Args: { credential_id: string }
+        Returns: boolean
       }
     }
     Enums: {
