@@ -1,5 +1,9 @@
 import { useAuth } from '@/contexts/AuthContext';
 
+/**
+ * Freemium model: All data is real-time for everyone.
+ * This hook is kept for future premium tier implementation.
+ */
 export const useDelayedData = () => {
   const auth = useAuth();
   
@@ -7,37 +11,27 @@ export const useDelayedData = () => {
   if (!auth) {
     return {
       isPremium: false,
-      shouldDelayData: true,
+      shouldDelayData: false, // No delay in freemium model
       getDelayedTimestamp: (timestamp?: number) => timestamp,
-      getDataDelay: () => '15min',
-      getDelayStatus: () => ({ isDelayed: true, delayText: '15-min delayed', statusText: 'Loading...' })
+      getDataDelay: () => 'realtime',
+      getDelayStatus: () => ({ isDelayed: false, delayText: 'Real-time', statusText: 'Live market data' })
     };
   }
   
   const { profile, isGuest } = auth;
   
+  // Freemium model: Everyone gets real-time data
   const isPremium = profile?.subscription_active && profile?.subscription_tier !== 'free';
-  const shouldDelayData = isGuest || !isPremium;
+  const shouldDelayData = false; // No delays for anyone in freemium model
   
-  // For free users, add 15 minutes (900000ms) delay to timestamps
-  const getDelayedTimestamp = (timestamp?: number) => {
-    if (!shouldDelayData) return timestamp;
-    
-    const now = Date.now();
-    const fifteenMinutesAgo = now - (15 * 60 * 1000); // 15 minutes in milliseconds
-    
-    return timestamp ? Math.min(timestamp, fifteenMinutesAgo) : fifteenMinutesAgo;
-  };
+  // No delay - return timestamp as-is
+  const getDelayedTimestamp = (timestamp?: number) => timestamp;
   
-  // Get the appropriate data source URL parameter
-  const getDataDelay = () => {
-    return shouldDelayData ? '15min' : 'realtime';
-  };
+  // Always return realtime for freemium model
+  const getDataDelay = () => 'realtime';
   
-  // Get delay status for UI display
+  // Get delay status for UI display - always show as real-time
   const getDelayStatus = () => {
-    if (isGuest) return { isDelayed: true, delayText: '15-min delayed', statusText: 'Sign in for real-time data' };
-    if (!isPremium) return { isDelayed: true, delayText: '15-min delayed', statusText: 'Upgrade for real-time data' };
     return { isDelayed: false, delayText: 'Real-time', statusText: 'Live market data' };
   };
   

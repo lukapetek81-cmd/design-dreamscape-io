@@ -14,32 +14,33 @@ import { AlertTriangle, CheckCircle, Settings, Activity, Shield, RefreshCw } fro
 import { IBKRLogo } from '@/components/IBKRLogo';
 
 const Trading: React.FC = () => {
-  const { isPremium } = useAuth();
+  const { isGuest } = useAuth();
   const { isConnected, isConnecting, connect, disconnect, session } = useIBKRTrading();
   const { hasActiveCredentials } = useIBKRCredentials();
   const [showCredentialsForm, setShowCredentialsForm] = useState(false);
 
-  if (!isPremium) {
+  // Require login for trading features
+  if (isGuest) {
     return (
       <>
         <SEOHead 
-          title="Trading Dashboard - Premium Feature"
-          description="Professional trading dashboard with Interactive Brokers integration. Upgrade to premium for live market data and advanced trading features."
-          keywords={["IBKR trading", "Interactive Brokers", "commodity trading", "premium features"]}
+          title="Trading Dashboard - Sign In Required"
+          description="Professional trading dashboard with Interactive Brokers integration. Sign in to access trading features."
+          keywords={["IBKR trading", "Interactive Brokers", "commodity trading"]}
         />
         <div className="min-h-screen bg-background p-6">
           <Card className="max-w-2xl mx-auto">
             <CardHeader>
-              <CardTitle>Premium Feature</CardTitle>
+              <CardTitle>Sign In Required</CardTitle>
               <CardDescription>
-                IBKR trading integration is available for premium subscribers only
+                Please sign in to access the trading dashboard
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Alert>
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
-                  Upgrade to premium to access professional trading features with Interactive Brokers integration.
+                  Sign in to access professional trading features with Interactive Brokers integration.
                 </AlertDescription>
               </Alert>
             </CardContent>
