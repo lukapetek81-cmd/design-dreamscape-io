@@ -48,7 +48,7 @@ export type Database = {
           entity_id: string | null
           entity_type: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           new_values: Json | null
           old_values: Json | null
           session_id: string | null
@@ -61,7 +61,7 @@ export type Database = {
           entity_id?: string | null
           entity_type: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           new_values?: Json | null
           old_values?: Json | null
           session_id?: string | null
@@ -74,7 +74,7 @@ export type Database = {
           entity_id?: string | null
           entity_type?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           new_values?: Json | null
           old_values?: Json | null
           session_id?: string | null
@@ -936,12 +936,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      cleanup_old_metrics: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      cleanup_old_metrics: { Args: never; Returns: undefined }
       get_current_user_profile: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           avatar_url: string | null
           commodity_price_api_credentials: string | null
@@ -954,11 +951,14 @@ export type Database = {
           subscription_tier: string | null
           updated_at: string
         }
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
-      is_business_hours: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      is_business_hours: { Args: never; Returns: boolean }
       mask_email: {
         Args: {
           email_address: string
@@ -967,10 +967,7 @@ export type Database = {
         }
         Returns: string
       }
-      validate_session: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      validate_session: { Args: never; Returns: boolean }
       verify_credential_owner: {
         Args: { credential_id: string }
         Returns: boolean
