@@ -7,9 +7,8 @@ import {
 } from "@/components/ui/sidebar";
 import { useSidebar } from "@/components/ui/sidebar";
 import { TrendingUp } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
-import UpgradeBox from "./UpgradeBox";
+import AdBanner from "./AdBanner";
 import CommodityGroupsList from "./sidebar/CommodityGroupsList";
 import MarketToolsList from "./sidebar/MarketToolsList";
 import ThemeSwitcher from "./sidebar/ThemeSwitcher";
@@ -23,7 +22,6 @@ interface CommoditySidebarProps {
 
 const CommoditySidebar = React.memo(({ activeGroup, onGroupSelect, commodityCounts }: CommoditySidebarProps) => {
   const { state, openMobile } = useSidebar();
-  const { profile } = useAuth();
   const isMobile = useIsMobile();
   const collapsed = state === "collapsed";
   const contentRef = React.useRef<HTMLDivElement>(null);
@@ -35,19 +33,12 @@ const CommoditySidebar = React.memo(({ activeGroup, onGroupSelect, commodityCoun
     }
   }, [openMobile]);
 
-  // Memoize premium status check
-  const isPremiumUser = React.useMemo(() => 
-    profile?.subscription_active && 
-    (profile?.subscription_tier === 'premium' || profile?.subscription_tier === 'pro'),
-    [profile?.subscription_active, profile?.subscription_tier]
-  );
-
   return (
     <Sidebar className="border-r bg-background">
       <SidebarHeader className="border-b bg-background">
         <div className={`flex items-center gap-3 ${isMobile ? 'p-6' : 'p-4'}`}>
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <TrendingUp className="w-4 h-4 text-white" />
+            <TrendingUp className="w-4 h-4 text-primary-foreground" />
           </div>
           {!collapsed && (
             <div>
@@ -76,9 +67,9 @@ const CommoditySidebar = React.memo(({ activeGroup, onGroupSelect, commodityCoun
         {/* Market Tools Section - Always in middle */}
         <MarketToolsList />
         
-        {/* Upgrade Box Section - Always before footer */}
+        {/* Ad Banner Section - Freemium monetization */}
         <div className={`mt-8 mb-4 ${isMobile ? 'px-4' : 'px-2'}`}>
-          <UpgradeBox />
+          <AdBanner variant="sidebar" />
         </div>
       </SidebarContent>
 
