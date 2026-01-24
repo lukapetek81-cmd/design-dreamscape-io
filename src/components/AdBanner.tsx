@@ -1,4 +1,6 @@
 import React, { useEffect, useRef } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { showBannerAd, hideBannerAd, isAdMobInitialized } from '@/services/admobService';
 
 // AdSense Publisher ID from environment
 const ADSENSE_PUBLISHER_ID = import.meta.env.VITE_ADSENSE_PUBLISHER_ID || '';
@@ -8,6 +10,8 @@ interface AdBannerProps {
   className?: string;
   /** Ad slot ID from your AdSense account */
   slot?: string;
+  /** Position for native banner ads (top or bottom) */
+  nativePosition?: 'top' | 'bottom';
 }
 
 // Extend window type for adsbygoogle
@@ -18,18 +22,21 @@ declare global {
 }
 
 /**
- * Google AdSense ad component with multiple placement variants.
- * Requires VITE_ADSENSE_PUBLISHER_ID environment variable.
+ * Unified ad component that uses:
+ * - Google AdMob (native SDK) on Android/iOS
+ * - Google AdSense (web script) on web/PWA
  */
 const AdBanner: React.FC<AdBannerProps> = ({ 
   variant = 'sidebar', 
   className = '',
-  slot = ''
+  slot = '',
+  nativePosition = 'bottom'
 }) => {
   const adRef = useRef<HTMLModElement>(null);
   const isAdPushed = useRef(false);
+  const isNative = Capacitor.isNativePlatform();
 
-  // Get responsive ad dimensions based on variant
+  // Get responsive ad dimensions based on variant (for web/AdSense)
   const getAdConfig = () => {
     switch (variant) {
       case 'banner':
@@ -62,10 +69,21 @@ const AdBanner: React.FC<AdBannerProps> = ({
   };
 
   useEffect(() => {
-    // Only push ad once and only if publisher ID exists
+    // Native platform: Use AdMob
+    if (isNative) {
+      if (isAdMobInitialized()) {
+        showBannerAd(nativePosition);
+      }
+      
+      // Cleanup: hide banner when component unmounts
+      return () => {
+        hideBannerAd();
+      };
+    }
+    
+    // Web platform: Use AdSense
     if (!isAdPushed.current && ADSENSE_PUBLISHER_ID && adRef.current) {
       try {
-        // Initialize adsbygoogle array if not exists
         window.adsbygoogle = window.adsbygoogle || [];
         window.adsbygoogle.push({});
         isAdPushed.current = true;
@@ -73,11 +91,23 @@ const AdBanner: React.FC<AdBannerProps> = ({
         console.error('AdSense error:', error);
       }
     }
-  }, []);
+  }, [isNative, nativePosition]);
 
   const config = getAdConfig();
 
-  // Show placeholder if no publisher ID configured
+  // Native platform: AdMob handles ads natively, just show placeholder space
+  if (isNative) {
+    return (
+      <div 
+        className={`${className} mx-2 mb-4 flex items-center justify-center bg-muted/20 rounded-lg`}
+        style={{ minHeight: variant === 'banner' ? '50px' : '90px' }}
+      >
+        <p className="text-xs text-muted-foreground/40">Ad space (native)</p>
+      </div>
+    );
+  }
+
+  // Web platform: Show placeholder if no publisher ID configured
   if (!ADSENSE_PUBLISHER_ID) {
     return (
       <div 
@@ -92,6 +122,7 @@ const AdBanner: React.FC<AdBannerProps> = ({
     );
   }
 
+  // Web platform: Render AdSense ad
   return (
     <div className={`${className} mx-2 mb-4`}>
       <ins
