@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { showBannerAd, hideBannerAd, isAdMobInitialized } from '@/services/admobService';
+import { useAuth } from '@/contexts/AuthContext';
 
 // AdSense Publisher ID from environment
 const ADSENSE_PUBLISHER_ID = import.meta.env.VITE_ADSENSE_PUBLISHER_ID || '';
@@ -25,6 +26,8 @@ declare global {
  * Unified ad component that uses:
  * - Google AdMob (native SDK) on Android/iOS
  * - Google AdSense (web script) on web/PWA
+ * 
+ * Ads are hidden for premium subscribers.
  */
 const AdBanner: React.FC<AdBannerProps> = ({ 
   variant = 'sidebar', 
@@ -35,6 +38,10 @@ const AdBanner: React.FC<AdBannerProps> = ({
   const adRef = useRef<HTMLModElement>(null);
   const isAdPushed = useRef(false);
   const isNative = Capacitor.isNativePlatform();
+  const auth = useAuth();
+  
+  // Check if user has premium subscription - hide ads for premium users
+  const isPremium = auth?.profile?.subscription_active && auth?.profile?.subscription_tier === 'premium';
 
   // Get responsive ad dimensions based on variant (for web/AdSense)
   const getAdConfig = () => {
@@ -69,6 +76,14 @@ const AdBanner: React.FC<AdBannerProps> = ({
   };
 
   useEffect(() => {
+    // Don't show ads for premium users
+    if (isPremium) {
+      if (isNative) {
+        hideBannerAd();
+      }
+      return;
+    }
+
     // Native platform: Use AdMob
     if (isNative) {
       if (isAdMobInitialized()) {
@@ -91,9 +106,14 @@ const AdBanner: React.FC<AdBannerProps> = ({
         console.error('AdSense error:', error);
       }
     }
-  }, [isNative, nativePosition]);
+  }, [isNative, nativePosition, isPremium]);
 
   const config = getAdConfig();
+
+  // Don't render ads for premium users
+  if (isPremium) {
+    return null;
+  }
 
   // Native platform: AdMob handles ads natively, just show placeholder space
   if (isNative) {
