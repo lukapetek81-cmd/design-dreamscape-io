@@ -12,7 +12,7 @@
         <!-- Google AdMob App ID -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-8597609154479605~XXXXXXXXXX" />
+            android:value="ca-app-pub-8597609154479605~4310240399" />
 
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation"
