@@ -27,13 +27,10 @@ export const initializePlayBilling = async (): Promise<boolean> => {
   }
 
   try {
-    // Note: You'll need to set up RevenueCat and add your API key
-    // For now, we'll use a placeholder - replace with your actual key
     const apiKey = import.meta.env.VITE_REVENUECAT_API_KEY || '';
     
     if (!apiKey) {
-      console.warn('[PlayBilling] No RevenueCat API key configured. Using direct Google Play Billing.');
-      // Fall back to checking subscription status via backend
+      console.warn('[PlayBilling] No RevenueCat API key configured.');
       isInitialized = true;
       return true;
     }
