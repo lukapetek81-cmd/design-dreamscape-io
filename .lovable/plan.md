@@ -1,98 +1,39 @@
 
+The signed Android App Bundle (AAB) is not stored in the source code directory because it is a **compiled build artifact**, not a source file. It is generated during the Android build process and is typically excluded from version control (git) to keep the repository clean and secure.
 
-# Google Play Console Setup Guide
+To obtain your AAB for the Google Play Console, you need to perform an Android build. Since this requires the Android SDK and Gradle, it is typically done on your local machine rather than in the cloud editor.
 
-This plan covers completing all required sections in the Google Play Console to publish Commodity Hub.
+### Where it will be located
+Once the build is successful, the AAB will be generated at:
+`android/app/build/outputs/bundle/release/app-release.aab`
 
-## 1. Store Listing
+### How to generate your Signed AAB
 
-The app already has assets prepared. Here's what to use:
+To generate the file, follow these steps on your local computer:
 
-**App Details:**
-- **App name**: Commodity Hub - Trading Analytics
-- **Short description** (80 chars max): Professional commodity trading platform with real-time data and analytics
-- **Full description**: Use the content from `src/components/app-store/AppStoreAssets.tsx` (APP_STORE_DESCRIPTION.full)
+1. **Download your project code**: Use the "Export" or "Download" feature in Lovable to get the latest source code.
+2. **Install requirements**: Ensure you have Node.js, the Android SDK, and Android Studio installed.
+3. **Prepare the build**:
+   ```bash
+   npm install
+   npm run build  # Creates the 'dist' folder
+   npx cap copy android # Copies the web assets to the Android project
+   ```
+4. **Build the AAB in Android Studio**:
+   - Open the `android` folder in Android Studio.
+   - Wait for Gradle to sync.
+   - Go to **Build > Generate Signed Bundle / APK...**.
+   - Select **Android App Bundle** and click Next.
+   - Create or select your **Keystore** (the `.jks` file used for signing).
+   - Select the `release` build variant.
+   - Click Finish.
 
-**Graphics:**
-- **App icon** (512x512): `public/icons/icon-512-playstore.png`
-- **Feature graphic** (1024x500): `public/store-assets/feature-graphic.png`
-- **Phone screenshots**: The 5 images in `public/screenshots/phone-*.png`
-- **Tablet screenshots**: The 2 images in `public/screenshots/tablet-*.png`
+### Missing Configuration: google-services.json
+Before you build, you will need to add your `google-services.json` file (from your Firebase Console) to the `android/app/` directory. This is required for Google Sign-In and other Google services to function correctly in the production app.
 
-## 2. Content Rating Questionnaire
+### Technical Details
+- **Build Tool**: Gradle (the standard Android build system).
+- **File Format**: `.aab` (Android App Bundle), which is now the required format for new apps on the Google Play Store (replacing `.apk`).
+- **Signing**: The "signed" part refers to using a private cryptographic key (keystore) to verify that the app was created by you. This is a security requirement for the Play Store.
 
-Answer the IARC questionnaire as follows:
-- **Category**: Utility / Productivity / Finance
-- **Violence**: No
-- **Sexual content**: No
-- **Language**: No
-- **Controlled substances**: No
-- **Simulated gambling**: Yes (trading simulations involve risk)
-- **User-generated content**: Yes (community features)
-- **Personal data sharing**: Yes (account creation, analytics)
-
-This should result in a **Teen (13+)** rating.
-
-## 3. Data Safety Section
-
-Based on the app's data collection (from `src/utils/playStoreCompliance.ts`):
-
-| Data Type | Collected | Shared | Purpose |
-|-----------|-----------|--------|---------|
-| Email address | Yes | No | Account management |
-| Name | Yes | No | Account management |
-| User IDs | Yes | No | App functionality |
-| Purchase history | Yes | No | App functionality |
-| App interactions | Yes | No | Analytics |
-| Device ID | Yes | No | Analytics |
-
-**Security practices:**
-- Data encrypted in transit: Yes
-- Data encrypted at rest: Yes
-- Users can request deletion: Yes
-
-## 4. Target Audience & Content
-
-- **Target age group**: 13 and above
-- **Appeals to children**: No
-- **Contains ads**: No (set `containsAds: false` in metadata)
-
-## 5. App Access
-
-- Select **"All or some functionality is restricted"**
-- Provide test credentials or note that a Google Sign-In account is needed
-- If features require premium, note which ones are gated
-
-## 6. Ads Declaration
-
-- Select **"No, my app does not contain ads"**
-- (AdMob is configured but if not actively showing ads yet, declare No)
-
-## 7. App Category & Contact
-
-- **Category**: Finance
-- **Email**: support@commodityhub.com
-- **Website**: Your published Lovable URL
-- **Privacy policy**: Your published URL + `/privacy-policy`
-
-## 8. Pricing & Distribution
-
-- **Free** with in-app purchases ($4.99 - $19.99)
-- **Countries**: Select all target countries (US, CA, GB, AU, DE, FR, JP, SG as configured)
-
-## 9. Release Setup
-
-- Go to **Production > Create new release**
-- Enable **Google Play App Signing** (recommended)
-- Upload the signed AAB from `android/app/build/outputs/bundle/release/app-release.aab`
-- Release name: `1.0.0`
-- Release notes: Use content from `RELEASE_NOTES` in AppStoreAssets.tsx
-
-## 10. Review & Submit
-
-After completing all sections, the dashboard will show green checkmarks. Click **"Send for review"**. Google typically reviews within 1-3 days for new apps.
-
-## Code Changes Needed
-
-**No code changes are required.** All assets and metadata are already in the codebase. This is purely a Google Play Console configuration task using the existing assets.
-
+If you have already performed a build locally and still can't find it, ensure that you selected "Bundle" and not "APK" during the generation process.
