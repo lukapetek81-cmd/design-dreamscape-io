@@ -1,8 +1,21 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+// Input validation helpers
+function validateCommodityInput(commodity: unknown): string {
+  if (typeof commodity !== 'string' || commodity.length === 0 || commodity.length > 100) {
+    throw new Error('Invalid commodity parameter: must be a non-empty string under 100 characters');
+  }
+  // Only allow alphanumeric, spaces, hyphens
+  if (!/^[a-zA-Z0-9\s\-]+$/.test(commodity)) {
+    throw new Error('Invalid commodity parameter: contains disallowed characters');
+  }
+  return commodity;
 }
 
 interface IBKRContract {
@@ -42,7 +55,28 @@ serve(async (req) => {
   }
 
   try {
-    const { commodity } = await req.json()
+    // Authenticate user
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    const supabaseAuth = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    );
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const body = await req.json();
+    const commodity = validateCommodityInput(body.commodity);
     
     console.log(`Fetching IBKR futures contracts for: ${commodity}`)
 

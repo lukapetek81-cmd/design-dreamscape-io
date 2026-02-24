@@ -23,11 +23,19 @@ serve(async (req) => {
 
   try {
     console.log('Enhanced commodity news function called');
-    const { commodity, source = 'all' } = await req.json();
+    const body = await req.json();
+    
+    // Input validation
+    const commodity = typeof body.commodity === 'string' && body.commodity.length > 0 && body.commodity.length <= 100
+      ? body.commodity.replace(/[^a-zA-Z0-9\s\-]/g, '')
+      : null;
+    const validSources = ['all', 'marketaux', 'fmp', 'news'];
+    const source = validSources.includes(body.source) ? body.source : 'all';
+    
     console.log('Request params:', { commodity, source });
     
     if (!commodity) {
-      throw new Error('Commodity parameter is required');
+      throw new Error('Commodity parameter is required and must be a valid string');
     }
 
     const newsApiKey = Deno.env.get('NEWS_API_KEY');

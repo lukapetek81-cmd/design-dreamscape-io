@@ -55,6 +55,12 @@ verify_jwt = false
 [functions.ibkr-fix-bridge]
 verify_jwt = false
 
+[functions.ibkr-client-portal]
+verify_jwt = false
+
+[functions.fetch-ibkr-futures]
+verify_jwt = false
+
 [functions.api-docs]
 verify_jwt = false
 
