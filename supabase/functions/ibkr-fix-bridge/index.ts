@@ -226,7 +226,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("[IBKR-BRIDGE] Error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: 'An error occurred processing your request' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
@@ -273,7 +273,7 @@ async function initializeIBKRConnection(credentials: any): Promise<any> {
     console.error("[IBKR-BRIDGE] Connection error:", error);
     return {
       success: false,
-      error: error.message
+      error: 'Failed to connect to trading bridge'
     };
   }
 }
@@ -322,7 +322,7 @@ async function subscribeToMarketData(symbols: string[]): Promise<any> {
     console.error("[IBKR-BRIDGE] Subscription error:", error);
     return {
       success: false,
-      error: error.message
+      error: 'Failed to subscribe to market data'
     };
   }
 }

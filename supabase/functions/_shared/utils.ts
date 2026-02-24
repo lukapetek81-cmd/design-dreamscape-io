@@ -111,11 +111,14 @@ export function errorResponse(
   status: number = 500,
   details?: any
 ): Response {
-  const message = error instanceof Error ? error.message : error;
+  // Log full error server-side, return generic message to client
+  if (error instanceof Error) {
+    console.error('[errorResponse] Internal error:', error.message);
+  }
+  const message = typeof error === 'string' ? error : 'An error occurred processing your request';
   const response: ApiResponse = {
     success: false,
     error: message,
-    ...(details && { details }),
   };
 
   return new Response(JSON.stringify(response), {
@@ -147,9 +150,10 @@ export async function authenticateUser(
 
     return { user: data.user };
   } catch (error) {
+    console.error('Authentication error:', error);
     return { 
       user: null, 
-      error: `Authentication failed: ${error instanceof Error ? error.message : String(error)}` 
+      error: 'Authentication failed'
     };
   }
 }

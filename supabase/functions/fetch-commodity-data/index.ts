@@ -703,7 +703,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in fetch-commodity-data function:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: 'Failed to fetch commodity data' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }

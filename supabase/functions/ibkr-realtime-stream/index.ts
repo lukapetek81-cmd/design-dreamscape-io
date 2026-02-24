@@ -64,7 +64,7 @@ serve(async (req) => {
         console.error('[REALTIME-STREAM] Message processing error:', error);
         socket.send(JSON.stringify({
           type: 'error',
-          message: error.message
+          message: 'Failed to process message'
         }));
       }
     };
@@ -89,7 +89,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('[REALTIME-STREAM] Error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: 'An error occurred processing your request' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
@@ -133,7 +133,7 @@ async function handleAuthentication(socket: WebSocket, message: any, supabase: a
     console.error('[REALTIME-STREAM] Authentication error:', error);
     socket.send(JSON.stringify({
       type: 'auth_error',
-      message: error.message
+      message: 'Authentication failed'
     }));
   }
 }
@@ -167,7 +167,7 @@ async function handleSubscription(socket: WebSocket, message: any, supabase: any
     console.error('[REALTIME-STREAM] Subscription error:', error);
     socket.send(JSON.stringify({
       type: 'subscription_error',
-      message: error.message
+      message: 'Failed to subscribe to market data'
     }));
   }
 }
@@ -187,7 +187,7 @@ async function handleUnsubscription(socket: WebSocket, message: any) {
     console.error('[REALTIME-STREAM] Unsubscription error:', error);
     socket.send(JSON.stringify({
       type: 'unsubscription_error',
-      message: error.message
+      message: 'Failed to unsubscribe'
     }));
   }
 }
