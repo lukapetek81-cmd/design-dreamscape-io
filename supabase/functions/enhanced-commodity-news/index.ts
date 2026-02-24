@@ -160,7 +160,7 @@ serve(async (req) => {
     
     const fallbackNews = generateFallbackNews('Commodity');
     return new Response(
-      JSON.stringify({ articles: fallbackNews, source: 'fallback', error: error.message }),
+      JSON.stringify({ articles: fallbackNews, source: 'fallback', error: 'Failed to fetch news' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
