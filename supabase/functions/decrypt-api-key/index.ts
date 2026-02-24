@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { DecryptKeySchema, formatValidationError, safeErrorMessage } from "../_shared/validation.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -103,21 +104,16 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { encryptedKey, userSecret } = body;
     
-    // Validate input types and formats
-    if (typeof encryptedKey !== 'string' || encryptedKey.length === 0 || encryptedKey.length > 10000) {
+    // Validate input with zod schema
+    const parsed = DecryptKeySchema.safeParse(body);
+    if (!parsed.success) {
       return new Response(
-        JSON.stringify({ error: 'Invalid encryptedKey: must be a non-empty string under 10000 chars' }),
+        JSON.stringify({ error: formatValidationError(parsed.error) }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    if (typeof userSecret !== 'string' || userSecret.length === 0 || userSecret.length > 1000) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid userSecret: must be a non-empty string under 1000 chars' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const { encryptedKey, userSecret } = parsed.data;
 
     // Get the master decryption key from environment (Supabase secret)
     const masterSecret = Deno.env.get('CREDENTIAL_MASTER_KEY');
@@ -155,9 +151,9 @@ serve(async (req) => {
     }
 
   } catch (error) {
-    console.error('Error decrypting API key:', error);
+    const message = safeErrorMessage(error, 'DECRYPT-API-KEY');
     return new Response(
-      JSON.stringify({ error: 'Failed to decrypt credentials' }),
+      JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
