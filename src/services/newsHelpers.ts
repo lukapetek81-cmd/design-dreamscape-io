@@ -183,9 +183,9 @@ export const fetchNewsFromFMP = async (commodityName: string): Promise<EnhancedN
     console.warn('FMP edge function failed, trying direct API:', error);
   }
   
-  // Fallback to direct API call with localStorage key
-  const getFmpApiKey = () => localStorage.getItem('fmpApiKey') || '';
-  const apiKey = getFmpApiKey();
+  // Fallback to direct API call with encrypted storage key
+  const { secureStorage } = await import('@/utils/security');
+  const apiKey = (await secureStorage.getItem('fmpApiKey')) || '';
   
   if (!apiKey) {
     console.warn('No FMP API key available');
