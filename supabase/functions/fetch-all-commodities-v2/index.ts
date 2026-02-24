@@ -76,7 +76,7 @@ serve(async (req) => {
     logger.error('Error in fetch-all-commodities-v2 function', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message,
+        error: 'Failed to fetch commodities data',
         timestamp: new Date().toISOString()
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

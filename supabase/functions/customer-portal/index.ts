@@ -91,8 +91,7 @@ serve(async (req) => {
     });
     
     return new Response(JSON.stringify({ 
-      error: errorMessage,
-      details: "Check function logs for more information"
+      error: 'Failed to access customer portal'
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
