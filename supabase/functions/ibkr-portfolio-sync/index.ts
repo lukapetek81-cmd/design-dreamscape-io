@@ -12,6 +12,29 @@ serve(async (req) => {
   }
 
   try {
+    // Verify JWT authentication
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const supabaseAuth = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    );
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -19,7 +42,7 @@ serve(async (req) => {
 
     const { sessionId, portfolioData } = await req.json();
 
-    // Get user from session
+    // Get user from session and verify ownership
     const { data: sessionData } = await supabase
       .from('trading_sessions')
       .select('user_id')
@@ -27,11 +50,14 @@ serve(async (req) => {
       .eq('status', 'active')
       .single();
 
-    if (!sessionData) {
-      throw new Error('Invalid or expired session');
+    if (!sessionData || sessionData.user_id !== user.id) {
+      return new Response(JSON.stringify({ error: 'Invalid or unauthorized session' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
-    const userId = sessionData.user_id;
+    const userId = user.id;
     const snapshotDate = new Date().toISOString().split('T')[0];
 
     // Calculate portfolio metrics
