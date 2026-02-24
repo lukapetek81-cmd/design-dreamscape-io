@@ -169,7 +169,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('[IBKR-CLIENT-PORTAL] Error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
@@ -378,9 +378,41 @@ async function handlePlaceOrder(req: Request, supabase: any) {
     const token = authHeader?.replace('Bearer ', '');
     const { data: { user } } = await supabase.auth.getUser(token);
 
-    // Validate order parameters
-    if (!order.symbol || !order.side || !order.quantity || !order.orderType) {
+    // Validate order parameters with type and range checks
+    if (!order || typeof order !== 'object') {
       throw new Error('Invalid order parameters');
+    }
+    
+    const validSides = ['BUY', 'SELL'];
+    const validOrderTypes = ['MKT', 'LMT', 'STP', 'STP_LMT', 'TRAIL'];
+    const validTifs = ['GTC', 'DAY', 'IOC', 'FOK'];
+    
+    if (typeof order.symbol !== 'string' || order.symbol.length === 0 || order.symbol.length > 20 || !/^[a-zA-Z0-9.\-]+$/.test(order.symbol)) {
+      throw new Error('Invalid symbol: must be alphanumeric, 1-20 chars');
+    }
+    if (!validSides.includes(order.side)) {
+      throw new Error('Invalid side: must be BUY or SELL');
+    }
+    if (typeof order.quantity !== 'number' || !Number.isFinite(order.quantity) || order.quantity <= 0 || order.quantity > 1000000) {
+      throw new Error('Invalid quantity: must be a positive number up to 1,000,000');
+    }
+    if (!validOrderTypes.includes(order.orderType)) {
+      throw new Error('Invalid orderType: must be MKT, LMT, STP, STP_LMT, or TRAIL');
+    }
+    if (order.tif && !validTifs.includes(order.tif)) {
+      throw new Error('Invalid tif: must be GTC, DAY, IOC, or FOK');
+    }
+    if (order.price !== undefined && (typeof order.price !== 'number' || !Number.isFinite(order.price) || order.price <= 0)) {
+      throw new Error('Invalid price: must be a positive number');
+    }
+    if (order.stopPrice !== undefined && (typeof order.stopPrice !== 'number' || !Number.isFinite(order.stopPrice) || order.stopPrice <= 0)) {
+      throw new Error('Invalid stopPrice: must be a positive number');
+    }
+    if (order.trailAmount !== undefined && (typeof order.trailAmount !== 'number' || !Number.isFinite(order.trailAmount) || order.trailAmount <= 0)) {
+      throw new Error('Invalid trailAmount: must be a positive number');
+    }
+    if (order.orderRef !== undefined && (typeof order.orderRef !== 'string' || order.orderRef.length > 100)) {
+      throw new Error('Invalid orderRef: must be a string under 100 chars');
     }
 
     // Additional validation for order types
@@ -489,8 +521,19 @@ async function handleMarketData(req: Request, supabase: any) {
       throw new Error('Invalid or expired session');
     }
 
+    // Validate symbols input
+    if (!Array.isArray(symbols) || symbols.length === 0 || symbols.length > 50) {
+      throw new Error('Invalid symbols: must be a non-empty array of up to 50 items');
+    }
+    const validatedSymbols = symbols.filter(
+      (s: unknown) => typeof s === 'string' && s.length > 0 && s.length <= 20 && /^[a-zA-Z0-9.\-]+$/.test(s)
+    );
+    if (validatedSymbols.length === 0) {
+      throw new Error('No valid symbols provided');
+    }
+
     // Get market data from IBKR
-    const marketData = await getIBKRMarketData(symbols);
+    const marketData = await getIBKRMarketData(validatedSymbols);
     
     return new Response(JSON.stringify({
       success: true,
