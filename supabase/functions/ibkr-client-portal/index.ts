@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { SessionIdSchema, OrderSchema, PlaceOrderSchema, SymbolsSchema, CancelOrderSchema, ModifyOrderSchema, formatValidationError, safeErrorMessage } from "../_shared/validation.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -277,7 +278,7 @@ async function handleConnect(req: Request, supabase: any) {
     console.error('[IBKR-CLIENT-PORTAL] Connection error:', error);
     return new Response(JSON.stringify({
       success: false,
-      error: error.message
+      error: safeErrorMessage(error, 'IBKR-CONNECT')
     }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -290,12 +291,12 @@ async function handleAuthenticate(req: Request, supabase: any) {
   
   try {
     const body = await req.json();
-    const { sessionId } = body;
-
-    const session = activeSessions.get(sessionId);
-    if (!session) {
-      throw new Error('Invalid session');
+    // Validate sessionId with schema
+    const parsed = SessionIdSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new Error(formatValidationError(parsed.error));
     }
+    const { sessionId } = parsed.data;
 
     if (Date.now() > (session.expires || 0)) {
       activeSessions.delete(sessionId);
@@ -318,7 +319,7 @@ async function handleAuthenticate(req: Request, supabase: any) {
     console.error('[IBKR-CLIENT-PORTAL] Auth error:', error);
     return new Response(JSON.stringify({
       success: false,
-      error: error.message
+      error: safeErrorMessage(error, 'IBKR-AUTH')
     }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -331,7 +332,11 @@ async function handleGetPortfolio(req: Request, supabase: any) {
   
   try {
     const body = await req.json();
-    const { sessionId } = body;
+    const sessionParsed = SessionIdSchema.safeParse(body);
+    if (!sessionParsed.success) {
+      throw new Error(formatValidationError(sessionParsed.error));
+    }
+    const { sessionId } = sessionParsed.data;
 
     const session = validateSession(sessionId);
     if (!session) {
@@ -353,7 +358,7 @@ async function handleGetPortfolio(req: Request, supabase: any) {
     console.error('[IBKR-CLIENT-PORTAL] Portfolio error:', error);
     return new Response(JSON.stringify({
       success: false,
-      error: error.message
+      error: safeErrorMessage(error, 'IBKR-PORTFOLIO')
     }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -366,7 +371,11 @@ async function handlePlaceOrder(req: Request, supabase: any) {
   
   try {
     const body = await req.json();
-    const { sessionId, order } = body;
+    const sessionParsed = SessionIdSchema.safeParse(body);
+    if (!sessionParsed.success) {
+      throw new Error(formatValidationError(sessionParsed.error));
+    }
+    const { sessionId } = sessionParsed.data;
 
     const session = validateSession(sessionId);
     if (!session) {
@@ -378,50 +387,18 @@ async function handlePlaceOrder(req: Request, supabase: any) {
     const token = authHeader?.replace('Bearer ', '');
     const { data: { user } } = await supabase.auth.getUser(token);
 
-    // Validate order parameters with type and range checks
-    if (!order || typeof order !== 'object') {
-      throw new Error('Invalid order parameters');
+    // Validate order with zod schema
+    const orderParsed = OrderSchema.safeParse(body.order);
+    if (!orderParsed.success) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: formatValidationError(orderParsed.error)
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
-    
-    const validSides = ['BUY', 'SELL'];
-    const validOrderTypes = ['MKT', 'LMT', 'STP', 'STP_LMT', 'TRAIL'];
-    const validTifs = ['GTC', 'DAY', 'IOC', 'FOK'];
-    
-    if (typeof order.symbol !== 'string' || order.symbol.length === 0 || order.symbol.length > 20 || !/^[a-zA-Z0-9.\-]+$/.test(order.symbol)) {
-      throw new Error('Invalid symbol: must be alphanumeric, 1-20 chars');
-    }
-    if (!validSides.includes(order.side)) {
-      throw new Error('Invalid side: must be BUY or SELL');
-    }
-    if (typeof order.quantity !== 'number' || !Number.isFinite(order.quantity) || order.quantity <= 0 || order.quantity > 1000000) {
-      throw new Error('Invalid quantity: must be a positive number up to 1,000,000');
-    }
-    if (!validOrderTypes.includes(order.orderType)) {
-      throw new Error('Invalid orderType: must be MKT, LMT, STP, STP_LMT, or TRAIL');
-    }
-    if (order.tif && !validTifs.includes(order.tif)) {
-      throw new Error('Invalid tif: must be GTC, DAY, IOC, or FOK');
-    }
-    if (order.price !== undefined && (typeof order.price !== 'number' || !Number.isFinite(order.price) || order.price <= 0)) {
-      throw new Error('Invalid price: must be a positive number');
-    }
-    if (order.stopPrice !== undefined && (typeof order.stopPrice !== 'number' || !Number.isFinite(order.stopPrice) || order.stopPrice <= 0)) {
-      throw new Error('Invalid stopPrice: must be a positive number');
-    }
-    if (order.trailAmount !== undefined && (typeof order.trailAmount !== 'number' || !Number.isFinite(order.trailAmount) || order.trailAmount <= 0)) {
-      throw new Error('Invalid trailAmount: must be a positive number');
-    }
-    if (order.orderRef !== undefined && (typeof order.orderRef !== 'string' || order.orderRef.length > 100)) {
-      throw new Error('Invalid orderRef: must be a string under 100 chars');
-    }
-
-    // Additional validation for order types
-    if ((order.orderType === 'LMT' || order.orderType === 'STP_LMT') && !order.price) {
-      throw new Error('Price required for limit orders');
-    }
-    if ((order.orderType === 'STP' || order.orderType === 'STP_LMT') && !order.stopPrice) {
-      throw new Error('Stop price required for stop orders');
-    }
+    const order = orderParsed.data;
 
     // Store order in database first
     const { data: dbOrder, error: dbError } = await supabase
@@ -501,7 +478,7 @@ async function handlePlaceOrder(req: Request, supabase: any) {
     console.error('[IBKR-CLIENT-PORTAL] Order error:', error);
     return new Response(JSON.stringify({
       success: false,
-      error: error.message
+      error: safeErrorMessage(error, 'IBKR-ORDER')
     }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -514,22 +491,21 @@ async function handleMarketData(req: Request, supabase: any) {
   
   try {
     const body = await req.json();
-    const { sessionId, symbols } = body;
+    const parsed = SymbolsSchema.safeParse(body);
+    if (!parsed.success) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: formatValidationError(parsed.error)
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    const { sessionId, symbols: validatedSymbols } = parsed.data;
 
     const session = validateSession(sessionId);
     if (!session) {
       throw new Error('Invalid or expired session');
-    }
-
-    // Validate symbols input
-    if (!Array.isArray(symbols) || symbols.length === 0 || symbols.length > 50) {
-      throw new Error('Invalid symbols: must be a non-empty array of up to 50 items');
-    }
-    const validatedSymbols = symbols.filter(
-      (s: unknown) => typeof s === 'string' && s.length > 0 && s.length <= 20 && /^[a-zA-Z0-9.\-]+$/.test(s)
-    );
-    if (validatedSymbols.length === 0) {
-      throw new Error('No valid symbols provided');
     }
 
     // Get market data from IBKR
@@ -546,7 +522,7 @@ async function handleMarketData(req: Request, supabase: any) {
     console.error('[IBKR-CLIENT-PORTAL] Market data error:', error);
     return new Response(JSON.stringify({
       success: false,
-      error: error.message
+      error: safeErrorMessage(error, 'IBKR-MARKET-DATA')
     }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -559,7 +535,11 @@ async function handleAccountInfo(req: Request, supabase: any) {
   
   try {
     const body = await req.json();
-    const { sessionId } = body;
+    const sessionParsed = SessionIdSchema.safeParse(body);
+    if (!sessionParsed.success) {
+      throw new Error(formatValidationError(sessionParsed.error));
+    }
+    const { sessionId } = sessionParsed.data;
 
     const session = validateSession(sessionId);
     if (!session) {
@@ -580,7 +560,7 @@ async function handleAccountInfo(req: Request, supabase: any) {
     console.error('[IBKR-CLIENT-PORTAL] Account info error:', error);
     return new Response(JSON.stringify({
       success: false,
-      error: error.message
+      error: safeErrorMessage(error, 'IBKR-ACCOUNT')
     }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
