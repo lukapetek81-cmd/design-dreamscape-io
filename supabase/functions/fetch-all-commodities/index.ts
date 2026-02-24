@@ -240,7 +240,10 @@ serve(async (req) => {
 
   try {
     const body = req.method === 'POST' ? await req.json() : {}
-    const { dataDelay = 'realtime' } = body
+    
+    // Input validation
+    const validDelays = ['realtime', '15min'];
+    const dataDelay = validDelays.includes(body.dataDelay) ? body.dataDelay : 'realtime';
     
     console.log(`Fetching all commodities with ${dataDelay} data`)
 
@@ -398,7 +401,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in fetch-all-commodities function:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
