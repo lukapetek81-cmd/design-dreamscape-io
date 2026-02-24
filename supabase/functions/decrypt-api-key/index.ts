@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -78,25 +79,30 @@ serve(async (req) => {
   }
 
   try {
-    const { encryptedKey, userSecret, getMasterKey } = await req.json();
-    
-    // Handle master key request (for encryption setup)
-    if (getMasterKey) {
-      const masterSecret = Deno.env.get('CREDENTIAL_MASTER_KEY');
-      if (!masterSecret) {
-        console.error('Master key not found in environment');
-        return new Response(
-          JSON.stringify({ error: 'Master key not configured' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      console.log('Master key retrieved successfully');
+    // Validate authentication
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
       return new Response(
-        JSON.stringify({ masterKey: masterSecret }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const supabaseAuth = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    );
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { encryptedKey, userSecret } = await req.json();
     
     if (!encryptedKey || !userSecret) {
       return new Response(
