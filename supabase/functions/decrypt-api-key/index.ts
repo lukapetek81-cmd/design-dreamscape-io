@@ -102,11 +102,19 @@ serve(async (req) => {
       );
     }
 
-    const { encryptedKey, userSecret } = await req.json();
+    const body = await req.json();
+    const { encryptedKey, userSecret } = body;
     
-    if (!encryptedKey || !userSecret) {
+    // Validate input types and formats
+    if (typeof encryptedKey !== 'string' || encryptedKey.length === 0 || encryptedKey.length > 10000) {
       return new Response(
-        JSON.stringify({ error: 'Missing encrypted key or user secret' }),
+        JSON.stringify({ error: 'Invalid encryptedKey: must be a non-empty string under 10000 chars' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (typeof userSecret !== 'string' || userSecret.length === 0 || userSecret.length > 1000) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid userSecret: must be a non-empty string under 1000 chars' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

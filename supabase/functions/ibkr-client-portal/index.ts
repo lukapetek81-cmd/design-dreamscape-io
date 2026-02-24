@@ -95,6 +95,26 @@ serve(async (req) => {
   }
 
   try {
+    // Global auth check - all endpoints require authentication
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    const supabaseAuthCheck = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    );
+    const { data: { user: authUser }, error: globalAuthError } = await supabaseAuthCheck.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+    if (globalAuthError || !authUser) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -102,6 +122,16 @@ serve(async (req) => {
 
     const url = new URL(req.url);
     const action = url.pathname.split('/').pop();
+    
+    // Validate action parameter
+    const validActions = ['connect', 'authenticate', 'portfolio', 'orders', 'place-order', 
+      'cancel-order', 'modify-order', 'market-data', 'market-data-stream', 'account-info', 
+      'account-summary', 'order-history', 'disconnect'];
+    if (!action || !validActions.includes(action)) {
+      return new Response(JSON.stringify({ error: 'Invalid endpoint' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
     switch (action) {
       case 'connect':

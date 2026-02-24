@@ -201,11 +201,19 @@ serve(async (req) => {
   }
 
   try {
-    const { commodityName, isPremium, dataDelay = 'realtime' } = await req.json()
+    const body = await req.json()
+    
+    // Input validation
+    const commodityName = typeof body.commodityName === 'string' && body.commodityName.length > 0 && body.commodityName.length <= 100
+      ? body.commodityName
+      : null;
+    const isPremium = typeof body.isPremium === 'boolean' ? body.isPremium : false;
+    const validDelays = ['realtime', '15min'];
+    const dataDelay = validDelays.includes(body.dataDelay) ? body.dataDelay : 'realtime';
     
     if (!commodityName) {
       return new Response(
-        JSON.stringify({ error: 'Missing commodityName' }),
+        JSON.stringify({ error: 'Missing or invalid commodityName (must be string, 1-100 chars)' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
