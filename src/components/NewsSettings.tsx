@@ -3,11 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Settings, Key, Check, AlertCircle } from 'lucide-react';
+import { Settings, Check, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { secureStorage } from '@/utils/security';
 
 const NewsSettings: React.FC = () => {
   const { toast } = useToast();
@@ -20,19 +20,21 @@ const NewsSettings: React.FC = () => {
   const [testing, setTesting] = React.useState<Record<string, boolean>>({});
 
   React.useEffect(() => {
-    // Load existing API keys from localStorage
-    setApiKeys({
-      marketauxApiKey: localStorage.getItem('marketauxApiKey') || '',
-      fmpApiKey: localStorage.getItem('fmpApiKey') || ''
-    });
+    // Load existing API keys from encrypted storage
+    const loadKeys = async () => {
+      const marketaux = await secureStorage.getItem('marketauxApiKey') || '';
+      const fmp = await secureStorage.getItem('fmpApiKey') || '';
+      setApiKeys({ marketauxApiKey: marketaux, fmpApiKey: fmp });
+    };
+    loadKeys();
   }, []);
 
-  const handleSave = (keyName: string, value: string) => {
-    localStorage.setItem(keyName, value);
+  const handleSave = async (keyName: string, value: string) => {
+    await secureStorage.setItem(keyName, value);
     setApiKeys(prev => ({ ...prev, [keyName]: value }));
     toast({
       title: "API Key Saved",
-      description: `${keyName} has been saved successfully.`,
+      description: `API key has been saved securely.`,
     });
   };
 
@@ -44,7 +46,6 @@ const NewsSettings: React.FC = () => {
     try {
       let isValid = false;
       
-      // Simple validation tests for each API
       switch (keyName) {
         case 'fmpApiKey': {
           const fmpResponse = await fetch(`https://financialmodelingprep.com/api/v3/profile/AAPL?apikey=${apiKey}`);
@@ -62,7 +63,7 @@ const NewsSettings: React.FC = () => {
       
       toast({
         title: isValid ? "API Key Valid" : "API Key Invalid",
-        description: isValid ? `${keyName} is working correctly.` : `${keyName} failed validation.`,
+        description: isValid ? "API key is working correctly." : "API key failed validation.",
         variant: isValid ? "default" : "destructive",
       });
       
@@ -70,7 +71,7 @@ const NewsSettings: React.FC = () => {
       setTestResults(prev => ({ ...prev, [keyName]: false }));
       toast({
         title: "Test Failed",
-        description: `Unable to test ${keyName}. Please check your connection.`,
+        description: "Unable to test API key. Please check your connection.",
         variant: "destructive",
       });
     } finally {

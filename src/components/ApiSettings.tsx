@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Settings, Key, Save, Eye, EyeOff, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
+import { secureStorage } from '@/utils/security';
 
 const ApiSettings = () => {
   const [fmpApiKey, setFmpApiKey] = React.useState('');
@@ -17,26 +17,29 @@ const ApiSettings = () => {
   const [isOpen, setIsOpen] = React.useState(false);
 
   React.useEffect(() => {
-    // Load saved API keys from localStorage
-    const savedFmp = localStorage.getItem('fmpApiKey');
-    const savedNews = localStorage.getItem('newsApiKey');
-    const savedAlpha = localStorage.getItem('alphaVantageApiKey');
-    
-    if (savedFmp) setFmpApiKey(savedFmp);
-    if (savedNews) setNewsApiKey(savedNews);
-    if (savedAlpha) setAlphaVantageApiKey(savedAlpha);
+    // Load saved API keys from encrypted storage
+    const loadKeys = async () => {
+      const savedFmp = await secureStorage.getItem('fmpApiKey');
+      const savedNews = await secureStorage.getItem('newsApiKey');
+      const savedAlpha = await secureStorage.getItem('alphaVantageApiKey');
+      
+      if (savedFmp) setFmpApiKey(savedFmp);
+      if (savedNews) setNewsApiKey(savedNews);
+      if (savedAlpha) setAlphaVantageApiKey(savedAlpha);
+    };
+    loadKeys();
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     try {
       if (fmpApiKey) {
-        localStorage.setItem('fmpApiKey', fmpApiKey);
+        await secureStorage.setItem('fmpApiKey', fmpApiKey);
       }
       if (newsApiKey) {
-        localStorage.setItem('newsApiKey', newsApiKey);
+        await secureStorage.setItem('newsApiKey', newsApiKey);
       }
       if (alphaVantageApiKey) {
-        localStorage.setItem('alphaVantageApiKey', alphaVantageApiKey);
+        await secureStorage.setItem('alphaVantageApiKey', alphaVantageApiKey);
       }
       
       toast.success('API keys saved successfully!');
@@ -203,7 +206,7 @@ const ApiSettings = () => {
           <p className="text-xs text-muted-foreground">
             <strong>Multiple News Sources:</strong> The app now combines news from Financial Modeling Prep, 
             NewsAPI, and Alpha Vantage to provide more comprehensive and relevant commodity news. 
-            API keys are stored locally in your browser. Without API keys, the app will use fallback data.
+            API keys are encrypted and stored locally in your browser. Without API keys, the app will use fallback data.
           </p>
         </div>
       </Card>

@@ -7,7 +7,9 @@ import {
   getFallbackNews
 } from './newsHelpers';
 
-const getFmpApiKey = () => localStorage.getItem('fmpApiKey') || 'demo';
+import { secureStorage } from '@/utils/security';
+
+const getFmpApiKey = async () => (await secureStorage.getItem('fmpApiKey')) || 'demo';
 
 export interface CommodityPrice {
   symbol: string;
@@ -260,7 +262,7 @@ export class CommodityApiService {
     console.log('Fetching available commodities from FMP API');
     
     try {
-      const apiKey = getFmpApiKey();
+      const apiKey = await getFmpApiKey();
       const response = await fetch(
         `https://financialmodelingprep.com/api/v3/quotes/commodity?apikey=${apiKey}`
       );
@@ -358,7 +360,7 @@ export class CommodityApiService {
     const symbols = COMMODITY_SYMBOLS[commodityName];
     if (!symbols) return null;
 
-    const apiKey = getFmpApiKey();
+    const apiKey = await getFmpApiKey();
     const response = await fetch(
       `https://financialmodelingprep.com/api/v3/quote/${symbols.fmp}?apikey=${apiKey}`
     );
@@ -502,7 +504,7 @@ export class CommodityApiService {
     const symbols = COMMODITY_SYMBOLS[commodityName];
     if (!symbols) return [];
 
-    const apiKey = getFmpApiKey();
+    const apiKey = await getFmpApiKey();
     let endpoint = '';
     const dataLimit = this.getTimeframeDays(timeframe);
     

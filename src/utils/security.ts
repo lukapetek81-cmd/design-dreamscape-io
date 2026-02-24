@@ -158,25 +158,50 @@ export const validatePasswordStrength = (password: string): {
   };
 };
 
-// Secure local storage with encryption
+// AES-GCM encrypted local storage
+const ENCRYPTION_KEY_NAME = 'app_enc_key';
+
+async function getOrCreateEncryptionKey(): Promise<CryptoKey> {
+  const stored = sessionStorage.getItem(ENCRYPTION_KEY_NAME);
+  if (stored) {
+    const keyData = Uint8Array.from(atob(stored), c => c.charCodeAt(0));
+    return crypto.subtle.importKey('raw', keyData, { name: 'AES-GCM' }, true, ['encrypt', 'decrypt']);
+  }
+  const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+  const exported = await crypto.subtle.exportKey('raw', key);
+  sessionStorage.setItem(ENCRYPTION_KEY_NAME, btoa(String.fromCharCode(...new Uint8Array(exported))));
+  return key;
+}
+
 export const secureStorage = {
-  setItem: (key: string, value: string): void => {
+  setItem: async (key: string, value: string): Promise<void> => {
     try {
-      // In a real app, you'd use proper encryption here
-      const encrypted = btoa(value); // Simple base64 encoding for demo
-      localStorage.setItem(`secure_${key}`, encrypted);
+      const encKey = await getOrCreateEncryptionKey();
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const encoded = new TextEncoder().encode(value);
+      const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, encKey, encoded);
+      const combined = new Uint8Array(iv.length + encrypted.byteLength);
+      combined.set(iv, 0);
+      combined.set(new Uint8Array(encrypted), iv.length);
+      localStorage.setItem(`secure_${key}`, btoa(String.fromCharCode(...combined)));
     } catch (error) {
-      console.error('Failed to store secure item:', error);
+      console.error('Failed to store secure item');
     }
   },
 
-  getItem: (key: string): string | null => {
+  getItem: async (key: string): Promise<string | null> => {
     try {
-      const encrypted = localStorage.getItem(`secure_${key}`);
-      if (!encrypted) return null;
-      return atob(encrypted); // Simple base64 decoding for demo
+      const stored = localStorage.getItem(`secure_${key}`);
+      if (!stored) return null;
+      const encKey = await getOrCreateEncryptionKey();
+      const data = Uint8Array.from(atob(stored), c => c.charCodeAt(0));
+      const iv = data.slice(0, 12);
+      const encrypted = data.slice(12);
+      const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, encKey, encrypted);
+      return new TextDecoder().decode(decrypted);
     } catch (error) {
-      console.error('Failed to retrieve secure item:', error);
+      // Key mismatch (new session) - clear stale data
+      localStorage.removeItem(`secure_${key}`);
       return null;
     }
   },
@@ -186,14 +211,13 @@ export const secureStorage = {
   },
 
   clear: (): void => {
-    const keysToRemove = [];
+    const keysToRemove: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key?.startsWith('secure_')) {
-        keysToRemove.push(key);
-      }
+      const k = localStorage.key(i);
+      if (k?.startsWith('secure_')) keysToRemove.push(k);
     }
-    keysToRemove.forEach(key => localStorage.removeItem(key));
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+    sessionStorage.removeItem(ENCRYPTION_KEY_NAME);
   }
 };
 
