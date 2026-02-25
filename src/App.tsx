@@ -29,6 +29,7 @@ import RiskManagement from '@/pages/RiskManagement';
 import TradingCommunity from '@/pages/TradingCommunity';
 import Watchlists from '@/pages/Watchlists';
 import Trading from '@/pages/Trading';
+import DeleteAccount from '@/pages/DeleteAccount';
 
 const App = () => {
   // Create QueryClient directly without useMemo to avoid React hooks issues
@@ -73,6 +74,7 @@ const App = () => {
                 <Route path="/risk-management" element={<RiskManagement />} />
                 <Route path="/trading-community" element={<TradingCommunity />} />
                 <Route path="/watchlists" element={<Watchlists />} />
+                <Route path="/delete-account" element={<DeleteAccount />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <Toaster />

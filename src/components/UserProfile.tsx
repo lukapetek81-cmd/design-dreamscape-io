@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { User, LogOut, Settings, Crown } from 'lucide-react';
+import { User, LogOut, Settings, Crown, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 
@@ -72,6 +72,13 @@ const UserProfile = () => {
           <Link to="/billing">
             <Settings className="mr-3 h-4 w-4" />
             <span className="text-sm">Account Settings</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="cursor-pointer mobile-touch-target px-4 py-3" asChild>
+          <Link to="/delete-account">
+            <Trash2 className="mr-3 h-4 w-4 text-destructive" />
+            <span className="text-sm text-destructive">Delete Account</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
