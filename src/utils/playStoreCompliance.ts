@@ -45,6 +45,7 @@ export const PRIVACY_SETTINGS = {
     dataEncryptedInTransit: true,
     dataEncryptedAtRest: true,
     userCanRequestDataDeletion: true,
+    dataDeletionUrl: 'https://commodity-hub.lovable.app/delete-account',
     followsPlayFamiliesPolicy: true,
   }
 };
