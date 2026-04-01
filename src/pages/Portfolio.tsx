@@ -10,8 +10,6 @@ import AddPositionForm from '@/components/AddPositionForm';
 import PositionCard from '@/components/PositionCard';
 import { MobilePageHeader } from '@/components/mobile/MobilePageHeader';
 
-import { PremiumGate } from '@/components/PremiumGate';
-
 const Portfolio = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
