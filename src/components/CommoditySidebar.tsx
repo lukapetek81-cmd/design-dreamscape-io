@@ -66,10 +66,6 @@ const CommoditySidebar = React.memo(({ activeGroup, onGroupSelect, commodityCoun
         {/* Market Tools Section - Always in middle */}
         <MarketToolsList />
         
-        {/* Ad Banner Section - Freemium monetization */}
-        <div className={`mt-8 mb-4 ${isMobile ? 'px-4' : 'px-2'}`}>
-          <AdBanner variant="sidebar" />
-        </div>
       </SidebarContent>
 
       {/* Theme Switcher - Always at bottom */}

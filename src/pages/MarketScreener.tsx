@@ -430,21 +430,6 @@ const MarketScreener = () => {
         </div>
       </div>
 
-      {!profile?.subscription_active && (
-        <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-lg">Upgrade for Advanced Screening</h3>
-                <p className="text-muted-foreground">Get access to 50+ technical indicators, custom alerts, and export features.</p>
-              </div>
-              <Button className="ml-4">
-                Upgrade Now
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
         </div>
     </div>
   );

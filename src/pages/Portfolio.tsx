@@ -213,7 +213,7 @@ const Portfolio = () => {
       </Dialog>
         </div>
       </div>
-    </PremiumGate>
+    
   );
 };
 

@@ -348,23 +348,6 @@ const Watchlists = () => {
         </div>
       </div>
 
-      <div className="container mx-auto p-4">
-        {!profile?.subscription_active && (
-        <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-lg">Upgrade for Premium Watchlists</h3>
-                <p className="text-muted-foreground">Get unlimited watchlists, advanced sorting, and real-time alerts.</p>
-              </div>
-              <Button className="ml-4">
-                Upgrade Now
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-        )}
-      </div>
     </div>
   );
 };

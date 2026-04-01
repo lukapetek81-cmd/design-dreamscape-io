@@ -55,7 +55,6 @@ const CommodityCard = React.memo<CommodityCardProps>(({
   const isMobile = useIsMobile();
   const { vibrateTouch } = useHaptics();
   const { profile } = useAuth();
-  const { isPremium } = usePremiumGating();
   const marketStatus = getMarketStatus(name);
 
   // Get current price data for selected contract
