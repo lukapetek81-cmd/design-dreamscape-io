@@ -244,7 +244,7 @@ const CommodityCard = React.memo<CommodityCardProps>(({
             </div>
 
             {/* Contract Selector - Outside click handler */}
-            {isPremium && availableContracts && availableContracts.length > 0 && (
+            {availableContracts && availableContracts.length > 0 && (
               <div className="mt-3" onClick={(e) => e.stopPropagation()}>
                 <Select value={selectedContract} onValueChange={handleContractChange}>
                   <SelectTrigger 

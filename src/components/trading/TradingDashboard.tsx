@@ -27,7 +27,7 @@ import { useIBKRCredentials } from '@/hooks/useIBKRCredentials';
 import { TSPDisclaimer } from '../TSPDisclaimer';
 
 export const TradingDashboard: React.FC = () => {
-  const { requirePremium } = usePremiumGating();
+  
   const { hasActiveCredentials } = useIBKRCredentials();
   const {
     session,
