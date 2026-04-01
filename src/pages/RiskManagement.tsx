@@ -768,21 +768,6 @@ const RiskManagement = () => {
         </TabsContent>
       </Tabs>
 
-      {!profile?.subscription_active && (
-        <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-lg">Unlock Advanced Risk Analytics</h3>
-                <p className="text-muted-foreground">Get real-time portfolio risk monitoring, advanced Monte Carlo simulations, and institutional-grade risk metrics.</p>
-              </div>
-              <Button className="ml-4">
-                Upgrade Now
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };

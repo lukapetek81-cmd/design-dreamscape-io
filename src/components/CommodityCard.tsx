@@ -9,7 +9,6 @@ import { TouchRipple } from './mobile/TouchRipple';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useAuth } from '@/contexts/AuthContext';
-import { usePremiumGating } from '@/hooks/usePremiumGating';
 import { getMarketStatus } from '@/lib/marketHours';
 import LazyChart from './LazyChart';
 import LazyNews from './LazyNews';
@@ -56,7 +55,6 @@ const CommodityCard = React.memo<CommodityCardProps>(({
   const isMobile = useIsMobile();
   const { vibrateTouch } = useHaptics();
   const { profile } = useAuth();
-  const { isPremium } = usePremiumGating();
   const marketStatus = getMarketStatus(name);
 
   // Get current price data for selected contract
@@ -172,8 +170,8 @@ const CommodityCard = React.memo<CommodityCardProps>(({
                             {selectedContractData?.contractSize || contractSize}
                           </span>
                         )}
-                        {isPremium && selectedContractData && (
-                          <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-medium bg-amber-100 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 rounded-full tracking-wider">
+                        {selectedContractData && (
+                          <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-medium bg-accent text-accent-foreground rounded-full tracking-wider">
                             <Calendar className="w-3 h-3" />
                             {selectedContractData.expirationDate ? new Date(selectedContractData.expirationDate).toLocaleDateString() : 'N/A'}
                           </span>
@@ -246,7 +244,7 @@ const CommodityCard = React.memo<CommodityCardProps>(({
             </div>
 
             {/* Contract Selector - Outside click handler */}
-            {isPremium && availableContracts && availableContracts.length > 0 && (
+            {availableContracts && availableContracts.length > 0 && (
               <div className="mt-3" onClick={(e) => e.stopPropagation()}>
                 <Select value={selectedContract} onValueChange={handleContractChange}>
                   <SelectTrigger 

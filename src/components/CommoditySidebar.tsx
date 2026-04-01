@@ -8,7 +8,6 @@ import {
 import { useSidebar } from "@/components/ui/sidebar";
 import { TrendingUp } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import AdBanner from "./AdBanner";
 import CommodityGroupsList from "./sidebar/CommodityGroupsList";
 import MarketToolsList from "./sidebar/MarketToolsList";
 import ThemeSwitcher from "./sidebar/ThemeSwitcher";
@@ -67,10 +66,6 @@ const CommoditySidebar = React.memo(({ activeGroup, onGroupSelect, commodityCoun
         {/* Market Tools Section - Always in middle */}
         <MarketToolsList />
         
-        {/* Ad Banner Section - Freemium monetization */}
-        <div className={`mt-8 mb-4 ${isMobile ? 'px-4' : 'px-2'}`}>
-          <AdBanner variant="sidebar" />
-        </div>
       </SidebarContent>
 
       {/* Theme Switcher - Always at bottom */}

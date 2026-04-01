@@ -10,8 +10,6 @@ import AddPositionForm from '@/components/AddPositionForm';
 import PositionCard from '@/components/PositionCard';
 import { MobilePageHeader } from '@/components/mobile/MobilePageHeader';
 
-import { PremiumGate } from '@/components/PremiumGate';
-
 const Portfolio = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -44,7 +42,6 @@ const Portfolio = () => {
   }
 
   return (
-    <PremiumGate feature="your investment portfolio">
       <div className="min-h-screen bg-background">
         {/* Mobile-optimized header */}
         <MobilePageHeader
@@ -216,7 +213,7 @@ const Portfolio = () => {
       </Dialog>
         </div>
       </div>
-    </PremiumGate>
+    
   );
 };
 

@@ -16,7 +16,7 @@ import {
   Shield
 } from 'lucide-react';
 import { useIBKRTrading } from '@/hooks/useIBKRTrading';
-import { usePremiumGating } from '@/hooks/usePremiumGating';
+
 import { OrderEntry } from './OrderEntry';
 import { PositionsList } from './PositionsList';
 import { RiskManager } from './RiskManager';
@@ -27,7 +27,7 @@ import { useIBKRCredentials } from '@/hooks/useIBKRCredentials';
 import { TSPDisclaimer } from '../TSPDisclaimer';
 
 export const TradingDashboard: React.FC = () => {
-  const { requirePremium } = usePremiumGating();
+  
   const { hasActiveCredentials } = useIBKRCredentials();
   const {
     session,
@@ -43,15 +43,11 @@ export const TradingDashboard: React.FC = () => {
   } = useIBKRTrading();
 
   useEffect(() => {
-    if (!requirePremium(false)) return;
-    
     if (isConnected) {
       refreshPortfolio();
       refreshAccountInfo();
     }
-  }, [isConnected, requirePremium, refreshPortfolio, refreshAccountInfo]);
-
-  if (!requirePremium()) return null;
+  }, [isConnected, refreshPortfolio, refreshAccountInfo]);
 
   const handleRefresh = async () => {
     if (isConnected) {

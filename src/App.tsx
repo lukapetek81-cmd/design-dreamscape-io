@@ -9,7 +9,7 @@ import { createOptimizedQueryClient } from '@/lib/queryClient';
 import SEOHead from '@/components/SEOHead';
 import Dashboard from '@/pages/Dashboard';
 import Auth from '@/pages/Auth';
-import Billing from '@/pages/Billing';
+
 import NotFound from '@/pages/NotFound';
 import Portfolio from '@/pages/Portfolio';
 import MarketStatus from '@/pages/MarketStatus';
@@ -49,7 +49,7 @@ const App = () => {
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms-of-service" element={<TermsOfService />} />
                 
-                <Route path="/billing" element={<Billing />} />
+                
                 <Route path="/trading" element={<Trading />} />
                 <Route path="/market-status" element={<MarketStatus />} />
                 <Route path="/api-comparison" element={<APIComparison />} />
