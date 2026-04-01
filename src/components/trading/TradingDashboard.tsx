@@ -43,15 +43,11 @@ export const TradingDashboard: React.FC = () => {
   } = useIBKRTrading();
 
   useEffect(() => {
-    if (!requirePremium(false)) return;
-    
     if (isConnected) {
       refreshPortfolio();
       refreshAccountInfo();
     }
-  }, [isConnected, requirePremium, refreshPortfolio, refreshAccountInfo]);
-
-  if (!requirePremium()) return null;
+  }, [isConnected, refreshPortfolio, refreshAccountInfo]);
 
   const handleRefresh = async () => {
     if (isConnected) {
