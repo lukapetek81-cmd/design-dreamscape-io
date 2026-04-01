@@ -8,7 +8,6 @@ import {
 import { useSidebar } from "@/components/ui/sidebar";
 import { TrendingUp } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import AdBanner from "./AdBanner";
 import CommodityGroupsList from "./sidebar/CommodityGroupsList";
 import MarketToolsList from "./sidebar/MarketToolsList";
 import ThemeSwitcher from "./sidebar/ThemeSwitcher";
