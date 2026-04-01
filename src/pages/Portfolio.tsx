@@ -42,7 +42,6 @@ const Portfolio = () => {
   }
 
   return (
-    <PremiumGate feature="your investment portfolio">
       <div className="min-h-screen bg-background">
         {/* Mobile-optimized header */}
         <MobilePageHeader
