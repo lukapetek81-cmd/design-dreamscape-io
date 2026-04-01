@@ -9,7 +9,7 @@ import { createOptimizedQueryClient } from '@/lib/queryClient';
 import SEOHead from '@/components/SEOHead';
 import Dashboard from '@/pages/Dashboard';
 import Auth from '@/pages/Auth';
-import Billing from '@/pages/Billing';
+
 import NotFound from '@/pages/NotFound';
 import Portfolio from '@/pages/Portfolio';
 import MarketStatus from '@/pages/MarketStatus';
