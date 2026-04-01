@@ -9,7 +9,6 @@ import { TouchRipple } from './mobile/TouchRipple';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useAuth } from '@/contexts/AuthContext';
-import { usePremiumGating } from '@/hooks/usePremiumGating';
 import { getMarketStatus } from '@/lib/marketHours';
 import LazyChart from './LazyChart';
 import LazyNews from './LazyNews';
