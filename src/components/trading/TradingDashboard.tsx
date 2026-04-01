@@ -16,7 +16,7 @@ import {
   Shield
 } from 'lucide-react';
 import { useIBKRTrading } from '@/hooks/useIBKRTrading';
-import { usePremiumGating } from '@/hooks/usePremiumGating';
+
 import { OrderEntry } from './OrderEntry';
 import { PositionsList } from './PositionsList';
 import { RiskManager } from './RiskManager';
