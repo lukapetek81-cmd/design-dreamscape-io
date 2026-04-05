@@ -16,6 +16,7 @@ import { IBKRLogo } from '@/components/IBKRLogo';
 
 const Trading: React.FC = () => {
   const { isGuest } = useAuth();
+  const navigate = useNavigate();
   const { isConnected, isConnecting, connect, disconnect, session } = useIBKRTrading();
   const { hasActiveCredentials } = useIBKRCredentials();
   const [showCredentialsForm, setShowCredentialsForm] = useState(false);
