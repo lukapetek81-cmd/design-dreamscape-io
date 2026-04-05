@@ -286,20 +286,22 @@ const PriceComparison = () => {
         />
         
         <SidebarInset className="flex-1 flex flex-col min-w-0">
-          <header className="flex h-16 shrink-0 items-center justify-between border-b px-4">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger className="p-2 hover:bg-muted rounded-lg lg:hidden">
-                <Menu className="h-5 w-5" />
-              </SidebarTrigger>
-            </div>
-            <div className="flex items-center gap-2">
+          <header className="flex h-16 shrink-0 items-center border-b px-4">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="mr-2">
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Dashboard
+            </Button>
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <SidebarTrigger className="p-2 hover:bg-muted rounded-lg lg:hidden">
+              <Menu className="h-5 w-5" />
+            </SidebarTrigger>
+            <div className="flex items-center gap-2 ml-auto">
               <BarChart className="h-5 w-5 text-primary" />
               <h1 className="text-lg font-semibold">
                 <span className="hidden sm:inline">Price Comparison</span>
                 <span className="sm:hidden">Compare</span>
               </h1>
             </div>
-            <div className="w-[72px]"></div> {/* Spacer for centering */}
           </header>
 
           <main className="flex-1 p-4 overflow-auto">

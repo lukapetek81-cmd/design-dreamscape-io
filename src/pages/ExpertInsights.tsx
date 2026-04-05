@@ -116,6 +116,11 @@ const ExpertInsights = () => {
         />
         <SidebarInset className="flex-1">
           <header className="flex h-16 shrink-0 items-center border-b px-4">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="mr-2">
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Dashboard
+            </Button>
+            <Separator orientation="vertical" className="mr-2 h-4" />
             <SidebarTrigger className="p-2 min-h-[48px] min-w-[48px]" />
             <Separator orientation="vertical" className="mr-2 h-4" />
             <div className="flex items-center gap-2">

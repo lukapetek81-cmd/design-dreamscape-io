@@ -10,11 +10,13 @@ import { IBKRCredentialsForm } from '@/components/IBKRCredentialsForm';
 import { TradingDashboard } from '@/components/trading/TradingDashboard';
 import { TSPDisclaimer } from '@/components/TSPDisclaimer';
 import SEOHead from '@/components/SEOHead';
-import { AlertTriangle, CheckCircle, Settings, Activity, Shield, RefreshCw } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Settings, Activity, Shield, RefreshCw, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { IBKRLogo } from '@/components/IBKRLogo';
 
 const Trading: React.FC = () => {
   const { isGuest } = useAuth();
+  const navigate = useNavigate();
   const { isConnected, isConnecting, connect, disconnect, session } = useIBKRTrading();
   const { hasActiveCredentials } = useIBKRCredentials();
   const [showCredentialsForm, setShowCredentialsForm] = useState(false);
@@ -61,11 +63,17 @@ const Trading: React.FC = () => {
       <div className="min-h-screen bg-background">
         <div className="max-w-4xl mx-auto px-6 py-12 space-y-8">
           {/* Header */}
-          <div className="text-center space-y-4">
-            <h1 className="text-4xl font-bold tracking-tight">Professional Trading</h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Interactive Brokers integration coming soon
-            </p>
+          <div>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="mb-4">
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Dashboard
+            </Button>
+            <div className="text-center space-y-4">
+              <h1 className="text-4xl font-bold tracking-tight">Professional Trading</h1>
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                Interactive Brokers integration coming soon
+              </p>
+            </div>
           </div>
 
           {/* Coming Soon Section */}
