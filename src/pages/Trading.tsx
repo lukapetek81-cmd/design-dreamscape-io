@@ -10,7 +10,8 @@ import { IBKRCredentialsForm } from '@/components/IBKRCredentialsForm';
 import { TradingDashboard } from '@/components/trading/TradingDashboard';
 import { TSPDisclaimer } from '@/components/TSPDisclaimer';
 import SEOHead from '@/components/SEOHead';
-import { AlertTriangle, CheckCircle, Settings, Activity, Shield, RefreshCw } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Settings, Activity, Shield, RefreshCw, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { IBKRLogo } from '@/components/IBKRLogo';
 
 const Trading: React.FC = () => {
