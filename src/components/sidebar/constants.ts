@@ -1,4 +1,4 @@
-import { Zap, Coins, Wheat, TrendingUp, Beef, Coffee, Package, Newspaper, Moon, Sun, Monitor, Briefcase, Settings, BarChart3, Star, Filter, Calendar, Calculator, MessageSquare, Lightbulb, GraduationCap, Users, GitCompare, Activity, Database } from "lucide-react";
+import { Zap, Coins, Wheat, TrendingUp, Beef, Coffee, Package, Newspaper, Moon, Sun, Monitor, Briefcase, Settings, BarChart3, Star, Filter, Calendar, Calculator, MessageSquare, Lightbulb, GraduationCap, Users, Activity, Database } from "lucide-react";
 import { CommodityGroup, MarketTool } from "./types";
 
 export const COMMODITY_GROUPS: CommodityGroup[] = [
@@ -27,7 +27,6 @@ export const COMMUNITY_TOOLS: MarketTool[] = [
 ];
 
 export const ACTIVITY_TOOLS: MarketTool[] = [
-  { id: "price-comparison", label: "Price Comparison", icon: GitCompare, color: "bg-teal-50 dark:bg-teal-950/20 border-teal-200 dark:border-teal-800 text-teal-600 dark:text-teal-400", path: "/price-comparison" },
   { id: "market-status", label: "Market Status", icon: Activity, color: "bg-slate-50 dark:bg-slate-950/20 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400", path: "/market-status" },
   { id: "trading", label: "Trading", icon: Database, color: "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400", path: "/trading" },
 ];

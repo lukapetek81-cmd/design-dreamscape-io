@@ -21,7 +21,7 @@ import MarketCorrelation from '@/pages/MarketCorrelation';
 import MarketScreener from '@/pages/MarketScreener';
 import MarketSentiment from '@/pages/MarketSentiment';
 import NewsSettings from '@/pages/NewsSettings';
-import PriceComparison from '@/pages/PriceComparison';
+
 import ResetPassword from '@/pages/ResetPassword';
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsOfService from "@/pages/TermsOfService";
@@ -67,7 +67,7 @@ const App = () => {
                 <Route path="/community" element={<TradingCommunity />} />
                 <Route path="/calendar" element={<EconomicCalendar />} />
                 <Route path="/news-settings" element={<NewsSettings />} />
-                <Route path="/price-comparison" element={<PriceComparison />} />
+                
                 <Route path="/portfolio" element={<Portfolio />} />
                 
                 <Route path="/risk-calculator" element={<RiskManagement />} />
