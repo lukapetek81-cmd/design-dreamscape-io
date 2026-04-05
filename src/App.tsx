@@ -67,7 +67,7 @@ const App = () => {
                 <Route path="/community" element={<TradingCommunity />} />
                 <Route path="/calendar" element={<EconomicCalendar />} />
                 <Route path="/news-settings" element={<NewsSettings />} />
-                <Route path="/price-comparison" element={<PriceComparison />} />
+                
                 <Route path="/portfolio" element={<Portfolio />} />
                 
                 <Route path="/risk-calculator" element={<RiskManagement />} />
