@@ -83,6 +83,42 @@ export type Database = {
         }
         Relationships: []
       }
+      blofin_credentials: {
+        Row: {
+          api_key_encrypted: string
+          created_at: string
+          environment: string
+          id: string
+          is_active: boolean
+          passphrase_encrypted: string
+          secret_key_encrypted: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          api_key_encrypted: string
+          created_at?: string
+          environment?: string
+          id?: string
+          is_active?: boolean
+          passphrase_encrypted: string
+          secret_key_encrypted: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          api_key_encrypted?: string
+          created_at?: string
+          environment?: string
+          id?: string
+          is_active?: boolean
+          passphrase_encrypted?: string
+          secret_key_encrypted?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       expert_insights: {
         Row: {
           bullish_bearish: string | null
