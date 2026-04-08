@@ -251,7 +251,6 @@ export const BloFinDashboard: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <Button
-                  className="bg-emerald-600 hover:bg-emerald-700"
                   onClick={() => { setOrderForm(prev => ({ ...prev, side: 'buy' })); handlePlaceOrder(); }}
                   disabled={isLoading}
                 >
