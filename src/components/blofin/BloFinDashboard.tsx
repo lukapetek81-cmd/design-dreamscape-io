@@ -75,7 +75,7 @@ export const BloFinDashboard: React.FC = () => {
               Account Balance
             </CardTitle>
             <div className="flex items-center gap-2">
-              <Badge variant="default" className="bg-emerald-600">Connected</Badge>
+              <Badge variant="default">Connected</Badge>
               <Button variant="ghost" size="sm" onClick={refreshAll} disabled={isLoading}>
                 <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
               </Button>
