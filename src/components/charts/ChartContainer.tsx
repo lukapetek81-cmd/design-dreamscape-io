@@ -2,9 +2,10 @@ import React from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Loader, AlertCircle } from 'lucide-react';
 import { CommodityHistoricalData } from '@/hooks/useCommodityData';
-import { formatPrice, getCurrencySymbol, getDecimalPlaces } from '@/lib/commodityUtils';
+import { isCentPriced } from '@/lib/commodityUtils';
 import { getYAxisDomain, formatXAxisTick, formatTooltipLabel, smoothPriceData } from './chartUtils';
 import CandlestickChart from '../CandlestickChart';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface ChartContainerProps {
   data: CommodityHistoricalData[];
@@ -25,9 +26,26 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
   error,
   isPositiveTrend
 }) => {
-  // Apply data smoothing only for line charts on problematic commodities
-  const smoothedData = chartType === 'line' ? smoothPriceData(data, name) : data;
+  const { selectedCurrency, convertPrice, currencyInfo, formatConvertedPrice } = useCurrency();
+
+  // Convert data prices to selected currency
+  const convertedData = React.useMemo(() => {
+    if (selectedCurrency === 'USD') return data;
+    return data.map(item => ({
+      ...item,
+      price: convertPrice(item.price),
+      ...(item.open !== undefined && { open: convertPrice(item.open) }),
+      ...(item.high !== undefined && { high: convertPrice(item.high) }),
+      ...(item.low !== undefined && { low: convertPrice(item.low) }),
+      ...(item.close !== undefined && { close: convertPrice(item.close) }),
+    }));
+  }, [data, selectedCurrency, convertPrice]);
+
+  // Apply data smoothing only for line charts
+  const smoothedData = chartType === 'line' ? smoothPriceData(convertedData, name) : convertedData;
   const yAxisDomain = getYAxisDomain(smoothedData, name, selectedTimeframe);
+
+  const isCent = isCentPriced(name) && selectedCurrency === 'USD';
 
   if (loading) {
     return (
@@ -67,7 +85,7 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
     <>
       {chartType === 'candlestick' ? (
         (() => {
-          const filteredData = data.filter((item): item is CommodityHistoricalData & { open: number; high: number; low: number; close: number } => 
+          const filteredData = convertedData.filter((item): item is CommodityHistoricalData & { open: number; high: number; low: number; close: number } => 
             typeof item.open === 'number' && 
             typeof item.high === 'number' && 
             typeof item.low === 'number' && 
@@ -97,7 +115,7 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
               }}
               axisLine={{ stroke: 'hsl(var(--border))' }}
               tickLine={{ stroke: 'hsl(var(--border))' }}
-              interval={selectedTimeframe === '1d' ? 'preserveStartEnd' : 'preserveStartEnd'}
+              interval="preserveStartEnd"
             />
             <YAxis 
               tick={{ 
@@ -108,15 +126,17 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
               axisLine={{ stroke: 'hsl(var(--border))' }}
               tickLine={{ stroke: 'hsl(var(--border))' }}
               tickFormatter={(value) => {
-                const decimals = getDecimalPlaces(name, selectedTimeframe);
-                const symbol = getCurrencySymbol(name);
-                return `${symbol}${value.toFixed(decimals)}`;
+                if (isCent) return `${value.toFixed(1)}¢`;
+                return `${currencyInfo.symbol}${value.toFixed(2)}`;
               }}
               domain={yAxisDomain}
             />
             <Tooltip 
               labelFormatter={(label) => formatTooltipLabel(label, selectedTimeframe)}
-              formatter={(value: number) => [formatPrice(value, name), 'Price']}
+              formatter={(value: number) => {
+                if (isCent) return [`${value.toFixed(2)}¢`, 'Price'];
+                return [`${currencyInfo.symbol}${value.toFixed(2)}`, `Price (${selectedCurrency})`];
+              }}
               contentStyle={{
                 backgroundColor: 'hsl(var(--background))',
                 border: '1px solid hsl(var(--border))',

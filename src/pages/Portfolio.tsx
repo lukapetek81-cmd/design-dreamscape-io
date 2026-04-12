@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Loader, TrendingUp, TrendingDown, DollarSign, Briefcase, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,6 +9,8 @@ import { usePortfolio, PositionWithCurrentPrice } from '@/hooks/usePortfolio';
 import AddPositionForm from '@/components/AddPositionForm';
 import PositionCard from '@/components/PositionCard';
 import { MobilePageHeader } from '@/components/mobile/MobilePageHeader';
+import CurrencySelector from '@/components/CurrencySelector';
+import { useCurrency } from '@/hooks/useCurrency';
 
 const Portfolio = () => {
   const navigate = useNavigate();
@@ -16,14 +18,10 @@ const Portfolio = () => {
   const { positions, loading, portfolioSummary, deletePosition } = usePortfolio();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingPosition, setEditingPosition] = useState<PositionWithCurrentPrice | null>(null);
+  const { formatConvertedPrice, selectedCurrency } = useCurrency();
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount);
+    return formatConvertedPrice(amount);
   };
 
   const formatPercentage = (percentage: number) => {
@@ -43,19 +41,21 @@ const Portfolio = () => {
 
   return (
       <div className="min-h-screen bg-background">
-        {/* Mobile-optimized header */}
         <MobilePageHeader
           title="My Portfolio"
           subtitle="Track your commodity positions and performance"
         >
-          <Button 
-            onClick={() => setShowAddForm(true)} 
-            className="gap-2 touch-manipulation"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Add Position</span>
-            <span className="sm:hidden">Add</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <CurrencySelector compact />
+            <Button 
+              onClick={() => setShowAddForm(true)} 
+              className="gap-2 touch-manipulation"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">Add Position</span>
+              <span className="sm:hidden">Add</span>
+            </Button>
+          </div>
         </MobilePageHeader>
         
         <div className="container mx-auto px-4 py-6 max-w-7xl">
@@ -189,7 +189,6 @@ const Portfolio = () => {
         </div>
       )}
 
-      {/* Add Position Dialog */}
       <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -199,13 +198,11 @@ const Portfolio = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Position Dialog */}
       <Dialog open={!!editingPosition} onOpenChange={() => setEditingPosition(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit Position</DialogTitle>
           </DialogHeader>
-          {/* TODO: Add edit form component */}
           <div className="p-4 text-center text-muted-foreground">
             Edit functionality coming soon...
           </div>
