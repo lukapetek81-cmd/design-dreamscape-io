@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { MoreVertical, TrendingUp, TrendingDown, Calendar, DollarSign, Hash, Edit, Trash2 } from 'lucide-react';
+import { MoreVertical, TrendingUp, TrendingDown, Calendar, Hash, Edit, Trash2 } from 'lucide-react';
 import { PositionWithCurrentPrice } from '@/hooks/usePortfolio';
-import { formatPrice } from '@/lib/commodityUtils';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface PositionCardProps {
   position: PositionWithCurrentPrice;
@@ -16,6 +16,7 @@ interface PositionCardProps {
 
 const PositionCard: React.FC<PositionCardProps> = ({ position, onEdit, onDelete }) => {
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+  const { formatConvertedPrice } = useCurrency();
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -30,12 +31,7 @@ const PositionCard: React.FC<PositionCardProps> = ({ position, onEdit, onDelete 
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount);
+    return formatConvertedPrice(amount);
   };
 
   return (
@@ -83,19 +79,17 @@ const PositionCard: React.FC<PositionCardProps> = ({ position, onEdit, onDelete 
         </CardHeader>
         
         <CardContent className="space-y-4">
-          {/* Price Information */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Entry Price</p>
-              <p className="text-sm font-semibold">{formatPrice(position.entry_price, position.commodity_name)}</p>
+              <p className="text-sm font-semibold">{formatConvertedPrice(position.entry_price)}</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Current Price</p>
-              <p className="text-sm font-semibold">{formatPrice(position.current_price, position.commodity_name)}</p>
+              <p className="text-sm font-semibold">{formatConvertedPrice(position.current_price)}</p>
             </div>
           </div>
 
-          {/* Value Information */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Position Value</p>
@@ -107,7 +101,6 @@ const PositionCard: React.FC<PositionCardProps> = ({ position, onEdit, onDelete 
             </div>
           </div>
 
-          {/* Performance */}
           <div className={`p-3 rounded-lg border ${
             position.is_positive 
               ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800' 
@@ -143,7 +136,6 @@ const PositionCard: React.FC<PositionCardProps> = ({ position, onEdit, onDelete 
             </div>
           </div>
 
-          {/* Notes */}
           {position.notes && (
             <div className="pt-2 border-t">
               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Notes</p>
@@ -153,7 +145,6 @@ const PositionCard: React.FC<PositionCardProps> = ({ position, onEdit, onDelete 
         </CardContent>
       </Card>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>

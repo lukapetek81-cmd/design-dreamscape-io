@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Toggle } from '@/components/ui/toggle';
 import { TrendingUp, Calendar, ChartCandlestick } from 'lucide-react';
 import { TIMEFRAMES } from './chartUtils';
+import CurrencySelector from '@/components/CurrencySelector';
 
 interface ChartHeaderProps {
   name: string;
@@ -53,6 +54,9 @@ const ChartHeader: React.FC<ChartHeaderProps> = ({
       </div>
       
       <div className="flex items-center gap-3">
+        {/* Currency Selector */}
+        <CurrencySelector compact />
+
         {/* Chart Type Toggle */}
         <div className="flex items-center gap-2">
           <Toggle
