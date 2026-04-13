@@ -6,20 +6,28 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// FMP symbols for non-energy commodities only
+// FMP symbols for non-energy commodities — use correct suffixes
 const FMP_SYMBOLS: Record<string, string> = {
+  // Metals
+  'Gold Futures': 'GCUSD', 'Silver Futures': 'SIUSD', 'Platinum': 'PLUSD',
+  'Palladium': 'PAUSD', 'Copper': 'HGUSD',
+  'Aluminum': 'ALIUSD', 'Nickel': 'NIUSD', 'Zinc': 'ZNUSD',
   'Iron Ore': 'BHP',
-  'Barley': 'ZW=F',
-  'Spring Wheat': 'MW=F',
-  'Hard Red Winter Wheat': 'KE=F',
-  'Feeder Cattle Futures': 'GF=F',
-  'Milk Class III': 'DC=F',
-  'Milk Nonfat Dry': 'NF=F',
-  'Sugar #11': 'SB=F',
-  'Sugar #5': 'SB=F',
-  'Coffee': 'KC=F',
-  'Lumber Futures': 'LBS=F',
-  'Random Length Lumber': 'LB=F'
+  // Grains (USX for CBOT grains)
+  'Corn Futures': 'ZCUSX', 'Wheat Futures': 'ZWUSX', 'Soybean Futures': 'ZSUSX',
+  'Soybean Oil': 'ZLUSX', 'Soybean Meal': 'ZMUSD', 'Oat Futures': 'ZOUSX',
+  'Rough Rice': 'ZRUSD', 'Barley': 'ZW=F',
+  'Spring Wheat': 'MW=F', 'Hard Red Winter Wheat': 'KE=F',
+  // Softs
+  'Coffee Arabica': 'KCUSX', 'Sugar #11': 'SBUSD', 'Sugar #5': 'SB=F',
+  'Cotton': 'CTUSX', 'Cocoa': 'CCUSD', 'Orange Juice': 'OJUSX',
+  'Coffee': 'KCUSX',
+  // Livestock
+  'Live Cattle Futures': 'LEUSX', 'Lean Hogs Futures': 'HEUSX',
+  'Feeder Cattle Futures': 'GFUSX',
+  'Milk Class III': 'DCUSD', 'Milk Nonfat Dry': 'NF=F',
+  // Other
+  'Lumber Futures': 'LBSUSD', 'Random Length Lumber': 'LBUSD',
 };
 
 // ALL energy commodities use OilPriceAPI exclusively

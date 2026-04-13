@@ -454,17 +454,23 @@ serve(async (req) => {
         try {
           // Map our commodity names to FMP-compatible symbols
           const FMP_SYMBOL_MAP: Record<string, string> = {
+            // Metals (USD suffix)
             'Gold Futures': 'GCUSD', 'Silver Futures': 'SIUSD', 'Platinum': 'PLUSD',
             'Palladium': 'PAUSD', 'Copper': 'HGUSD',
-            'Corn Futures': 'ZCUSD', 'Wheat Futures': 'ZWUSD', 'Soybean Futures': 'ZSUSD',
-            'Soybean Oil': 'ZLUSD', 'Soybean Meal': 'ZMUSD', 'Oat Futures': 'ZOUSD',
+            'Aluminum': 'ALIUSD', 'Nickel': 'NIUSD', 'Zinc': 'ZNUSD',
+            // Grains (USX suffix for CME/CBOT grains)
+            'Corn Futures': 'ZCUSX', 'Wheat Futures': 'ZWUSX', 'Soybean Futures': 'ZSUSX',
+            'Soybean Oil': 'ZLUSX', 'Soybean Meal': 'ZMUSD', 'Oat Futures': 'ZOUSX',
             'Rough Rice': 'ZRUSD',
-            'Coffee Arabica': 'KCUSD', 'Sugar #11': 'SBUSD', 'Cotton': 'CTUSD',
-            'Cocoa': 'CCUSD', 'Orange Juice': 'OJUSD',
-            'Live Cattle Futures': 'LEUSD', 'Lean Hogs Futures': 'HEUSD',
-            'Feeder Cattle Futures': 'GFUSD',
+            // Softs
+            'Coffee Arabica': 'KCUSX', 'Sugar #11': 'SBUSD', 'Cotton': 'CTUSX',
+            'Cocoa': 'CCUSD', 'Orange Juice': 'OJUSX',
+            // Livestock (USX suffix)
+            'Live Cattle Futures': 'LEUSX', 'Lean Hogs Futures': 'HEUSX',
+            'Feeder Cattle Futures': 'GFUSX',
+            // Other
             'Lumber Futures': 'LBSUSD', 'Random Length Lumber': 'LBUSD',
-            'Milk Class III': 'DC=F',
+            'Milk Class III': 'DCUSD',
           };
 
           const entriesToFetch = Object.entries(FMP_SYMBOL_MAP)
