@@ -454,16 +454,16 @@ serve(async (req) => {
         try {
           // Map our commodity names to FMP-compatible symbols
           const FMP_SYMBOL_MAP: Record<string, string> = {
-            'Gold Futures': 'GCUSD', 'Silver Futures': 'SIUSD', 'Platinum': 'PLUSD',
-            'Palladium': 'PAUSD', 'Copper': 'HGUSD',
-            'Corn Futures': 'ZCUSD', 'Wheat Futures': 'ZWUSD', 'Soybean Futures': 'ZSUSD',
-            'Soybean Oil': 'ZLUSD', 'Soybean Meal': 'ZMUSD', 'Oat Futures': 'ZOUSD',
-            'Rough Rice': 'ZRUSD',
-            'Coffee Arabica': 'KCUSD', 'Sugar #11': 'SBUSD', 'Cotton': 'CTUSD',
-            'Cocoa': 'CCUSD', 'Orange Juice': 'OJUSD',
-            'Live Cattle Futures': 'LEUSD', 'Lean Hogs Futures': 'HEUSD',
-            'Feeder Cattle Futures': 'GFUSD',
-            'Lumber Futures': 'LBSUSD', 'Random Length Lumber': 'LBUSD',
+            'Gold Futures': 'GC=F', 'Silver Futures': 'SI=F', 'Platinum': 'PL=F',
+            'Palladium': 'PA=F', 'Copper': 'HG=F',
+            'Corn Futures': 'ZC=F', 'Wheat Futures': 'ZW=F', 'Soybean Futures': 'ZS=F',
+            'Soybean Oil': 'ZL=F', 'Soybean Meal': 'ZM=F', 'Oat Futures': 'ZO=F',
+            'Rough Rice': 'ZR=F',
+            'Coffee Arabica': 'KC=F', 'Sugar #11': 'SB=F', 'Cotton': 'CT=F',
+            'Cocoa': 'CC=F', 'Orange Juice': 'OJ=F',
+            'Live Cattle Futures': 'LE=F', 'Lean Hogs Futures': 'HE=F',
+            'Feeder Cattle Futures': 'GF=F',
+            'Lumber Futures': 'LBS=F', 'Random Length Lumber': 'LB=F',
             'Milk Class III': 'DC=F',
           };
 
