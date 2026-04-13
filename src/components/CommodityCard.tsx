@@ -82,8 +82,20 @@ const CommodityCard = React.memo<CommodityCardProps>(({
 
   const isPositive = currentChange >= 0;
 
+  // Get price prefix based on commodity units
+  const getPricePrefix = React.useCallback((commodityName: string): string => {
+    const lower = commodityName.toLowerCase();
+    if (lower.includes('gas storage')) return ''; // Bcf value, no currency
+    if (lower.includes('dutch ttf')) return '€';
+    if (lower.includes('natural gas uk')) return '£';
+    return '$';
+  }, []);
+
   // Format price for display
   const formatPrice = React.useCallback((priceValue: number): string => {
+    if (priceValue >= 10000) {
+      return priceValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
     if (priceValue >= 1000) {
       return priceValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
