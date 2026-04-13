@@ -350,13 +350,17 @@ serve(async (req) => {
 
           // OilPriceAPI-supported blends
           const OIL_API_BLENDS: Record<string, string> = {
-            // All 10 oil types from OilPriceAPI (excluding WTI/Brent already from FMP)
+            // Oil types from OilPriceAPI (excluding WTI/Brent already from FMP)
             'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
             'Tapis Crude Oil': 'TAPIS_CRUDE_USD',
             'Western Canadian Select': 'WCS_CRUDE_USD',
             'Urals Crude Oil': 'URALS_CRUDE_USD',
             'Jet Fuel': 'JET_FUEL_USD',
             'ULSD Diesel': 'ULSD_DIESEL_USD',
+            // Natural gas types (excluding Henry Hub already from FMP)
+            'Dutch TTF Gas': 'DUTCH_TTF_EUR',
+            'Japan/Korea LNG': 'JKM_LNG_USD',
+            'US Gas Storage': 'NATURAL_GAS_STORAGE',
           };
 
           // Fetch real prices from OilPriceAPI for supported blends
