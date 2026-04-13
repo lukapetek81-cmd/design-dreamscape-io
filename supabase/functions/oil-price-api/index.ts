@@ -9,12 +9,27 @@ const OIL_API_BASE = 'https://api.oilpriceapi.com/v1';
 
 // Mapping from our internal commodity names to OilPriceAPI codes
 const OIL_BLEND_CODES: Record<string, string> = {
-  'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
-  'Tapis Crude Oil': 'TAPIS_CRUDE_USD',
-  'Urals Crude Oil': 'URALS_CRUDE_USD',
-  // These are also available for existing commodities
+  // Crude Oil Benchmarks
   'Crude Oil': 'WTI_USD',
   'Brent Crude Oil': 'BRENT_CRUDE_USD',
+  'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
+  'Urals Crude Oil': 'URALS_CRUDE_USD',
+  'DME Oman Crude': 'DME_OMAN_USD',
+  'Murban Crude': 'MURBAN_CRUDE_USD',
+  'OPEC Basket': 'OPEC_BASKET_USD',
+  'Indian Basket': 'INDIAN_BASKET_USD',
+  'Tapis Crude Oil': 'TAPIS_CRUDE_USD',
+  
+  // Regional Crude Benchmarks
+  'WTI Midland': 'WTI_MIDLAND_USD',
+  'Alaska North Slope': 'ANS_WEST_COAST_USD',
+  'Mars Blend': 'MARS_USD',
+  'Louisiana Light Sweet': 'LOUISIANA_LIGHT_USD',
+  'Western Canadian Select': 'WESTERN_CANADIAN_SELECT_USD',
+  'Canadian Crude Index': 'CANADIAN_CRUDE_INDEX_USD',
+  'Mexican Basket': 'MEXICAN_BASKET_USD',
+  
+  // Also available for existing commodities
   'Natural Gas': 'NATURAL_GAS_USD',
   'Heating Oil': 'HEATING_OIL_USD',
   'Gasoline RBOB': 'GASOLINE_RBOB_USD',

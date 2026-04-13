@@ -11,6 +11,17 @@ export const COMMODITY_SYMBOLS: Record<string, CommoditySymbol> = {
   'Crude Oil Dubai': { symbol: 'DC=F', category: 'energy', contractSize: '1,000 bbl', venue: 'DME' },
   'Tapis Crude Oil': { symbol: 'TAP=F', category: 'energy', contractSize: '1,000 bbl', venue: 'SGX' },
   'Urals Crude Oil': { symbol: 'URL=F', category: 'energy', contractSize: '1,000 bbl', venue: 'ICE' },
+  'DME Oman Crude': { symbol: 'OQD=F', category: 'energy', contractSize: '1,000 bbl', venue: 'DME' },
+  'Murban Crude': { symbol: 'MURBAN=F', category: 'energy', contractSize: '1,000 bbl', venue: 'ICE' },
+  'OPEC Basket': { symbol: 'OPEC=X', category: 'energy', contractSize: '1 bbl', venue: 'OPEC' },
+  'Indian Basket': { symbol: 'INDBSK=X', category: 'energy', contractSize: '1 bbl', venue: 'PPAC' },
+  'WTI Midland': { symbol: 'WTM=F', category: 'energy', contractSize: '1,000 bbl', venue: 'CME' },
+  'Alaska North Slope': { symbol: 'ANS=F', category: 'energy', contractSize: '1,000 bbl', venue: 'ICE' },
+  'Mars Blend': { symbol: 'MARS=F', category: 'energy', contractSize: '1,000 bbl', venue: 'CME' },
+  'Louisiana Light Sweet': { symbol: 'LLS=F', category: 'energy', contractSize: '1,000 bbl', venue: 'CME' },
+  'Western Canadian Select': { symbol: 'WCS=F', category: 'energy', contractSize: '1,000 bbl', venue: 'CME' },
+  'Canadian Crude Index': { symbol: 'CCI=X', category: 'energy', contractSize: '1 bbl', venue: 'NEB' },
+  'Mexican Basket': { symbol: 'MEXBSK=X', category: 'energy', contractSize: '1 bbl', venue: 'PEMEX' },
   
   // Metals
   'Gold Futures': { symbol: 'GC=F', category: 'metals', contractSize: '100 oz', venue: 'COMEX' },
@@ -125,7 +136,7 @@ export const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
 
 // Category mappings for grouping
 export const CATEGORY_MAPPINGS: Record<string, string[]> = {
-  energy: ['Crude Oil', 'Brent Crude Oil', 'Crude Oil Dubai', 'Tapis Crude Oil', 'Urals Crude Oil', 'Natural Gas', 'Gasoline RBOB', 'Heating Oil', 'Coal', 'Uranium', 'Ethanol'],
+  energy: ['Crude Oil', 'Brent Crude Oil', 'Crude Oil Dubai', 'Tapis Crude Oil', 'Urals Crude Oil', 'DME Oman Crude', 'Murban Crude', 'OPEC Basket', 'Indian Basket', 'WTI Midland', 'Alaska North Slope', 'Mars Blend', 'Louisiana Light Sweet', 'Western Canadian Select', 'Canadian Crude Index', 'Mexican Basket', 'Natural Gas', 'Gasoline RBOB', 'Heating Oil', 'Coal', 'Uranium', 'Ethanol'],
   metals: ['Gold Futures', 'Silver Futures', 'Copper', 'Platinum', 'Palladium', 'Aluminum', 'Zinc', 'Lead', 'Nickel'],
   grains: ['Corn Futures', 'Wheat Futures', 'Soybean Futures', 'Oat Futures', 'Rough Rice', 'Barley'],
   livestock: ['Live Cattle Futures', 'Feeder Cattle Futures', 'Lean Hogs Futures'],
