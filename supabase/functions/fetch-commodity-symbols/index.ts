@@ -300,13 +300,98 @@ serve(async (req) => {
     let commoditiesData: any[] = []
     let dataSource = 'fallback';
 
-    // Use FMP API as primary source
+    // ALL energy commodities are reserved for OilPriceAPI — never use FMP for energy
+    const OIL_API_ONLY_NAMES = new Set([
+      'Crude Oil', 'Brent Crude Oil', 'Natural Gas', 'Gasoline RBOB', 'Heating Oil',
+      'Natural Gas UK', 'Gas Oil', 'Coal', 'Ethanol', 'Propane',
+      'Crude Oil Dubai', 'Tapis Crude Oil', 'Western Canadian Select', 'Urals Crude Oil',
+      'Jet Fuel', 'ULSD Diesel', 'Dutch TTF Gas', 'Japan/Korea LNG', 'US Gas Storage',
+      'VLSFO Global', 'HFO 380 Global', 'MGO 0.5%S Global', 'HFO 380 Rotterdam',
+      'VLSFO Singapore', 'MGO Houston', 'VLSFO Fujairah',
+    ]);
+
+    // ALL energy products use OilPriceAPI exclusively
+    const OIL_API_BLENDS: Record<string, string> = {
+      'Crude Oil': 'WTI_USD',
+      'Brent Crude Oil': 'BRENT_CRUDE_USD',
+      'Natural Gas': 'NATURAL_GAS_USD',
+      'Gasoline RBOB': 'GASOLINE_RBOB_USD',
+      'Heating Oil': 'HEATING_OIL_USD',
+      'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
+      'Tapis Crude Oil': 'TAPIS_CRUDE_USD',
+      'Western Canadian Select': 'WCS_CRUDE_USD',
+      'Urals Crude Oil': 'URALS_CRUDE_USD',
+      'Jet Fuel': 'JET_FUEL_USD',
+      'ULSD Diesel': 'ULSD_DIESEL_USD',
+      'Natural Gas UK': 'NATURAL_GAS_GBP',
+      'Dutch TTF Gas': 'DUTCH_TTF_EUR',
+      'Japan/Korea LNG': 'JKM_LNG_USD',
+      'US Gas Storage': 'NATURAL_GAS_STORAGE',
+      'VLSFO Global': 'VLSFO_USD',
+      'HFO 380 Global': 'HFO_380_USD',
+      'MGO 0.5%S Global': 'MGO_05S_USD',
+      'HFO 380 Rotterdam': 'HFO_380_NLRTM_USD',
+      'VLSFO Singapore': 'VLSFO_SGSIN_USD',
+      'MGO Houston': 'MGO_05S_USHOU_USD',
+      'VLSFO Fujairah': 'VLSFO_AEFUJ_USD',
+    };
+
+    // Step 1: Fetch energy commodities from OilPriceAPI (independent of FMP)
+    const oilApiKey = Deno.env.get('OIL_PRICE_API_KEY');
+    if (oilApiKey) {
+      try {
+        console.log('Fetching energy commodities from OilPriceAPI...');
+        const oilApiFetches = Object.entries(OIL_API_BLENDS)
+          .filter(([name]) => COMMODITY_SYMBOLS[name])
+          .map(async ([name, code]) => {
+            try {
+              const resp = await fetch(
+                `https://api.oilpriceapi.com/v1/prices/latest?by_code=${code}`,
+                { headers: { 'Authorization': `Token ${oilApiKey}` } }
+              );
+              if (!resp.ok) {
+                const errText = await resp.text();
+                console.warn(`OilPriceAPI ${code}: ${resp.status} - ${errText}`);
+                return null;
+              }
+              const result = await resp.json();
+              if (result.data?.price) {
+                return {
+                  name,
+                  symbol: COMMODITY_SYMBOLS[name].symbol,
+                  price: result.data.price,
+                  change: 0,
+                  changePercent: 0,
+                  volume: 0,
+                  ...COMMODITY_SYMBOLS[name],
+                  supportedByFMP: false,
+                  source: 'oilpriceapi',
+                };
+              }
+            } catch (err) {
+              console.warn(`OilPriceAPI fetch failed for ${code}:`, err);
+            }
+            return null;
+          });
+
+        const oilApiResults = await Promise.all(oilApiFetches);
+        for (const result of oilApiResults) {
+          if (result) {
+            commoditiesData.push(result);
+          }
+        }
+        console.log(`OilPriceAPI: loaded ${commoditiesData.length} energy commodities`);
+        if (commoditiesData.length > 0) dataSource = 'oilpriceapi';
+      } catch (err) {
+        console.warn('OilPriceAPI batch fetch failed:', err);
+      }
+    }
+
+    // Step 2: Fetch non-energy commodities from FMP
     const fmpApiKey = Deno.env.get('FMP_API_KEY');
     if (fmpApiKey && fmpApiKey !== 'demo') {
       try {
-        console.log('Using FMP for symbols');
-        
-        // Fetch available commodities directly from FMP
+        console.log('Using FMP for non-energy symbols');
         const response = await fetch(
           `https://financialmodelingprep.com/api/v3/quotes/commodity?apikey=${fmpApiKey}`
         );
@@ -319,22 +404,11 @@ serve(async (req) => {
         
         if (Array.isArray(data) && data.length > 0) {
           console.log(`FMP returned ${data.length} commodities`);
-          dataSource = 'fmp';
-          
-          // Names reserved for OilPriceAPI — skip FMP matching for these
-          // ALL energy commodities are reserved for OilPriceAPI — never use FMP for energy
-          const OIL_API_ONLY_NAMES = new Set([
-            'Crude Oil', 'Brent Crude Oil', 'Natural Gas', 'Gasoline RBOB', 'Heating Oil',
-            'Natural Gas UK', 'Gas Oil', 'Coal', 'Ethanol', 'Propane',
-            'Crude Oil Dubai', 'Tapis Crude Oil', 'Western Canadian Select', 'Urals Crude Oil',
-            'Jet Fuel', 'ULSD Diesel', 'Dutch TTF Gas', 'Japan/Korea LNG', 'US Gas Storage',
-            'VLSFO Global', 'HFO 380 Global', 'MGO 0.5%S Global', 'HFO 380 Rotterdam',
-            'VLSFO Singapore', 'MGO Houston', 'VLSFO Fujairah',
-          ]);
+          dataSource = commoditiesData.length > 0 ? 'mixed' : 'fmp';
 
-          // Build commodity list from FMP data, using our category mappings where available
-          commoditiesData = data.map(fmpItem => {
-            // Try to find a match in our static mapping for additional metadata
+          const existingNames = new Set(commoditiesData.map(c => c.name));
+
+          const fmpCommodities = data.map(fmpItem => {
             const matchedCommodity = Object.entries(COMMODITY_SYMBOLS).find(([name, info]) => {
               if (OIL_API_ONLY_NAMES.has(name)) return false;
               return info.symbol === fmpItem.symbol || 
@@ -344,8 +418,8 @@ serve(async (req) => {
             const commodityName = matchedCommodity ? matchedCommodity[0] : 
               (fmpItem.name || fmpItem.symbol.replace('=F', ' Futures'));
             
-            // Skip if FMP item resolves to an OilPriceAPI-only name
             if (OIL_API_ONLY_NAMES.has(commodityName)) return null;
+            if (existingNames.has(commodityName)) return null;
 
             const metadata = matchedCommodity ? matchedCommodity[1] : {
               category: 'other',
@@ -365,98 +439,11 @@ serve(async (req) => {
             };
           }).filter(Boolean);
 
-          // Add regional oil blends not covered by FMP
-          const existingNames = new Set(commoditiesData.map(c => c.name));
-          const wtiPrice = commoditiesData.find(c => c.symbol === 'CL=F')?.price || 0;
-          const brentPrice = commoditiesData.find(c => c.symbol === 'BZ=F')?.price || 0;
-          const refPrice = brentPrice || wtiPrice;
-
-          // ALL energy products use OilPriceAPI exclusively
-          const OIL_API_BLENDS: Record<string, string> = {
-            // Core benchmarks
-            'Crude Oil': 'WTI_USD',
-            'Brent Crude Oil': 'BRENT_CRUDE_USD',
-            'Natural Gas': 'NATURAL_GAS_USD',
-            'Gasoline RBOB': 'GASOLINE_RBOB_USD',
-            'Heating Oil': 'HEATING_OIL_USD',
-            // Regional oil blends
-            'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
-            'Tapis Crude Oil': 'TAPIS_CRUDE_USD',
-            'Western Canadian Select': 'WCS_CRUDE_USD',
-            'Urals Crude Oil': 'URALS_CRUDE_USD',
-            // Refined products
-            'Jet Fuel': 'JET_FUEL_USD',
-            'ULSD Diesel': 'ULSD_DIESEL_USD',
-            // Natural gas types
-            'Natural Gas UK': 'NATURAL_GAS_GBP',
-            'Dutch TTF Gas': 'DUTCH_TTF_EUR',
-            'Japan/Korea LNG': 'JKM_LNG_USD',
-            'US Gas Storage': 'NATURAL_GAS_STORAGE',
-            // Marine Fuels
-            'VLSFO Global': 'VLSFO_USD',
-            'HFO 380 Global': 'HFO_380_USD',
-            'MGO 0.5%S Global': 'MGO_05S_USD',
-            'HFO 380 Rotterdam': 'HFO_380_NLRTM_USD',
-            'VLSFO Singapore': 'VLSFO_SGSIN_USD',
-            'MGO Houston': 'MGO_05S_USHOU_USD',
-            'VLSFO Fujairah': 'VLSFO_AEFUJ_USD',
-          };
-
-          // Fetch real prices from OilPriceAPI for ALL energy commodities (replacing any FMP data)
-          const oilApiKey = Deno.env.get('OIL_PRICE_API_KEY');
-          if (oilApiKey) {
-            const oilApiFetches = Object.entries(OIL_API_BLENDS)
-              .filter(([name]) => COMMODITY_SYMBOLS[name])
-              .map(async ([name, code]) => {
-                try {
-                  const resp = await fetch(
-                    `https://api.oilpriceapi.com/v1/prices/latest?by_code=${code}`,
-                    { headers: { 'Authorization': `Token ${oilApiKey}` } }
-                  );
-                  if (!resp.ok) {
-                    const errText = await resp.text();
-                    console.warn(`OilPriceAPI ${code}: ${resp.status} - ${errText}`);
-                    return null;
-                  }
-                  const result = await resp.json();
-                  if (result.data?.price) {
-                    return {
-                      name,
-                      symbol: COMMODITY_SYMBOLS[name].symbol,
-                      price: result.data.price,
-                      change: 0,
-                      changePercent: 0,
-                      volume: 0,
-                      ...COMMODITY_SYMBOLS[name],
-                      supportedByFMP: false,
-                      source: 'oilpriceapi',
-                    };
-                  }
-                } catch (err) {
-                  console.warn(`OilPriceAPI fetch failed for ${code}:`, err);
-                }
-                return null;
-              });
-
-            const oilApiResults = await Promise.all(oilApiFetches);
-            for (const result of oilApiResults) {
-              if (result) {
-                // Remove any existing FMP entry for this commodity and replace with OilPriceAPI data
-                commoditiesData = commoditiesData.filter(c => c.name !== result.name);
-                commoditiesData.push(result);
-                existingNames.add(result.name);
-              }
-            }
-            console.log(`OilPriceAPI: added ${oilApiResults.filter(Boolean).length} blends with real prices`);
-          }
-        } else {
-          throw new Error('No data returned from FMP API');
+          commoditiesData.push(...fmpCommodities);
         }
       } catch (error) {
-        console.warn('FMP API failed, using fallback data:', error);
+        console.warn('FMP API failed:', error);
       }
-    } else {
-      console.log('No FMP API key, using static fallback data');
     }
 
     // Use limited fallback if FMP API failed - only show a few core commodities
