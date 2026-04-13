@@ -449,15 +449,18 @@ serve(async (req) => {
     // Try FMP as secondary source
     if (!nonEnergyLoaded) {
       const fmpApiKey = Deno.env.get('FMP_API_KEY');
+      console.log(`FMP_API_KEY exists: ${!!fmpApiKey}, length: ${fmpApiKey?.length || 0}`);
       if (fmpApiKey && fmpApiKey !== 'demo') {
         try {
-          console.log('Using FMP for non-energy symbols');
-          const response = await fetch(
-            `https://financialmodelingprep.com/api/v3/quotes/commodity?apikey=${fmpApiKey}`
-          );
+          const fmpUrl = `https://financialmodelingprep.com/api/v3/quotes/commodity?apikey=${fmpApiKey}`;
+          console.log(`FMP URL (redacted key): ${fmpUrl.replace(fmpApiKey, fmpApiKey.substring(0, 4) + '...')}`);
+          const response = await fetch(fmpUrl);
           
+          console.log(`FMP response status: ${response.status}`);
           if (!response.ok) {
-            throw new Error(`FMP API error: ${response.status}`);
+            const errorBody = await response.text();
+            console.warn(`FMP error body: ${errorBody.substring(0, 200)}`);
+            throw new Error(`FMP API error: ${response.status} - ${errorBody.substring(0, 100)}`);
           }
           
           const data = await response.json();
