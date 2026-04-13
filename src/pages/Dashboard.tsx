@@ -239,6 +239,7 @@ const DashboardContent = ({
               <VirtualizedCommodityList 
                 commodities={filteredCommodities} 
                 loading={loading}
+                highlightCommodity={highlightCommodity}
               />
             )}
 
