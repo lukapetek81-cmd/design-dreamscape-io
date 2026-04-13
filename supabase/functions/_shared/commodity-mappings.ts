@@ -11,11 +11,6 @@ export const COMMODITY_SYMBOLS: Record<string, CommoditySymbol> = {
   'Crude Oil Dubai': { symbol: 'DC=F', category: 'energy', contractSize: '1,000 bbl', venue: 'DME' },
   'Tapis Crude Oil': { symbol: 'TAP=F', category: 'energy', contractSize: '1,000 bbl', venue: 'SGX' },
   'Urals Crude Oil': { symbol: 'URL=F', category: 'energy', contractSize: '1,000 bbl', venue: 'ICE' },
-  'Bonny Light Crude Oil': { symbol: 'BNL=F', category: 'energy', contractSize: '1,000 bbl', venue: 'ICE' },
-  'Arab Light Crude Oil': { symbol: 'ARL=F', category: 'energy', contractSize: '1,000 bbl', venue: 'DME' },
-  'Arab Heavy Crude Oil': { symbol: 'ARH=F', category: 'energy', contractSize: '1,000 bbl', venue: 'DME' },
-  'ESPO Crude Oil': { symbol: 'ESPO=F', category: 'energy', contractSize: '1,000 bbl', venue: 'ICE' },
-  'Isthmus Crude Oil': { symbol: 'IST=F', category: 'energy', contractSize: '1,000 bbl', venue: 'NYMEX' },
   
   // Metals
   'Gold Futures': { symbol: 'GC=F', category: 'metals', contractSize: '100 oz', venue: 'COMEX' },
@@ -130,7 +125,7 @@ export const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
 
 // Category mappings for grouping
 export const CATEGORY_MAPPINGS: Record<string, string[]> = {
-  energy: ['Crude Oil', 'Brent Crude Oil', 'Crude Oil Dubai', 'Tapis Crude Oil', 'Urals Crude Oil', 'Bonny Light Crude Oil', 'Arab Light Crude Oil', 'Arab Heavy Crude Oil', 'ESPO Crude Oil', 'Isthmus Crude Oil', 'Natural Gas', 'Gasoline RBOB', 'Heating Oil', 'Coal', 'Uranium', 'Ethanol'],
+  energy: ['Crude Oil', 'Brent Crude Oil', 'Crude Oil Dubai', 'Tapis Crude Oil', 'Urals Crude Oil', 'Natural Gas', 'Gasoline RBOB', 'Heating Oil', 'Coal', 'Uranium', 'Ethanol'],
   metals: ['Gold Futures', 'Silver Futures', 'Copper', 'Platinum', 'Palladium', 'Aluminum', 'Zinc', 'Lead', 'Nickel'],
   grains: ['Corn Futures', 'Wheat Futures', 'Soybean Futures', 'Oat Futures', 'Rough Rice', 'Barley'],
   livestock: ['Live Cattle Futures', 'Feeder Cattle Futures', 'Lean Hogs Futures'],
