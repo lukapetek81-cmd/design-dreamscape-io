@@ -321,17 +321,29 @@ serve(async (req) => {
           console.log(`FMP returned ${data.length} commodities`);
           dataSource = 'fmp';
           
+          // Names reserved for OilPriceAPI — skip FMP matching for these
+          const OIL_API_ONLY_NAMES = new Set([
+            'Crude Oil Dubai', 'Tapis Crude Oil', 'Western Canadian Select', 'Urals Crude Oil',
+            'Jet Fuel', 'ULSD Diesel', 'Dutch TTF Gas', 'Japan/Korea LNG', 'US Gas Storage',
+            'VLSFO Global', 'HFO 380 Global', 'MGO 0.5%S Global', 'HFO 380 Rotterdam',
+            'VLSFO Singapore', 'MGO Houston', 'VLSFO Fujairah',
+          ]);
+
           // Build commodity list from FMP data, using our category mappings where available
           commoditiesData = data.map(fmpItem => {
             // Try to find a match in our static mapping for additional metadata
-            const matchedCommodity = Object.entries(COMMODITY_SYMBOLS).find(([name, info]) => 
-              info.symbol === fmpItem.symbol || 
-              name.toLowerCase().includes(fmpItem.name?.toLowerCase().split(' ')[0] || '')
-            );
+            const matchedCommodity = Object.entries(COMMODITY_SYMBOLS).find(([name, info]) => {
+              if (OIL_API_ONLY_NAMES.has(name)) return false;
+              return info.symbol === fmpItem.symbol || 
+                name.toLowerCase().includes(fmpItem.name?.toLowerCase().split(' ')[0] || '');
+            });
             
             const commodityName = matchedCommodity ? matchedCommodity[0] : 
               (fmpItem.name || fmpItem.symbol.replace('=F', ' Futures'));
             
+            // Skip if FMP item resolves to an OilPriceAPI-only name
+            if (OIL_API_ONLY_NAMES.has(commodityName)) return null;
+
             const metadata = matchedCommodity ? matchedCommodity[1] : {
               category: 'other',
               contractSize: 'TBD',
@@ -348,7 +360,7 @@ serve(async (req) => {
               ...metadata,
               supportedByFMP: true
             };
-          });
+          }).filter(Boolean);
 
           // Add regional oil blends not covered by FMP
           const existingNames = new Set(commoditiesData.map(c => c.name));
