@@ -24,6 +24,7 @@ interface CommodityCardProps {
   venue?: string;
   contractSize?: string;
   category?: string;
+  defaultOpen?: boolean;
   availableContracts?: Array<{
     name: string;
     symbol: string;
@@ -48,9 +49,10 @@ const CommodityCard = React.memo<CommodityCardProps>(({
   venue = 'NYMEX',
   contractSize,
   category,
+  defaultOpen = false,
   availableContracts
 }) => {
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [isOpen, setIsOpen] = React.useState(defaultOpen);
   const [selectedContract, setSelectedContract] = React.useState(symbol);
   const isMobile = useIsMobile();
   const { vibrateTouch } = useHaptics();

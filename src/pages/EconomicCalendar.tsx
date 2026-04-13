@@ -6,6 +6,7 @@ import { Calendar, Clock, TrendingUp, AlertTriangle, Star, Loader, RefreshCw } f
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 import { MobilePageHeader } from '@/components/mobile/MobilePageHeader';
 
 interface EconomicEvent {
@@ -26,6 +27,7 @@ interface EconomicEvent {
 }
 
 const EconomicCalendar = () => {
+  const navigate = useNavigate();
   const [selectedImpact, setSelectedImpact] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedCountry, setSelectedCountry] = useState('all');
@@ -247,8 +249,13 @@ const EconomicCalendar = () => {
                                 <p className="text-sm font-medium mb-2">Potential Commodity Impact:</p>
                                 <div className="flex flex-wrap gap-2">
                                   {event.commodityImpact.map(commodity => (
-                                    <Badge key={commodity} variant="outline" className="text-xs">
-                                      {commodity}
+                                    <Badge 
+                                      key={commodity} 
+                                      variant="outline" 
+                                      className="text-xs cursor-pointer hover:bg-primary/10 hover:border-primary/50 transition-colors"
+                                      onClick={() => navigate(`/?commodity=${encodeURIComponent(commodity)}`)}
+                                    >
+                                      {commodity} ↗
                                     </Badge>
                                   ))}
                                 </div>

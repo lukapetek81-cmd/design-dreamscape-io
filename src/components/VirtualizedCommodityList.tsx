@@ -23,11 +23,13 @@ interface FuturesContract {
 interface VirtualizedCommodityListProps {
   commodities: Commodity[];
   loading?: boolean;
+  highlightCommodity?: string | null;
 }
 
 const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({ 
   commodities, 
-  loading = false 
+  loading = false,
+  highlightCommodity
 }) => {
   const isMobile = useIsMobile();
   const { isPremium } = useAuth();
@@ -87,10 +89,16 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, [commodities.length, visibleItems, isLoadingMore, isMobile]);
 
-  // Reset visible items when commodities change
+  // Reset visible items when commodities change, ensure highlighted item is visible
   React.useEffect(() => {
-    setVisibleItems(isMobile ? 5 : 10);
-  }, [commodities, isMobile]);
+    const defaultVisible = isMobile ? 5 : 10;
+    if (highlightCommodity) {
+      const idx = commodities.findIndex(c => c.name === highlightCommodity);
+      setVisibleItems(Math.max(defaultVisible, idx + 2));
+    } else {
+      setVisibleItems(defaultVisible);
+    }
+  }, [commodities, isMobile, highlightCommodity]);
 
   const visibleCommodities = React.useMemo(() => 
     commodities.slice(0, visibleItems), 
@@ -122,11 +130,13 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
           // Get futures contracts for this specific commodity from the bulk query
           const availableContracts = isPremium ? futuresQuery.data?.[commodity.name] : undefined;
 
+          const isHighlighted = commodity.name === highlightCommodity;
           return (
             <div 
               key={`${commodity.symbol}-${index}`}
-              className="animate-fade-in"
+              className={`animate-fade-in ${isHighlighted ? 'ring-2 ring-primary/50 rounded-2xl' : ''}`}
               style={{ animationDelay: `${index * 0.05}s` }}
+              ref={isHighlighted ? (el) => { el?.scrollIntoView({ behavior: 'smooth', block: 'center' }); } : undefined}
             >
               <CommodityCard
                 name={commodity.name}
@@ -137,6 +147,7 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
                 venue={commodity.venue}
                 contractSize={commodity.contractSize}
                 availableContracts={availableContracts}
+                defaultOpen={commodity.name === highlightCommodity}
               />
             </div>
           );

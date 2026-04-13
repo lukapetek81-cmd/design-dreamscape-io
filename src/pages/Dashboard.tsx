@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import CommodityCard from '@/components/CommodityCard';
 import VirtualizedCommodityList from '@/components/VirtualizedCommodityList';
 import UserProfile from '@/components/UserProfile';
@@ -14,10 +14,27 @@ import { Button } from '@/components/ui/button';
 import { OfflineIndicator } from '@/components/OfflineIndicator';
 
 const Dashboard = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeGroup, setActiveGroup] = useState("energy");
   const isMobile = useIsMobile();
   const { isGuest, profile, loading: authLoading } = useAuth();
   const { data: commodities, isLoading: commoditiesLoading, error: commoditiesError, refetch: refetchCommodities } = useAvailableCommodities();
+  const [highlightCommodity, setHighlightCommodity] = useState<string | null>(null);
+
+  // Handle ?commodity= URL param — switch to correct group and highlight
+  useEffect(() => {
+    const commodityParam = searchParams.get('commodity');
+    if (commodityParam && commodities && commodities.length > 0) {
+      const found = commodities.find(c => c.name === commodityParam);
+      if (found) {
+        setActiveGroup(found.category);
+        setHighlightCommodity(found.name);
+        // Clear the param so it doesn't persist on refresh
+        searchParams.delete('commodity');
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+  }, [searchParams, commodities]);
 
   // Show loading screen while auth is checking
   if (authLoading) {
@@ -45,6 +62,7 @@ const Dashboard = () => {
         loading={commoditiesLoading}
         error={commoditiesError?.message || null}
         onRetry={() => refetchCommodities()}
+        highlightCommodity={highlightCommodity}
       />
     </SidebarProvider>
   );
@@ -58,7 +76,8 @@ const DashboardContent = ({
   commodities, 
   loading, 
   error, 
-  onRetry
+  onRetry,
+  highlightCommodity
 }: {
   activeGroup: string;
   setActiveGroup: (group: string) => void;
@@ -68,6 +87,7 @@ const DashboardContent = ({
   loading: boolean;
   error: string | null;
   onRetry: () => void;
+  highlightCommodity?: string | null;
 }) => {
   const { setOpenMobile } = useSidebar();
   const { connected: realtimeConnected, delayStatus } = useRealtimeDataContext();
@@ -219,6 +239,7 @@ const DashboardContent = ({
               <VirtualizedCommodityList 
                 commodities={filteredCommodities} 
                 loading={loading}
+                highlightCommodity={highlightCommodity}
               />
             )}
 
