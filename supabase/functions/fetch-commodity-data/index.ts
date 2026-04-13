@@ -6,179 +6,94 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Commodity symbol mappings - FMP only
+// FMP symbols for historical chart data — only supported commodities
 const COMMODITY_SYMBOLS: Record<string, string> = {
-  // Precious Metals
+  // Energy (FMP symbols for fallback historical)
+  'WTI Crude Oil': 'CL=F',
+  'Brent Crude Oil': 'BZ=F',
+  'Natural Gas': 'NG=F',
+  'Gasoline RBOB': 'RB=F',
+  'Heating Oil': 'HO=F',
+  'Crude Oil Dubai': 'CL=F',
+  'Tapis Crude Oil': 'CL=F',
+  'Western Canadian Select': 'CL=F',
+  'Urals Crude Oil': 'CL=F',
+  'Jet Fuel': 'HO=F',
+  'ULSD Diesel': 'HO=F',
+  'Natural Gas UK': 'NG=F',
+  'Dutch TTF Gas': 'NG=F',
+  'Japan/Korea LNG': 'NG=F',
+  'US Gas Storage': 'NG=F',
+  'VLSFO Global': 'CL=F',
+  'HFO 380 Global': 'CL=F',
+  'MGO 0.5%S Global': 'CL=F',
+  'HFO 380 Rotterdam': 'CL=F',
+  'VLSFO Singapore': 'CL=F',
+  'MGO Houston': 'CL=F',
+  'VLSFO Fujairah': 'CL=F',
+  
+  // Metals
   'Gold Futures': 'GC=F',
   'Silver Futures': 'SI=F',
   'Platinum': 'PL=F',
   'Palladium': 'PA=F',
-  'Rhodium': 'PA=F', // Use Palladium as fallback for Rhodium
-  
-  // Base Metals
   'Copper': 'HG=F',
-  'Aluminum': 'HG=F', // Use Copper as fallback
-  'Aluminum LME': 'HG=F',
+  'Aluminum': 'HG=F',
   'Zinc': 'HG=F',
-  'Zinc LME': 'HG=F',
-  'Lead': 'HG=F',
-  'Nickel': 'HG=F',
-  'Tin': 'HG=F',
-  'Steel': 'HG=F',
-  'Hot-Rolled Coil Steel': 'HG=F',
-  'Iron Ore 62% FE': 'HG=F',
-  'Iron Ore': 'HG=F',
-  'Magnesium': 'HG=F',
   
-  // Industrial/Tech Metals
-  'Lithium': 'HG=F', // Use Copper as fallback
-  'Cobalt': 'HG=F',
-  'Titanium': 'HG=F',
-  'Gallium': 'HG=F',
-  'Indium': 'HG=F',
-  'Tellurium': 'HG=F',
-  'Neodymium': 'HG=F',
-  'Uranium': 'HG=F',
-  
-  // Energy
-  'WTI Crude Oil': 'CL=F',
-  'Brent Crude Oil': 'BZ=F',
-  'Crude Oil Dubai': 'CL=F',
-  'Ural Oil': 'CL=F',
-  'Urals Crude Oil': 'CL=F',
-  'Tapis Crude Oil': 'CL=F',
-  'DME Oman Crude': 'CL=F',
-  'Murban Crude': 'CL=F',
-  'OPEC Basket': 'CL=F',
-  'Indian Basket': 'CL=F',
-  'WTI Midland': 'CL=F',
-  'Alaska North Slope': 'CL=F',
-  'Mars Blend': 'CL=F',
-  'Louisiana Light Sweet': 'CL=F',
-  'Western Canadian Select': 'CL=F',
-  'Canadian Crude Index': 'CL=F',
-  'Mexican Basket': 'CL=F',
-  'Natural Gas': 'NG=F',
-  'Natural Gas US': 'NG=F',
-  'Natural Gas Europe': 'NG=F',
-  'Natural Gas UK': 'NG=F',
-  'Liquefied Natural Gas Japan': 'NG=F',
-  'TTF Gas': 'NG=F',
-  'UK Gas': 'NG=F',
-  'Heating Oil': 'HO=F',
-  'Gasoline RBOB': 'RB=F',
-  'Gas Oil': 'HO=F',
-  'Coal': 'HO=F',
-  'Coal Australia': 'HO=F',
-  'Coal South Africa': 'HO=F',
-  'Ethanol': 'RB=F',
-  'Methanol': 'RB=F',
-  'Propane': 'NG=F',
-  'Naphtha': 'RB=F',
-  
-  // Grains & Agriculture
+  // Grains
   'Corn Futures': 'ZC=F',
-  'Wheat Futures': 'ZW=F',
   'Soybean Futures': 'ZS=F',
   'Soybean Oil': 'ZL=F',
   'Soybean Meal': 'ZM=F',
   'Oat Futures': 'ZO=F',
   'Rough Rice': 'ZR=F',
-  'Canola': 'ZS=F',
-  'Barley': 'ZW=F',
-  'Spring Wheat': 'ZW=F',
-  'Hard Red Winter Wheat': 'ZW=F',
   
-  // Livestock & Dairy
+  // Livestock
   'Live Cattle Futures': 'LE=F',
   'Feeder Cattle Futures': 'GF=F',
   'Lean Hogs Futures': 'HE=F',
-  'Milk': 'HE=F',
   'Milk Class III': 'HE=F',
-  'Milk Nonfat Dry': 'HE=F',
-  'Butter': 'HE=F',
-  'Cheese': 'HE=F',
-  'Eggs US': 'HE=F',
-  'Eggs China': 'HE=F',
-  'Poultry': 'HE=F',
-  'Salmon': 'HE=F',
-  'Fish Meal': 'HE=F',
   
-  // Soft Commodities
+  // Softs
   'Coffee Arabica': 'KC=F',
-  'Coffee Robusta': 'KC=F',
-  'Coffee': 'KC=F',
-  'Sugar': 'SB=F',
   'Sugar #11': 'SB=F',
-  'Sugar #5': 'SB=F',
   'Cotton': 'CT=F',
   'Cocoa': 'CC=F',
   'Orange Juice': 'OJ=F',
-  'Tea': 'KC=F',
-  'Tea Kolkata': 'KC=F',
-  'Tea Colombo': 'KC=F',
-  'Tea Mombasa': 'KC=F',
   
-  // Oils & Fats
-  'Palm Oil': 'ZL=F',
-  'Sunflower Oil': 'ZL=F',
-  'Rapeseed Oil': 'ZL=F',
-  'Coconut Oil': 'ZL=F',
-  'Olive Oil': 'ZL=F',
-  
-  // Forest Products
-  'Lumber': 'LBS=F',
+  // Other
   'Lumber Futures': 'LBS=F',
   'Random Length Lumber': 'LBS=F',
-  'Pulp': 'LBS=F',
-  'Newsprint': 'LBS=F',
-  
-  // Industrial Materials
-  'Rubber': 'CT=F',
-  'Cotton Yarn': 'CT=F',
-  'Wool': 'CT=F',
-  'Jute': 'CT=F',
-  'Bitumen': 'CL=F',
-  'Kraft Pulp': 'LBS=F',
-  
-  // Fertilizers & Chemicals
-  'Urea': 'NG=F',
-  'Diammonium Phosphate': 'NG=F',
-  'Potash': 'NG=F',
-  'Ammonia': 'NG=F',
-  'Soda Ash': 'NG=F',
-  
-  // Plastics
-  'Polyethylene': 'CL=F',
-  'Polypropylene': 'CL=F',
-  'Polyvinyl Chloride': 'CL=F',
-  'PVC': 'CL=F',
-  'Styrene': 'CL=F',
-  
-  // Food & Agriculture
-  'White Sugar': 'SB=F',
-  'Raw Sugar': 'SB=F',
-  'Potato': 'ZC=F',
-  'Onion': 'ZC=F',
-  'Garlic': 'ZC=F',
-  'Apple': 'OJ=F',
-  'Banana': 'OJ=F',
-  
-  // Spices
-  'Black Pepper': 'KC=F',
-  'Cardamom': 'KC=F',
-  'Turmeric': 'KC=F',
-  'Coriander': 'KC=F',
-  'Chilli': 'KC=F',
-  'Cumin': 'KC=F',
-  
-  // Others
-  'Electricity': 'NG=F',
-  'Carbon Credits': 'NG=F'
+};
+
+// OilPriceAPI codes for ALL energy commodities — historical data
+const OIL_API_BLEND_CODES: Record<string, string> = {
+  'WTI Crude Oil': 'WTI_USD',
+  'Brent Crude Oil': 'BRENT_CRUDE_USD',
+  'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
+  'Tapis Crude Oil': 'TAPIS_CRUDE_USD',
+  'Western Canadian Select': 'WCS_CRUDE_USD',
+  'Urals Crude Oil': 'URALS_CRUDE_USD',
+  'Natural Gas': 'NATURAL_GAS_USD',
+  'Natural Gas UK': 'NATURAL_GAS_GBP',
+  'Dutch TTF Gas': 'DUTCH_TTF_EUR',
+  'Japan/Korea LNG': 'JKM_LNG_USD',
+  'US Gas Storage': 'NATURAL_GAS_STORAGE',
+  'Gasoline RBOB': 'GASOLINE_RBOB_USD',
+  'Heating Oil': 'HEATING_OIL_USD',
+  'Jet Fuel': 'JET_FUEL_USD',
+  'ULSD Diesel': 'ULSD_DIESEL_USD',
+  'VLSFO Global': 'VLSFO_USD',
+  'HFO 380 Global': 'HFO_380_USD',
+  'MGO 0.5%S Global': 'MGO_05S_USD',
+  'HFO 380 Rotterdam': 'HFO_380_NLRTM_USD',
+  'VLSFO Singapore': 'VLSFO_SGSIN_USD',
+  'MGO Houston': 'MGO_05S_USHOU_USD',
+  'VLSFO Fujairah': 'VLSFO_AEFUJ_USD',
 };
 
 const generateFallbackData = (commodityName: string, timeframe: string, basePrice: number, isPremium: boolean = false, chartType: string = 'line') => {
-  // Premium users get more data points for better granularity
   const dataPoints = isPremium 
     ? (timeframe === '1d' ? 48 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : 365) 
     : (timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180);
@@ -187,58 +102,25 @@ const generateFallbackData = (commodityName: string, timeframe: string, basePric
   
   let currentPrice = basePrice;
   
-  // Adjust volatility based on commodity type and timeframe
-  let volatility: number;
-  let trendStrength: number;
+  const isEnergy = commodityName.includes('Oil') || commodityName.includes('Gas') || 
+    commodityName.includes('Fuel') || commodityName.includes('Diesel') || 
+    commodityName.includes('VLSFO') || commodityName.includes('HFO') || commodityName.includes('MGO');
+  const isAgri = commodityName.includes('Futures') || commodityName.includes('Corn') || commodityName.includes('Soybean');
   
-  if (commodityName === 'Wheat Futures') {
-    // Wheat is more volatile due to weather, crop conditions, etc.
-    volatility = basePrice * (timeframe === '1d' ? 0.025 : timeframe === '1m' ? 0.05 : timeframe === '3m' ? 0.08 : 0.15);
-    trendStrength = 0.001; // Stronger trends for wheat
-  } else if (commodityName.includes('Futures') || commodityName.includes('Corn') || commodityName.includes('Soybean')) {
-    // Agricultural commodities are generally more volatile
-    volatility = basePrice * (timeframe === '1d' ? 0.02 : timeframe === '1m' ? 0.04 : timeframe === '3m' ? 0.07 : 0.12);
-    trendStrength = 0.0008;
-  } else if (commodityName.includes('Oil') || commodityName.includes('Gas')) {
-    // Energy commodities - more volatile on longer timeframes
+  let volatility: number;
+  if (isEnergy) {
     volatility = basePrice * (timeframe === '1d' ? 0.03 : timeframe === '1m' ? 0.05 : timeframe === '3m' ? 0.08 : 0.15);
-    trendStrength = 0.0007;
+  } else if (isAgri) {
+    volatility = basePrice * (timeframe === '1d' ? 0.02 : timeframe === '1m' ? 0.04 : timeframe === '3m' ? 0.07 : 0.12);
   } else {
-    // Metals and other commodities - increase volatility for longer timeframes
     volatility = basePrice * (timeframe === '1d' ? 0.015 : timeframe === '1m' ? 0.03 : timeframe === '3m' ? 0.05 : 0.1);
-    trendStrength = 0.0005;
   }
   
   const trendDirection = Math.random() > 0.5 ? 1 : -1;
-  
-  // Add more complex patterns for longer timeframes
-  const addComplexPatterns = (price: number, index: number) => {
-    let adjustedPrice = price;
-    
-    // Add seasonal patterns for agricultural commodities
-    if (commodityName === 'Wheat Futures') {
-      // Wheat typically has harvest lows in summer/fall and highs in spring
-      const seasonalFactor = Math.sin((index / dataPoints) * Math.PI * 2) * 0.05;
-      adjustedPrice *= (1 + seasonalFactor);
-    }
-    
-    // Add cycles for longer timeframes to prevent flat tails
-    if (timeframe === '3m' || timeframe === '6m') {
-      // Add market cycles
-      const cycleFactor = Math.sin((index / dataPoints) * Math.PI * 4) * 0.02; // 2 cycles over the period
-      adjustedPrice *= (1 + cycleFactor);
-      
-      // Add trend variations to create more realistic longer-term patterns
-      const trendVariation = Math.sin((index / dataPoints) * Math.PI * 6) * 0.015; // 3 cycles
-      adjustedPrice *= (1 + trendVariation);
-    }
-    
-    return adjustedPrice;
-  };
+  const trendStrength = 0.0007;
   
   for (let i = dataPoints - 1; i >= 0; i--) {
     let date: Date;
-    
     if (timeframe === '1d') {
       date = new Date(now.getTime() - (i * 60 * 60 * 1000));
     } else {
@@ -249,34 +131,21 @@ const generateFallbackData = (commodityName: string, timeframe: string, basePric
     const trendComponent = trendDirection * trendStrength * basePrice * (dataPoints - i);
     const meanReversionComponent = (basePrice - currentPrice) * 0.01;
     
-    currentPrice += randomChange + trendComponent + meanReversionComponent;
-    
-    // Apply complex patterns including seasonal and cyclical patterns
-    currentPrice = addComplexPatterns(currentPrice, i);
-    
-    // More realistic bounds for different commodities
-    let minPrice, maxPrice;
-    if (commodityName === 'Wheat Futures') {
-      minPrice = basePrice * 0.6; // Wheat can have larger swings
-      maxPrice = basePrice * 1.4;
-    } else if (commodityName.includes('Futures')) {
-      minPrice = basePrice * 0.7;
-      maxPrice = basePrice * 1.3;
-    } else {
-      minPrice = basePrice * 0.8;
-      maxPrice = basePrice * 1.2;
+    // Add cyclical patterns for longer timeframes
+    let cycleFactor = 0;
+    if (timeframe === '3m' || timeframe === '6m') {
+      cycleFactor = Math.sin((i / dataPoints) * Math.PI * 4) * 0.02 * basePrice;
     }
     
-    currentPrice = Math.max(minPrice, Math.min(maxPrice, currentPrice));
+    currentPrice += randomChange + trendComponent + meanReversionComponent + cycleFactor;
+    currentPrice = Math.max(basePrice * 0.7, Math.min(basePrice * 1.3, currentPrice));
     
-    // Use appropriate decimal places based on price level
     let decimals = 2;
     if (basePrice >= 1000) decimals = 0;
     else if (basePrice >= 100) decimals = 1;
     
-    // Generate OHLC data for candlestick charts
     if (chartType === 'candlestick') {
-      const dayVolatility = volatility * 0.3; // Intraday volatility
+      const dayVolatility = volatility * 0.3;
       const open = currentPrice;
       const high = open + (Math.random() * dayVolatility);
       const low = open - (Math.random() * dayVolatility);
@@ -288,14 +157,13 @@ const generateFallbackData = (commodityName: string, timeframe: string, basePric
         high: Math.round(high * Math.pow(10, decimals)) / Math.pow(10, decimals),
         low: Math.round(low * Math.pow(10, decimals)) / Math.pow(10, decimals),
         close: Math.round(close * Math.pow(10, decimals)) / Math.pow(10, decimals),
-        price: Math.round(close * Math.pow(10, decimals)) / Math.pow(10, decimals) // For compatibility
+        price: Math.round(close * Math.pow(10, decimals)) / Math.pow(10, decimals),
       });
-      
-      currentPrice = close; // Update current price for next iteration
+      currentPrice = close;
     } else {
       data.push({
         date: date.toISOString(),
-        price: Math.round(currentPrice * Math.pow(10, decimals)) / Math.pow(10, decimals)
+        price: Math.round(currentPrice * Math.pow(10, decimals)) / Math.pow(10, decimals),
       });
     }
   }
@@ -305,181 +173,23 @@ const generateFallbackData = (commodityName: string, timeframe: string, basePric
 
 const getBasePriceForCommodity = (commodityName: string): number => {
   const basePrices: Record<string, number> = {
-    // Energy
-    'WTI Crude Oil': 65,
-    'Brent Crude Oil': 70,
-    'Natural Gas': 2.85,
-    'Gasoline RBOB': 2.1,
-    'Heating Oil': 2.3,
-    'Natural Gas UK': 90,
-    'Gas Oil': 650,
-    'Coal': 85,
-    'Coal Australia': 88,
-    'Coal South Africa': 82,
-    'Ethanol': 2.15,
-    'Methanol': 385,
-    'Propane': 0.95,
-    'Naphtha': 485,
-    
-    // Precious Metals
-    'Gold Futures': 2000,
-    'Silver Futures': 25,
-    'Platinum': 1050,
-    'Palladium': 1200,
-    'Rhodium': 4500,
-    
-    // Base Metals
-    'Copper': 4.2,
-    'Aluminum': 2200,
-    'Aluminum LME': 2200,
-    'Zinc': 2800,
-    'Zinc LME': 2800,
-    'Lead': 2100,
-    'Nickel': 18500,
-    'Tin': 32000,
-    'Steel': 650,
-    'Hot-Rolled Coil Steel': 685,
-    'Iron Ore 62% FE': 115,
-    'Iron Ore': 115,
-    'Magnesium': 2850,
-    
-    // Industrial/Tech Metals
-    'Lithium': 85,
-    'Cobalt': 35000,
-    'Titanium': 8500,
-    'Gallium': 285,
-    'Indium': 185,
-    'Tellurium': 485,
-    'Neodymium': 85,
-    'Uranium': 50,
-    
-    // Energy - Additional / Regional Blends
-    'Crude Oil Dubai': 64,
-    'Ural Oil': 62,
-    'Urals Crude Oil': 62,
-    'Tapis Crude Oil': 68,
-    'DME Oman Crude': 72,
-    'Murban Crude': 74,
-    'OPEC Basket': 73,
-    'Indian Basket': 72,
-    'WTI Midland': 66,
-    'Alaska North Slope': 67,
-    'Mars Blend': 64,
-    'Louisiana Light Sweet': 67,
-    'Western Canadian Select': 55,
-    'Canadian Crude Index': 60,
-    'Mexican Basket': 62,
-    'Natural Gas US': 2.85,
-    'Natural Gas Europe': 32,
-    'Liquefied Natural Gas Japan': 15.50,
-    'TTF Gas': 28,
-    'UK Gas': 85,
-    
-    // Grains & Agriculture
-    'Corn Futures': 430,
-    'Wheat Futures': 550,
-    'Soybean Futures': 1150,
-    'Soybean Oil': 45,
-    'Soybean Meal': 315,
-    'Oat Futures': 385,
-    'Rough Rice': 16.25,
-    'Canola': 520,
-    'Barley': 240,
-    'Spring Wheat': 580,
-    'Hard Red Winter Wheat': 565,
-    
-    // Livestock & Dairy
-    'Live Cattle Futures': 170,
-    'Feeder Cattle Futures': 240,
-    'Lean Hogs Futures': 75,
-    'Milk': 20.85,
-    'Milk Class III': 20.85,
-    'Milk Nonfat Dry': 1.35,
-    'Butter': 2.85,
-    'Cheese': 1.95,
-    'Eggs US': 2.15,
-    'Eggs China': 1.85,
-    'Poultry': 1.45,
-    'Salmon': 8.50,
-    'Fish Meal': 1850,
-    
-    // Soft Commodities
-    'Coffee Arabica': 165,
-    'Coffee Robusta': 2100,
-    'Coffee': 165,
-    'Sugar': 19.75,
-    'Sugar #11': 19.75,
-    'Sugar #5': 485,
-    'Cotton': 72.80,
-    'Cocoa': 2850,
-    'Orange Juice': 315,
-    'Tea': 3.20,
-    'Tea Kolkata': 3.85,
-    'Tea Colombo': 3.65,
-    'Tea Mombasa': 3.45,
-    
-    // Oils & Fats
-    'Palm Oil': 885,
-    'Sunflower Oil': 1350,
-    'Rapeseed Oil': 1450,
-    'Coconut Oil': 1650,
-    'Olive Oil': 4200,
-    
-    // Forest Products
-    'Lumber': 485,
-    'Lumber Futures': 485,
-    'Random Length Lumber': 485,
-    'Pulp': 1450,
-    'Newsprint': 685,
-    
-    // Industrial Materials
-    'Rubber': 1.85,
-    'Cotton Yarn': 3200,
-    'Wool': 14.50,
-    'Jute': 850,
-    'Bitumen': 485,
-    'Kraft Pulp': 1450,
-    
-    // Fertilizers & Chemicals
-    'Urea': 385,
-    'Diammonium Phosphate': 545,
-    'Potash': 285,
-    'Ammonia': 485,
-    'Soda Ash': 285,
-    
-    // Plastics
-    'Polyethylene': 1250,
-    'Polypropylene': 1180,
-    'Polyvinyl Chloride': 985,
-    'PVC': 985,
-    'Styrene': 1450,
-    
-    // Food & Agriculture
-    'White Sugar': 485,
-    'Raw Sugar': 19.75,
-    'Potato': 285,
-    'Onion': 385,
-    'Garlic': 1250,
-    'Apple': 1.85,
-    'Banana': 0.85,
-    
-    // Spices
-    'Black Pepper': 6500,
-    'Cardamom': 1850,
-    'Turmeric': 685,
-    'Coriander': 1250,
-    'Chilli': 2850,
-    'Cumin': 4500,
-    
-    // Others
-    'Electricity': 125,
-    'Carbon Credits': 25,
-    
-    // Simple mappings for legacy support
-    'Gold': 2000,
-    'Silver': 25,
-    'Corn': 430,
-    'Wheat': 550,
+    'WTI Crude Oil': 65, 'Brent Crude Oil': 70, 'Natural Gas': 2.85,
+    'Gasoline RBOB': 2.1, 'Heating Oil': 2.3, 'Natural Gas UK': 90,
+    'Crude Oil Dubai': 64, 'Tapis Crude Oil': 68, 'Urals Crude Oil': 62,
+    'Western Canadian Select': 55, 'Jet Fuel': 2.5, 'ULSD Diesel': 2.4,
+    'Dutch TTF Gas': 28, 'Japan/Korea LNG': 15.50, 'US Gas Storage': 2.85,
+    'VLSFO Global': 550, 'HFO 380 Global': 400, 'MGO 0.5%S Global': 700,
+    'HFO 380 Rotterdam': 410, 'VLSFO Singapore': 560, 'MGO Houston': 720,
+    'VLSFO Fujairah': 570,
+    'Gold Futures': 2000, 'Silver Futures': 25, 'Platinum': 1050,
+    'Palladium': 1200, 'Copper': 4.2, 'Aluminum': 2200, 'Zinc': 2800,
+    'Corn Futures': 430, 'Soybean Futures': 1150,
+    'Soybean Oil': 45, 'Soybean Meal': 315, 'Oat Futures': 385, 'Rough Rice': 16.25,
+    'Live Cattle Futures': 170, 'Feeder Cattle Futures': 240,
+    'Lean Hogs Futures': 75, 'Milk Class III': 20.85,
+    'Coffee Arabica': 165, 'Sugar #11': 19.75, 'Cotton': 72.80,
+    'Cocoa': 2850, 'Orange Juice': 315,
+    'Lumber Futures': 485, 'Random Length Lumber': 485,
   };
   return basePrices[commodityName] || 100;
 };
@@ -502,63 +212,33 @@ serve(async (req) => {
       )
     }
 
-    console.log(`Fetching data for ${commodityName}${contractSymbol ? ` (${contractSymbol})` : ''}, timeframe: ${timeframe}, chartType: ${chartType || 'line'} with ${dataDelay} data (Premium: ${isPremium || false})`)
-    console.log(`Contract symbol provided: ${contractSymbol}`)
+    console.log(`Fetching data for ${commodityName}, timeframe: ${timeframe}, chartType: ${chartType || 'line'}`)
 
-    // Get FMP API key from Supabase secrets
     const fmpApiKey = Deno.env.get('FMP_API_KEY')
-    
-    // For IBKR contract symbols, map back to base FMP symbols but we'll modify the data later
     let symbol = contractSymbol || COMMODITY_SYMBOLS[commodityName]
     let isIBKRContract = false
     
-    // If contract symbol is provided but it's an IBKR symbol (not supported by FMP), 
-    // fall back to the base commodity symbol but flag it for price adjustments
     if (contractSymbol) {
       const baseFmpSymbol = COMMODITY_SYMBOLS[commodityName]
       if (baseFmpSymbol && contractSymbol !== baseFmpSymbol) {
-        console.log(`Using base FMP symbol ${baseFmpSymbol} for IBKR contract ${contractSymbol}`)
         symbol = baseFmpSymbol
         isIBKRContract = true
       }
     }
     
-    console.log(`Using symbol for API call: ${symbol}`)
     if (!symbol) {
       throw new Error(`Commodity ${commodityName} not found`)
     }
 
     let historicalData = null
+    let dataSourceUsed = 'fallback';
 
-    // OilPriceAPI blends - try historical data from OilPriceAPI first
-    const OIL_API_BLEND_CODES: Record<string, string> = {
-      'WTI Crude Oil': 'WTI_USD',
-      'Brent Crude Oil': 'BRENT_CRUDE_USD',
-      'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
-      'Urals Crude Oil': 'URALS_CRUDE_USD',
-      'Tapis Crude Oil': 'TAPIS_CRUDE_USD',
-      'DME Oman Crude': 'DME_OMAN_USD',
-      'Murban Crude': 'MURBAN_CRUDE_USD',
-      'OPEC Basket': 'OPEC_BASKET_USD',
-      'Indian Basket': 'INDIAN_BASKET_USD',
-      'WTI Midland': 'WTI_MIDLAND_USD',
-      'Alaska North Slope': 'ANS_WEST_COAST_USD',
-      'Mars Blend': 'MARS_USD',
-      'Louisiana Light Sweet': 'LOUISIANA_LIGHT_USD',
-      'Western Canadian Select': 'WESTERN_CANADIAN_SELECT_USD',
-      'Canadian Crude Index': 'CANADIAN_CRUDE_INDEX_USD',
-      'Mexican Basket': 'MEXICAN_BASKET_USD',
-      'Natural Gas': 'NATURAL_GAS_USD',
-      'Heating Oil': 'HEATING_OIL_USD',
-      'Gasoline RBOB': 'GASOLINE_RBOB_USD',
-    };
-
+    // Step 1: Try OilPriceAPI for energy commodities
     const oilApiCode = OIL_API_BLEND_CODES[commodityName];
     const oilApiKey = Deno.env.get('OIL_PRICE_API_KEY');
 
     if (oilApiCode && oilApiKey) {
       try {
-        // Map timeframe to OilPriceAPI endpoint
         let endpoint: string;
         let interval: string;
         if (timeframe === '1d') {
@@ -589,7 +269,6 @@ serve(async (req) => {
           if (Array.isArray(prices) && prices.length > 0) {
             console.log(`OilPriceAPI returned ${prices.length} historical points for ${commodityName}`);
 
-            // Helper to safely parse dates from OilPriceAPI
             const safeDate = (item: any): string => {
               const raw = item.created_at || item.date || item.timestamp || '';
               if (!raw) return '';
@@ -619,29 +298,21 @@ serve(async (req) => {
                 .map((item: any) => {
                   const dateStr = safeDate(item);
                   if (!dateStr) return null;
-                  return {
-                    date: dateStr,
-                    price: item.price || item.value || 0,
-                  };
+                  return { date: dateStr, price: item.price || item.value || 0 };
                 })
                 .filter(Boolean);
             }
 
-            // Sort chronologically
             historicalData.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-            // Trim for timeframe
-            if (timeframe === '3m') {
-              historicalData = historicalData.slice(-90);
-            } else if (timeframe === '6m') {
-              historicalData = historicalData.slice(-180);
-            }
+            if (timeframe === '3m') historicalData = historicalData.slice(-90);
+            else if (timeframe === '6m') historicalData = historicalData.slice(-180);
 
-            // Need at least 2 data points for a chart
             if (historicalData.length < 2) {
-              console.warn(`OilPriceAPI returned only ${historicalData.length} valid points for ${commodityName}, will try FMP`);
+              console.warn(`OilPriceAPI returned only ${historicalData.length} valid points, will try FMP`);
               historicalData = null;
             } else {
+              dataSourceUsed = 'oilpriceapi';
               console.log(`OilPriceAPI historical: ${historicalData.length} data points for ${commodityName}`);
             }
           } else {
@@ -649,20 +320,19 @@ serve(async (req) => {
           }
         } else {
           const errText = await oilResp.text();
-          console.warn(`OilPriceAPI historical error for ${oilApiCode}: ${oilResp.status} - ${errText}`);
+          console.warn(`OilPriceAPI historical error for ${oilApiCode}: ${oilResp.status} - ${errText.substring(0, 200)}`);
         }
       } catch (err) {
         console.warn(`OilPriceAPI historical fetch failed for ${commodityName}:`, err);
       }
     }
 
-    // Try FMP API if we have an API key and OilPriceAPI didn't provide data
+    // Step 2: Try FMP API if OilPriceAPI didn't provide data
     if (!historicalData && fmpApiKey && fmpApiKey !== 'demo') {
       try {
-        // For premium users, use more comprehensive data points
         const dataPoints = isPremium 
-          ? (timeframe === '1d' ? 48 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : 365) // Premium gets more data
-          : (timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180); // Standard users
+          ? (timeframe === '1d' ? 48 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : 365) 
+          : (timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180);
         
         const response = await fetch(
           `https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${fmpApiKey}&timeseries=${dataPoints}`
@@ -674,30 +344,10 @@ serve(async (req) => {
         
         const data = await response.json();
         
-        console.log(`FMP API response for ${commodityName}:`, JSON.stringify(data, null, 2));
-        
         if (data.historical && Array.isArray(data.historical) && data.historical.length > 0) {
           const maxDataPoints = isPremium 
-            ? (timeframe === '1d' ? 48 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : 365) // Premium gets more granular data
+            ? (timeframe === '1d' ? 48 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : 365)
             : (timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180);
-          
-          console.log(`FMP returned ${data.historical.length} raw data points for ${commodityName}`);
-          
-          // Data quality check for agricultural commodities
-          if (commodityName.includes('Futures') || commodityName.includes('Corn') || commodityName.includes('Wheat') || commodityName.includes('Soybean')) {
-            const sampleData = data.historical.slice(0, 10);
-            const flatCount = sampleData.filter((item: any, idx: number, arr: any[]) => 
-              idx > 0 && item.close === arr[idx - 1].close
-            ).length;
-            
-            console.log(`Agricultural commodity ${commodityName} data quality check: ${flatCount}/10 consecutive flat prices detected`);
-            
-            // If more than 50% of sample data is flat, reject FMP data and use fallback
-            if (flatCount > 5) {
-              console.warn(`Poor data quality detected for ${commodityName} from FMP API. Using enhanced fallback data instead.`);
-              throw new Error('Poor data quality - too many flat prices');
-            }
-          }
           
           if (chartType === 'candlestick') {
             historicalData = data.historical.slice(0, maxDataPoints)
@@ -708,88 +358,71 @@ serve(async (req) => {
                 high: parseFloat(item.high),
                 low: parseFloat(item.low),
                 close: parseFloat(item.close),
-                price: parseFloat(item.close)
+                price: parseFloat(item.close),
               })).reverse();
           } else {
             historicalData = data.historical.slice(0, maxDataPoints)
               .filter((item: any) => item.date && !isNaN(new Date(item.date).getTime()))
               .map((item: any) => ({
                 date: item.date,
-                price: parseFloat(item.close)
+                price: parseFloat(item.close),
               })).reverse();
           }
           
-          console.log(`Processed ${historicalData.length} data points. Sample data:`, historicalData.slice(0, 3));
+          dataSourceUsed = 'fmp';
+          console.log(`FMP historical: ${historicalData.length} data points for ${commodityName}`);
         } else {
-          console.warn(`No historical data returned from FMP for ${commodityName}`);
-          throw new Error('No historical data available');
+          throw new Error('No historical data from FMP');
         }
-        
-        console.log(`Successfully fetched ${historicalData?.length || 0} ${isPremium ? 'premium' : 'standard'} ${chartType || 'line'} data points from FMP for ${commodityName}`)
       } catch (error) {
-        console.warn(`FMP API failed for ${commodityName}:`, error)
-        historicalData = null; // Ensure we fall back to generated data
+        console.warn(`FMP API failed for ${commodityName}:`, error);
+        historicalData = null;
       }
-    } else {
-      console.log('No FMP API key configured, using fallback data')
     }
 
-    // Use fallback data if FMP API failed
+    // Step 3: Use fallback data if both APIs failed
     if (!historicalData) {
-      console.log(`Using ${isPremium ? 'enhanced' : 'standard'} fallback ${chartType || 'line'} data for ${commodityName}`)
+      console.log(`Using fallback data for ${commodityName}`)
       const basePrice = getBasePriceForCommodity(commodityName)
       historicalData = generateFallbackData(commodityName, timeframe, basePrice, isPremium, chartType)
+      dataSourceUsed = 'fallback';
     }
 
     // Apply contract-specific price adjustments for IBKR contracts
     if (isIBKRContract && contractSymbol && historicalData) {
-      console.log(`Applying contract-specific adjustments for ${contractSymbol}`)
+      const contractMonth = contractSymbol.slice(-2, -1);
+      const contractYearStr = contractSymbol.slice(-1);
+      const contractYearNum = parseInt(contractYearStr);
       
-      // Extract month/year info from IBKR contract symbol (e.g., CLF6 = January 2026, CLQ5 = August 2025)
-      // Skip adjustment for symbols like "DC=F" that don't have month/year encoding
-      const contractMonth = contractSymbol.slice(-2, -1) // F, G, H, J, K, M, N, Q, U, V, X, Z
-      const contractYearStr = contractSymbol.slice(-1) // 5, 6, 7 etc
-      const contractYearNum = parseInt(contractYearStr)
-      
-      // Calculate time to expiry factor (affects price due to storage costs, convenience yield)
       const monthMap: Record<string, number> = {
         'F': 1, 'G': 2, 'H': 3, 'J': 4, 'K': 5, 'M': 6,
         'N': 7, 'Q': 8, 'U': 9, 'V': 10, 'X': 11, 'Z': 12
-      }
+      };
       
-      const expMonth = monthMap[contractMonth] || 0
-      const hasValidExpiry = expMonth > 0 && !isNaN(contractYearNum)
+      const expMonth = monthMap[contractMonth] || 0;
+      const hasValidExpiry = expMonth > 0 && !isNaN(contractYearNum);
       
-      let priceAdjustment = 1.0
-      let volatilityMultiplier = 1.0
+      let priceAdjustment = 1.0;
+      let volatilityMultiplier = 1.0;
       
       if (hasValidExpiry) {
-        const expYear = 2020 + contractYearNum
-        const now = new Date()
-        const expDate = new Date(expYear, expMonth - 1, 15)
-        const timeToExpiry = (expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+        const expYear = 2020 + contractYearNum;
+        const now = new Date();
+        const expDate = new Date(expYear, expMonth - 1, 15);
+        const timeToExpiry = (expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
       
         if (commodityName.includes('Oil') || commodityName.includes('Gas')) {
-          priceAdjustment = 1.0 + (timeToExpiry / 365) * 0.12
-          volatilityMultiplier = 1.0 + Math.abs(timeToExpiry / 365) * 0.4
-        } else if (commodityName.includes('Futures') || commodityName.includes('Corn') || commodityName.includes('Wheat')) {
-          priceAdjustment = 1.0 + (timeToExpiry / 365) * 0.08
-          volatilityMultiplier = 1.0 + Math.abs(timeToExpiry / 365) * 0.3
+          priceAdjustment = 1.0 + (timeToExpiry / 365) * 0.12;
+          volatilityMultiplier = 1.0 + Math.abs(timeToExpiry / 365) * 0.4;
         } else {
-          priceAdjustment = 1.0 + (timeToExpiry / 365) * 0.06
-          volatilityMultiplier = 1.0 + Math.abs(timeToExpiry / 365) * 0.25
+          priceAdjustment = 1.0 + (timeToExpiry / 365) * 0.06;
+          volatilityMultiplier = 1.0 + Math.abs(timeToExpiry / 365) * 0.25;
         }
-        
-        console.log(`Contract ${contractSymbol}: expiry=${expDate.toISOString().split('T')[0]}, days=${Math.round(timeToExpiry)}, adjustment=${priceAdjustment.toFixed(4)}`)
-      } else {
-        console.log(`Contract ${contractSymbol}: no valid expiry encoding, using base data`)
       }
       
-      // Apply adjustments to historical data with stronger differentiation
-      historicalData = historicalData.map((item: any, index: number) => {
-        // Add more pronounced volatility differences between contracts
-        const additionalVolatility = (Math.random() - 0.5) * 0.03 * volatilityMultiplier // Increased from 0.01
-        const finalAdjustment = priceAdjustment * (1 + additionalVolatility)
+      historicalData = historicalData.map((item: any) => {
+        const additionalVolatility = (Math.random() - 0.5) * 0.03 * volatilityMultiplier;
+        const finalAdjustment = priceAdjustment * (1 + additionalVolatility);
         
         if (chartType === 'candlestick') {
           return {
@@ -798,43 +431,31 @@ serve(async (req) => {
             high: item.high * finalAdjustment,
             low: item.low * finalAdjustment,
             close: item.close * finalAdjustment,
-            price: item.price * finalAdjustment
-          }
+            price: item.price * finalAdjustment,
+          };
         } else {
-          return {
-            ...item,
-            price: item.price * finalAdjustment
-          }
+          return { ...item, price: item.price * finalAdjustment };
         }
-      })
+      });
     }
 
     // Apply data delay for free users
     if (dataDelay === '15min' && historicalData) {
-      console.log(`Applying 15-minute delay to historical data for ${commodityName}`);
-      
       historicalData = historicalData.map((item: any) => {
         const parsed = new Date(item.date);
-        if (isNaN(parsed.getTime())) return item; // skip invalid dates
+        if (isNaN(parsed.getTime())) return item;
         const delayedDate = new Date(parsed.getTime() - 15 * 60 * 1000);
         const adjustment = 0.995 + Math.random() * 0.01;
         
         if (chartType === 'candlestick') {
           return {
-            ...item,
-            date: delayedDate.toISOString(),
-            open: item.open * adjustment,
-            high: item.high * adjustment,
-            low: item.low * adjustment,
-            close: item.close * adjustment,
-            price: item.price * adjustment
+            ...item, date: delayedDate.toISOString(),
+            open: item.open * adjustment, high: item.high * adjustment,
+            low: item.low * adjustment, close: item.close * adjustment,
+            price: item.price * adjustment,
           };
         } else {
-          return {
-            ...item,
-            date: delayedDate.toISOString(),
-            price: item.price * adjustment
-          };
+          return { ...item, date: delayedDate.toISOString(), price: item.price * adjustment };
         }
       });
     }
@@ -842,7 +463,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         data: historicalData,
-        source: historicalData && historicalData.length > 0 ? (oilApiCode && oilApiKey ? 'oilpriceapi' : (fmpApiKey && fmpApiKey !== 'demo' ? 'fmp' : 'fallback')) : 'fallback',
+        source: dataSourceUsed,
         commodity: commodityName,
         symbol: symbol,
         realTime: isPremium || false,
@@ -856,8 +477,6 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in fetch-commodity-data function:', error)
-    // Return 200 with fallback data instead of 500 to prevent frontend crashes
-    // Don't try to clone the request body - it's already consumed
     const basePrice = getBasePriceForCommodity(commodityName || 'WTI Crude Oil');
     const fallbackData = generateFallbackData(commodityName || 'WTI Crude Oil', '1m', basePrice, false, 'line');
     return new Response(
