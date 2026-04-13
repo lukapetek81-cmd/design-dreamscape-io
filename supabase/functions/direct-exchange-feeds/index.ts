@@ -9,7 +9,7 @@ const corsHeaders = {
 // Direct Exchange Feed Mappings - Prioritizing official exchange sources
 const DIRECT_EXCHANGE_FEEDS = {
   // Energy - NYMEX/ICE Direct
-  'Crude Oil': { 
+  'WTI Crude Oil': { 
     exchange: 'NYMEX', 
     symbol: 'CL=F', 
     primarySource: 'cme_direct',

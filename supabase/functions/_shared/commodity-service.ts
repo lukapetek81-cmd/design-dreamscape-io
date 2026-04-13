@@ -189,7 +189,7 @@ export class CommodityService {
     try {
       // Alpha Vantage commodity symbols mapping
       const avSymbolMap: Record<string, string> = {
-        'Crude Oil': 'WTI',
+        'WTI Crude Oil': 'WTI',
         'Brent Crude Oil': 'BRENT',
         'Natural Gas': 'NATURAL_GAS',
         'Corn Futures': 'CORN',
@@ -309,7 +309,7 @@ export class CommodityService {
 
   private getFallbackCommodities(): CommodityData[] {
     const coreCommodities = [
-      'Crude Oil', 'Natural Gas', 'Gold Futures', 'Silver Futures', 
+      'WTI Crude Oil', 'Natural Gas', 'Gold Futures', 'Silver Futures', 
       'Corn Futures', 'Wheat Futures', 'Coffee', 'Sugar', 'Cotton'
     ];
     
@@ -359,7 +359,7 @@ export class CommodityService {
 
   private getBasePriceForCommodity(commodityName: string): number {
     const basePrices: Record<string, number> = {
-      'Crude Oil': 65, 'Brent Crude Oil': 70, 'Natural Gas': 2.85,
+      'WTI Crude Oil': 65, 'Brent Crude Oil': 70, 'Natural Gas': 2.85,
       'Gold Futures': 2000, 'Silver Futures': 25, 'Copper': 4.2,
       'Corn Futures': 430, 'Wheat Futures': 550, 'Soybean Futures': 1150,
       'Coffee': 165, 'Sugar': 19.75, 'Cotton': 72.80

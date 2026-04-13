@@ -35,7 +35,7 @@ const MARKET_HOURS = {
 // Categorize commodities by their trading patterns
 const COMMODITY_CATEGORIES = {
   ENERGY: [
-    'Crude Oil', 'Brent Crude Oil', 'Natural Gas', 
+    'WTI Crude Oil', 'Brent Crude Oil', 'Natural Gas', 
     'Heating Oil', 'Gasoline RBOB'
   ],
   AGRICULTURE: [

@@ -29,7 +29,7 @@ const getCommoditySymbols = (commodityName: string): string => {
     'Gold Futures': 'GOLD,GLD,IAU',
     'Silver Futures': 'SILVER,SLV',
     'Copper': 'COPPER,FCX',
-    'Crude Oil': 'OIL,USO,UCO',
+    'WTI Crude Oil': 'OIL,USO,UCO',
     'Natural Gas': 'NATGAS,UNG',
     'Corn Futures': 'CORN',
     'Wheat Futures': 'WHEAT',
@@ -46,7 +46,7 @@ const getCommodityTicker = (commodityName: string): string => {
   const tickerMap: Record<string, string> = {
     'Gold Futures': 'GLD',
     'Silver Futures': 'SLV', 
-    'Crude Oil': 'USO',
+    'WTI Crude Oil': 'USO',
     'Natural Gas': 'UNG'
   };
   return tickerMap[commodityName] || 'SPY'; // fallback

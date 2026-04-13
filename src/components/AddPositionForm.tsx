@@ -12,7 +12,7 @@ import { usePortfolio } from '@/hooks/usePortfolio';
 const COMMODITY_OPTIONS = [
   'Gold Futures',
   'Silver Futures',
-  'Crude Oil',
+  'WTI Crude Oil',
   'Natural Gas',
   'Copper',
   'Platinum',
