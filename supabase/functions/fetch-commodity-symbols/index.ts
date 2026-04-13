@@ -375,12 +375,24 @@ serve(async (req) => {
           const OIL_API_BLENDS: Record<string, string> = {
             // Oil types from OilPriceAPI (excluding WTI/Brent already from FMP)
             'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
+          // ALL energy products use OilPriceAPI exclusively
+          const OIL_API_BLENDS: Record<string, string> = {
+            // Core benchmarks
+            'Crude Oil': 'WTI_USD',
+            'Brent Crude Oil': 'BRENT_CRUDE_USD',
+            'Natural Gas': 'NATURAL_GAS_USD',
+            'Gasoline RBOB': 'GASOLINE_RBOB_USD',
+            'Heating Oil': 'HEATING_OIL_USD',
+            // Regional oil blends
+            'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
             'Tapis Crude Oil': 'TAPIS_CRUDE_USD',
             'Western Canadian Select': 'WCS_CRUDE_USD',
             'Urals Crude Oil': 'URALS_CRUDE_USD',
+            // Refined products
             'Jet Fuel': 'JET_FUEL_USD',
             'ULSD Diesel': 'ULSD_DIESEL_USD',
-            // Natural gas types (excluding Henry Hub already from FMP)
+            // Natural gas types
+            'Natural Gas UK': 'NATURAL_GAS_GBP',
             'Dutch TTF Gas': 'DUTCH_TTF_EUR',
             'Japan/Korea LNG': 'JKM_LNG_USD',
             'US Gas Storage': 'NATURAL_GAS_STORAGE',

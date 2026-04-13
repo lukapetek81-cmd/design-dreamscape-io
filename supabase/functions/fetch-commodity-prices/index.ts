@@ -132,8 +132,8 @@ serve(async (req) => {
       }
     }
 
-    // Use FMP API as secondary source for commodities not from OilPriceAPI
-    if (!priceData) {
+    // Use FMP API only for NON-energy commodities
+    if (!priceData && !ENERGY_NAMES.has(commodityName)) {
       const fmpApiKey = Deno.env.get('FMP_API_KEY')
       
       if (fmpApiKey && fmpApiKey !== 'demo') {
