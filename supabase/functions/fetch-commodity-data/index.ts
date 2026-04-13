@@ -353,9 +353,22 @@ const getBasePriceForCommodity = (commodityName: string): number => {
     'Neodymium': 85,
     'Uranium': 50,
     
-    // Energy - Additional
+    // Energy - Additional / Regional Blends
     'Crude Oil Dubai': 64,
     'Ural Oil': 62,
+    'Urals Crude Oil': 62,
+    'Tapis Crude Oil': 68,
+    'DME Oman Crude': 72,
+    'Murban Crude': 74,
+    'OPEC Basket': 73,
+    'Indian Basket': 72,
+    'WTI Midland': 66,
+    'Alaska North Slope': 67,
+    'Mars Blend': 64,
+    'Louisiana Light Sweet': 67,
+    'Western Canadian Select': 55,
+    'Canadian Crude Index': 60,
+    'Mexican Basket': 62,
     'Natural Gas US': 2.85,
     'Natural Gas Europe': 32,
     'Liquefied Natural Gas Japan': 15.50,
