@@ -76,7 +76,8 @@ const DashboardContent = ({
   commodities, 
   loading, 
   error, 
-  onRetry
+  onRetry,
+  highlightCommodity
 }: {
   activeGroup: string;
   setActiveGroup: (group: string) => void;
@@ -86,6 +87,7 @@ const DashboardContent = ({
   loading: boolean;
   error: string | null;
   onRetry: () => void;
+  highlightCommodity?: string | null;
 }) => {
   const { setOpenMobile } = useSidebar();
   const { connected: realtimeConnected, delayStatus } = useRealtimeDataContext();
