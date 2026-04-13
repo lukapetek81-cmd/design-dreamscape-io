@@ -631,7 +631,7 @@ serve(async (req) => {
     }
 
     // Try FMP API if we have an API key and OilPriceAPI didn't provide data
-    if (fmpApiKey && fmpApiKey !== 'demo') {
+    if (!historicalData && fmpApiKey && fmpApiKey !== 'demo') {
       try {
         // For premium users, use more comprehensive data points
         const dataPoints = isPremium 
