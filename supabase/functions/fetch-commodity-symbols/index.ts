@@ -43,11 +43,9 @@ const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; cont
   'Copper': { symbol: 'HG=F', category: 'metals', contractSize: '25,000 lbs', venue: 'COMEX' },
   'Aluminum': { symbol: 'ALI=F', category: 'metals', contractSize: '25 MT', venue: 'LME' },
   'Zinc': { symbol: 'ZS=F', category: 'metals', contractSize: '25 MT', venue: 'LME' },
-  'Nickel': { symbol: 'NI=F', category: 'metals', contractSize: '6 MT', venue: 'LME' },
   
   // Grains & Agriculture
   'Corn Futures': { symbol: 'ZC=F', category: 'grains', contractSize: '5,000 bu', venue: 'CBOT' },
-  'Wheat Futures': { symbol: 'ZW=F', category: 'grains', contractSize: '5,000 bu', venue: 'CBOT' },
   'Soybean Futures': { symbol: 'ZS=F', category: 'grains', contractSize: '5,000 bu', venue: 'CBOT' },
   'Soybean Oil': { symbol: 'ZL=F', category: 'grains', contractSize: '60,000 lbs', venue: 'CBOT' },
   'Soybean Meal': { symbol: 'ZM=F', category: 'grains', contractSize: '100 tons', venue: 'CBOT' },
@@ -77,12 +75,12 @@ const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
   // Precious Metals
   'XAU': 'Gold Futures', 'XAG': 'Silver Futures', 'XPT': 'Platinum', 'XPD': 'Palladium',
   // Base Metals
-  'HG': 'Copper', 'ALU': 'Aluminum', 'ZNC': 'Zinc', 'NICKEL': 'Nickel',
+  'HG': 'Copper', 'ALU': 'Aluminum', 'ZNC': 'Zinc',
   // Energy
   'WTIOIL': 'WTI Crude Oil', 'BRENTOIL': 'Brent Crude Oil', 'NG': 'Natural Gas',
   'HO': 'Heating Oil', 'RB': 'Gasoline RBOB',
   // Grains
-  'CORN': 'Corn Futures', 'ZW': 'Wheat Futures', 'SOYBEAN': 'Soybean Futures',
+  'CORN': 'Corn Futures', 'SOYBEAN': 'Soybean Futures',
   'ZL': 'Soybean Oil', 'ZM': 'Soybean Meal', 'OAT': 'Oat Futures', 'RR': 'Rough Rice',
   // Softs
   'CA': 'Coffee Arabica', 'LS': 'Sugar #11', 'CT': 'Cotton', 'CC': 'Cocoa', 'OJ': 'Orange Juice',
@@ -286,9 +284,9 @@ serve(async (req) => {
             // Metals (USD suffix)
             'Gold Futures': 'GCUSD', 'Silver Futures': 'SIUSD', 'Platinum': 'PLUSD',
             'Palladium': 'PAUSD', 'Copper': 'HGUSD',
-            'Aluminum': 'ALIUSD', 'Nickel': 'NIUSD', 'Zinc': 'ZNUSD',
+            'Aluminum': 'ALIUSD', 'Zinc': 'ZNUSD',
             // Grains (USX suffix for CME/CBOT grains)
-            'Corn Futures': 'ZCUSX', 'Wheat Futures': 'ZWUSX', 'Soybean Futures': 'ZSUSX',
+            'Corn Futures': 'ZCUSX', 'Soybean Futures': 'ZSUSX',
             'Soybean Oil': 'ZLUSX', 'Soybean Meal': 'ZMUSD', 'Oat Futures': 'ZOUSX',
             'Rough Rice': 'ZRUSD',
             // Softs

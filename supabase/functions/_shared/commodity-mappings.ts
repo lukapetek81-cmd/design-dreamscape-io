@@ -25,12 +25,10 @@ export const COMMODITY_SYMBOLS: Record<string, CommoditySymbol> = {
   'Platinum': { symbol: 'PL=F', category: 'metals', contractSize: '50 oz', venue: 'NYMEX' },
   'Palladium': { symbol: 'PA=F', category: 'metals', contractSize: '100 oz', venue: 'NYMEX' },
   'Aluminum': { symbol: 'ALI=F', category: 'metals', contractSize: '25 MT', venue: 'LME' },
-  'Nickel': { symbol: 'NI=F', category: 'metals', contractSize: '6 MT', venue: 'LME' },
   'Zinc': { symbol: 'ZS=F', category: 'metals', contractSize: '25 MT', venue: 'LME' },
   
   // Grains (FMP)
   'Corn Futures': { symbol: 'ZC=F', category: 'grains', contractSize: '5,000 bu', venue: 'CBOT' },
-  'Wheat Futures': { symbol: 'ZW=F', category: 'grains', contractSize: '5,000 bu', venue: 'CBOT' },
   'Soybean Futures': { symbol: 'ZS=F', category: 'grains', contractSize: '5,000 bu', venue: 'CBOT' },
   'Soybean Oil': { symbol: 'ZL=F', category: 'grains', contractSize: '60,000 lbs', venue: 'CBOT' },
   'Soybean Meal': { symbol: 'ZM=F', category: 'grains', contractSize: '100 tons', venue: 'CBOT' },
@@ -58,10 +56,10 @@ export const COMMODITY_SYMBOLS: Record<string, CommoditySymbol> = {
 // CommodityPriceAPI symbol mapping
 export const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
   'XAU': 'Gold Futures', 'XAG': 'Silver Futures', 'XPT': 'Platinum', 'XPD': 'Palladium',
-  'HG': 'Copper', 'ALU': 'Aluminum', 'ZNC': 'Zinc', 'NICKEL': 'Nickel',
+  'HG': 'Copper', 'ALU': 'Aluminum', 'ZNC': 'Zinc',
   'WTIOIL': 'WTI Crude Oil', 'BRENTOIL': 'Brent Crude Oil', 'NG': 'Natural Gas',
   'HO': 'Heating Oil', 'RB': 'Gasoline RBOB',
-  'CORN': 'Corn Futures', 'ZW': 'Wheat Futures', 'SOYBEAN': 'Soybean Futures',
+  'CORN': 'Corn Futures', 'SOYBEAN': 'Soybean Futures',
   'ZL': 'Soybean Oil', 'ZM': 'Soybean Meal', 'OAT': 'Oat Futures', 'RR': 'Rough Rice',
   'CA': 'Coffee Arabica', 'LS': 'Sugar #11', 'CT': 'Cotton', 'CC': 'Cocoa', 'OJ': 'Orange Juice',
   'CATTLE': 'Live Cattle Futures', 'HOGS': 'Lean Hogs Futures',
@@ -71,8 +69,8 @@ export const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
 // Category mappings for grouping
 export const CATEGORY_MAPPINGS: Record<string, string[]> = {
   energy: ['WTI Crude Oil', 'Brent Crude Oil', 'Crude Oil Dubai', 'Tapis Crude Oil', 'Urals Crude Oil', 'Western Canadian Select', 'Natural Gas', 'Natural Gas UK', 'Dutch TTF Gas', 'Japan/Korea LNG', 'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel'],
-  metals: ['Gold Futures', 'Silver Futures', 'Copper', 'Platinum', 'Palladium', 'Aluminum', 'Nickel', 'Zinc'],
-  grains: ['Corn Futures', 'Wheat Futures', 'Soybean Futures', 'Soybean Oil', 'Soybean Meal', 'Oat Futures', 'Rough Rice'],
+  metals: ['Gold Futures', 'Silver Futures', 'Copper', 'Platinum', 'Palladium', 'Aluminum', 'Zinc'],
+  grains: ['Corn Futures', 'Soybean Futures', 'Soybean Oil', 'Soybean Meal', 'Oat Futures', 'Rough Rice'],
   livestock: ['Live Cattle Futures', 'Feeder Cattle Futures', 'Lean Hogs Futures', 'Milk Class III'],
   softs: ['Coffee Arabica', 'Sugar #11', 'Cotton', 'Cocoa', 'Orange Juice'],
   other: ['Lumber Futures', 'Random Length Lumber'],
