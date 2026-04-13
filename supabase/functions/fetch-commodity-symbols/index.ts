@@ -447,20 +447,32 @@ serve(async (req) => {
     }
 
     // Try FMP using per-symbol /quote endpoint (works on basic plans)
+    // FMP uses USD-suffixed symbols for commodities
     if (!nonEnergyLoaded) {
       const fmpApiKey = Deno.env.get('FMP_API_KEY');
       if (fmpApiKey && fmpApiKey !== 'demo') {
         try {
-          // Only fetch symbols that are real exchange-traded futures with FMP-compatible symbols
-          const fmpSymbols = Object.entries(COMMODITY_SYMBOLS)
-            .filter(([name, info]) => !OIL_API_ONLY_NAMES.has(name) && info.category !== 'energy' && !existingNames.has(name))
-            .filter(([_, info]) => info.symbol.endsWith('=F')) // Only real futures symbols
-            .slice(0, 30); // Limit to avoid rate limits
+          // Map our commodity names to FMP-compatible symbols
+          const FMP_SYMBOL_MAP: Record<string, string> = {
+            'Gold Futures': 'GCUSD', 'Silver Futures': 'SIUSD', 'Platinum': 'PLUSD',
+            'Palladium': 'PAUSD', 'Copper': 'HGUSD',
+            'Corn Futures': 'ZCUSD', 'Wheat Futures': 'ZWUSD', 'Soybean Futures': 'ZSUSD',
+            'Soybean Oil': 'ZLUSD', 'Soybean Meal': 'ZMUSD', 'Oat Futures': 'ZOUSD',
+            'Rough Rice': 'ZRUSD',
+            'Coffee Arabica': 'KCUSD', 'Sugar #11': 'SBUSD', 'Cotton': 'CTUSD',
+            'Cocoa': 'CCUSD', 'Orange Juice': 'OJUSD',
+            'Live Cattle Futures': 'LEUSD', 'Lean Hogs Futures': 'HEUSD',
+            'Feeder Cattle Futures': 'GFUSD',
+            'Lumber Futures': 'LBSUSD', 'Random Length Lumber': 'LBUSD',
+            'Milk Class III': 'DC=F',
+          };
 
-          if (fmpSymbols.length > 0) {
-            // Batch symbols into a single comma-separated request
-            const symbolList = fmpSymbols.map(([_, info]) => info.symbol).join(',');
-            console.log(`FMP: fetching ${fmpSymbols.length} symbols via /quote batch`);
+          const entriesToFetch = Object.entries(FMP_SYMBOL_MAP)
+            .filter(([name]) => !existingNames.has(name) && COMMODITY_SYMBOLS[name]);
+
+          if (entriesToFetch.length > 0) {
+            const symbolList = entriesToFetch.map(([_, sym]) => sym).join(',');
+            console.log(`FMP: fetching ${entriesToFetch.length} symbols via /quote batch: ${symbolList}`);
             
             const response = await fetch(
               `https://financialmodelingprep.com/api/v3/quote/${symbolList}?apikey=${fmpApiKey}`
@@ -475,17 +487,17 @@ serve(async (req) => {
                 console.log(`FMP /quote returned ${data.length} results`);
                 
                 for (const fmpItem of data) {
-                  // Find matching commodity by symbol
-                  const matched = fmpSymbols.find(([_, info]) => info.symbol === fmpItem.symbol);
+                  const matched = entriesToFetch.find(([_, sym]) => sym === fmpItem.symbol);
                   if (matched && !existingNames.has(matched[0])) {
+                    const meta = COMMODITY_SYMBOLS[matched[0]];
                     commoditiesData.push({
                       name: matched[0],
-                      symbol: fmpItem.symbol,
+                      symbol: meta.symbol,
                       price: parseFloat(fmpItem.price) || 0,
                       change: parseFloat(fmpItem.change) || 0,
                       changePercent: parseFloat(fmpItem.changesPercentage) || 0,
                       volume: parseInt(fmpItem.volume) || 0,
-                      ...matched[1],
+                      ...meta,
                       supportedByFMP: true,
                       source: 'fmp',
                     });
@@ -493,9 +505,9 @@ serve(async (req) => {
                   }
                 }
                 
-                nonEnergyLoaded = commoditiesData.length > 22; // More than just energy
+                nonEnergyLoaded = commoditiesData.length > 22;
                 dataSource = 'mixed';
-                console.log(`FMP: loaded ${data.length} non-energy commodities`);
+                console.log(`FMP: successfully loaded ${data.length} non-energy commodities with real prices`);
               }
             } else {
               const errorBody = await response.text();
