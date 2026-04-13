@@ -82,7 +82,7 @@ serve(async (req) => {
 
     // Map commodity names to IBKR underlying symbols
     const commodityToSymbolMap: Record<string, string[]> = {
-      'Crude Oil': ['CL', 'WTI'],
+      'WTI Crude Oil': ['CL', 'WTI'],
       'Brent Crude Oil': ['BZ', 'COIL'],
       'Natural Gas': ['NG'],
       'Heating Oil': ['HO'],

@@ -61,7 +61,7 @@ const RiskManagement = () => {
 
   const [accountBalance, setAccountBalance] = useState('10000');
   const [riskPercentage, setRiskPercentage] = useState([2]);
-  const [selectedCommodity, setSelectedCommodity] = useState('Crude Oil');
+  const [selectedCommodity, setSelectedCommodity] = useState('WTI Crude Oil');
   const [entryPrice, setEntryPrice] = useState('');
   const [stopLossPrice, setStopLossPrice] = useState('');
   const [targetPrice, setTargetPrice] = useState('');
