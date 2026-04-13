@@ -89,10 +89,16 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, [commodities.length, visibleItems, isLoadingMore, isMobile]);
 
-  // Reset visible items when commodities change
+  // Reset visible items when commodities change, ensure highlighted item is visible
   React.useEffect(() => {
-    setVisibleItems(isMobile ? 5 : 10);
-  }, [commodities, isMobile]);
+    const defaultVisible = isMobile ? 5 : 10;
+    if (highlightCommodity) {
+      const idx = commodities.findIndex(c => c.name === highlightCommodity);
+      setVisibleItems(Math.max(defaultVisible, idx + 2));
+    } else {
+      setVisibleItems(defaultVisible);
+    }
+  }, [commodities, isMobile, highlightCommodity]);
 
   const visibleCommodities = React.useMemo(() => 
     commodities.slice(0, visibleItems), 
