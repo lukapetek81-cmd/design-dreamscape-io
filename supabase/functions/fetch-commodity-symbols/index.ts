@@ -346,16 +346,21 @@ serve(async (req) => {
             };
           });
 
-          // Add regional oil blends not covered by FMP, using WTI as price reference
+          // Add regional oil blends not covered by FMP
           const existingNames = new Set(commoditiesData.map(c => c.name));
           const wtiPrice = commoditiesData.find(c => c.symbol === 'CL=F')?.price || 0;
           const brentPrice = commoditiesData.find(c => c.symbol === 'BZ=F')?.price || 0;
           const refPrice = brentPrice || wtiPrice;
 
-          const REGIONAL_OIL_BLENDS: Record<string, { differential: number }> = {
-            'Crude Oil Dubai': { differential: -2.5 },
-            'Tapis Crude Oil': { differential: 1.5 },
-            'Urals Crude Oil': { differential: -8.0 },
+          // OilPriceAPI-supported blends
+          const OIL_API_BLENDS: Record<string, string> = {
+            'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
+            'Tapis Crude Oil': 'TAPIS_CRUDE_USD',
+            'Urals Crude Oil': 'URALS_CRUDE_USD',
+          };
+
+          // Blends only available via Brent differential estimate
+          const ESTIMATED_BLENDS: Record<string, { differential: number }> = {
             'Bonny Light Crude Oil': { differential: 0.5 },
             'Arab Light Crude Oil': { differential: -1.0 },
             'Arab Heavy Crude Oil': { differential: -4.5 },
@@ -363,8 +368,55 @@ serve(async (req) => {
             'Isthmus Crude Oil': { differential: -0.8 },
           };
 
+          // Fetch real prices from OilPriceAPI for supported blends
+          const oilApiKey = Deno.env.get('OIL_PRICE_API_KEY');
+          if (oilApiKey) {
+            const oilApiFetches = Object.entries(OIL_API_BLENDS)
+              .filter(([name]) => !existingNames.has(name) && COMMODITY_SYMBOLS[name])
+              .map(async ([name, code]) => {
+                try {
+                  const resp = await fetch(
+                    `https://api.oilpriceapi.com/v1/prices/latest?by_code=${code}`,
+                    { headers: { 'Authorization': `Token ${oilApiKey}` } }
+                  );
+                  if (!resp.ok) {
+                    const errText = await resp.text();
+                    console.warn(`OilPriceAPI ${code}: ${resp.status} - ${errText}`);
+                    return null;
+                  }
+                  const result = await resp.json();
+                  if (result.data?.price) {
+                    return {
+                      name,
+                      symbol: COMMODITY_SYMBOLS[name].symbol,
+                      price: result.data.price,
+                      change: 0,
+                      changePercent: 0,
+                      volume: 0,
+                      ...COMMODITY_SYMBOLS[name],
+                      supportedByFMP: false,
+                      source: 'oilpriceapi',
+                    };
+                  }
+                } catch (err) {
+                  console.warn(`OilPriceAPI fetch failed for ${code}:`, err);
+                }
+                return null;
+              });
+
+            const oilApiResults = await Promise.all(oilApiFetches);
+            for (const result of oilApiResults) {
+              if (result) {
+                commoditiesData.push(result);
+                existingNames.add(result.name);
+              }
+            }
+            console.log(`OilPriceAPI: added ${oilApiResults.filter(Boolean).length} blends with real prices`);
+          }
+
+          // Add remaining blends with Brent-estimated prices
           if (refPrice > 0) {
-            for (const [name, blend] of Object.entries(REGIONAL_OIL_BLENDS)) {
+            for (const [name, blend] of Object.entries(ESTIMATED_BLENDS)) {
               if (!existingNames.has(name) && COMMODITY_SYMBOLS[name]) {
                 const estimatedPrice = parseFloat((refPrice + blend.differential).toFixed(2));
                 commoditiesData.push({
