@@ -489,8 +489,11 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  let commodityName = 'Crude Oil';
   try {
-    const { commodityName, timeframe, isPremium, chartType, dataDelay = 'realtime', contractSymbol } = await req.json()
+    const body = await req.json();
+    commodityName = body.commodityName;
+    const { timeframe, isPremium, chartType, dataDelay = 'realtime', contractSymbol } = body;
     
     if (!commodityName || !timeframe) {
       return new Response(
@@ -641,8 +644,6 @@ serve(async (req) => {
             } else {
               console.log(`OilPriceAPI historical: ${historicalData.length} data points for ${commodityName}`);
             }
-
-            console.log(`OilPriceAPI historical: ${historicalData.length} data points for ${commodityName}`);
           } else {
             console.warn(`OilPriceAPI returned empty data for ${commodityName}`);
           }
@@ -745,8 +746,10 @@ serve(async (req) => {
       console.log(`Applying contract-specific adjustments for ${contractSymbol}`)
       
       // Extract month/year info from IBKR contract symbol (e.g., CLF6 = January 2026, CLQ5 = August 2025)
+      // Skip adjustment for symbols like "DC=F" that don't have month/year encoding
       const contractMonth = contractSymbol.slice(-2, -1) // F, G, H, J, K, M, N, Q, U, V, X, Z
-      const contractYear = contractSymbol.slice(-1) // 5, 6, 7 etc
+      const contractYearStr = contractSymbol.slice(-1) // 5, 6, 7 etc
+      const contractYearNum = parseInt(contractYearStr)
       
       // Calculate time to expiry factor (affects price due to storage costs, convenience yield)
       const monthMap: Record<string, number> = {
@@ -754,41 +757,33 @@ serve(async (req) => {
         'N': 7, 'Q': 8, 'U': 9, 'V': 10, 'X': 11, 'Z': 12
       }
       
-      const expMonth = monthMap[contractMonth] || 6 // Default to June if unknown
-      const expYear = 2020 + parseInt(contractYear) // Convert to full year
-      const now = new Date()
-      const expDate = new Date(expYear, expMonth - 1, 15) // 15th of expiry month
-      const timeToExpiry = (expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24) // Days
+      const expMonth = monthMap[contractMonth] || 0
+      const hasValidExpiry = expMonth > 0 && !isNaN(contractYearNum)
       
-      // Different adjustments based on commodity type and time to expiry
       let priceAdjustment = 1.0
       let volatilityMultiplier = 1.0
       
-      if (commodityName.includes('Oil') || commodityName.includes('Gas')) {
-        // Energy: farther contracts typically trade at contango (higher prices)
-        // Make the adjustment more pronounced for visible differences
-        priceAdjustment = 1.0 + (timeToExpiry / 365) * 0.12 // 12% per year contango (increased from 5%)
-        volatilityMultiplier = 1.0 + Math.abs(timeToExpiry / 365) * 0.4 // More volatile for distant contracts (increased from 0.2)
-      } else if (commodityName.includes('Futures') || commodityName.includes('Corn') || commodityName.includes('Wheat')) {
-        // Agricultural: storage costs vs convenience yield
-        priceAdjustment = 1.0 + (timeToExpiry / 365) * 0.08 // 8% storage cost per year (increased from 3%)
-        volatilityMultiplier = 1.0 + Math.abs(timeToExpiry / 365) * 0.3 // (increased from 0.15)
+      if (hasValidExpiry) {
+        const expYear = 2020 + contractYearNum
+        const now = new Date()
+        const expDate = new Date(expYear, expMonth - 1, 15)
+        const timeToExpiry = (expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+      
+        if (commodityName.includes('Oil') || commodityName.includes('Gas')) {
+          priceAdjustment = 1.0 + (timeToExpiry / 365) * 0.12
+          volatilityMultiplier = 1.0 + Math.abs(timeToExpiry / 365) * 0.4
+        } else if (commodityName.includes('Futures') || commodityName.includes('Corn') || commodityName.includes('Wheat')) {
+          priceAdjustment = 1.0 + (timeToExpiry / 365) * 0.08
+          volatilityMultiplier = 1.0 + Math.abs(timeToExpiry / 365) * 0.3
+        } else {
+          priceAdjustment = 1.0 + (timeToExpiry / 365) * 0.06
+          volatilityMultiplier = 1.0 + Math.abs(timeToExpiry / 365) * 0.25
+        }
+        
+        console.log(`Contract ${contractSymbol}: expiry=${expDate.toISOString().split('T')[0]}, days=${Math.round(timeToExpiry)}, adjustment=${priceAdjustment.toFixed(4)}`)
       } else {
-        // Metals: less time value effect but still noticeable
-        priceAdjustment = 1.0 + (timeToExpiry / 365) * 0.06 // 6% per year (increased from 2%)
-        volatilityMultiplier = 1.0 + Math.abs(timeToExpiry / 365) * 0.25 // (increased from 0.1)
+        console.log(`Contract ${contractSymbol}: no valid expiry encoding, using base data`)
       }
-      
-      // Add stronger contract-specific randomness to make each contract unique
-      const contractHash = contractSymbol.split('').reduce((a, b) => {
-        a = ((a << 5) - a) + b.charCodeAt(0)
-        return a & a
-      }, 0)
-      const randomFactor = 0.92 + (Math.abs(contractHash) % 100) / 625 // 0.92 to 1.08 (increased range from 0.98-1.02)
-      
-      priceAdjustment *= randomFactor
-      
-      console.log(`Contract ${contractSymbol}: expiry=${expDate.toISOString().split('T')[0]}, days=${Math.round(timeToExpiry)}, adjustment=${priceAdjustment.toFixed(4)}`)
       
       // Apply adjustments to historical data with stronger differentiation
       historicalData = historicalData.map((item: any, index: number) => {
@@ -862,8 +857,9 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in fetch-commodity-data function:', error)
     // Return 200 with fallback data instead of 500 to prevent frontend crashes
-    const basePrice = getBasePriceForCommodity((await req.clone().json().catch(() => ({}))).commodityName || 'Crude Oil');
-    const fallbackData = generateFallbackData('Crude Oil', '1m', basePrice, false, 'line');
+    // Don't try to clone the request body - it's already consumed
+    const basePrice = getBasePriceForCommodity(commodityName || 'Crude Oil');
+    const fallbackData = generateFallbackData(commodityName || 'Crude Oil', '1m', basePrice, false, 'line');
     return new Response(
       JSON.stringify({ 
         data: fallbackData, 
