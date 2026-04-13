@@ -446,62 +446,61 @@ serve(async (req) => {
       }
     }
 
-    // Try FMP as secondary source
+    // Try FMP using per-symbol /quote endpoint (works on basic plans)
     if (!nonEnergyLoaded) {
       const fmpApiKey = Deno.env.get('FMP_API_KEY');
-      console.log(`FMP_API_KEY exists: ${!!fmpApiKey}, length: ${fmpApiKey?.length || 0}`);
       if (fmpApiKey && fmpApiKey !== 'demo') {
         try {
-          const fmpUrl = `https://financialmodelingprep.com/api/v3/quotes/commodity?apikey=${fmpApiKey}`;
-          console.log(`FMP URL (redacted key): ${fmpUrl.replace(fmpApiKey, fmpApiKey.substring(0, 4) + '...')}`);
-          const response = await fetch(fmpUrl);
-          
-          console.log(`FMP response status: ${response.status}`);
-          if (!response.ok) {
-            const errorBody = await response.text();
-            console.warn(`FMP error body: ${errorBody.substring(0, 200)}`);
-            throw new Error(`FMP API error: ${response.status} - ${errorBody.substring(0, 100)}`);
-          }
-          
-          const data = await response.json();
-          
-          if (Array.isArray(data) && data.length > 0) {
-            console.log(`FMP returned ${data.length} commodities`);
-            dataSource = commoditiesData.length > 0 ? 'mixed' : 'fmp';
+          // Only fetch symbols that are real exchange-traded futures with FMP-compatible symbols
+          const fmpSymbols = Object.entries(COMMODITY_SYMBOLS)
+            .filter(([name, info]) => !OIL_API_ONLY_NAMES.has(name) && info.category !== 'energy' && !existingNames.has(name))
+            .filter(([_, info]) => info.symbol.endsWith('=F')) // Only real futures symbols
+            .slice(0, 30); // Limit to avoid rate limits
 
-            const fmpCommodities = data.map(fmpItem => {
-              const matchedCommodity = Object.entries(COMMODITY_SYMBOLS).find(([name, info]) => {
-                if (OIL_API_ONLY_NAMES.has(name)) return false;
-                return info.symbol === fmpItem.symbol || 
-                  name.toLowerCase().includes(fmpItem.name?.toLowerCase().split(' ')[0] || '');
-              });
+          if (fmpSymbols.length > 0) {
+            // Batch symbols into a single comma-separated request
+            const symbolList = fmpSymbols.map(([_, info]) => info.symbol).join(',');
+            console.log(`FMP: fetching ${fmpSymbols.length} symbols via /quote batch`);
+            
+            const response = await fetch(
+              `https://financialmodelingprep.com/api/v3/quote/${symbolList}?apikey=${fmpApiKey}`
+            );
+            
+            console.log(`FMP /quote response status: ${response.status}`);
+            
+            if (response.ok) {
+              const data = await response.json();
               
-              const commodityName = matchedCommodity ? matchedCommodity[0] : 
-                (fmpItem.name || fmpItem.symbol.replace('=F', ' Futures'));
-              
-              if (OIL_API_ONLY_NAMES.has(commodityName)) return null;
-              if (existingNames.has(commodityName)) return null;
-
-              const metadata = matchedCommodity ? matchedCommodity[1] : {
-                category: 'other',
-                contractSize: 'TBD',
-                venue: 'Various'
-              };
-              
-              return {
-                name: commodityName,
-                symbol: fmpItem.symbol,
-                price: parseFloat(fmpItem.price) || 0,
-                change: parseFloat(fmpItem.change) || 0,
-                changePercent: parseFloat(fmpItem.changesPercentage) || 0,
-                volume: parseInt(fmpItem.volume) || 0,
-                ...metadata,
-                supportedByFMP: true
-              };
-            }).filter(Boolean);
-
-            commoditiesData.push(...fmpCommodities);
-            nonEnergyLoaded = fmpCommodities.length > 0;
+              if (Array.isArray(data) && data.length > 0) {
+                console.log(`FMP /quote returned ${data.length} results`);
+                
+                for (const fmpItem of data) {
+                  // Find matching commodity by symbol
+                  const matched = fmpSymbols.find(([_, info]) => info.symbol === fmpItem.symbol);
+                  if (matched && !existingNames.has(matched[0])) {
+                    commoditiesData.push({
+                      name: matched[0],
+                      symbol: fmpItem.symbol,
+                      price: parseFloat(fmpItem.price) || 0,
+                      change: parseFloat(fmpItem.change) || 0,
+                      changePercent: parseFloat(fmpItem.changesPercentage) || 0,
+                      volume: parseInt(fmpItem.volume) || 0,
+                      ...matched[1],
+                      supportedByFMP: true,
+                      source: 'fmp',
+                    });
+                    existingNames.add(matched[0]);
+                  }
+                }
+                
+                nonEnergyLoaded = commoditiesData.length > 22; // More than just energy
+                dataSource = 'mixed';
+                console.log(`FMP: loaded ${data.length} non-energy commodities`);
+              }
+            } else {
+              const errorBody = await response.text();
+              console.warn(`FMP /quote error: ${response.status} - ${errorBody.substring(0, 200)}`);
+            }
           }
         } catch (error) {
           console.warn('FMP API failed:', error);
@@ -509,10 +508,9 @@ serve(async (req) => {
       }
     }
 
-    // Step 3: Static fallback for all non-energy commodities if both APIs failed
-    if (!nonEnergyLoaded) {
-      console.log('Using static fallback for non-energy commodities');
-      const staticNonEnergy = Object.entries(COMMODITY_SYMBOLS)
+    // Step 3: Static fallback for any remaining non-energy commodities
+    {
+      const remaining = Object.entries(COMMODITY_SYMBOLS)
         .filter(([name, info]) => !OIL_API_ONLY_NAMES.has(name) && info.category !== 'energy' && !existingNames.has(name))
         .map(([name, info]) => ({
           name,
@@ -526,9 +524,10 @@ serve(async (req) => {
           source: 'static',
         }));
       
-      commoditiesData.push(...staticNonEnergy);
-      console.log(`Static fallback: added ${staticNonEnergy.length} non-energy commodities`);
-      if (dataSource === 'fallback') dataSource = 'static';
+      if (remaining.length > 0) {
+        commoditiesData.push(...remaining);
+        console.log(`Static fallback: added ${remaining.length} remaining non-energy commodities`);
+      }
     }
 
     // Apply data delay for free users
