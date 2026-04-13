@@ -586,25 +586,42 @@ serve(async (req) => {
           if (Array.isArray(prices) && prices.length > 0) {
             console.log(`OilPriceAPI returned ${prices.length} historical points for ${commodityName}`);
 
+            // Helper to safely parse dates from OilPriceAPI
+            const safeDate = (item: any): string => {
+              const raw = item.created_at || item.date || item.timestamp || '';
+              if (!raw) return '';
+              const d = new Date(raw);
+              return isNaN(d.getTime()) ? '' : d.toISOString();
+            };
+
             if (chartType === 'candlestick') {
-              historicalData = prices.map((item: any) => {
-                const price = item.price || item.value || 0;
-                const date = item.created_at || item.date || item.timestamp || '';
-                const vol = price * 0.005;
-                return {
-                  date,
-                  open: price - vol * (Math.random() - 0.3),
-                  high: price + vol * Math.random(),
-                  low: price - vol * Math.random(),
-                  close: price,
-                  price,
-                };
-              });
+              historicalData = prices
+                .map((item: any) => {
+                  const dateStr = safeDate(item);
+                  if (!dateStr) return null;
+                  const price = item.price || item.value || 0;
+                  const vol = price * 0.005;
+                  return {
+                    date: dateStr,
+                    open: price - vol * (Math.random() - 0.3),
+                    high: price + vol * Math.random(),
+                    low: price - vol * Math.random(),
+                    close: price,
+                    price,
+                  };
+                })
+                .filter(Boolean);
             } else {
-              historicalData = prices.map((item: any) => ({
-                date: item.created_at || item.date || item.timestamp || '',
-                price: item.price || item.value || 0,
-              }));
+              historicalData = prices
+                .map((item: any) => {
+                  const dateStr = safeDate(item);
+                  if (!dateStr) return null;
+                  return {
+                    date: dateStr,
+                    price: item.price || item.value || 0,
+                  };
+                })
+                .filter(Boolean);
             }
 
             // Sort chronologically
@@ -615,6 +632,14 @@ serve(async (req) => {
               historicalData = historicalData.slice(-90);
             } else if (timeframe === '6m') {
               historicalData = historicalData.slice(-180);
+            }
+
+            // Need at least 2 data points for a chart
+            if (historicalData.length < 2) {
+              console.warn(`OilPriceAPI returned only ${historicalData.length} valid points for ${commodityName}, will try FMP`);
+              historicalData = null;
+            } else {
+              console.log(`OilPriceAPI historical: ${historicalData.length} data points for ${commodityName}`);
             }
 
             console.log(`OilPriceAPI historical: ${historicalData.length} data points for ${commodityName}`);
