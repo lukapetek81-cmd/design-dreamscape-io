@@ -38,22 +38,12 @@ const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; cont
   'Silver Futures': { symbol: 'SI=F', category: 'metals', contractSize: '5,000 oz', venue: 'COMEX' },
   'Platinum': { symbol: 'PL=F', category: 'metals', contractSize: '50 oz', venue: 'NYMEX' },
   'Palladium': { symbol: 'PA=F', category: 'metals', contractSize: '100 oz', venue: 'NYMEX' },
-  'Rhodium': { symbol: 'XRH=X', category: 'metals', contractSize: '1 oz', venue: 'OTC' },
   
   // Base Metals
   'Copper': { symbol: 'HG=F', category: 'metals', contractSize: '25,000 lbs', venue: 'COMEX' },
   'Aluminum': { symbol: 'ALI=F', category: 'metals', contractSize: '25 MT', venue: 'LME' },
   'Zinc': { symbol: 'ZS=F', category: 'metals', contractSize: '25 MT', venue: 'LME' },
-  'Lead': { symbol: 'LL=F', category: 'metals', contractSize: '25 MT', venue: 'LME' },
   'Nickel': { symbol: 'NI=F', category: 'metals', contractSize: '6 MT', venue: 'LME' },
-  'Tin': { symbol: 'SN=F', category: 'metals', contractSize: '5 MT', venue: 'LME' },
-  'Steel': { symbol: 'STE=F', category: 'metals', contractSize: '100 MT', venue: 'SGX' },
-  'Iron Ore': { symbol: 'TIO=F', category: 'metals', contractSize: '100 MT', venue: 'SGX' },
-  
-  // Industrial/Tech Metals
-  'Lithium': { symbol: 'LITH=F', category: 'metals', contractSize: '1 MT', venue: 'LME' },
-  'Cobalt': { symbol: 'COB=F', category: 'metals', contractSize: '1 MT', venue: 'LME' },
-  'Uranium': { symbol: 'UX=F', category: 'metals', contractSize: '250 lbs', venue: 'NYMEX' },
   
   // Grains & Agriculture
   'Corn Futures': { symbol: 'ZC=F', category: 'grains', contractSize: '5,000 bu', venue: 'CBOT' },
@@ -147,7 +137,7 @@ serve(async (req) => {
     // ALL energy commodities are reserved for OilPriceAPI — never use FMP for energy
     const OIL_API_ONLY_NAMES = new Set([
       'WTI Crude Oil', 'Brent Crude Oil', 'Natural Gas', 'Gasoline RBOB', 'Heating Oil',
-      'Natural Gas UK', 'Gas Oil', 'Coal', 'Ethanol', 'Propane',
+      'Natural Gas UK',
       'Crude Oil Dubai', 'Tapis Crude Oil', 'Western Canadian Select', 'Urals Crude Oil',
       'Jet Fuel', 'ULSD Diesel', 'Dutch TTF Gas', 'Japan/Korea LNG', 'US Gas Storage',
       'VLSFO Global', 'HFO 380 Global', 'MGO 0.5%S Global', 'HFO 380 Rotterdam',
