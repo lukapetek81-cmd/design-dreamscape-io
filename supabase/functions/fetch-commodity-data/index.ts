@@ -644,8 +644,6 @@ serve(async (req) => {
             } else {
               console.log(`OilPriceAPI historical: ${historicalData.length} data points for ${commodityName}`);
             }
-
-            console.log(`OilPriceAPI historical: ${historicalData.length} data points for ${commodityName}`);
           } else {
             console.warn(`OilPriceAPI returned empty data for ${commodityName}`);
           }
