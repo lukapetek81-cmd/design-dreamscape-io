@@ -9,7 +9,7 @@ const corsHeaders = {
 // Enhanced commodity mappings with categories and contract specs
 const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; contractSize: string; venue: string }> = {
   // Energy
-  'Crude Oil': { symbol: 'CL=F', category: 'energy', contractSize: '1,000 bbl', venue: 'NYMEX' },
+  'WTI Crude Oil': { symbol: 'CL=F', category: 'energy', contractSize: '1,000 bbl', venue: 'NYMEX' },
   'Brent Crude Oil': { symbol: 'BZ=F', category: 'energy', contractSize: '1,000 bbl', venue: 'ICE' },
   'Natural Gas': { symbol: 'NG=F', category: 'energy', contractSize: '10,000 MMBtu', venue: 'NYMEX' },
   'Gasoline RBOB': { symbol: 'RB=F', category: 'energy', contractSize: '42,000 gal', venue: 'NYMEX' },
@@ -178,7 +178,7 @@ const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
   'NDYM': 'Neodymium',
   
   // Energy
-  'WTIOIL': 'Crude Oil',
+  'WTIOIL': 'WTI Crude Oil',
   'BRENTOIL': 'Brent Crude Oil',
   'DBLC1': 'Crude Oil Dubai',
   'URAL-OIL': 'Ural Oil',
@@ -302,7 +302,7 @@ serve(async (req) => {
 
     // ALL energy commodities are reserved for OilPriceAPI — never use FMP for energy
     const OIL_API_ONLY_NAMES = new Set([
-      'Crude Oil', 'Brent Crude Oil', 'Natural Gas', 'Gasoline RBOB', 'Heating Oil',
+      'WTI Crude Oil', 'Brent Crude Oil', 'Natural Gas', 'Gasoline RBOB', 'Heating Oil',
       'Natural Gas UK', 'Gas Oil', 'Coal', 'Ethanol', 'Propane',
       'Crude Oil Dubai', 'Tapis Crude Oil', 'Western Canadian Select', 'Urals Crude Oil',
       'Jet Fuel', 'ULSD Diesel', 'Dutch TTF Gas', 'Japan/Korea LNG', 'US Gas Storage',
@@ -312,7 +312,7 @@ serve(async (req) => {
 
     // ALL energy products use OilPriceAPI exclusively
     const OIL_API_BLENDS: Record<string, string> = {
-      'Crude Oil': 'WTI_USD',
+      'WTI Crude Oil': 'WTI_USD',
       'Brent Crude Oil': 'BRENT_CRUDE_USD',
       'Natural Gas': 'NATURAL_GAS_USD',
       'Gasoline RBOB': 'GASOLINE_RBOB_USD',

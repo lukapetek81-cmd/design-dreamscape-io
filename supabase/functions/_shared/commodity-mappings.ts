@@ -3,7 +3,7 @@ import { CommoditySymbol } from './types.ts';
 // Enhanced commodity mappings with categories and contract specs
 export const COMMODITY_SYMBOLS: Record<string, CommoditySymbol> = {
   // Energy
-  'Crude Oil': { symbol: 'CL=F', category: 'energy', contractSize: '1,000 bbl', venue: 'NYMEX' },
+  'WTI Crude Oil': { symbol: 'CL=F', category: 'energy', contractSize: '1,000 bbl', venue: 'NYMEX' },
   'Brent Crude Oil': { symbol: 'BZ=F', category: 'energy', contractSize: '1,000 bbl', venue: 'ICE' },
   'Natural Gas': { symbol: 'NG=F', category: 'energy', contractSize: '10,000 MMBtu', venue: 'NYMEX' },
   'Gasoline RBOB': { symbol: 'RB=F', category: 'energy', contractSize: '42,000 gal', venue: 'NYMEX' },
@@ -86,7 +86,7 @@ export const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
   'NDYM': 'Neodymium',
   
   // Energy
-  'WTIOIL': 'Crude Oil',
+  'WTIOIL': 'WTI Crude Oil',
   'BRENTOIL': 'Brent Crude Oil',
   'DBLC1': 'Crude Oil Dubai',
   'URAL-OIL': 'Ural Oil',
@@ -136,7 +136,7 @@ export const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
 
 // Category mappings for grouping
 export const CATEGORY_MAPPINGS: Record<string, string[]> = {
-  energy: ['Crude Oil', 'Brent Crude Oil', 'Crude Oil Dubai', 'Tapis Crude Oil', 'Urals Crude Oil', 'DME Oman Crude', 'Murban Crude', 'OPEC Basket', 'Indian Basket', 'WTI Midland', 'Alaska North Slope', 'Mars Blend', 'Louisiana Light Sweet', 'Western Canadian Select', 'Canadian Crude Index', 'Mexican Basket', 'Natural Gas', 'Gasoline RBOB', 'Heating Oil', 'Coal', 'Uranium', 'Ethanol'],
+  energy: ['WTI Crude Oil', 'Brent Crude Oil', 'Crude Oil Dubai', 'Tapis Crude Oil', 'Urals Crude Oil', 'DME Oman Crude', 'Murban Crude', 'OPEC Basket', 'Indian Basket', 'WTI Midland', 'Alaska North Slope', 'Mars Blend', 'Louisiana Light Sweet', 'Western Canadian Select', 'Canadian Crude Index', 'Mexican Basket', 'Natural Gas', 'Gasoline RBOB', 'Heating Oil', 'Coal', 'Uranium', 'Ethanol'],
   metals: ['Gold Futures', 'Silver Futures', 'Copper', 'Platinum', 'Palladium', 'Aluminum', 'Zinc', 'Lead', 'Nickel'],
   grains: ['Corn Futures', 'Wheat Futures', 'Soybean Futures', 'Oat Futures', 'Rough Rice', 'Barley'],
   livestock: ['Live Cattle Futures', 'Feeder Cattle Futures', 'Lean Hogs Futures'],

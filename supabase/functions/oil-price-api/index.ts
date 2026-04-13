@@ -10,7 +10,7 @@ const OIL_API_BASE = 'https://api.oilpriceapi.com/v1';
 // Mapping from our internal commodity names to OilPriceAPI codes
 const OIL_BLEND_CODES: Record<string, string> = {
   // All 10 oil types supported by OilPriceAPI
-  'Crude Oil': 'WTI_USD',
+  'WTI Crude Oil': 'WTI_USD',
   'Brent Crude Oil': 'BRENT_CRUDE_USD',
   'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
   'Tapis Crude Oil': 'TAPIS_CRUDE_USD',

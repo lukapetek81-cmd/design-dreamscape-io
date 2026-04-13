@@ -25,7 +25,7 @@ const FMP_SYMBOLS: Record<string, string> = {
 // ALL energy commodities use OilPriceAPI exclusively
 const OIL_API_CODES: Record<string, string> = {
   // Core oil benchmarks
-  'Crude Oil': 'WTI_USD',
+  'WTI Crude Oil': 'WTI_USD',
   'Brent Crude Oil': 'BRENT_CRUDE_USD',
   'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
   'Tapis Crude Oil': 'TAPIS_CRUDE_USD',
@@ -59,7 +59,7 @@ const ENERGY_NAMES = new Set(Object.keys(OIL_API_CODES).concat([
 
 const getBasePriceForCommodity = (commodityName: string): number => {
   const basePrices: Record<string, number> = {
-    'Crude Oil': 65, 'Brent Crude Oil': 70, 'Natural Gas': 2.85,
+    'WTI Crude Oil': 65, 'Brent Crude Oil': 70, 'Natural Gas': 2.85,
     'Gasoline RBOB': 2.1, 'Heating Oil': 2.3, 'Natural Gas UK': 90,
     'Gas Oil': 650, 'Coal': 85, 'Ethanol': 2.15, 'Propane': 0.95,
     'Gold Futures': 2000, 'Silver Futures': 25, 'Platinum': 1050,
