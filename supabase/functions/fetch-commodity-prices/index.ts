@@ -132,50 +132,40 @@ serve(async (req) => {
       }
     }
 
-    // Use FMP API only for NON-energy commodities
+    // Use FMP API only for NON-energy commodities (per-symbol endpoint)
     if (!priceData && !ENERGY_NAMES.has(commodityName)) {
       const fmpApiKey = Deno.env.get('FMP_API_KEY')
       
       if (fmpApiKey && fmpApiKey !== 'demo') {
         try {
-          console.log(`Using FMP API to find current price for ${commodityName}`)
+          // Try direct symbol lookup first
+          const hardcodedSymbol = FMP_SYMBOLS[commodityName];
+          const symbolToFetch = hardcodedSymbol || commodityName.replace(/\s+/g, '');
           
-          const commoditiesResponse = await fetch(
-            `https://financialmodelingprep.com/api/v3/quotes/commodity?apikey=${fmpApiKey}`
+          console.log(`Using FMP /quote for ${commodityName} (symbol: ${symbolToFetch})`)
+          
+          const response = await fetch(
+            `https://financialmodelingprep.com/api/v3/quote/${symbolToFetch}?apikey=${fmpApiKey}`
           )
           
-          if (commoditiesResponse.ok) {
-            const commoditiesData = await commoditiesResponse.json()
+          if (response.ok) {
+            const data = await response.json()
             
-            if (Array.isArray(commoditiesData) && commoditiesData.length > 0) {
-              const fmpCommodity = commoditiesData.find(item => {
-                if (item.name && item.name.toLowerCase() === commodityName.toLowerCase()) {
-                  return true;
-                }
-                const hardcodedSymbol = FMP_SYMBOLS[commodityName];
-                if (hardcodedSymbol && item.symbol === hardcodedSymbol) {
-                  return true;
-                }
-                const itemNameLower = (item.name || '').toLowerCase();
-                const commodityNameLower = commodityName.toLowerCase();
-                const commodityWords = commodityNameLower.split(' ').filter(w => w.length > 2);
-                return commodityWords.every(word => itemNameLower.includes(word));
-              });
-              
-              if (fmpCommodity) {
-                priceData = {
-                  symbol: fmpCommodity.symbol,
-                  price: parseFloat(fmpCommodity.price) || 0,
-                  change: parseFloat(fmpCommodity.change) || 0,
-                  changePercent: parseFloat(fmpCommodity.changesPercentage) || 0,
-                  lastUpdate: new Date().toISOString()
-                }
-                dataSource = 'fmp'
-                console.log(`Successfully fetched from FMP:`, priceData)
-              } else {
-                console.log(`No FMP commodity found matching "${commodityName}"`)
+            if (Array.isArray(data) && data.length > 0) {
+              const fmpCommodity = data[0];
+              priceData = {
+                symbol: fmpCommodity.symbol,
+                price: parseFloat(fmpCommodity.price) || 0,
+                change: parseFloat(fmpCommodity.change) || 0,
+                changePercent: parseFloat(fmpCommodity.changesPercentage) || 0,
+                lastUpdate: new Date().toISOString()
               }
+              dataSource = 'fmp'
+              console.log(`Successfully fetched from FMP /quote:`, priceData)
             }
+          } else {
+            console.warn(`FMP /quote error for ${symbolToFetch}: ${response.status}`)
+            await response.text(); // consume body
           }
         } catch (error) {
           console.warn(`FMP API failed for ${commodityName}:`, error)
