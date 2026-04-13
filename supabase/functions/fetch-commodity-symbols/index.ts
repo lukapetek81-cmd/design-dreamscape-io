@@ -322,7 +322,10 @@ serve(async (req) => {
           dataSource = 'fmp';
           
           // Names reserved for OilPriceAPI — skip FMP matching for these
+          // ALL energy commodities are reserved for OilPriceAPI — never use FMP for energy
           const OIL_API_ONLY_NAMES = new Set([
+            'Crude Oil', 'Brent Crude Oil', 'Natural Gas', 'Gasoline RBOB', 'Heating Oil',
+            'Natural Gas UK', 'Gas Oil', 'Coal', 'Ethanol', 'Propane',
             'Crude Oil Dubai', 'Tapis Crude Oil', 'Western Canadian Select', 'Urals Crude Oil',
             'Jet Fuel', 'ULSD Diesel', 'Dutch TTF Gas', 'Japan/Korea LNG', 'US Gas Storage',
             'VLSFO Global', 'HFO 380 Global', 'MGO 0.5%S Global', 'HFO 380 Rotterdam',
@@ -368,16 +371,24 @@ serve(async (req) => {
           const brentPrice = commoditiesData.find(c => c.symbol === 'BZ=F')?.price || 0;
           const refPrice = brentPrice || wtiPrice;
 
-          // OilPriceAPI-supported blends
+          // ALL energy products use OilPriceAPI exclusively
           const OIL_API_BLENDS: Record<string, string> = {
-            // Oil types from OilPriceAPI (excluding WTI/Brent already from FMP)
+            // Core benchmarks
+            'Crude Oil': 'WTI_USD',
+            'Brent Crude Oil': 'BRENT_CRUDE_USD',
+            'Natural Gas': 'NATURAL_GAS_USD',
+            'Gasoline RBOB': 'GASOLINE_RBOB_USD',
+            'Heating Oil': 'HEATING_OIL_USD',
+            // Regional oil blends
             'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
             'Tapis Crude Oil': 'TAPIS_CRUDE_USD',
             'Western Canadian Select': 'WCS_CRUDE_USD',
             'Urals Crude Oil': 'URALS_CRUDE_USD',
+            // Refined products
             'Jet Fuel': 'JET_FUEL_USD',
             'ULSD Diesel': 'ULSD_DIESEL_USD',
-            // Natural gas types (excluding Henry Hub already from FMP)
+            // Natural gas types
+            'Natural Gas UK': 'NATURAL_GAS_GBP',
             'Dutch TTF Gas': 'DUTCH_TTF_EUR',
             'Japan/Korea LNG': 'JKM_LNG_USD',
             'US Gas Storage': 'NATURAL_GAS_STORAGE',
@@ -391,11 +402,11 @@ serve(async (req) => {
             'VLSFO Fujairah': 'VLSFO_AEFUJ_USD',
           };
 
-          // Fetch real prices from OilPriceAPI for supported blends
+          // Fetch real prices from OilPriceAPI for ALL energy commodities (replacing any FMP data)
           const oilApiKey = Deno.env.get('OIL_PRICE_API_KEY');
           if (oilApiKey) {
             const oilApiFetches = Object.entries(OIL_API_BLENDS)
-              .filter(([name]) => !existingNames.has(name) && COMMODITY_SYMBOLS[name])
+              .filter(([name]) => COMMODITY_SYMBOLS[name])
               .map(async ([name, code]) => {
                 try {
                   const resp = await fetch(
@@ -430,6 +441,8 @@ serve(async (req) => {
             const oilApiResults = await Promise.all(oilApiFetches);
             for (const result of oilApiResults) {
               if (result) {
+                // Remove any existing FMP entry for this commodity and replace with OilPriceAPI data
+                commoditiesData = commoditiesData.filter(c => c.name !== result.name);
                 commoditiesData.push(result);
                 existingNames.add(result.name);
               }
