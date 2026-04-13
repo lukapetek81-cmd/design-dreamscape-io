@@ -62,6 +62,7 @@ const Dashboard = () => {
         loading={commoditiesLoading}
         error={commoditiesError?.message || null}
         onRetry={() => refetchCommodities()}
+        highlightCommodity={highlightCommodity}
       />
     </SidebarProvider>
   );
