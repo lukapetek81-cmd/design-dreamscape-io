@@ -188,11 +188,6 @@ const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
   'DBLC1': 'Crude Oil Dubai',
   'TAPIS': 'Tapis Crude Oil',
   'URAL-OIL': 'Urals Crude Oil',
-  'BONNY': 'Bonny Light Crude Oil',
-  'ARBL': 'Arab Light Crude Oil',
-  'ARBH': 'Arab Heavy Crude Oil',
-  'ESPO': 'ESPO Crude Oil',
-  'ISTH': 'Isthmus Crude Oil',
   
   // Grains & Agriculture
   'CORN': 'Corn Futures',
