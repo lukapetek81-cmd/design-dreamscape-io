@@ -75,12 +75,12 @@ const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
   // Precious Metals
   'XAU': 'Gold Futures', 'XAG': 'Silver Futures', 'XPT': 'Platinum', 'XPD': 'Palladium',
   // Base Metals
-  'HG': 'Copper', 'ALU': 'Aluminum', 'ZNC': 'Zinc', 'NICKEL': 'Nickel',
+  'HG': 'Copper', 'ALU': 'Aluminum', 'ZNC': 'Zinc',
   // Energy
   'WTIOIL': 'WTI Crude Oil', 'BRENTOIL': 'Brent Crude Oil', 'NG': 'Natural Gas',
   'HO': 'Heating Oil', 'RB': 'Gasoline RBOB',
   // Grains
-  'CORN': 'Corn Futures', 'ZW': 'Wheat Futures', 'SOYBEAN': 'Soybean Futures',
+  'CORN': 'Corn Futures', 'SOYBEAN': 'Soybean Futures',
   'ZL': 'Soybean Oil', 'ZM': 'Soybean Meal', 'OAT': 'Oat Futures', 'RR': 'Rough Rice',
   // Softs
   'CA': 'Coffee Arabica', 'LS': 'Sugar #11', 'CT': 'Cotton', 'CC': 'Cocoa', 'OJ': 'Orange Juice',
