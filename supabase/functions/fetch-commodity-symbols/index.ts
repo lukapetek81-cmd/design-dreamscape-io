@@ -276,9 +276,8 @@ serve(async (req) => {
       }
     }
 
-    // Try FMP using per-symbol /quote endpoint (works on basic plans)
-    // FMP uses USD-suffixed symbols for commodities
-    if (!nonEnergyLoaded) {
+    // Always try FMP for any non-energy commodities not yet loaded
+    {
       const fmpApiKey = Deno.env.get('FMP_API_KEY');
       if (fmpApiKey && fmpApiKey !== 'demo') {
         try {
