@@ -14,10 +14,27 @@ import { Button } from '@/components/ui/button';
 import { OfflineIndicator } from '@/components/OfflineIndicator';
 
 const Dashboard = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeGroup, setActiveGroup] = useState("energy");
   const isMobile = useIsMobile();
   const { isGuest, profile, loading: authLoading } = useAuth();
   const { data: commodities, isLoading: commoditiesLoading, error: commoditiesError, refetch: refetchCommodities } = useAvailableCommodities();
+  const [highlightCommodity, setHighlightCommodity] = useState<string | null>(null);
+
+  // Handle ?commodity= URL param — switch to correct group and highlight
+  useEffect(() => {
+    const commodityParam = searchParams.get('commodity');
+    if (commodityParam && commodities && commodities.length > 0) {
+      const found = commodities.find(c => c.name === commodityParam);
+      if (found) {
+        setActiveGroup(found.category);
+        setHighlightCommodity(found.name);
+        // Clear the param so it doesn't persist on refresh
+        searchParams.delete('commodity');
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+  }, [searchParams, commodities]);
 
   // Show loading screen while auth is checking
   if (authLoading) {
