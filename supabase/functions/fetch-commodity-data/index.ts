@@ -489,8 +489,11 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  let commodityName = 'Crude Oil';
   try {
-    const { commodityName, timeframe, isPremium, chartType, dataDelay = 'realtime', contractSymbol } = await req.json()
+    const body = await req.json();
+    commodityName = body.commodityName;
+    const { timeframe, isPremium, chartType, dataDelay = 'realtime', contractSymbol } = body;
     
     if (!commodityName || !timeframe) {
       return new Response(
