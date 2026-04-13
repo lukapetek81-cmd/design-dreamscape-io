@@ -356,39 +356,20 @@ serve(async (req) => {
       }
     }
 
-    // Step 3: Static fallback for any remaining non-energy commodities
-    // Use realistic base prices so they never show $0.00
-    const FALLBACK_PRICES: Record<string, number> = {
-      'Coffee Robusta': 3500, 'Sugar #5': 520, 'Tea': 3.20,
-      'Milk Nonfat Dry': 1.18, 'Butter': 2.45, 'Cheese': 1.85,
-      'Milk Class III': 18.50, 'Rhodium': 5200, 'Lead': 2100, 'Tin': 28000,
-      'Steel': 450, 'Iron Ore': 110, 'Lithium': 15000, 'Cobalt': 30000,
-      'Uranium': 85, 'Canola': 620, 'Barley': 5.50, 'Spring Wheat': 6.80,
-      'Hard Red Winter Wheat': 6.20, 'Palm Oil': 3800, 'Sunflower Oil': 1100,
-      'Rapeseed Oil': 950, 'Coconut Oil': 1200, 'Olive Oil': 8500,
-      'Random Length Lumber': 550, 'Pulp': 750, 'Newsprint': 600,
-      'Rubber': 1.60, 'Cotton Yarn': 3.50, 'Wool': 12.50, 'Jute': 650,
-      'Urea': 300, 'Diammonium Phosphate': 550, 'Potash': 280, 'Ammonia': 450,
-      'Polyethylene': 1100, 'Polypropylene': 1050, 'PVC': 850, 'Styrene': 1200,
-      'White Sugar': 530, 'Raw Sugar': 19.50, 'Potato': 22, 'Onion': 1.50,
-      'Garlic': 4.50, 'Apple': 1.80, 'Banana': 1.10,
-      'Black Pepper': 5500, 'Cardamom': 25000, 'Turmeric': 1500,
-      'Coriander': 7500, 'Chilli': 12000, 'Cumin': 15000,
-      'Electricity': 45, 'Carbon Credits': 75, 'Weather Derivatives': 100,
-    };
+    // Step 3: Any remaining commodities in COMMODITY_SYMBOLS that weren't loaded get added with price 0
     {
       const remaining = Object.entries(COMMODITY_SYMBOLS)
         .filter(([name, info]) => !OIL_API_ONLY_NAMES.has(name) && info.category !== 'energy' && !existingNames.has(name))
         .map(([name, info]) => ({
           name,
           symbol: info.symbol,
-          price: FALLBACK_PRICES[name] || 0,
+          price: 0,
           change: 0,
           changePercent: 0,
           volume: 0,
           ...info,
           supportedByFMP: false,
-          source: FALLBACK_PRICES[name] ? 'fallback-estimate' : 'static',
+          source: 'static',
         }));
       
       if (remaining.length > 0) {
