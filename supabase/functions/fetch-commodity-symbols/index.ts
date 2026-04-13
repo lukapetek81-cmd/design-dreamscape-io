@@ -406,11 +406,11 @@ serve(async (req) => {
             'VLSFO Fujairah': 'VLSFO_AEFUJ_USD',
           };
 
-          // Fetch real prices from OilPriceAPI for supported blends
+          // Fetch real prices from OilPriceAPI for ALL energy commodities (replacing any FMP data)
           const oilApiKey = Deno.env.get('OIL_PRICE_API_KEY');
           if (oilApiKey) {
             const oilApiFetches = Object.entries(OIL_API_BLENDS)
-              .filter(([name]) => !existingNames.has(name) && COMMODITY_SYMBOLS[name])
+              .filter(([name]) => COMMODITY_SYMBOLS[name])
               .map(async ([name, code]) => {
                 try {
                   const resp = await fetch(
@@ -445,6 +445,8 @@ serve(async (req) => {
             const oilApiResults = await Promise.all(oilApiFetches);
             for (const result of oilApiResults) {
               if (result) {
+                // Remove any existing FMP entry for this commodity and replace with OilPriceAPI data
+                commoditiesData = commoditiesData.filter(c => c.name !== result.name);
                 commoditiesData.push(result);
                 existingNames.add(result.name);
               }
