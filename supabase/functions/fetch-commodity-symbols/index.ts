@@ -344,22 +344,10 @@ serve(async (req) => {
 
           // OilPriceAPI-supported blends
           const OIL_API_BLENDS: Record<string, string> = {
-            // Crude Oil Benchmarks
+            // Only blends with actively updated prices from OilPriceAPI
             'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
-            'Tapis Crude Oil': 'TAPIS_CRUDE_USD',
             'Urals Crude Oil': 'URALS_CRUDE_USD',
-            'DME Oman Crude': 'DME_OMAN_USD',
-            'Murban Crude': 'MURBAN_CRUDE_USD',
             'OPEC Basket': 'OPEC_BASKET_USD',
-            'Indian Basket': 'INDIAN_BASKET_USD',
-            // Regional Crude Benchmarks
-            'WTI Midland': 'WTI_MIDLAND_USD',
-            'Alaska North Slope': 'ANS_WEST_COAST_USD',
-            'Mars Blend': 'MARS_USD',
-            'Louisiana Light Sweet': 'LOUISIANA_LIGHT_USD',
-            'Western Canadian Select': 'WESTERN_CANADIAN_SELECT_USD',
-            'Canadian Crude Index': 'CANADIAN_CRUDE_INDEX_USD',
-            'Mexican Basket': 'MEXICAN_BASKET_USD',
           };
 
           // Fetch real prices from OilPriceAPI for supported blends
