@@ -27,6 +27,7 @@ interface EconomicEvent {
 }
 
 const EconomicCalendar = () => {
+  const navigate = useNavigate();
   const [selectedImpact, setSelectedImpact] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedCountry, setSelectedCountry] = useState('all');
