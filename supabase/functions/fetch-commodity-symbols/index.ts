@@ -19,6 +19,14 @@ const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; cont
   'Coal': { symbol: 'MTF=F', category: 'energy', contractSize: '1,350 MT', venue: 'ICE' },
   'Ethanol': { symbol: 'CHK=F', category: 'energy', contractSize: '29,000 gal', venue: 'CBOT' },
   'Propane': { symbol: 'PN=F', category: 'energy', contractSize: '42,000 gal', venue: 'NYMEX' },
+  'Crude Oil Dubai': { symbol: 'DC=F', category: 'energy', contractSize: '1,000 bbl', venue: 'DME' },
+  'Tapis Crude Oil': { symbol: 'TAP=F', category: 'energy', contractSize: '1,000 bbl', venue: 'SGX' },
+  'Urals Crude Oil': { symbol: 'URL=F', category: 'energy', contractSize: '1,000 bbl', venue: 'ICE' },
+  'Bonny Light Crude Oil': { symbol: 'BNL=F', category: 'energy', contractSize: '1,000 bbl', venue: 'ICE' },
+  'Arab Light Crude Oil': { symbol: 'ARL=F', category: 'energy', contractSize: '1,000 bbl', venue: 'DME' },
+  'Arab Heavy Crude Oil': { symbol: 'ARH=F', category: 'energy', contractSize: '1,000 bbl', venue: 'DME' },
+  'ESPO Crude Oil': { symbol: 'ESPO=F', category: 'energy', contractSize: '1,000 bbl', venue: 'ICE' },
+  'Isthmus Crude Oil': { symbol: 'IST=F', category: 'energy', contractSize: '1,000 bbl', venue: 'NYMEX' },
   
   // Precious Metals
   'Gold Futures': { symbol: 'GC=F', category: 'metals', contractSize: '100 oz', venue: 'COMEX' },
@@ -182,6 +190,14 @@ const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
   'METH': 'Methanol',
   'PROP': 'Propane',
   'NAPHTHA': 'Naphtha',
+  'DBLC1': 'Crude Oil Dubai',
+  'TAPIS': 'Tapis Crude Oil',
+  'URAL-OIL': 'Urals Crude Oil',
+  'BONNY': 'Bonny Light Crude Oil',
+  'ARBL': 'Arab Light Crude Oil',
+  'ARBH': 'Arab Heavy Crude Oil',
+  'ESPO': 'ESPO Crude Oil',
+  'ISTH': 'Isthmus Crude Oil',
   
   // Grains & Agriculture
   'CORN': 'Corn Futures',
