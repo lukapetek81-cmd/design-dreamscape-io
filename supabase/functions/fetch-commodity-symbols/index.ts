@@ -359,15 +359,6 @@ serve(async (req) => {
             'Urals Crude Oil': 'URALS_CRUDE_USD',
           };
 
-          // Blends only available via Brent differential estimate
-          const ESTIMATED_BLENDS: Record<string, { differential: number }> = {
-            'Bonny Light Crude Oil': { differential: 0.5 },
-            'Arab Light Crude Oil': { differential: -1.0 },
-            'Arab Heavy Crude Oil': { differential: -4.5 },
-            'ESPO Crude Oil': { differential: -1.5 },
-            'Isthmus Crude Oil': { differential: -0.8 },
-          };
-
           // Fetch real prices from OilPriceAPI for supported blends
           const oilApiKey = Deno.env.get('OIL_PRICE_API_KEY');
           if (oilApiKey) {
@@ -412,26 +403,6 @@ serve(async (req) => {
               }
             }
             console.log(`OilPriceAPI: added ${oilApiResults.filter(Boolean).length} blends with real prices`);
-          }
-
-          // Add remaining blends with Brent-estimated prices
-          if (refPrice > 0) {
-            for (const [name, blend] of Object.entries(ESTIMATED_BLENDS)) {
-              if (!existingNames.has(name) && COMMODITY_SYMBOLS[name]) {
-                const estimatedPrice = parseFloat((refPrice + blend.differential).toFixed(2));
-                commoditiesData.push({
-                  name,
-                  symbol: COMMODITY_SYMBOLS[name].symbol,
-                  price: estimatedPrice,
-                  change: 0,
-                  changePercent: 0,
-                  volume: 0,
-                  ...COMMODITY_SYMBOLS[name],
-                  supportedByFMP: false,
-                  estimatedFromBrent: true,
-                });
-              }
-            }
           }
         } else {
           throw new Error('No data returned from FMP API');
