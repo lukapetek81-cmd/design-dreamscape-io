@@ -53,10 +53,6 @@ const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; cont
   'Soybean Meal': { symbol: 'ZM=F', category: 'grains', contractSize: '100 tons', venue: 'CBOT' },
   'Oat Futures': { symbol: 'ZO=F', category: 'grains', contractSize: '5,000 bu', venue: 'CBOT' },
   'Rough Rice': { symbol: 'ZR=F', category: 'grains', contractSize: '2,000 cwt', venue: 'CBOT' },
-  'Canola': { symbol: 'RS=F', category: 'grains', contractSize: '20 MT', venue: 'ICE' },
-  'Barley': { symbol: 'BAR=F', category: 'grains', contractSize: '20 MT', venue: 'ICE' },
-  'Spring Wheat': { symbol: 'MW=F', category: 'grains', contractSize: '5,000 bu', venue: 'MGEX' },
-  'Hard Red Winter Wheat': { symbol: 'KE=F', category: 'grains', contractSize: '5,000 bu', venue: 'KCBT' },
   
   // Livestock & Dairy
   'Live Cattle Futures': { symbol: 'LE=F', category: 'livestock', contractSize: '40,000 lbs', venue: 'CME' },
