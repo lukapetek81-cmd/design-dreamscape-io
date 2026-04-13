@@ -15,10 +15,6 @@ const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; cont
   'Gasoline RBOB': { symbol: 'RB=F', category: 'energy', contractSize: '42,000 gal', venue: 'NYMEX' },
   'Heating Oil': { symbol: 'HO=F', category: 'energy', contractSize: '42,000 gal', venue: 'NYMEX' },
   'Natural Gas UK': { symbol: 'M.GB=F', category: 'energy', contractSize: '1,000 therms', venue: 'ICE' },
-  'Gas Oil': { symbol: 'LGO=F', category: 'energy', contractSize: '100 MT', venue: 'ICE' },
-  'Coal': { symbol: 'MTF=F', category: 'energy', contractSize: '1,350 MT', venue: 'ICE' },
-  'Ethanol': { symbol: 'CHK=F', category: 'energy', contractSize: '29,000 gal', venue: 'CBOT' },
-  'Propane': { symbol: 'PN=F', category: 'energy', contractSize: '42,000 gal', venue: 'NYMEX' },
   'Crude Oil Dubai': { symbol: 'DC=F', category: 'energy', contractSize: '1,000 bbl', venue: 'DME' },
   'Tapis Crude Oil': { symbol: 'TAP=F', category: 'energy', contractSize: '1,000 bbl', venue: 'SGX' },
   'Western Canadian Select': { symbol: 'WCS=F', category: 'energy', contractSize: '1,000 bbl', venue: 'CME' },
@@ -42,22 +38,12 @@ const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; cont
   'Silver Futures': { symbol: 'SI=F', category: 'metals', contractSize: '5,000 oz', venue: 'COMEX' },
   'Platinum': { symbol: 'PL=F', category: 'metals', contractSize: '50 oz', venue: 'NYMEX' },
   'Palladium': { symbol: 'PA=F', category: 'metals', contractSize: '100 oz', venue: 'NYMEX' },
-  'Rhodium': { symbol: 'XRH=X', category: 'metals', contractSize: '1 oz', venue: 'OTC' },
   
   // Base Metals
   'Copper': { symbol: 'HG=F', category: 'metals', contractSize: '25,000 lbs', venue: 'COMEX' },
   'Aluminum': { symbol: 'ALI=F', category: 'metals', contractSize: '25 MT', venue: 'LME' },
   'Zinc': { symbol: 'ZS=F', category: 'metals', contractSize: '25 MT', venue: 'LME' },
-  'Lead': { symbol: 'LL=F', category: 'metals', contractSize: '25 MT', venue: 'LME' },
   'Nickel': { symbol: 'NI=F', category: 'metals', contractSize: '6 MT', venue: 'LME' },
-  'Tin': { symbol: 'SN=F', category: 'metals', contractSize: '5 MT', venue: 'LME' },
-  'Steel': { symbol: 'STE=F', category: 'metals', contractSize: '100 MT', venue: 'SGX' },
-  'Iron Ore': { symbol: 'TIO=F', category: 'metals', contractSize: '100 MT', venue: 'SGX' },
-  
-  // Industrial/Tech Metals
-  'Lithium': { symbol: 'LITH=F', category: 'metals', contractSize: '1 MT', venue: 'LME' },
-  'Cobalt': { symbol: 'COB=F', category: 'metals', contractSize: '1 MT', venue: 'LME' },
-  'Uranium': { symbol: 'UX=F', category: 'metals', contractSize: '250 lbs', venue: 'NYMEX' },
   
   // Grains & Agriculture
   'Corn Futures': { symbol: 'ZC=F', category: 'grains', contractSize: '5,000 bu', venue: 'CBOT' },
@@ -67,199 +53,43 @@ const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; cont
   'Soybean Meal': { symbol: 'ZM=F', category: 'grains', contractSize: '100 tons', venue: 'CBOT' },
   'Oat Futures': { symbol: 'ZO=F', category: 'grains', contractSize: '5,000 bu', venue: 'CBOT' },
   'Rough Rice': { symbol: 'ZR=F', category: 'grains', contractSize: '2,000 cwt', venue: 'CBOT' },
-  'Canola': { symbol: 'RS=F', category: 'grains', contractSize: '20 MT', venue: 'ICE' },
-  'Barley': { symbol: 'BAR=F', category: 'grains', contractSize: '20 MT', venue: 'ICE' },
-  'Spring Wheat': { symbol: 'MW=F', category: 'grains', contractSize: '5,000 bu', venue: 'MGEX' },
-  'Hard Red Winter Wheat': { symbol: 'KE=F', category: 'grains', contractSize: '5,000 bu', venue: 'KCBT' },
   
   // Livestock & Dairy
   'Live Cattle Futures': { symbol: 'LE=F', category: 'livestock', contractSize: '40,000 lbs', venue: 'CME' },
   'Feeder Cattle Futures': { symbol: 'GF=F', category: 'livestock', contractSize: '50,000 lbs', venue: 'CME' },
   'Lean Hogs Futures': { symbol: 'HE=F', category: 'livestock', contractSize: '40,000 lbs', venue: 'CME' },
   'Milk Class III': { symbol: 'DC=F', category: 'livestock', contractSize: '200,000 lbs', venue: 'CME' },
-  'Milk Nonfat Dry': { symbol: 'NF=F', category: 'livestock', contractSize: '44,000 lbs', venue: 'CME' },
-  'Butter': { symbol: 'DA=F', category: 'livestock', contractSize: '40,000 lbs', venue: 'CME' },
-  'Cheese': { symbol: 'CSC=F', category: 'livestock', contractSize: '40,000 lbs', venue: 'CME' },
   
   // Soft Commodities
   'Coffee Arabica': { symbol: 'KC=F', category: 'softs', contractSize: '37,500 lbs', venue: 'ICE' },
-  'Coffee Robusta': { symbol: 'RM=F', category: 'softs', contractSize: '10 MT', venue: 'ICE' },
   'Sugar #11': { symbol: 'SB=F', category: 'softs', contractSize: '112,000 lbs', venue: 'ICE' },
-  'Sugar #5': { symbol: 'SF=F', category: 'softs', contractSize: '50 MT', venue: 'ICE' },
   'Cotton': { symbol: 'CT=F', category: 'softs', contractSize: '50,000 lbs', venue: 'ICE' },
   'Cocoa': { symbol: 'CC=F', category: 'softs', contractSize: '10 MT', venue: 'ICE' },
   'Orange Juice': { symbol: 'OJ=F', category: 'softs', contractSize: '15,000 lbs', venue: 'ICE' },
-  'Tea': { symbol: 'TEA=F', category: 'softs', contractSize: '10 MT', venue: 'Multi' },
-  
-  // Oils & Fats
-  'Palm Oil': { symbol: 'CPO=F', category: 'oils', contractSize: '25 MT', venue: 'BMD' },
-  'Sunflower Oil': { symbol: 'SUN=F', category: 'oils', contractSize: '20 MT', venue: 'MATIF' },
-  'Rapeseed Oil': { symbol: 'RSO=F', category: 'oils', contractSize: '20 MT', venue: 'MATIF' },
-  'Coconut Oil': { symbol: 'CNO=F', category: 'oils', contractSize: '10 MT', venue: 'MCX' },
-  'Olive Oil': { symbol: 'OLV=F', category: 'oils', contractSize: '10 MT', venue: 'MATIF' },
   
   // Forest Products
   'Lumber Futures': { symbol: 'LBS=F', category: 'forest', contractSize: '110,000 bd ft', venue: 'CME' },
   'Random Length Lumber': { symbol: 'LB=F', category: 'forest', contractSize: '110,000 bd ft', venue: 'CME' },
-  'Pulp': { symbol: 'PULP=F', category: 'forest', contractSize: '20 MT', venue: 'CME' },
-  'Newsprint': { symbol: 'NEWS=F', category: 'forest', contractSize: '20 MT', venue: 'CME' },
-  
-  // Industrial Materials
-  'Rubber': { symbol: 'RU=F', category: 'industrial', contractSize: '5 MT', venue: 'TOCOM' },
-  'Cotton Yarn': { symbol: 'CY=F', category: 'industrial', contractSize: '10 MT', venue: 'MCX' },
-  'Wool': { symbol: 'WOL=F', category: 'industrial', contractSize: '2.5 MT', venue: 'SFE' },
-  'Jute': { symbol: 'JUT=F', category: 'industrial', contractSize: '10 MT', venue: 'MCX' },
-  
-  // Fertilizers & Chemicals
-  'Urea': { symbol: 'UREA=F', category: 'chemicals', contractSize: '500 MT', venue: 'DCE' },
-  'Diammonium Phosphate': { symbol: 'DAP=F', category: 'chemicals', contractSize: '500 MT', venue: 'DCE' },
-  'Potash': { symbol: 'POT=F', category: 'chemicals', contractSize: '100 MT', venue: 'ICE' },
-  'Ammonia': { symbol: 'AMM=F', category: 'chemicals', contractSize: '100 MT', venue: 'CME' },
-  
-  // Plastics
-  'Polyethylene': { symbol: 'PE=F', category: 'plastics', contractSize: '25 MT', venue: 'DCE' },
-  'Polypropylene': { symbol: 'PP=F', category: 'plastics', contractSize: '25 MT', venue: 'DCE' },
-  'PVC': { symbol: 'PVC=F', category: 'plastics', contractSize: '25 MT', venue: 'DCE' },
-  'Styrene': { symbol: 'STY=F', category: 'plastics', contractSize: '25 MT', venue: 'DCE' },
-  
-  // Food & Agriculture
-  'White Sugar': { symbol: 'WSU=F', category: 'food', contractSize: '50 MT', venue: 'LIFFE' },
-  'Raw Sugar': { symbol: 'SB=F', category: 'food', contractSize: '112,000 lbs', venue: 'ICE' },
-  'Potato': { symbol: 'POT=F', category: 'food', contractSize: '25 MT', venue: 'MATIF' },
-  'Onion': { symbol: 'ONI=F', category: 'food', contractSize: '10 MT', venue: 'NCDEX' },
-  'Garlic': { symbol: 'GAR=F', category: 'food', contractSize: '5 MT', venue: 'NCDEX' },
-  'Apple': { symbol: 'APP=F', category: 'food', contractSize: '20 MT', venue: 'NCDEX' },
-  'Banana': { symbol: 'BAN=F', category: 'food', contractSize: '10 MT', venue: 'NCDEX' },
-  
-  // Spices
-  'Black Pepper': { symbol: 'BP=F', category: 'spices', contractSize: '1 MT', venue: 'MCX' },
-  'Cardamom': { symbol: 'CAR=F', category: 'spices', contractSize: '100 kg', venue: 'MCX' },
-  'Turmeric': { symbol: 'TUR=F', category: 'spices', contractSize: '1 MT', venue: 'MCX' },
-  'Coriander': { symbol: 'COR=F', category: 'spices', contractSize: '1 MT', venue: 'MCX' },
-  'Chilli': { symbol: 'CHI=F', category: 'spices', contractSize: '1 MT', venue: 'MCX' },
-  'Cumin': { symbol: 'CUM=F', category: 'spices', contractSize: '100 kg', venue: 'MCX' },
-  
-  // Others
-  'Electricity': { symbol: 'ELE=F', category: 'other', contractSize: '1 MWh', venue: 'NYMEX' },
-  'Carbon Credits': { symbol: 'CER=F', category: 'other', contractSize: '1,000 tCO2e', venue: 'ICE' },
-  'Weather Derivatives': { symbol: 'WTH=F', category: 'other', contractSize: 'Variable', venue: 'CME' },
 };
 
-// CommodityPriceAPI symbol mapping - expanded to include all available symbols
+// CommodityPriceAPI symbol mapping - only for commodities we support
 const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
   // Precious Metals
-  'XAU': 'Gold Futures',
-  'XAG': 'Silver Futures', 
-  'XPT': 'Platinum',
-  'XPD': 'Palladium',
-  'XRH': 'Rhodium',
-  
+  'XAU': 'Gold Futures', 'XAG': 'Silver Futures', 'XPT': 'Platinum', 'XPD': 'Palladium',
   // Base Metals
-  'HG': 'Copper',
-  'ALU': 'Aluminum',
-  'AL': 'Aluminum LME',
-  'ZNC': 'Zinc',
-  'ZINC': 'Zinc LME',
-  'LEAD': 'Lead',
-  'NICKEL': 'Nickel',
-  'TIN': 'Tin',
-  'STEEL': 'Steel',
-  'HRC-STEEL': 'Hot-Rolled Coil Steel',
-  'TIOC': 'Iron Ore 62% FE',
-  'MG': 'Magnesium',
-  
-  // Industrial/Tech Metals
-  'LC': 'Lithium',
-  'COB': 'Cobalt',
-  'TITAN': 'Titanium',
-  'GA': 'Gallium',
-  'INDIUM': 'Indium',
-  'TEL': 'Tellurium',
-  'NDYM': 'Neodymium',
-  
+  'HG': 'Copper', 'ALU': 'Aluminum', 'ZNC': 'Zinc', 'NICKEL': 'Nickel',
   // Energy
-  'WTIOIL': 'WTI Crude Oil',
-  'BRENTOIL': 'Brent Crude Oil',
-  'DBLC1': 'Crude Oil Dubai',
-  'URAL-OIL': 'Ural Oil',
-  'NG': 'Natural Gas',
-  'NGUS': 'Natural Gas US',
-  'NGEU': 'Natural Gas Europe',
-  'LNG': 'Liquefied Natural Gas Japan',
-  'TTF-GAS': 'TTF Gas',
-  'UK-GAS': 'UK Gas',
-  'HO': 'Heating Oil',
-  'RB': 'Gasoline RBOB',
-  'LGO': 'Gas Oil',
-  'COAL': 'Coal',
-  'AUCOAL': 'Coal Australia',
-  'RB1COAL': 'Coal South Africa',
-  'UXA': 'Uranium',
-  'ETHANOL': 'Ethanol',
-  'METH': 'Methanol',
-  'PROP': 'Propane',
-  'NAPHTHA': 'Naphtha',
-  'DBLC1': 'Crude Oil Dubai',
-  'TAPIS': 'Tapis Crude Oil',
-  'URAL-OIL': 'Urals Crude Oil',
-  
-  // Grains & Agriculture
-  'CORN': 'Corn Futures',
-  'ZW': 'Wheat Futures',
-  'SOYBEAN': 'Soybean Futures',
-  'ZL': 'Soybean Oil',
-  'ZM': 'Soybean Meal',
-  'OAT': 'Oat Futures',
-  'RR': 'Rough Rice',
-  'CANOLA': 'Canola',
-  
-  // Soft Commodities
-  'LS': 'Sugar',
-  'CT': 'Cotton',
-  'CA': 'Coffee Arabica',
-  'CR': 'Coffee Robusta',
-  'CC': 'Cocoa',
-  'TEA': 'Tea',
-  'TEAK': 'Tea Kolkata',
-  'TEAC': 'Tea Colombo',
-  'TEAM': 'Tea Mombasa',
-  
-  // Oils & Fats
-  'PO': 'Palm Oil',
-  'SUNF': 'Sunflower Oil',
-  'RSO': 'Rapeseed Oil',
-  'CO': 'Coconut Oil',
-  
-  // Livestock & Dairy
-  'CATTLE': 'Live Cattle Futures',
-  'HOGS': 'Lean Hogs Futures',
-  'MILK': 'Milk',
-  'CHE': 'Cheese',
-  'BUTTER': 'Butter',
-  'EGGS-US': 'Eggs US',
-  'EGGS-CH': 'Eggs China',
-  'POUL': 'Poultry',
-  'SALMON': 'Salmon',
-  'FM': 'Fish Meal',
-  
-  // Industrial Materials
-  'LB': 'Lumber',
-  'RUBBER': 'Rubber',
-  'WOOL': 'Wool',
-  'BIT': 'Bitumen',
-  'K-PULP': 'Kraft Pulp',
-  
-  // Plastics & Chemicals
-  'POL': 'Polyethylene',
-  'PVC': 'Polyvinyl Chloride',
-  'PYL': 'Polypropylene',
-  'SODASH': 'Soda Ash',
-  'UREA': 'Urea',
-  'DIAPH': 'Diammonium Phosphate',
-  
-  // Food & Agriculture
-  'POTATO': 'Potato',
-  'OJ': 'Orange Juice'
+  'WTIOIL': 'WTI Crude Oil', 'BRENTOIL': 'Brent Crude Oil', 'NG': 'Natural Gas',
+  'HO': 'Heating Oil', 'RB': 'Gasoline RBOB',
+  // Grains
+  'CORN': 'Corn Futures', 'ZW': 'Wheat Futures', 'SOYBEAN': 'Soybean Futures',
+  'ZL': 'Soybean Oil', 'ZM': 'Soybean Meal', 'OAT': 'Oat Futures', 'RR': 'Rough Rice',
+  // Softs
+  'CA': 'Coffee Arabica', 'LS': 'Sugar #11', 'CT': 'Cotton', 'CC': 'Cocoa', 'OJ': 'Orange Juice',
+  // Livestock
+  'CATTLE': 'Live Cattle Futures', 'HOGS': 'Lean Hogs Futures',
+  // Other
+  'LUMBER': 'Lumber Futures',
 };
 
 serve(async (req) => {
@@ -303,7 +133,7 @@ serve(async (req) => {
     // ALL energy commodities are reserved for OilPriceAPI — never use FMP for energy
     const OIL_API_ONLY_NAMES = new Set([
       'WTI Crude Oil', 'Brent Crude Oil', 'Natural Gas', 'Gasoline RBOB', 'Heating Oil',
-      'Natural Gas UK', 'Gas Oil', 'Coal', 'Ethanol', 'Propane',
+      'Natural Gas UK',
       'Crude Oil Dubai', 'Tapis Crude Oil', 'Western Canadian Select', 'Urals Crude Oil',
       'Jet Fuel', 'ULSD Diesel', 'Dutch TTF Gas', 'Japan/Korea LNG', 'US Gas Storage',
       'VLSFO Global', 'HFO 380 Global', 'MGO 0.5%S Global', 'HFO 380 Rotterdam',
@@ -446,9 +276,8 @@ serve(async (req) => {
       }
     }
 
-    // Try FMP using per-symbol /quote endpoint (works on basic plans)
-    // FMP uses USD-suffixed symbols for commodities
-    if (!nonEnergyLoaded) {
+    // Always try FMP for any non-energy commodities not yet loaded
+    {
       const fmpApiKey = Deno.env.get('FMP_API_KEY');
       if (fmpApiKey && fmpApiKey !== 'demo') {
         try {
@@ -526,39 +355,20 @@ serve(async (req) => {
       }
     }
 
-    // Step 3: Static fallback for any remaining non-energy commodities
-    // Use realistic base prices so they never show $0.00
-    const FALLBACK_PRICES: Record<string, number> = {
-      'Coffee Robusta': 3500, 'Sugar #5': 520, 'Tea': 3.20,
-      'Milk Nonfat Dry': 1.18, 'Butter': 2.45, 'Cheese': 1.85,
-      'Milk Class III': 18.50, 'Rhodium': 5200, 'Lead': 2100, 'Tin': 28000,
-      'Steel': 450, 'Iron Ore': 110, 'Lithium': 15000, 'Cobalt': 30000,
-      'Uranium': 85, 'Canola': 620, 'Barley': 5.50, 'Spring Wheat': 6.80,
-      'Hard Red Winter Wheat': 6.20, 'Palm Oil': 3800, 'Sunflower Oil': 1100,
-      'Rapeseed Oil': 950, 'Coconut Oil': 1200, 'Olive Oil': 8500,
-      'Random Length Lumber': 550, 'Pulp': 750, 'Newsprint': 600,
-      'Rubber': 1.60, 'Cotton Yarn': 3.50, 'Wool': 12.50, 'Jute': 650,
-      'Urea': 300, 'Diammonium Phosphate': 550, 'Potash': 280, 'Ammonia': 450,
-      'Polyethylene': 1100, 'Polypropylene': 1050, 'PVC': 850, 'Styrene': 1200,
-      'White Sugar': 530, 'Raw Sugar': 19.50, 'Potato': 22, 'Onion': 1.50,
-      'Garlic': 4.50, 'Apple': 1.80, 'Banana': 1.10,
-      'Black Pepper': 5500, 'Cardamom': 25000, 'Turmeric': 1500,
-      'Coriander': 7500, 'Chilli': 12000, 'Cumin': 15000,
-      'Electricity': 45, 'Carbon Credits': 75, 'Weather Derivatives': 100,
-    };
+    // Step 3: Any remaining commodities in COMMODITY_SYMBOLS that weren't loaded get added with price 0
     {
       const remaining = Object.entries(COMMODITY_SYMBOLS)
         .filter(([name, info]) => !OIL_API_ONLY_NAMES.has(name) && info.category !== 'energy' && !existingNames.has(name))
         .map(([name, info]) => ({
           name,
           symbol: info.symbol,
-          price: FALLBACK_PRICES[name] || 0,
+          price: 0,
           change: 0,
           changePercent: 0,
           volume: 0,
           ...info,
           supportedByFMP: false,
-          source: FALLBACK_PRICES[name] ? 'fallback-estimate' : 'static',
+          source: 'static',
         }));
       
       if (remaining.length > 0) {
