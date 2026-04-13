@@ -20,19 +20,8 @@ const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; cont
   'Ethanol': { symbol: 'CHK=F', category: 'energy', contractSize: '29,000 gal', venue: 'CBOT' },
   'Propane': { symbol: 'PN=F', category: 'energy', contractSize: '42,000 gal', venue: 'NYMEX' },
   'Crude Oil Dubai': { symbol: 'DC=F', category: 'energy', contractSize: '1,000 bbl', venue: 'DME' },
-  'Tapis Crude Oil': { symbol: 'TAP=F', category: 'energy', contractSize: '1,000 bbl', venue: 'SGX' },
   'Urals Crude Oil': { symbol: 'URL=F', category: 'energy', contractSize: '1,000 bbl', venue: 'ICE' },
-  'DME Oman Crude': { symbol: 'OQD=F', category: 'energy', contractSize: '1,000 bbl', venue: 'DME' },
-  'Murban Crude': { symbol: 'MURBAN=F', category: 'energy', contractSize: '1,000 bbl', venue: 'ICE' },
   'OPEC Basket': { symbol: 'OPEC=X', category: 'energy', contractSize: '1 bbl', venue: 'OPEC' },
-  'Indian Basket': { symbol: 'INDBSK=X', category: 'energy', contractSize: '1 bbl', venue: 'PPAC' },
-  'WTI Midland': { symbol: 'WTM=F', category: 'energy', contractSize: '1,000 bbl', venue: 'CME' },
-  'Alaska North Slope': { symbol: 'ANS=F', category: 'energy', contractSize: '1,000 bbl', venue: 'ICE' },
-  'Mars Blend': { symbol: 'MARS=F', category: 'energy', contractSize: '1,000 bbl', venue: 'CME' },
-  'Louisiana Light Sweet': { symbol: 'LLS=F', category: 'energy', contractSize: '1,000 bbl', venue: 'CME' },
-  'Western Canadian Select': { symbol: 'WCS=F', category: 'energy', contractSize: '1,000 bbl', venue: 'CME' },
-  'Canadian Crude Index': { symbol: 'CCI=X', category: 'energy', contractSize: '1 bbl', venue: 'NEB' },
-  'Mexican Basket': { symbol: 'MEXBSK=X', category: 'energy', contractSize: '1 bbl', venue: 'PEMEX' },
   
   // Precious Metals
   'Gold Futures': { symbol: 'GC=F', category: 'metals', contractSize: '100 oz', venue: 'COMEX' },
@@ -355,22 +344,10 @@ serve(async (req) => {
 
           // OilPriceAPI-supported blends
           const OIL_API_BLENDS: Record<string, string> = {
-            // Crude Oil Benchmarks
+            // Only blends with actively updated prices from OilPriceAPI
             'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
-            'Tapis Crude Oil': 'TAPIS_CRUDE_USD',
             'Urals Crude Oil': 'URALS_CRUDE_USD',
-            'DME Oman Crude': 'DME_OMAN_USD',
-            'Murban Crude': 'MURBAN_CRUDE_USD',
             'OPEC Basket': 'OPEC_BASKET_USD',
-            'Indian Basket': 'INDIAN_BASKET_USD',
-            // Regional Crude Benchmarks
-            'WTI Midland': 'WTI_MIDLAND_USD',
-            'Alaska North Slope': 'ANS_WEST_COAST_USD',
-            'Mars Blend': 'MARS_USD',
-            'Louisiana Light Sweet': 'LOUISIANA_LIGHT_USD',
-            'Western Canadian Select': 'WESTERN_CANADIAN_SELECT_USD',
-            'Canadian Crude Index': 'CANADIAN_CRUDE_INDEX_USD',
-            'Mexican Basket': 'MEXICAN_BASKET_USD',
           };
 
           // Fetch real prices from OilPriceAPI for supported blends
