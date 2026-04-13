@@ -345,6 +345,42 @@ serve(async (req) => {
               supportedByFMP: true
             };
           });
+
+          // Add regional oil blends not covered by FMP, using WTI as price reference
+          const existingNames = new Set(commoditiesData.map(c => c.name));
+          const wtiPrice = commoditiesData.find(c => c.symbol === 'CL=F')?.price || 0;
+          const brentPrice = commoditiesData.find(c => c.symbol === 'BZ=F')?.price || 0;
+          const refPrice = brentPrice || wtiPrice;
+
+          const REGIONAL_OIL_BLENDS: Record<string, { differential: number }> = {
+            'Crude Oil Dubai': { differential: -2.5 },
+            'Tapis Crude Oil': { differential: 1.5 },
+            'Urals Crude Oil': { differential: -8.0 },
+            'Bonny Light Crude Oil': { differential: 0.5 },
+            'Arab Light Crude Oil': { differential: -1.0 },
+            'Arab Heavy Crude Oil': { differential: -4.5 },
+            'ESPO Crude Oil': { differential: -1.5 },
+            'Isthmus Crude Oil': { differential: -0.8 },
+          };
+
+          if (refPrice > 0) {
+            for (const [name, blend] of Object.entries(REGIONAL_OIL_BLENDS)) {
+              if (!existingNames.has(name) && COMMODITY_SYMBOLS[name]) {
+                const estimatedPrice = parseFloat((refPrice + blend.differential).toFixed(2));
+                commoditiesData.push({
+                  name,
+                  symbol: COMMODITY_SYMBOLS[name].symbol,
+                  price: estimatedPrice,
+                  change: 0,
+                  changePercent: 0,
+                  volume: 0,
+                  ...COMMODITY_SYMBOLS[name],
+                  supportedByFMP: false,
+                  estimatedFromBrent: true,
+                });
+              }
+            }
+          }
         } else {
           throw new Error('No data returned from FMP API');
         }
