@@ -249,8 +249,13 @@ const EconomicCalendar = () => {
                                 <p className="text-sm font-medium mb-2">Potential Commodity Impact:</p>
                                 <div className="flex flex-wrap gap-2">
                                   {event.commodityImpact.map(commodity => (
-                                    <Badge key={commodity} variant="outline" className="text-xs">
-                                      {commodity}
+                                    <Badge 
+                                      key={commodity} 
+                                      variant="outline" 
+                                      className="text-xs cursor-pointer hover:bg-primary/10 hover:border-primary/50 transition-colors"
+                                      onClick={() => navigate(`/?commodity=${encodeURIComponent(commodity)}`)}
+                                    >
+                                      {commodity} ↗
                                     </Badge>
                                   ))}
                                 </div>
