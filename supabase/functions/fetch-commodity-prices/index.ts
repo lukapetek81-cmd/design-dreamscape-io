@@ -27,170 +27,37 @@ const FMP_SYMBOLS: Record<string, string> = {
   'Random Length Lumber': 'LB=F'
 };
 
+// OilPriceAPI codes for commodities not available in FMP
+const OIL_API_CODES: Record<string, string> = {
+  'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
+  'Tapis Crude Oil': 'TAPIS_CRUDE_USD',
+  'Western Canadian Select': 'WCS_CRUDE_USD',
+  'Urals Crude Oil': 'URALS_CRUDE_USD',
+  'Jet Fuel': 'JET_FUEL_USD',
+  'ULSD Diesel': 'ULSD_DIESEL_USD',
+  'Natural Gas UK': 'NATURAL_GAS_GBP',
+  'Dutch TTF Gas': 'DUTCH_TTF_EUR',
+  'Japan/Korea LNG': 'JKM_LNG_USD',
+  'US Gas Storage': 'NATURAL_GAS_STORAGE',
+  'VLSFO Global': 'VLSFO_USD',
+  'HFO 380 Global': 'HFO_380_USD',
+  'MGO 0.5%S Global': 'MGO_05S_USD',
+  'HFO 380 Rotterdam': 'HFO_380_NLRTM_USD',
+  'VLSFO Singapore': 'VLSFO_SGSIN_USD',
+  'MGO Houston': 'MGO_05S_USHOU_USD',
+  'VLSFO Fujairah': 'VLSFO_AEFUJ_USD',
+};
+
 const getBasePriceForCommodity = (commodityName: string): number => {
   const basePrices: Record<string, number> = {
-    // Energy
-    'Crude Oil': 65,
-    'Brent Crude Oil': 70,
-    'Natural Gas': 2.85,
-    'Gasoline RBOB': 2.1,
-    'Heating Oil': 2.3,
-    'Natural Gas UK': 90,
-    'Gas Oil': 650,
-    'Coal': 85,
-    'Coal Australia': 88,
-    'Coal South Africa': 82,
-    'Ethanol': 2.15,
-    'Methanol': 385,
-    'Propane': 0.95,
-    'Naphtha': 485,
-    
-    // Precious Metals
-    'Gold Futures': 2000,
-    'Silver Futures': 25,
-    'Platinum': 1050,
-    'Palladium': 1200,
-    'Rhodium': 4500,
-    
-    // Base Metals
-    'Copper': 4.2,
-    'Aluminum': 2200,
-    'Aluminum LME': 2200,
-    'Zinc': 2800,
-    'Zinc LME': 2800,
-    'Lead': 2100,
-    'Nickel': 18500,
-    'Tin': 32000,
-    'Steel': 650,
-    'Hot-Rolled Coil Steel': 685,
-    'Iron Ore 62% FE': 115,
-    'Iron Ore': 115,
-    'Magnesium': 2850,
-    
-    // Industrial/Tech Metals
-    'Lithium': 85,
-    'Cobalt': 35000,
-    'Titanium': 8500,
-    'Gallium': 285,
-    'Indium': 185,
-    'Tellurium': 485,
-    'Neodymium': 85,
-    'Uranium': 50,
-    
-    // Energy - Additional
-    'Crude Oil Dubai': 64,
-    'Ural Oil': 62,
-    'Natural Gas US': 2.85,
-    'Natural Gas Europe': 32,
-    'Liquefied Natural Gas Japan': 15.50,
-    'TTF Gas': 28,
-    'UK Gas': 85,
-    
-    // Grains & Agriculture
-    'Corn Futures': 430,
-    'Wheat Futures': 550,
-    'Soybean Futures': 1150,
-    'Soybean Oil': 45,
-    'Soybean Meal': 315,
-    'Oat Futures': 385,
-    'Rough Rice': 16.25,
-    'Canola': 520,
-    'Barley': 240,
-    'Spring Wheat': 580,
-    'Hard Red Winter Wheat': 565,
-    
-    // Livestock & Dairy
-    'Live Cattle Futures': 170,
-    'Feeder Cattle Futures': 240,
-    'Lean Hogs Futures': 75,
-    'Milk': 20.85,
-    'Milk Class III': 20.85,
-    'Milk Nonfat Dry': 1.35,
-    'Butter': 2.85,
-    'Cheese': 1.95,
-    'Eggs US': 2.15,
-    'Eggs China': 1.85,
-    'Poultry': 1.45,
-    'Salmon': 8.50,
-    'Fish Meal': 1850,
-    
-    // Soft Commodities
-    'Coffee Arabica': 165,
-    'Coffee Robusta': 2100,
-    'Sugar': 19.75,
-    'Sugar #11': 19.75,
-    'Sugar #5': 485,
-    'Cotton': 72.80,
-    'Cocoa': 2850,
-    'Orange Juice': 315,
-    'Tea': 3.20,
-    'Tea Kolkata': 3.85,
-    'Tea Colombo': 3.65,
-    'Tea Mombasa': 3.45,
-    
-    // Oils & Fats
-    'Palm Oil': 885,
-    'Sunflower Oil': 1350,
-    'Rapeseed Oil': 1450,
-    'Coconut Oil': 1650,
-    'Olive Oil': 4200,
-    
-    // Forest Products
-    'Lumber': 485,
-    'Lumber Futures': 485,
-    'Random Length Lumber': 485,
-    'Pulp': 1450,
-    'Newsprint': 685,
-    
-    // Industrial Materials
-    'Rubber': 1.85,
-    'Cotton Yarn': 3200,
-    'Wool': 14.50,
-    'Jute': 850,
-    'Bitumen': 485,
-    'Kraft Pulp': 1450,
-    
-    // Fertilizers & Chemicals
-    'Urea': 385,
-    'Diammonium Phosphate': 545,
-    'Potash': 285,
-    'Ammonia': 485,
-    'Soda Ash': 285,
-    
-    // Plastics
-    'Polyethylene': 1250,
-    'Polypropylene': 1180,
-    'Polyvinyl Chloride': 985,
-    'PVC': 985,
-    'Styrene': 1450,
-    
-    // Food & Agriculture
-    'White Sugar': 485,
-    'Raw Sugar': 19.75,
-    'Potato': 285,
-    'Onion': 385,
-    'Garlic': 1250,
-    'Apple': 1.85,
-    'Banana': 0.85,
-    
-    // Spices
-    'Black Pepper': 6500,
-    'Cardamom': 1850,
-    'Turmeric': 685,
-    'Coriander': 1250,
-    'Chilli': 2850,
-    'Cumin': 4500,
-    
-    // Others
-    'Electricity': 125,
-    'Carbon Credits': 25,
-    'Weather Derivatives': 100,
-    
-    // Legacy mappings
-    'Coffee': 165,
-    'Micro Gold Futures': 2000,
-    'Micro Silver Futures': 25,
-    'Class III Milk Futures': 20.85
+    'Crude Oil': 65, 'Brent Crude Oil': 70, 'Natural Gas': 2.85,
+    'Gasoline RBOB': 2.1, 'Heating Oil': 2.3, 'Natural Gas UK': 90,
+    'Gas Oil': 650, 'Coal': 85, 'Ethanol': 2.15, 'Propane': 0.95,
+    'Gold Futures': 2000, 'Silver Futures': 25, 'Platinum': 1050,
+    'Palladium': 1200, 'Copper': 4.2, 'Aluminum': 2200,
+    'Corn Futures': 430, 'Wheat Futures': 550, 'Soybean Futures': 1150,
+    'Coffee Arabica': 165, 'Sugar #11': 19.75, 'Cotton': 72.80,
+    'Cocoa': 2850, 'Live Cattle Futures': 170, 'Lean Hogs Futures': 75,
   };
   return basePrices[commodityName] || 100;
 };
@@ -203,7 +70,6 @@ serve(async (req) => {
   try {
     const body = await req.json()
     
-    // Input validation
     const commodityName = typeof body.commodityName === 'string' && body.commodityName.length > 0 && body.commodityName.length <= 100
       ? body.commodityName
       : null;
@@ -223,61 +89,88 @@ serve(async (req) => {
     let priceData = null
     let dataSource = 'fallback'
 
-    // Use FMP API as primary source - get the symbol directly from FMP's commodity list
-    const fmpApiKey = Deno.env.get('FMP_API_KEY')
+    // Check if this commodity is available from OilPriceAPI first
+    const oilApiCode = OIL_API_CODES[commodityName];
+    const oilApiKey = Deno.env.get('OIL_PRICE_API_KEY');
     
-    if (fmpApiKey && fmpApiKey !== 'demo') {
+    if (oilApiCode && oilApiKey) {
       try {
-        console.log(`Using FMP API to find current price for ${commodityName}`)
+        console.log(`Trying OilPriceAPI for ${commodityName} (${oilApiCode})`);
+        const oilResp = await fetch(
+          `https://api.oilpriceapi.com/v1/prices/latest?by_code=${oilApiCode}`,
+          { headers: { 'Authorization': `Token ${oilApiKey}` } }
+        );
         
-        // First, get all available commodities to find the correct symbol
-        const commoditiesResponse = await fetch(
-          `https://financialmodelingprep.com/api/v3/quotes/commodity?apikey=${fmpApiKey}`
-        )
-        
-        if (commoditiesResponse.ok) {
-          const commoditiesData = await commoditiesResponse.json()
+        if (oilResp.ok) {
+          const oilResult = await oilResp.json();
+          if (oilResult.data?.price) {
+            priceData = {
+              symbol: oilApiCode,
+              price: oilResult.data.price,
+              change: 0,
+              changePercent: 0,
+              lastUpdate: oilResult.data.created_at || new Date().toISOString()
+            };
+            dataSource = 'oilpriceapi';
+            console.log(`OilPriceAPI price for ${commodityName}: ${oilResult.data.price}`);
+          }
+        } else {
+          const errText = await oilResp.text();
+          console.warn(`OilPriceAPI error for ${oilApiCode}: ${oilResp.status} - ${errText}`);
+        }
+      } catch (err) {
+        console.warn(`OilPriceAPI failed for ${commodityName}:`, err);
+      }
+    }
+
+    // Use FMP API as secondary source for commodities not from OilPriceAPI
+    if (!priceData) {
+      const fmpApiKey = Deno.env.get('FMP_API_KEY')
+      
+      if (fmpApiKey && fmpApiKey !== 'demo') {
+        try {
+          console.log(`Using FMP API to find current price for ${commodityName}`)
           
-          if (Array.isArray(commoditiesData) && commoditiesData.length > 0) {
-            // Find the matching commodity from FMP's list
-            const fmpCommodity = commoditiesData.find(item => {
-              // Try exact name match first
-              if (item.name && item.name.toLowerCase() === commodityName.toLowerCase()) {
-                return true;
-              }
-              
-              // Try symbol match with our hardcoded mapping as fallback
-              const hardcodedSymbol = FMP_SYMBOLS[commodityName];
-              if (hardcodedSymbol && item.symbol === hardcodedSymbol) {
-                return true;
-              }
-              
-              // Try partial name matching
-              const itemNameLower = (item.name || '').toLowerCase();
-              const commodityNameLower = commodityName.toLowerCase();
-              
-              // Extract key words for matching
-              const commodityWords = commodityNameLower.split(' ').filter(w => w.length > 2);
-              return commodityWords.some(word => itemNameLower.includes(word));
-            });
+          const commoditiesResponse = await fetch(
+            `https://financialmodelingprep.com/api/v3/quotes/commodity?apikey=${fmpApiKey}`
+          )
+          
+          if (commoditiesResponse.ok) {
+            const commoditiesData = await commoditiesResponse.json()
             
-            if (fmpCommodity) {
-              priceData = {
-                symbol: fmpCommodity.symbol,
-                price: parseFloat(fmpCommodity.price) || 0,
-                change: parseFloat(fmpCommodity.change) || 0,
-                changePercent: parseFloat(fmpCommodity.changesPercentage) || 0,
-                lastUpdate: new Date().toISOString()
+            if (Array.isArray(commoditiesData) && commoditiesData.length > 0) {
+              const fmpCommodity = commoditiesData.find(item => {
+                if (item.name && item.name.toLowerCase() === commodityName.toLowerCase()) {
+                  return true;
+                }
+                const hardcodedSymbol = FMP_SYMBOLS[commodityName];
+                if (hardcodedSymbol && item.symbol === hardcodedSymbol) {
+                  return true;
+                }
+                const itemNameLower = (item.name || '').toLowerCase();
+                const commodityNameLower = commodityName.toLowerCase();
+                const commodityWords = commodityNameLower.split(' ').filter(w => w.length > 2);
+                return commodityWords.every(word => itemNameLower.includes(word));
+              });
+              
+              if (fmpCommodity) {
+                priceData = {
+                  symbol: fmpCommodity.symbol,
+                  price: parseFloat(fmpCommodity.price) || 0,
+                  change: parseFloat(fmpCommodity.change) || 0,
+                  changePercent: parseFloat(fmpCommodity.changesPercentage) || 0,
+                  lastUpdate: new Date().toISOString()
+                }
+                dataSource = 'fmp'
+                console.log(`Successfully fetched from FMP:`, priceData)
+              } else {
+                console.log(`No FMP commodity found matching "${commodityName}"`)
               }
-              dataSource = 'fmp'
-              console.log(`Successfully fetched from FMP:`, priceData)
-            } else {
-              console.log(`No FMP commodity found matching "${commodityName}"`)
             }
           }
+        } catch (error) {
+          console.warn(`FMP API failed for ${commodityName}:`, error)
         }
-      } catch (error) {
-        console.warn(`FMP API failed for ${commodityName}:`, error)
       }
     }
 
@@ -298,9 +191,6 @@ serve(async (req) => {
     // Apply data delay for free users
     if (dataDelay === '15min' && priceData) {
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000)
-      console.log(`Applying 15-minute delay - simulating price data from ${fifteenMinutesAgo.toISOString()}`)
-      
-      // Use a deterministic seed based on commodity name for consistent delayed pricing
       const commodityHash = commodityName.split('').reduce((a, b) => {
         a = ((a << 5) - a) + b.charCodeAt(0)
         return a & a

@@ -82,8 +82,20 @@ const CommodityCard = React.memo<CommodityCardProps>(({
 
   const isPositive = currentChange >= 0;
 
+  // Get price prefix based on commodity units
+  const getPricePrefix = React.useCallback((commodityName: string): string => {
+    const lower = commodityName.toLowerCase();
+    if (lower.includes('gas storage')) return ''; // Bcf value, no currency
+    if (lower.includes('dutch ttf')) return '€';
+    if (lower.includes('natural gas uk')) return '£';
+    return '$';
+  }, []);
+
   // Format price for display
   const formatPrice = React.useCallback((priceValue: number): string => {
+    if (priceValue >= 10000) {
+      return priceValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
     if (priceValue >= 1000) {
       return priceValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
@@ -92,16 +104,46 @@ const CommodityCard = React.memo<CommodityCardProps>(({
 
   // Get price units helper
   const getPriceUnits = React.useCallback((commodityName: string): string => {
-    if (commodityName.toLowerCase().includes('oil') || commodityName.toLowerCase().includes('gasoline')) {
-      return '$/barrel';
+    const lower = commodityName.toLowerCase();
+    // Marine fuels (VLSFO, HFO, MGO)
+    if (lower.includes('vlsfo') || lower.includes('hfo') || lower.includes('mgo')) {
+      return '$/MT';
     }
-    if (commodityName.toLowerCase().includes('gas')) {
+    // Refined products sold per gallon
+    if (lower.includes('jet fuel') || lower.includes('ulsd') || lower.includes('diesel') || 
+        lower.includes('heating oil') || lower.includes('gasoline') || lower.includes('rbob')) {
+      return '$/gallon';
+    }
+    // Gas storage in Bcf
+    if (lower.includes('gas storage')) {
+      return 'Bcf';
+    }
+    // Dutch TTF in EUR/MWh
+    if (lower.includes('dutch ttf')) {
+      return '€/MWh';
+    }
+    // LNG in $/MMBtu
+    if (lower.includes('lng')) {
       return '$/MMBtu';
     }
-    if (commodityName.toLowerCase().includes('gold') || commodityName.toLowerCase().includes('silver')) {
+    // Crude oils per barrel
+    if (lower.includes('oil') || lower.includes('crude') || lower.includes('wti') || 
+        lower.includes('brent') || lower.includes('tapis') || lower.includes('urals') || 
+        lower.includes('canadian select') || lower.includes('opec')) {
+      return '$/barrel';
+    }
+    // Natural gas
+    if (lower.includes('gas')) {
+      return '$/MMBtu';
+    }
+    // UK natural gas in GBp/therm
+    if (lower.includes('natural gas uk')) {
+      return 'GBp/therm';
+    }
+    if (lower.includes('gold') || lower.includes('silver')) {
       return '$/oz';
     }
-    if (commodityName.toLowerCase().includes('corn') || commodityName.toLowerCase().includes('wheat')) {
+    if (lower.includes('corn') || lower.includes('wheat')) {
       return '¢/bushel';
     }
     return '$/unit';
@@ -206,7 +248,7 @@ const CommodityCard = React.memo<CommodityCardProps>(({
                       {displayPrice !== null ? (
                         typeof displayPrice === 'string' 
                           ? displayPrice 
-                          : `$${formatPrice(displayPrice)}`
+                          : `${getPricePrefix(name)}${formatPrice(displayPrice)}`
                       ) : (
                         <span className="text-muted-foreground text-lg">Loading...</span>
                       )}
