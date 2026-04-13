@@ -20,8 +20,11 @@ const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; cont
   'Ethanol': { symbol: 'CHK=F', category: 'energy', contractSize: '29,000 gal', venue: 'CBOT' },
   'Propane': { symbol: 'PN=F', category: 'energy', contractSize: '42,000 gal', venue: 'NYMEX' },
   'Crude Oil Dubai': { symbol: 'DC=F', category: 'energy', contractSize: '1,000 bbl', venue: 'DME' },
+  'Tapis Crude Oil': { symbol: 'TAP=F', category: 'energy', contractSize: '1,000 bbl', venue: 'SGX' },
+  'Western Canadian Select': { symbol: 'WCS=F', category: 'energy', contractSize: '1,000 bbl', venue: 'CME' },
   'Urals Crude Oil': { symbol: 'URL=F', category: 'energy', contractSize: '1,000 bbl', venue: 'ICE' },
-  'OPEC Basket': { symbol: 'OPEC=X', category: 'energy', contractSize: '1 bbl', venue: 'OPEC' },
+  'Jet Fuel': { symbol: 'JET=F', category: 'energy', contractSize: '42,000 gal', venue: 'NYMEX' },
+  'ULSD Diesel': { symbol: 'ULSD=F', category: 'energy', contractSize: '42,000 gal', venue: 'NYMEX' },
   
   // Precious Metals
   'Gold Futures': { symbol: 'GC=F', category: 'metals', contractSize: '100 oz', venue: 'COMEX' },
@@ -344,10 +347,13 @@ serve(async (req) => {
 
           // OilPriceAPI-supported blends
           const OIL_API_BLENDS: Record<string, string> = {
-            // Only blends with actively updated prices from OilPriceAPI
+            // All 10 oil types from OilPriceAPI (excluding WTI/Brent already from FMP)
             'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
+            'Tapis Crude Oil': 'TAPIS_CRUDE_USD',
+            'Western Canadian Select': 'WCS_CRUDE_USD',
             'Urals Crude Oil': 'URALS_CRUDE_USD',
-            'OPEC Basket': 'OPEC_BASKET_USD',
+            'Jet Fuel': 'JET_FUEL_USD',
+            'ULSD Diesel': 'ULSD_DIESEL_USD',
           };
 
           // Fetch real prices from OilPriceAPI for supported blends
