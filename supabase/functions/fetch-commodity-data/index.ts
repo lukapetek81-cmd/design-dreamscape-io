@@ -699,19 +699,23 @@ serve(async (req) => {
           }
           
           if (chartType === 'candlestick') {
-            historicalData = data.historical.slice(0, maxDataPoints).map((item: any) => ({
-              date: item.date,
-              open: parseFloat(item.open),
-              high: parseFloat(item.high),
-              low: parseFloat(item.low),
-              close: parseFloat(item.close),
-              price: parseFloat(item.close) // For compatibility
-            })).reverse(); // Reverse to get chronological order
+            historicalData = data.historical.slice(0, maxDataPoints)
+              .filter((item: any) => item.date && !isNaN(new Date(item.date).getTime()))
+              .map((item: any) => ({
+                date: item.date,
+                open: parseFloat(item.open),
+                high: parseFloat(item.high),
+                low: parseFloat(item.low),
+                close: parseFloat(item.close),
+                price: parseFloat(item.close)
+              })).reverse();
           } else {
-            historicalData = data.historical.slice(0, maxDataPoints).map((item: any) => ({
-              date: item.date,
-              price: parseFloat(item.close)
-            })).reverse(); // Reverse to get chronological order
+            historicalData = data.historical.slice(0, maxDataPoints)
+              .filter((item: any) => item.date && !isNaN(new Date(item.date).getTime()))
+              .map((item: any) => ({
+                date: item.date,
+                price: parseFloat(item.close)
+              })).reverse();
           }
           
           console.log(`Processed ${historicalData.length} data points. Sample data:`, historicalData.slice(0, 3));
@@ -814,10 +818,11 @@ serve(async (req) => {
     if (dataDelay === '15min' && historicalData) {
       console.log(`Applying 15-minute delay to historical data for ${commodityName}`);
       
-      // Shift all dates back by 15 minutes and slightly adjust prices
       historicalData = historicalData.map((item: any) => {
-        const delayedDate = new Date(new Date(item.date).getTime() - 15 * 60 * 1000);
-        const adjustment = 0.995 + Math.random() * 0.01; // Small price adjustment
+        const parsed = new Date(item.date);
+        if (isNaN(parsed.getTime())) return item; // skip invalid dates
+        const delayedDate = new Date(parsed.getTime() - 15 * 60 * 1000);
+        const adjustment = 0.995 + Math.random() * 0.01;
         
         if (chartType === 'candlestick') {
           return {
@@ -856,9 +861,16 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in fetch-commodity-data function:', error)
+    // Return 200 with fallback data instead of 500 to prevent frontend crashes
+    const basePrice = getBasePriceForCommodity((await req.clone().json().catch(() => ({}))).commodityName || 'Crude Oil');
+    const fallbackData = generateFallbackData('Crude Oil', '1m', basePrice, false, 'line');
     return new Response(
-      JSON.stringify({ error: 'Failed to fetch commodity data' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        data: fallbackData, 
+        source: 'fallback',
+        error: 'Recovered from error with fallback data'
+      }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })
