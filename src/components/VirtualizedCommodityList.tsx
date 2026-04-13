@@ -23,11 +23,13 @@ interface FuturesContract {
 interface VirtualizedCommodityListProps {
   commodities: Commodity[];
   loading?: boolean;
+  highlightCommodity?: string | null;
 }
 
 const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({ 
   commodities, 
-  loading = false 
+  loading = false,
+  highlightCommodity
 }) => {
   const isMobile = useIsMobile();
   const { isPremium } = useAuth();
