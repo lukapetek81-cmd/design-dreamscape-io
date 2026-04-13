@@ -41,7 +41,7 @@ const COMMODITY_SYMBOLS: Record<string, string> = {
   'Uranium': 'HG=F',
   
   // Energy
-  'Crude Oil': 'CL=F',
+  'WTI Crude Oil': 'CL=F',
   'Brent Crude Oil': 'BZ=F',
   'Crude Oil Dubai': 'CL=F',
   'Ural Oil': 'CL=F',
@@ -306,7 +306,7 @@ const generateFallbackData = (commodityName: string, timeframe: string, basePric
 const getBasePriceForCommodity = (commodityName: string): number => {
   const basePrices: Record<string, number> = {
     // Energy
-    'Crude Oil': 65,
+    'WTI Crude Oil': 65,
     'Brent Crude Oil': 70,
     'Natural Gas': 2.85,
     'Gasoline RBOB': 2.1,
@@ -489,7 +489,7 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
-  let commodityName = 'Crude Oil';
+  let commodityName = 'WTI Crude Oil';
   try {
     const body = await req.json();
     commodityName = body.commodityName;
@@ -532,7 +532,7 @@ serve(async (req) => {
 
     // OilPriceAPI blends - try historical data from OilPriceAPI first
     const OIL_API_BLEND_CODES: Record<string, string> = {
-      'Crude Oil': 'WTI_USD',
+      'WTI Crude Oil': 'WTI_USD',
       'Brent Crude Oil': 'BRENT_CRUDE_USD',
       'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
       'Urals Crude Oil': 'URALS_CRUDE_USD',
@@ -858,8 +858,8 @@ serve(async (req) => {
     console.error('Error in fetch-commodity-data function:', error)
     // Return 200 with fallback data instead of 500 to prevent frontend crashes
     // Don't try to clone the request body - it's already consumed
-    const basePrice = getBasePriceForCommodity(commodityName || 'Crude Oil');
-    const fallbackData = generateFallbackData(commodityName || 'Crude Oil', '1m', basePrice, false, 'line');
+    const basePrice = getBasePriceForCommodity(commodityName || 'WTI Crude Oil');
+    const fallbackData = generateFallbackData(commodityName || 'WTI Crude Oil', '1m', basePrice, false, 'line');
     return new Response(
       JSON.stringify({ 
         data: fallbackData, 

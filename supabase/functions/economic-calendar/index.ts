@@ -10,41 +10,41 @@ const getCommodityImpact = (event: string, country: string): string[] => {
   const e = event.toLowerCase();
   
   if (e.includes('non-farm') || e.includes('nonfarm') || e.includes('employment') || e.includes('jobless') || e.includes('unemployment')) {
-    return ['Gold Futures', 'Crude Oil', 'Silver Futures'];
+    return ['Gold Futures', 'WTI Crude Oil', 'Silver Futures'];
   }
   if (e.includes('cpi') || e.includes('inflation') || e.includes('consumer price')) {
     return ['Gold Futures', 'Silver Futures', 'Copper'];
   }
   if (e.includes('gdp')) {
-    return ['Crude Oil', 'Copper', 'Gold Futures'];
+    return ['WTI Crude Oil', 'Copper', 'Gold Futures'];
   }
   if (e.includes('interest rate') || e.includes('fed') || e.includes('fomc') || e.includes('monetary')) {
-    return ['Gold Futures', 'Silver Futures', 'Crude Oil'];
+    return ['Gold Futures', 'Silver Futures', 'WTI Crude Oil'];
   }
   if (e.includes('pmi') || e.includes('manufacturing') || e.includes('industrial')) {
-    return ['Copper', 'Crude Oil', 'Aluminum'];
+    return ['Copper', 'WTI Crude Oil', 'Aluminum'];
   }
   if (e.includes('oil') || e.includes('petroleum') || e.includes('energy') || e.includes('opec')) {
-    return ['Crude Oil', 'Brent Crude Oil', 'Natural Gas'];
+    return ['WTI Crude Oil', 'Brent Crude Oil', 'Natural Gas'];
   }
   if (e.includes('crop') || e.includes('agriculture') || e.includes('usda') || e.includes('farm')) {
     return ['Corn Futures', 'Wheat Futures', 'Soybean Futures'];
   }
   if (e.includes('trade balance') || e.includes('export') || e.includes('import')) {
-    return ['Crude Oil', 'Gold Futures', 'Copper'];
+    return ['WTI Crude Oil', 'Gold Futures', 'Copper'];
   }
   if (e.includes('retail') || e.includes('consumer') || e.includes('spending')) {
-    return ['Gold Futures', 'Crude Oil'];
+    return ['Gold Futures', 'WTI Crude Oil'];
   }
   if (e.includes('housing') || e.includes('building') || e.includes('construction')) {
     return ['Lumber', 'Copper'];
   }
   
   // Default based on country
-  if (country === 'CN') return ['Copper', 'Iron Ore', 'Crude Oil'];
-  if (country === 'JP') return ['Gold Futures', 'Crude Oil'];
+  if (country === 'CN') return ['Copper', 'Iron Ore', 'WTI Crude Oil'];
+  if (country === 'JP') return ['Gold Futures', 'WTI Crude Oil'];
   
-  return ['Gold Futures', 'Crude Oil'];
+  return ['Gold Futures', 'WTI Crude Oil'];
 };
 
 const getImpactLevel = (impact: string | null): 'low' | 'medium' | 'high' => {

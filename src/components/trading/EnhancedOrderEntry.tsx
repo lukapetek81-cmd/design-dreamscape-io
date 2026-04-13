@@ -12,7 +12,7 @@ import { useRealTimeMarketData } from '@/hooks/useRealTimeMarketData';
 import { useToast } from '@/hooks/use-toast';
 
 const COMMODITY_SYMBOLS = [
-  { symbol: 'CL', label: 'Crude Oil', exchange: 'NYMEX' },
+  { symbol: 'CL', label: 'WTI Crude Oil', exchange: 'NYMEX' },
   { symbol: 'GC', label: 'Gold', exchange: 'COMEX' },
   { symbol: 'SI', label: 'Silver', exchange: 'COMEX' },
   { symbol: 'NG', label: 'Natural Gas', exchange: 'NYMEX' },

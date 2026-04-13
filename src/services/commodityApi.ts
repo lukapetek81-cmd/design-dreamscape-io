@@ -56,7 +56,7 @@ const COMMODITY_SYMBOLS: Record<string, {
   
   // Energy
   'Brent Crude Oil': { fmp: 'BZUSD', yahoo: 'BZ=F', alphaVantage: 'BRENT' },
-  'Crude Oil': { fmp: 'CLUSD', yahoo: 'CL=F', alphaVantage: 'WTI' },
+  'WTI Crude Oil': { fmp: 'CLUSD', yahoo: 'CL=F', alphaVantage: 'WTI' },
   'Natural Gas': { fmp: 'NGUSD', yahoo: 'NG=F', alphaVantage: 'NATURAL_GAS' },
   'Heating Oil': { fmp: 'HOUSD', yahoo: 'HO=F', alphaVantage: 'HEATING_OIL' },
   'Gasoline RBOB': { fmp: 'RBUSD', yahoo: 'RB=F', alphaVantage: 'GASOLINE' },
@@ -150,7 +150,7 @@ const getBasePriceForCommodity = (commodityName: string): number => {
     'Palladium': 1800,
     
     // Energy
-    'Crude Oil': 65,
+    'WTI Crude Oil': 65,
     'Brent Crude Oil': 67,
     'Natural Gas': 2.85,
     'Gasoline RBOB': 2.1,

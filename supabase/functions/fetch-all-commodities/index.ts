@@ -9,7 +9,7 @@ const corsHeaders = {
 // Enhanced commodity mappings with categories and contract specs
 const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; contractSize: string; venue: string }> = {
   // Energy
-  'Crude Oil': { symbol: 'CL=F', category: 'energy', contractSize: '1,000 bbl', venue: 'NYMEX' },
+  'WTI Crude Oil': { symbol: 'CL=F', category: 'energy', contractSize: '1,000 bbl', venue: 'NYMEX' },
   'Brent Crude Oil': { symbol: 'BZ=F', category: 'energy', contractSize: '1,000 bbl', venue: 'ICE' },
   'Natural Gas': { symbol: 'NG=F', category: 'energy', contractSize: '10,000 MMBtu', venue: 'NYMEX' },
   'Gasoline RBOB': { symbol: 'RB=F', category: 'energy', contractSize: '42,000 gal', venue: 'NYMEX' },
@@ -78,7 +78,7 @@ const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
   'NDYM': 'Neodymium',
   
   // Energy
-  'WTIOIL': 'Crude Oil',
+  'WTIOIL': 'WTI Crude Oil',
   'BRENTOIL': 'Brent Crude Oil',
   'DBLC1': 'Crude Oil Dubai',
   'URAL-OIL': 'Ural Oil',
@@ -343,7 +343,7 @@ serve(async (req) => {
     if (commoditiesData.length === 0) {
       console.log('Generating limited fallback commodity data (core commodities only)');
       const corecommodities = [
-        'Crude Oil', 'Natural Gas', 'Gold Futures', 'Silver Futures', 
+        'WTI Crude Oil', 'Natural Gas', 'Gold Futures', 'Silver Futures', 
         'Corn Futures', 'Wheat Futures', 'Coffee'
       ];
       commoditiesData = corecommodities

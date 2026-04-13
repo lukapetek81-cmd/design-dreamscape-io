@@ -45,7 +45,7 @@ const Watchlists = () => {
       id: '1',
       name: 'Energy Focus',
       description: 'Key energy commodities for trading',
-      commodities: ['Crude Oil', 'Natural Gas', 'Gasoline RBOB'],
+      commodities: ['WTI Crude Oil', 'Natural Gas', 'Gasoline RBOB'],
       color: 'orange',
       isDefault: true
     },
