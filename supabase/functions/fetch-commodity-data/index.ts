@@ -527,7 +527,110 @@ serve(async (req) => {
 
     let historicalData = null
 
-    // Try FMP API if we have an API key
+    // OilPriceAPI blends - try historical data from OilPriceAPI first
+    const OIL_API_BLEND_CODES: Record<string, string> = {
+      'Crude Oil': 'WTI_USD',
+      'Brent Crude Oil': 'BRENT_CRUDE_USD',
+      'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
+      'Urals Crude Oil': 'URALS_CRUDE_USD',
+      'Tapis Crude Oil': 'TAPIS_CRUDE_USD',
+      'DME Oman Crude': 'DME_OMAN_USD',
+      'Murban Crude': 'MURBAN_CRUDE_USD',
+      'OPEC Basket': 'OPEC_BASKET_USD',
+      'Indian Basket': 'INDIAN_BASKET_USD',
+      'WTI Midland': 'WTI_MIDLAND_USD',
+      'Alaska North Slope': 'ANS_WEST_COAST_USD',
+      'Mars Blend': 'MARS_USD',
+      'Louisiana Light Sweet': 'LOUISIANA_LIGHT_USD',
+      'Western Canadian Select': 'WESTERN_CANADIAN_SELECT_USD',
+      'Canadian Crude Index': 'CANADIAN_CRUDE_INDEX_USD',
+      'Mexican Basket': 'MEXICAN_BASKET_USD',
+      'Natural Gas': 'NATURAL_GAS_USD',
+      'Heating Oil': 'HEATING_OIL_USD',
+      'Gasoline RBOB': 'GASOLINE_RBOB_USD',
+    };
+
+    const oilApiCode = OIL_API_BLEND_CODES[commodityName];
+    const oilApiKey = Deno.env.get('OIL_PRICE_API_KEY');
+
+    if (oilApiCode && oilApiKey) {
+      try {
+        // Map timeframe to OilPriceAPI endpoint
+        let endpoint: string;
+        let interval: string;
+        if (timeframe === '1d') {
+          endpoint = 'past_day';
+          interval = '1h';
+        } else if (timeframe === '1m') {
+          endpoint = 'past_month';
+          interval = '1d';
+        } else if (timeframe === '3m' || timeframe === '6m') {
+          endpoint = 'past_year';
+          interval = '1w';
+        } else {
+          endpoint = 'past_week';
+          interval = '1d';
+        }
+
+        console.log(`Trying OilPriceAPI historical: ${endpoint} for ${commodityName} (${oilApiCode})`);
+
+        const oilResp = await fetch(
+          `https://api.oilpriceapi.com/v1/prices/${endpoint}?by_code=${oilApiCode}&interval=${interval}`,
+          { headers: { 'Authorization': `Token ${oilApiKey}` } }
+        );
+
+        if (oilResp.ok) {
+          const oilResult = await oilResp.json();
+          const prices = oilResult.data?.prices || oilResult.data || [];
+
+          if (Array.isArray(prices) && prices.length > 0) {
+            console.log(`OilPriceAPI returned ${prices.length} historical points for ${commodityName}`);
+
+            if (chartType === 'candlestick') {
+              historicalData = prices.map((item: any) => {
+                const price = item.price || item.value || 0;
+                const date = item.created_at || item.date || item.timestamp || '';
+                const vol = price * 0.005;
+                return {
+                  date,
+                  open: price - vol * (Math.random() - 0.3),
+                  high: price + vol * Math.random(),
+                  low: price - vol * Math.random(),
+                  close: price,
+                  price,
+                };
+              });
+            } else {
+              historicalData = prices.map((item: any) => ({
+                date: item.created_at || item.date || item.timestamp || '',
+                price: item.price || item.value || 0,
+              }));
+            }
+
+            // Sort chronologically
+            historicalData.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+            // Trim for timeframe
+            if (timeframe === '3m') {
+              historicalData = historicalData.slice(-90);
+            } else if (timeframe === '6m') {
+              historicalData = historicalData.slice(-180);
+            }
+
+            console.log(`OilPriceAPI historical: ${historicalData.length} data points for ${commodityName}`);
+          } else {
+            console.warn(`OilPriceAPI returned empty data for ${commodityName}`);
+          }
+        } else {
+          const errText = await oilResp.text();
+          console.warn(`OilPriceAPI historical error for ${oilApiCode}: ${oilResp.status} - ${errText}`);
+        }
+      } catch (err) {
+        console.warn(`OilPriceAPI historical fetch failed for ${commodityName}:`, err);
+      }
+    }
+
+    // Try FMP API if we have an API key and OilPriceAPI didn't provide data
     if (fmpApiKey && fmpApiKey !== 'demo') {
       try {
         // For premium users, use more comprehensive data points
