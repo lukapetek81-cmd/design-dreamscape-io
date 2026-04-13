@@ -28,6 +28,14 @@ const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; cont
   'Dutch TTF Gas': { symbol: 'TTF=F', category: 'energy', contractSize: '1 MWh', venue: 'ICE' },
   'Japan/Korea LNG': { symbol: 'JKM=F', category: 'energy', contractSize: '10,000 MMBtu', venue: 'ICE' },
   'US Gas Storage': { symbol: 'NGS=X', category: 'energy', contractSize: '1 Bcf', venue: 'EIA' },
+  // Marine Fuels
+  'VLSFO Global': { symbol: 'VLSFO=X', category: 'energy', contractSize: '1 MT', venue: 'Global' },
+  'HFO 380 Global': { symbol: 'HFO380=X', category: 'energy', contractSize: '1 MT', venue: 'Global' },
+  'MGO 0.5%S Global': { symbol: 'MGO05S=X', category: 'energy', contractSize: '1 MT', venue: 'Global' },
+  'HFO 380 Rotterdam': { symbol: 'HFO380RTM=X', category: 'energy', contractSize: '1 MT', venue: 'Rotterdam' },
+  'VLSFO Singapore': { symbol: 'VLSFOSGP=X', category: 'energy', contractSize: '1 MT', venue: 'Singapore' },
+  'MGO Houston': { symbol: 'MGOHOU=X', category: 'energy', contractSize: '1 MT', venue: 'Houston' },
+  'VLSFO Fujairah': { symbol: 'VLSFOFUJ=X', category: 'energy', contractSize: '1 MT', venue: 'Fujairah' },
   
   // Precious Metals
   'Gold Futures': { symbol: 'GC=F', category: 'metals', contractSize: '100 oz', venue: 'COMEX' },
@@ -361,6 +369,14 @@ serve(async (req) => {
             'Dutch TTF Gas': 'DUTCH_TTF_EUR',
             'Japan/Korea LNG': 'JKM_LNG_USD',
             'US Gas Storage': 'NATURAL_GAS_STORAGE',
+            // Marine Fuels
+            'VLSFO Global': 'VLSFO_USD',
+            'HFO 380 Global': 'HFO_380_USD',
+            'MGO 0.5%S Global': 'MGO_05S_USD',
+            'HFO 380 Rotterdam': 'HFO_380_NLRTM_USD',
+            'VLSFO Singapore': 'VLSFO_SGSIN_USD',
+            'MGO Houston': 'MGO_05S_USHOU_USD',
+            'VLSFO Fujairah': 'VLSFO_AEFUJ_USD',
           };
 
           // Fetch real prices from OilPriceAPI for supported blends
