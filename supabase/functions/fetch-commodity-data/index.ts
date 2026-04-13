@@ -856,8 +856,9 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in fetch-commodity-data function:', error)
     // Return 200 with fallback data instead of 500 to prevent frontend crashes
-    const basePrice = getBasePriceForCommodity((await req.clone().json().catch(() => ({}))).commodityName || 'Crude Oil');
-    const fallbackData = generateFallbackData('Crude Oil', '1m', basePrice, false, 'line');
+    // Don't try to clone the request body - it's already consumed
+    const basePrice = getBasePriceForCommodity(commodityName || 'Crude Oil');
+    const fallbackData = generateFallbackData(commodityName || 'Crude Oil', '1m', basePrice, false, 'line');
     return new Response(
       JSON.stringify({ 
         data: fallbackData, 
