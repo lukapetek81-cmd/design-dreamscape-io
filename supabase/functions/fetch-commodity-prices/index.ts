@@ -6,13 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// FMP symbols for commodities
+// FMP symbols for non-energy commodities only
 const FMP_SYMBOLS: Record<string, string> = {
-  'Natural Gas UK': 'NG=F',
-  'Gas Oil': 'HO=F',
-  'Coal': 'ANR',
-  'Ethanol': 'ZE=F',
-  'Propane': 'PN=F',
   'Iron Ore': 'BHP',
   'Barley': 'ZW=F',
   'Spring Wheat': 'MW=F',
@@ -27,18 +22,27 @@ const FMP_SYMBOLS: Record<string, string> = {
   'Random Length Lumber': 'LB=F'
 };
 
-// OilPriceAPI codes for commodities not available in FMP
+// ALL energy commodities use OilPriceAPI exclusively
 const OIL_API_CODES: Record<string, string> = {
+  // Core oil benchmarks
+  'Crude Oil': 'WTI_USD',
+  'Brent Crude Oil': 'BRENT_CRUDE_USD',
   'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
   'Tapis Crude Oil': 'TAPIS_CRUDE_USD',
   'Western Canadian Select': 'WCS_CRUDE_USD',
   'Urals Crude Oil': 'URALS_CRUDE_USD',
+  // Refined products
+  'Gasoline RBOB': 'GASOLINE_RBOB_USD',
+  'Heating Oil': 'HEATING_OIL_USD',
   'Jet Fuel': 'JET_FUEL_USD',
   'ULSD Diesel': 'ULSD_DIESEL_USD',
+  // Natural gas
+  'Natural Gas': 'NATURAL_GAS_USD',
   'Natural Gas UK': 'NATURAL_GAS_GBP',
   'Dutch TTF Gas': 'DUTCH_TTF_EUR',
   'Japan/Korea LNG': 'JKM_LNG_USD',
   'US Gas Storage': 'NATURAL_GAS_STORAGE',
+  // Marine fuels
   'VLSFO Global': 'VLSFO_USD',
   'HFO 380 Global': 'HFO_380_USD',
   'MGO 0.5%S Global': 'MGO_05S_USD',
@@ -47,6 +51,11 @@ const OIL_API_CODES: Record<string, string> = {
   'MGO Houston': 'MGO_05S_USHOU_USD',
   'VLSFO Fujairah': 'VLSFO_AEFUJ_USD',
 };
+
+// All energy commodity names — FMP is never used for these
+const ENERGY_NAMES = new Set(Object.keys(OIL_API_CODES).concat([
+  'Gas Oil', 'Coal', 'Ethanol', 'Propane'
+]));
 
 const getBasePriceForCommodity = (commodityName: string): number => {
   const basePrices: Record<string, number> = {

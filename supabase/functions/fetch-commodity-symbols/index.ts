@@ -322,7 +322,10 @@ serve(async (req) => {
           dataSource = 'fmp';
           
           // Names reserved for OilPriceAPI — skip FMP matching for these
+          // ALL energy commodities are reserved for OilPriceAPI — never use FMP for energy
           const OIL_API_ONLY_NAMES = new Set([
+            'Crude Oil', 'Brent Crude Oil', 'Natural Gas', 'Gasoline RBOB', 'Heating Oil',
+            'Natural Gas UK', 'Gas Oil', 'Coal', 'Ethanol', 'Propane',
             'Crude Oil Dubai', 'Tapis Crude Oil', 'Western Canadian Select', 'Urals Crude Oil',
             'Jet Fuel', 'ULSD Diesel', 'Dutch TTF Gas', 'Japan/Korea LNG', 'US Gas Storage',
             'VLSFO Global', 'HFO 380 Global', 'MGO 0.5%S Global', 'HFO 380 Rotterdam',
