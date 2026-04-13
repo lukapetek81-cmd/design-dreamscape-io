@@ -248,7 +248,7 @@ const CommodityCard = React.memo<CommodityCardProps>(({
                       {displayPrice !== null ? (
                         typeof displayPrice === 'string' 
                           ? displayPrice 
-                          : `$${formatPrice(displayPrice)}`
+                          : `${getPricePrefix(name)}${formatPrice(displayPrice)}`
                       ) : (
                         <span className="text-muted-foreground text-lg">Loading...</span>
                       )}
