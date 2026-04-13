@@ -20,6 +20,12 @@ const OIL_BLEND_CODES: Record<string, string> = {
   'Heating Oil': 'HEATING_OIL_USD',
   'Jet Fuel': 'JET_FUEL_USD',
   'ULSD Diesel': 'ULSD_DIESEL_USD',
+  // 5 natural gas types
+  'Natural Gas': 'NATURAL_GAS_USD',
+  'Natural Gas UK': 'NATURAL_GAS_GBP',
+  'Dutch TTF Gas': 'DUTCH_TTF_EUR',
+  'Japan/Korea LNG': 'JKM_LNG_USD',
+  'US Gas Storage': 'NATURAL_GAS_STORAGE',
 };
 
 serve(async (req) => {
