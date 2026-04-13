@@ -284,9 +284,9 @@ serve(async (req) => {
             // Metals (USD suffix)
             'Gold Futures': 'GCUSD', 'Silver Futures': 'SIUSD', 'Platinum': 'PLUSD',
             'Palladium': 'PAUSD', 'Copper': 'HGUSD',
-            'Aluminum': 'ALIUSD', 'Nickel': 'NIUSD', 'Zinc': 'ZNUSD',
+            'Aluminum': 'ALIUSD', 'Zinc': 'ZNUSD',
             // Grains (USX suffix for CME/CBOT grains)
-            'Corn Futures': 'ZCUSX', 'Wheat Futures': 'ZWUSX', 'Soybean Futures': 'ZSUSX',
+            'Corn Futures': 'ZCUSX', 'Soybean Futures': 'ZSUSX',
             'Soybean Oil': 'ZLUSX', 'Soybean Meal': 'ZMUSD', 'Oat Futures': 'ZOUSX',
             'Rough Rice': 'ZRUSD',
             // Softs
