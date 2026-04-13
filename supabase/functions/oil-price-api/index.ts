@@ -26,6 +26,14 @@ const OIL_BLEND_CODES: Record<string, string> = {
   'Dutch TTF Gas': 'DUTCH_TTF_EUR',
   'Japan/Korea LNG': 'JKM_LNG_USD',
   'US Gas Storage': 'NATURAL_GAS_STORAGE',
+  // Marine Fuels (Base + Port-specific)
+  'VLSFO Global': 'VLSFO_USD',
+  'HFO 380 Global': 'HFO_380_USD',
+  'MGO 0.5%S Global': 'MGO_05S_USD',
+  'HFO 380 Rotterdam': 'HFO_380_NLRTM_USD',
+  'VLSFO Singapore': 'VLSFO_SGSIN_USD',
+  'MGO Houston': 'MGO_05S_USHOU_USD',
+  'VLSFO Fujairah': 'VLSFO_AEFUJ_USD',
 };
 
 serve(async (req) => {
