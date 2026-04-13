@@ -139,6 +139,7 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
                 venue={commodity.venue}
                 contractSize={commodity.contractSize}
                 availableContracts={availableContracts}
+                defaultOpen={commodity.name === highlightCommodity}
               />
             </div>
           );
