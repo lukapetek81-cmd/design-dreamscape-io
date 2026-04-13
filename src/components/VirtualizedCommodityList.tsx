@@ -130,11 +130,13 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
           // Get futures contracts for this specific commodity from the bulk query
           const availableContracts = isPremium ? futuresQuery.data?.[commodity.name] : undefined;
 
+          const isHighlighted = commodity.name === highlightCommodity;
           return (
             <div 
               key={`${commodity.symbol}-${index}`}
-              className="animate-fade-in"
+              className={`animate-fade-in ${isHighlighted ? 'ring-2 ring-primary/50 rounded-2xl' : ''}`}
               style={{ animationDelay: `${index * 0.05}s` }}
+              ref={isHighlighted ? (el) => { el?.scrollIntoView({ behavior: 'smooth', block: 'center' }); } : undefined}
             >
               <CommodityCard
                 name={commodity.name}
