@@ -387,87 +387,145 @@ serve(async (req) => {
       }
     }
 
-    // Step 2: Fetch non-energy commodities from FMP
-    const fmpApiKey = Deno.env.get('FMP_API_KEY');
-    if (fmpApiKey && fmpApiKey !== 'demo') {
+    // Step 2: Fetch non-energy commodities from CommodityPriceAPI (primary) or FMP (secondary)
+    const existingNames = new Set(commoditiesData.map(c => c.name));
+    let nonEnergyLoaded = false;
+
+    // Try CommodityPriceAPI first for non-energy commodities
+    const commodityPriceApiKey = Deno.env.get('COMMODITYPRICE_API_KEY');
+    if (commodityPriceApiKey && !nonEnergyLoaded) {
       try {
-        console.log('Using FMP for non-energy symbols');
-        const response = await fetch(
-          `https://financialmodelingprep.com/api/v3/quotes/commodity?apikey=${fmpApiKey}`
-        );
+        console.log('Trying CommodityPriceAPI for non-energy symbols');
+        // Build reverse mapping: API symbol -> our commodity name (non-energy only)
+        const nonEnergySymbols = Object.entries(COMMODITY_PRICE_API_SYMBOLS)
+          .filter(([_, name]) => !OIL_API_ONLY_NAMES.has(name) && COMMODITY_SYMBOLS[name] && !existingNames.has(name));
         
-        if (!response.ok) {
-          throw new Error(`FMP API error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (Array.isArray(data) && data.length > 0) {
-          console.log(`FMP returned ${data.length} commodities`);
-          dataSource = commoditiesData.length > 0 ? 'mixed' : 'fmp';
+        // Fetch prices for each symbol
+        const fetchPromises = nonEnergySymbols.map(async ([apiSymbol, commodityName]) => {
+          try {
+            const resp = await fetch(
+              `https://api.commoditypriceapi.com/api/latest?base=USD&symbols=${apiSymbol}`,
+              { headers: { 'Authorization': `Bearer ${commodityPriceApiKey}` } }
+            );
+            if (!resp.ok) {
+              await resp.text();
+              return null;
+            }
+            const result = await resp.json();
+            if (result.data && result.data[apiSymbol]) {
+              const price = 1 / result.data[apiSymbol]; // API returns USD per unit inverse
+              return {
+                name: commodityName,
+                symbol: COMMODITY_SYMBOLS[commodityName].symbol,
+                price: Math.round(price * 100) / 100,
+                change: 0,
+                changePercent: 0,
+                volume: 0,
+                ...COMMODITY_SYMBOLS[commodityName],
+                supportedByFMP: false,
+                source: 'commoditypriceapi',
+              };
+            }
+          } catch (err) {
+            // Silently skip
+          }
+          return null;
+        });
 
-          const existingNames = new Set(commoditiesData.map(c => c.name));
-
-          const fmpCommodities = data.map(fmpItem => {
-            const matchedCommodity = Object.entries(COMMODITY_SYMBOLS).find(([name, info]) => {
-              if (OIL_API_ONLY_NAMES.has(name)) return false;
-              return info.symbol === fmpItem.symbol || 
-                name.toLowerCase().includes(fmpItem.name?.toLowerCase().split(' ')[0] || '');
-            });
-            
-            const commodityName = matchedCommodity ? matchedCommodity[0] : 
-              (fmpItem.name || fmpItem.symbol.replace('=F', ' Futures'));
-            
-            if (OIL_API_ONLY_NAMES.has(commodityName)) return null;
-            if (existingNames.has(commodityName)) return null;
-
-            const metadata = matchedCommodity ? matchedCommodity[1] : {
-              category: 'other',
-              contractSize: 'TBD',
-              venue: 'Various'
-            };
-            
-            return {
-              name: commodityName,
-              symbol: fmpItem.symbol,
-              price: parseFloat(fmpItem.price) || 0,
-              change: parseFloat(fmpItem.change) || 0,
-              changePercent: parseFloat(fmpItem.changesPercentage) || 0,
-              volume: parseInt(fmpItem.volume) || 0,
-              ...metadata,
-              supportedByFMP: true
-            };
-          }).filter(Boolean);
-
-          commoditiesData.push(...fmpCommodities);
+        const results = await Promise.all(fetchPromises);
+        const validResults = results.filter(Boolean);
+        if (validResults.length > 0) {
+          commoditiesData.push(...validResults);
+          validResults.forEach(r => existingNames.add(r.name));
+          nonEnergyLoaded = true;
+          dataSource = commoditiesData.length > validResults.length ? 'mixed' : 'commoditypriceapi';
+          console.log(`CommodityPriceAPI: loaded ${validResults.length} non-energy commodities`);
         }
       } catch (error) {
-        console.warn('FMP API failed:', error);
+        console.warn('CommodityPriceAPI failed:', error);
       }
     }
 
-    // Use limited fallback if FMP API failed - only show a few core commodities
-    if (commoditiesData.length === 0) {
-      console.log('Using limited fallback commodity data (core commodities only)');
-      dataSource = 'static';
-      const corecommodities = [
-        'Crude Oil', 'Natural Gas', 'Gold Futures', 'Silver Futures', 
-        'Corn Futures', 'Wheat Futures', 'Coffee'
-      ];
-      commoditiesData = corecommodities
-        .filter(name => COMMODITY_SYMBOLS[name])
-        .map(name => {
-          return {
-            name,
-            symbol: COMMODITY_SYMBOLS[name].symbol,
-            price: 0,
-            change: 0,
-            changePercent: 0,
-            volume: 0,
-            ...COMMODITY_SYMBOLS[name],
-            supportedByFMP: false
-          };
-        });
+    // Try FMP as secondary source
+    if (!nonEnergyLoaded) {
+      const fmpApiKey = Deno.env.get('FMP_API_KEY');
+      if (fmpApiKey && fmpApiKey !== 'demo') {
+        try {
+          console.log('Using FMP for non-energy symbols');
+          const response = await fetch(
+            `https://financialmodelingprep.com/api/v3/quotes/commodity?apikey=${fmpApiKey}`
+          );
+          
+          if (!response.ok) {
+            throw new Error(`FMP API error: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          
+          if (Array.isArray(data) && data.length > 0) {
+            console.log(`FMP returned ${data.length} commodities`);
+            dataSource = commoditiesData.length > 0 ? 'mixed' : 'fmp';
+
+            const fmpCommodities = data.map(fmpItem => {
+              const matchedCommodity = Object.entries(COMMODITY_SYMBOLS).find(([name, info]) => {
+                if (OIL_API_ONLY_NAMES.has(name)) return false;
+                return info.symbol === fmpItem.symbol || 
+                  name.toLowerCase().includes(fmpItem.name?.toLowerCase().split(' ')[0] || '');
+              });
+              
+              const commodityName = matchedCommodity ? matchedCommodity[0] : 
+                (fmpItem.name || fmpItem.symbol.replace('=F', ' Futures'));
+              
+              if (OIL_API_ONLY_NAMES.has(commodityName)) return null;
+              if (existingNames.has(commodityName)) return null;
+
+              const metadata = matchedCommodity ? matchedCommodity[1] : {
+                category: 'other',
+                contractSize: 'TBD',
+                venue: 'Various'
+              };
+              
+              return {
+                name: commodityName,
+                symbol: fmpItem.symbol,
+                price: parseFloat(fmpItem.price) || 0,
+                change: parseFloat(fmpItem.change) || 0,
+                changePercent: parseFloat(fmpItem.changesPercentage) || 0,
+                volume: parseInt(fmpItem.volume) || 0,
+                ...metadata,
+                supportedByFMP: true
+              };
+            }).filter(Boolean);
+
+            commoditiesData.push(...fmpCommodities);
+            nonEnergyLoaded = fmpCommodities.length > 0;
+          }
+        } catch (error) {
+          console.warn('FMP API failed:', error);
+        }
+      }
+    }
+
+    // Step 3: Static fallback for all non-energy commodities if both APIs failed
+    if (!nonEnergyLoaded) {
+      console.log('Using static fallback for non-energy commodities');
+      const staticNonEnergy = Object.entries(COMMODITY_SYMBOLS)
+        .filter(([name, info]) => !OIL_API_ONLY_NAMES.has(name) && info.category !== 'energy' && !existingNames.has(name))
+        .map(([name, info]) => ({
+          name,
+          symbol: info.symbol,
+          price: 0,
+          change: 0,
+          changePercent: 0,
+          volume: 0,
+          ...info,
+          supportedByFMP: false,
+          source: 'static',
+        }));
+      
+      commoditiesData.push(...staticNonEnergy);
+      console.log(`Static fallback: added ${staticNonEnergy.length} non-energy commodities`);
+      if (dataSource === 'fallback') dataSource = 'static';
     }
 
     // Apply data delay for free users
