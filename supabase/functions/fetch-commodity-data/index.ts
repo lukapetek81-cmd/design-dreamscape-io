@@ -817,7 +817,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         data: historicalData,
-        source: historicalData && historicalData.length > 0 && fmpApiKey && fmpApiKey !== 'demo' ? 'fmp' : 'fallback',
+        source: historicalData && historicalData.length > 0 ? (oilApiCode && oilApiKey ? 'oilpriceapi' : (fmpApiKey && fmpApiKey !== 'demo' ? 'fmp' : 'fallback')) : 'fallback',
         commodity: commodityName,
         symbol: symbol,
         realTime: isPremium || false,
