@@ -60,15 +60,13 @@ const getBasePriceForCommodity = (commodityName: string): number => {
   const basePrices: Record<string, number> = {
     'WTI Crude Oil': 65, 'Brent Crude Oil': 70, 'Natural Gas': 2.85,
     'Gasoline RBOB': 2.1, 'Heating Oil': 2.3, 'Natural Gas UK': 90,
-    'Gas Oil': 650, 'Coal': 85, 'Ethanol': 2.15, 'Propane': 0.95,
     'Gold Futures': 2000, 'Silver Futures': 25, 'Platinum': 1050,
     'Palladium': 1200, 'Copper': 4.2, 'Aluminum': 2200,
-    'Corn Futures': 430, 'Wheat Futures': 550, 'Soybean Futures': 1150,
-    'Coffee Arabica': 165, 'Coffee Robusta': 3500, 'Sugar #11': 19.75,
-    'Sugar #5': 520, 'Cotton': 72.80, 'Cocoa': 2850, 'Tea': 3.20,
+    'Corn Futures': 430, 'Soybean Futures': 1150,
+    'Coffee Arabica': 165, 'Sugar #11': 19.75,
+    'Cotton': 72.80, 'Cocoa': 2850,
     'Live Cattle Futures': 170, 'Lean Hogs Futures': 75,
     'Feeder Cattle Futures': 245, 'Milk Class III': 18.50,
-    'Milk Nonfat Dry': 1.18, 'Butter': 2.45, 'Cheese': 1.85,
     'Orange Juice': 450, 'Lumber Futures': 550, 'Oat Futures': 350,
     'Soybean Oil': 45, 'Soybean Meal': 330, 'Rough Rice': 17,
   };
