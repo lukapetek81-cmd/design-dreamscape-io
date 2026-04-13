@@ -371,10 +371,6 @@ serve(async (req) => {
           const brentPrice = commoditiesData.find(c => c.symbol === 'BZ=F')?.price || 0;
           const refPrice = brentPrice || wtiPrice;
 
-          // OilPriceAPI-supported blends
-          const OIL_API_BLENDS: Record<string, string> = {
-            // Oil types from OilPriceAPI (excluding WTI/Brent already from FMP)
-            'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
           // ALL energy products use OilPriceAPI exclusively
           const OIL_API_BLENDS: Record<string, string> = {
             // Core benchmarks
