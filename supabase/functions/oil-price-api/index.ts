@@ -9,17 +9,17 @@ const OIL_API_BASE = 'https://api.oilpriceapi.com/v1';
 
 // Mapping from our internal commodity names to OilPriceAPI codes
 const OIL_BLEND_CODES: Record<string, string> = {
-  // Crude Oil Benchmarks (only blends with actively updated prices)
+  // All 10 oil types supported by OilPriceAPI
   'Crude Oil': 'WTI_USD',
   'Brent Crude Oil': 'BRENT_CRUDE_USD',
   'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
+  'Tapis Crude Oil': 'TAPIS_CRUDE_USD',
+  'Western Canadian Select': 'WCS_CRUDE_USD',
   'Urals Crude Oil': 'URALS_CRUDE_USD',
-  'OPEC Basket': 'OPEC_BASKET_USD',
-  
-  // Also available for existing commodities
-  'Natural Gas': 'NATURAL_GAS_USD',
-  'Heating Oil': 'HEATING_OIL_USD',
   'Gasoline RBOB': 'GASOLINE_RBOB_USD',
+  'Heating Oil': 'HEATING_OIL_USD',
+  'Jet Fuel': 'JET_FUEL_USD',
+  'ULSD Diesel': 'ULSD_DIESEL_USD',
 };
 
 serve(async (req) => {
