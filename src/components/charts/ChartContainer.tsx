@@ -51,7 +51,7 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
     return (
       <div className="flex items-center justify-center h-full">
         <Loader className="w-6 h-6 animate-spin text-primary" />
-        <span className="ml-2 text-sm text-muted-foreground">Loading real market data...</span>
+        <span className="ml-2 text-sm text-muted-foreground">Loading market data...</span>
       </div>
     );
   }
