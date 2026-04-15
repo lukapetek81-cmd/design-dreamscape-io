@@ -1,5 +1,25 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
+// In-memory cache with TTL
+const priceCache = new Map<string, { data: any; source: string; timestamp: number }>();
+const CACHE_TTL = 3 * 60 * 1000; // 3 minutes
+
+function getCachedPrice(key: string): { data: any; source: string } | null {
+  const entry = priceCache.get(key);
+  if (entry && Date.now() - entry.timestamp < CACHE_TTL) {
+    return { data: entry.data, source: entry.source };
+  }
+  if (entry) priceCache.delete(key);
+  return null;
+}
+
+function setCachedPrice(key: string, data: any, source: string): void {
+  if (priceCache.size > 200) {
+    const oldest = priceCache.keys().next().value;
+    if (oldest) priceCache.delete(oldest);
+  }
+  priceCache.set(key, { data, source, timestamp: Date.now() });
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -114,6 +134,26 @@ serve(async (req) => {
 
     console.log(`Fetching current price for ${commodityName} with ${dataDelay} data (Premium: ${isPremium || false})`)
 
+    // Check cache first
+    const cacheKey = `price:${commodityName}:${dataDelay}`;
+    const cached = getCachedPrice(cacheKey);
+    if (cached) {
+      console.log(`Cache hit for ${commodityName}`);
+      return new Response(
+        JSON.stringify({
+          price: cached.data,
+          source: cached.source,
+          commodity: commodityName,
+          symbol: cached.data?.symbol,
+          realTime: isPremium || false,
+          dataDelay,
+          isDelayed: dataDelay === '15min',
+          cached: true,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     let priceData = null
     let dataSource = 'fallback'
 
@@ -222,6 +262,11 @@ serve(async (req) => {
         changePercent: priceData.changePercent * (0.9 + seededRandom * 0.2),
         lastUpdate: fifteenMinutesAgo.toISOString()
       }
+    }
+
+    // Cache the result
+    if (dataSource !== 'fallback') {
+      setCachedPrice(cacheKey, priceData, dataSource);
     }
 
     return new Response(
