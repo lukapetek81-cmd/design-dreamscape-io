@@ -19,7 +19,6 @@ const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; cont
   'Tapis Crude Oil': { symbol: 'TAP=F', category: 'energy', contractSize: '1,000 bbl', venue: 'SGX' },
   'Urals Crude Oil': { symbol: 'URL=F', category: 'energy', contractSize: '1,000 bbl', venue: 'ICE' },
   'Western Canadian Select': { symbol: 'WCS=F', category: 'energy', contractSize: '1,000 bbl', venue: 'CME' },
-  // Regional Crude Benchmarks
   'WTI Midland': { symbol: 'WTIM=F', category: 'energy', contractSize: '1,000 bbl', venue: 'CME' },
   'Alaska North Slope': { symbol: 'ANS=F', category: 'energy', contractSize: '1,000 bbl', venue: 'ICE' },
   'Mars Blend': { symbol: 'MARS=F', category: 'energy', contractSize: '1,000 bbl', venue: 'CME' },
@@ -85,23 +84,93 @@ const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; cont
   'Random Length Lumber': { symbol: 'LB=F', category: 'forest', contractSize: '110,000 bd ft', venue: 'CME' },
 };
 
-// CommodityPriceAPI v2 symbol mapping - updated symbols for v2 API
-const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
-  // Precious Metals
-  'XAU': 'Gold Futures', 'XAG': 'Silver Futures', 'PL': 'Platinum', 'PA': 'Palladium',
-  // Base Metals
-  'HG-SPOT': 'Copper', 'AL-SPOT': 'Aluminum', 'ZINC': 'Zinc',
-  // Grains
-  'CORN': 'Corn Futures', 'SOYBEAN-FUT': 'Soybean Futures',
-  'ZL': 'Soybean Oil', 'ZM': 'Soybean Meal', 'OAT-SPOT': 'Oat Futures', 'RR-FUT': 'Rough Rice',
-  // Softs
-  'CA': 'Coffee Arabica', 'LS': 'Sugar #11', 'CT': 'Cotton', 'CC': 'Cocoa', 'OJ': 'Orange Juice',
-  // Livestock
-  'LC-FUT': 'Live Cattle Futures', 'LH-FUT': 'Lean Hogs Futures',
+// CommodityPriceAPI v2 symbol mapping for NON-energy commodities
+// Maps CommodityPriceAPI symbol → our commodity name
+const CPAPI_SYMBOL_MAP: Record<string, string> = {
+  'XAU': 'Gold Futures',
+  'XAG': 'Silver Futures',
+  'PL': 'Platinum',
+  'PA': 'Palladium',
+  'HG-SPOT': 'Copper',
+  'AL-SPOT': 'Aluminum',
+  'ZINC': 'Zinc',
+  'CORN': 'Corn Futures',
+  'SOYBEAN-FUT': 'Soybean Futures',
+  'ZL': 'Soybean Oil',
+  'ZM': 'Soybean Meal',
+  'OAT-SPOT': 'Oat Futures',
+  'RR-FUT': 'Rough Rice',
+  'CA': 'Coffee Arabica',
+  'LS': 'Sugar #11',
+  'CT': 'Cotton',
+  'CC': 'Cocoa',
+  'OJ': 'Orange Juice',
   'MILK': 'Milk Class III',
-  // Other
   'LB-FUT': 'Lumber Futures',
+  'BEEF': 'Live Cattle Futures',
 };
+
+// Symbols priced in US cents — need to divide by 100 to get USD
+const CENT_SYMBOLS = new Set(['CORN', 'SOYBEAN-FUT', 'ZL']);
+
+// Reverse map: our commodity name → CommodityPriceAPI symbol
+const NAME_TO_CPAPI: Record<string, string> = {};
+for (const [sym, name] of Object.entries(CPAPI_SYMBOL_MAP)) {
+  NAME_TO_CPAPI[name] = sym;
+}
+
+// ALL energy commodity names — only use OilPriceAPI for these
+const OIL_API_ONLY_NAMES = new Set([
+  'WTI Crude Oil', 'Brent Crude Oil', 'Natural Gas', 'Gasoline RBOB', 'Heating Oil',
+  'Natural Gas UK', 'Crude Oil Dubai', 'Tapis Crude Oil', 'Western Canadian Select',
+  'Urals Crude Oil', 'Jet Fuel', 'ULSD Diesel', 'Dutch TTF Gas', 'Japan/Korea LNG',
+  'US Gas Storage', 'VLSFO Global', 'HFO 380 Global', 'MGO 0.5%S Global',
+  'HFO 380 Rotterdam', 'VLSFO Singapore', 'MGO Houston', 'VLSFO Fujairah',
+  'DME Oman Crude', 'Murban Crude', 'OPEC Basket', 'Indian Basket',
+  'WTI Midland', 'Alaska North Slope', 'Mars Blend', 'Louisiana Light Sweet',
+  'Gasoil', 'Naphtha', 'Propane', 'Ethanol',
+]);
+
+const OIL_API_BLENDS: Record<string, string> = {
+  'WTI Crude Oil': 'WTI_USD',
+  'Brent Crude Oil': 'BRENT_CRUDE_USD',
+  'Natural Gas': 'NATURAL_GAS_USD',
+  'Gasoline RBOB': 'GASOLINE_RBOB_USD',
+  'Heating Oil': 'HEATING_OIL_USD',
+  'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
+  'Tapis Crude Oil': 'TAPIS_CRUDE_USD',
+  'Western Canadian Select': 'WCS_CRUDE_USD',
+  'Urals Crude Oil': 'URALS_CRUDE_USD',
+  'Jet Fuel': 'JET_FUEL_USD',
+  'ULSD Diesel': 'ULSD_DIESEL_USD',
+  'Natural Gas UK': 'NATURAL_GAS_GBP',
+  'Dutch TTF Gas': 'DUTCH_TTF_EUR',
+  'Japan/Korea LNG': 'JKM_LNG_USD',
+  'US Gas Storage': 'NATURAL_GAS_STORAGE',
+  'VLSFO Global': 'VLSFO_USD',
+  'HFO 380 Global': 'HFO_380_USD',
+  'MGO 0.5%S Global': 'MGO_05S_USD',
+  'HFO 380 Rotterdam': 'HFO_380_NLRTM_USD',
+  'VLSFO Singapore': 'VLSFO_SGSIN_USD',
+  'MGO Houston': 'MGO_05S_USHOU_USD',
+  'VLSFO Fujairah': 'VLSFO_AEFUJ_USD',
+  'DME Oman Crude': 'DME_OMAN_USD',
+  'Murban Crude': 'MURBAN_CRUDE_USD',
+  'OPEC Basket': 'OPEC_BASKET_USD',
+  'Indian Basket': 'INDIAN_BASKET_USD',
+  'WTI Midland': 'WTI_MIDLAND_USD',
+  'Alaska North Slope': 'ANS_WEST_COAST_USD',
+  'Mars Blend': 'MARS_USD',
+  'Louisiana Light Sweet': 'LOUISIANA_LIGHT_USD',
+  'Gasoil': 'GASOIL_USD',
+  'Naphtha': 'NAPHTHA_USD',
+  'Propane': 'PROPANE_MONT_BELVIEU_USD',
+  'Ethanol': 'ETHANOL_USD',
+};
+
+// In-memory cache for the symbols list
+let symbolsCache: { data: any[]; timestamp: number } | null = null;
+const SYMBOLS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -109,75 +178,49 @@ serve(async (req) => {
   }
 
   try {
-    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
+      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
     )
 
-    // Check if user is authenticated
     const { data: { user } } = await supabaseClient.auth.getUser()
     let isPremium = false;
-
     if (user) {
-      // Check for premium subscription
       const { data: profile } = await supabaseClient
         .from('profiles')
         .select('subscription_active, subscription_tier')
         .eq('id', user.id)
         .single()
-
       isPremium = profile?.subscription_active && profile?.subscription_tier === 'premium';
     }
 
     const body = req.method === 'POST' ? await req.json() : {}
     const { dataDelay = 'realtime' } = body
-    
+
+    // Check cache
+    if (symbolsCache && Date.now() - symbolsCache.timestamp < SYMBOLS_CACHE_TTL) {
+      console.log(`Cache hit: returning ${symbolsCache.data.length} commodities`);
+      return new Response(
+        JSON.stringify({
+          commodities: symbolsCache.data,
+          source: 'cached',
+          count: symbolsCache.data.length,
+          timestamp: new Date().toISOString(),
+          dataDelay,
+          isDelayed: dataDelay === '15min',
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     let commoditiesData: any[] = []
     let dataSource = 'fallback';
+    const existingNames = new Set<string>();
 
-    // ALL energy commodities are reserved for OilPriceAPI — never use FMP for energy
-    const OIL_API_ONLY_NAMES = new Set([
-      'WTI Crude Oil', 'Brent Crude Oil', 'Natural Gas', 'Gasoline RBOB', 'Heating Oil',
-      'Natural Gas UK',
-      'Crude Oil Dubai', 'Tapis Crude Oil', 'Western Canadian Select', 'Urals Crude Oil',
-      'Jet Fuel', 'ULSD Diesel', 'Dutch TTF Gas', 'Japan/Korea LNG', 'US Gas Storage',
-      'VLSFO Global', 'HFO 380 Global', 'MGO 0.5%S Global', 'HFO 380 Rotterdam',
-      'VLSFO Singapore', 'MGO Houston', 'VLSFO Fujairah',
-    ]);
-
-    // ALL energy products use OilPriceAPI exclusively
-    const OIL_API_BLENDS: Record<string, string> = {
-      'WTI Crude Oil': 'WTI_USD',
-      'Brent Crude Oil': 'BRENT_CRUDE_USD',
-      'Natural Gas': 'NATURAL_GAS_USD',
-      'Gasoline RBOB': 'GASOLINE_RBOB_USD',
-      'Heating Oil': 'HEATING_OIL_USD',
-      'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
-      'Tapis Crude Oil': 'TAPIS_CRUDE_USD',
-      'Western Canadian Select': 'WCS_CRUDE_USD',
-      'Urals Crude Oil': 'URALS_CRUDE_USD',
-      'Jet Fuel': 'JET_FUEL_USD',
-      'ULSD Diesel': 'ULSD_DIESEL_USD',
-      'Natural Gas UK': 'NATURAL_GAS_GBP',
-      'Dutch TTF Gas': 'DUTCH_TTF_EUR',
-      'Japan/Korea LNG': 'JKM_LNG_USD',
-      'US Gas Storage': 'NATURAL_GAS_STORAGE',
-      'VLSFO Global': 'VLSFO_USD',
-      'HFO 380 Global': 'HFO_380_USD',
-      'MGO 0.5%S Global': 'MGO_05S_USD',
-      'HFO 380 Rotterdam': 'HFO_380_NLRTM_USD',
-      'VLSFO Singapore': 'VLSFO_SGSIN_USD',
-      'MGO Houston': 'MGO_05S_USHOU_USD',
-      'VLSFO Fujairah': 'VLSFO_AEFUJ_USD',
-    };
-
-    // Step 1: Fetch energy commodities from OilPriceAPI (independent of FMP)
+    // ──────────────────────────────────────────────
+    // Step 1: Fetch energy commodities from OilPriceAPI
+    // ──────────────────────────────────────────────
     const oilApiKey = Deno.env.get('OIL_PRICE_API_KEY');
     if (oilApiKey) {
       try {
@@ -190,36 +233,23 @@ serve(async (req) => {
                 `https://api.oilpriceapi.com/v1/prices/latest?by_code=${code}`,
                 { headers: { 'Authorization': `Token ${oilApiKey}` } }
               );
-              if (!resp.ok) {
-                const errText = await resp.text();
-                console.warn(`OilPriceAPI ${code}: ${resp.status} - ${errText}`);
-                return null;
-              }
+              if (!resp.ok) { await resp.text(); return null; }
               const result = await resp.json();
               if (result.data?.price) {
                 return {
-                  name,
-                  symbol: COMMODITY_SYMBOLS[name].symbol,
-                  price: result.data.price,
-                  change: 0,
-                  changePercent: 0,
-                  volume: 0,
+                  name, symbol: COMMODITY_SYMBOLS[name].symbol,
+                  price: result.data.price, change: 0, changePercent: 0, volume: 0,
                   ...COMMODITY_SYMBOLS[name],
-                  supportedByFMP: false,
-                  source: 'oilpriceapi',
+                  supportedByFMP: false, source: 'oilpriceapi',
                 };
               }
-            } catch (err) {
-              console.warn(`OilPriceAPI fetch failed for ${code}:`, err);
-            }
+            } catch (_) { /* skip */ }
             return null;
           });
 
-        const oilApiResults = await Promise.all(oilApiFetches);
-        for (const result of oilApiResults) {
-          if (result) {
-            commoditiesData.push(result);
-          }
+        const results = await Promise.all(oilApiFetches);
+        for (const r of results) {
+          if (r) { commoditiesData.push(r); existingNames.add(r.name); }
         }
         console.log(`OilPriceAPI: loaded ${commoditiesData.length} energy commodities`);
         if (commoditiesData.length > 0) dataSource = 'oilpriceapi';
@@ -228,46 +258,47 @@ serve(async (req) => {
       }
     }
 
-    // Step 2: Fetch non-energy commodities from CommodityPriceAPI (primary) or FMP (secondary)
-    const existingNames = new Set(commoditiesData.map(c => c.name));
+    // ──────────────────────────────────────────────
+    // Step 2: Fetch non-energy commodities from CommodityPriceAPI v2
+    // ──────────────────────────────────────────────
+    const cpApiKey = Deno.env.get('COMMODITYPRICE_API_KEY');
     let nonEnergyLoaded = false;
 
-    // Try CommodityPriceAPI first for non-energy commodities
-    const commodityPriceApiKey = Deno.env.get('COMMODITYPRICE_API_KEY');
-    if (commodityPriceApiKey && !nonEnergyLoaded) {
+    if (cpApiKey) {
       try {
-        console.log('Trying CommodityPriceAPI v2 for non-energy symbols');
-        // Build reverse mapping: API symbol -> our commodity name (non-energy only)
-        const nonEnergySymbols = Object.entries(COMMODITY_PRICE_API_SYMBOLS)
-          .filter(([_, name]) => !OIL_API_ONLY_NAMES.has(name) && COMMODITY_SYMBOLS[name] && !existingNames.has(name));
-        
-        if (nonEnergySymbols.length > 0) {
-          const symbolList = nonEnergySymbols.map(([apiSymbol]) => apiSymbol).join(',');
-          
-          // CommodityPriceAPI v2 endpoint with apiKey query param
+        // Build list of CPAPI symbols for commodities not yet loaded
+        const neededSymbols = Object.entries(CPAPI_SYMBOL_MAP)
+          .filter(([_, name]) => !existingNames.has(name) && COMMODITY_SYMBOLS[name])
+          .map(([sym]) => sym);
+
+        if (neededSymbols.length > 0) {
+          const symbolList = neededSymbols.join(',');
+          console.log(`CommodityPriceAPI: fetching ${neededSymbols.length} symbols: ${symbolList}`);
+
           const resp = await fetch(
-            `https://api.commoditypriceapi.com/v2/rates/latest?symbols=${symbolList}&quote=USD&apiKey=${commodityPriceApiKey}`
+            `https://api.commoditypriceapi.com/v2/rates/latest?symbols=${symbolList}&quote=USD&apiKey=${cpApiKey}`
           );
-          
+
           if (resp.ok) {
             const result = await resp.json();
             if (result.success && result.rates) {
               let loadedCount = 0;
-              for (const [apiSymbol, commodityName] of nonEnergySymbols) {
+              for (const [apiSymbol, commodityName] of Object.entries(CPAPI_SYMBOL_MAP)) {
+                if (existingNames.has(commodityName)) continue;
                 const rate = result.rates[apiSymbol];
                 if (rate !== undefined && rate !== null) {
-                  const price = typeof rate === 'number' ? rate : parseFloat(rate);
+                  let price = typeof rate === 'number' ? rate : parseFloat(rate);
+                  // Convert cents to dollars for specific symbols
+                  if (CENT_SYMBOLS.has(apiSymbol) && price > 100) {
+                    price = price / 100;
+                  }
                   if (price > 0) {
+                    const meta = COMMODITY_SYMBOLS[commodityName];
                     commoditiesData.push({
-                      name: commodityName,
-                      symbol: COMMODITY_SYMBOLS[commodityName].symbol,
+                      name: commodityName, symbol: meta.symbol,
                       price: Math.round(price * 100) / 100,
-                      change: 0,
-                      changePercent: 0,
-                      volume: 0,
-                      ...COMMODITY_SYMBOLS[commodityName],
-                      supportedByFMP: false,
-                      source: 'commoditypriceapi',
+                      change: 0, changePercent: 0, volume: 0,
+                      ...meta, supportedByFMP: false, source: 'commoditypriceapi',
                     });
                     existingNames.add(commodityName);
                     loadedCount++;
@@ -276,152 +307,56 @@ serve(async (req) => {
               }
               if (loadedCount > 0) {
                 nonEnergyLoaded = true;
-                dataSource = commoditiesData.length > loadedCount ? 'mixed' : 'commoditypriceapi';
-                console.log(`CommodityPriceAPI v2: loaded ${loadedCount} non-energy commodities`);
+                dataSource = 'mixed';
+                console.log(`CommodityPriceAPI: loaded ${loadedCount} non-energy commodities`);
               }
             } else {
-              console.warn('CommodityPriceAPI v2: no rates in response', JSON.stringify(result).substring(0, 200));
+              console.warn('CommodityPriceAPI: unexpected response', JSON.stringify(result).substring(0, 200));
             }
           } else {
             const errText = await resp.text();
-            console.warn(`CommodityPriceAPI v2 error: ${resp.status} - ${errText.substring(0, 200)}`);
+            console.warn(`CommodityPriceAPI error: ${resp.status} - ${errText.substring(0, 200)}`);
           }
         }
       } catch (error) {
-        console.warn('CommodityPriceAPI v2 failed:', error);
+        console.warn('CommodityPriceAPI failed:', error);
       }
     }
 
-    // Always try FMP for any non-energy commodities not yet loaded
-    {
-      const fmpApiKey = Deno.env.get('FMP_API_KEY');
-      if (fmpApiKey && fmpApiKey !== 'demo') {
-        try {
-          // Map our commodity names to FMP-compatible symbols
-          const FMP_SYMBOL_MAP: Record<string, string> = {
-            // Metals (USD suffix)
-            'Gold Futures': 'GCUSD', 'Silver Futures': 'SIUSD', 'Platinum': 'PLUSD',
-            'Palladium': 'PAUSD', 'Copper': 'HGUSD',
-            'Aluminum': 'ALIUSD', 'Zinc': 'ZNUSD',
-            // Grains (USX suffix for CME/CBOT grains)
-            'Corn Futures': 'ZCUSX', 'Soybean Futures': 'ZSUSX',
-            'Soybean Oil': 'ZLUSX', 'Soybean Meal': 'ZMUSD', 'Oat Futures': 'ZOUSX',
-            'Rough Rice': 'ZRUSD',
-            // Softs
-            'Coffee Arabica': 'KCUSX', 'Sugar #11': 'SBUSD', 'Cotton': 'CTUSX',
-            'Cocoa': 'CCUSD', 'Orange Juice': 'OJUSX',
-            // Livestock (USX suffix)
-            'Live Cattle Futures': 'LEUSX', 'Lean Hogs Futures': 'HEUSX',
-            'Feeder Cattle Futures': 'GFUSX',
-            // Other
-            'Lumber Futures': 'LBSUSD', 'Random Length Lumber': 'LBUSD',
-            'Milk Class III': 'DCUSD',
-          };
-
-          const entriesToFetch = Object.entries(FMP_SYMBOL_MAP)
-            .filter(([name]) => !existingNames.has(name) && COMMODITY_SYMBOLS[name]);
-
-          if (entriesToFetch.length > 0) {
-            console.log(`FMP: fetching ${entriesToFetch.length} symbols via /stable/quote individually`);
-            
-            // Fetch each symbol individually since stable API doesn't support batch
-            const fmpFetches = entriesToFetch.map(async ([name, sym]) => {
-              try {
-                const response = await fetch(
-                  `https://financialmodelingprep.com/stable/quote?symbol=${sym}&apikey=${fmpApiKey}`
-                );
-                if (!response.ok) {
-                  const errText = await response.text();
-                  if (!errText.includes('Invalid API KEY')) {
-                    console.warn(`FMP /stable/quote error for ${sym}: ${response.status}`);
-                  }
-                  return null;
-                }
-                const data = await response.json();
-                if (Array.isArray(data) && data.length > 0) {
-                  return { name, fmpItem: data[0] };
-                }
-              } catch (err) {
-                // silently skip
-              }
-              return null;
-            });
-
-            const fmpResults = await Promise.all(fmpFetches);
-            let loadedCount = 0;
-            
-            for (const result of fmpResults) {
-              if (result && !existingNames.has(result.name)) {
-                const meta = COMMODITY_SYMBOLS[result.name];
-                commoditiesData.push({
-                  name: result.name,
-                  symbol: meta.symbol,
-                  price: parseFloat(result.fmpItem.price) || 0,
-                  change: parseFloat(result.fmpItem.change) || 0,
-                  changePercent: parseFloat(result.fmpItem.changePercentage) || parseFloat(result.fmpItem.changesPercentage) || 0,
-                  volume: parseInt(result.fmpItem.volume) || 0,
-                  ...meta,
-                  supportedByFMP: true,
-                  source: 'fmp',
-                });
-                existingNames.add(result.name);
-                loadedCount++;
-              }
-            }
-                
-            if (loadedCount > 0) {
-              nonEnergyLoaded = true;
-              dataSource = 'mixed';
-              console.log(`FMP: successfully loaded ${loadedCount} non-energy commodities with real prices`);
-            }
-          }
-        } catch (error) {
-          console.warn('FMP API failed:', error);
-        }
-      }
-    }
-
-    // Step 3: Any remaining commodities in COMMODITY_SYMBOLS that weren't loaded get added with price 0
+    // ──────────────────────────────────────────────
+    // Step 3: Remaining commodities get static fallback (price 0)
+    // ──────────────────────────────────────────────
     {
       const remaining = Object.entries(COMMODITY_SYMBOLS)
-        .filter(([name, info]) => !OIL_API_ONLY_NAMES.has(name) && info.category !== 'energy' && !existingNames.has(name))
+        .filter(([name]) => !existingNames.has(name))
         .map(([name, info]) => ({
-          name,
-          symbol: info.symbol,
-          price: 0,
-          change: 0,
-          changePercent: 0,
-          volume: 0,
-          ...info,
-          supportedByFMP: false,
-          source: 'static',
+          name, symbol: info.symbol,
+          price: 0, change: 0, changePercent: 0, volume: 0,
+          ...info, supportedByFMP: false, source: 'static',
         }));
-      
+
       if (remaining.length > 0) {
         commoditiesData.push(...remaining);
-        console.log(`Static fallback: added ${remaining.length} remaining non-energy commodities`);
+        console.log(`Static fallback: added ${remaining.length} remaining commodities`);
       }
     }
 
     // Apply data delay for free users
-    if (dataDelay === '15min') {
-      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
-      console.log(`Applying 15-minute delay - simulating data from ${fifteenMinutesAgo.toISOString()}`);
-    }
-
-    const currentTimestamp = dataDelay === '15min' 
+    const currentTimestamp = dataDelay === '15min'
       ? new Date(Date.now() - 15 * 60 * 1000).toISOString()
       : new Date().toISOString();
 
+    // Cache the result
+    symbolsCache = { data: commoditiesData, timestamp: Date.now() };
+
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         commodities: commoditiesData,
         source: dataSource,
         count: commoditiesData.length,
         timestamp: currentTimestamp,
-        dataDelay: dataDelay,
+        dataDelay,
         isDelayed: dataDelay === '15min',
-        usedFMP: dataSource === 'fmp'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
