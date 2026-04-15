@@ -343,7 +343,7 @@ serve(async (req) => {
                       symbol: meta.symbol,
                       price: parseFloat(fmpItem.price) || 0,
                       change: parseFloat(fmpItem.change) || 0,
-                      changePercent: parseFloat(fmpItem.changesPercentage) || 0,
+                      changePercent: parseFloat(fmpItem.changePercentage) || parseFloat(fmpItem.changesPercentage) || 0,
                       volume: parseInt(fmpItem.volume) || 0,
                       ...meta,
                       supportedByFMP: true,

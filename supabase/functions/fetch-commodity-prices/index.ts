@@ -216,7 +216,7 @@ serve(async (req) => {
                 symbol: fmpCommodity.symbol,
                 price: parseFloat(fmpCommodity.price) || 0,
                 change: parseFloat(fmpCommodity.change) || 0,
-                changePercent: parseFloat(fmpCommodity.changesPercentage) || 0,
+                changePercent: parseFloat(fmpCommodity.changePercentage) || parseFloat(fmpCommodity.changesPercentage) || 0,
                 lastUpdate: new Date().toISOString()
               }
               dataSource = 'fmp'
