@@ -85,24 +85,22 @@ const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; cont
   'Random Length Lumber': { symbol: 'LB=F', category: 'forest', contractSize: '110,000 bd ft', venue: 'CME' },
 };
 
-// CommodityPriceAPI symbol mapping - only for commodities we support
+// CommodityPriceAPI v2 symbol mapping - updated symbols for v2 API
 const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
   // Precious Metals
-  'XAU': 'Gold Futures', 'XAG': 'Silver Futures', 'XPT': 'Platinum', 'XPD': 'Palladium',
+  'XAU': 'Gold Futures', 'XAG': 'Silver Futures', 'PL': 'Platinum', 'PA': 'Palladium',
   // Base Metals
-  'HG': 'Copper', 'ALU': 'Aluminum', 'ZNC': 'Zinc',
-  // Energy
-  'WTIOIL': 'WTI Crude Oil', 'BRENTOIL': 'Brent Crude Oil', 'NG': 'Natural Gas',
-  'HO': 'Heating Oil', 'RB': 'Gasoline RBOB',
+  'HG-SPOT': 'Copper', 'AL-SPOT': 'Aluminum', 'ZINC': 'Zinc',
   // Grains
-  'CORN': 'Corn Futures', 'SOYBEAN': 'Soybean Futures',
-  'ZL': 'Soybean Oil', 'ZM': 'Soybean Meal', 'OAT': 'Oat Futures', 'RR': 'Rough Rice',
+  'CORN': 'Corn Futures', 'SOYBEAN-FUT': 'Soybean Futures',
+  'ZL': 'Soybean Oil', 'ZM': 'Soybean Meal', 'OAT-SPOT': 'Oat Futures', 'RR-FUT': 'Rough Rice',
   // Softs
   'CA': 'Coffee Arabica', 'LS': 'Sugar #11', 'CT': 'Cotton', 'CC': 'Cocoa', 'OJ': 'Orange Juice',
   // Livestock
-  'CATTLE': 'Live Cattle Futures', 'HOGS': 'Lean Hogs Futures',
+  'LC-FUT': 'Live Cattle Futures', 'LH-FUT': 'Lean Hogs Futures',
+  'MILK': 'Milk Class III',
   // Other
-  'LUMBER': 'Lumber Futures',
+  'LB-FUT': 'Lumber Futures',
 };
 
 serve(async (req) => {
