@@ -7,6 +7,29 @@ const corsHeaders = {
 
 const OIL_API_BASE = 'https://api.oilpriceapi.com/v1';
 
+// In-memory cache with TTL (5 minutes for single, 3 minutes for batch)
+const priceCache = new Map<string, { data: any; timestamp: number }>();
+const SINGLE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const BATCH_CACHE_TTL = 3 * 60 * 1000;  // 3 minutes
+
+function getCached(key: string, ttl: number): any | null {
+  const entry = priceCache.get(key);
+  if (entry && Date.now() - entry.timestamp < ttl) {
+    return entry.data;
+  }
+  if (entry) priceCache.delete(key);
+  return null;
+}
+
+function setCache(key: string, data: any): void {
+  // Cap cache at 200 entries to prevent memory issues
+  if (priceCache.size > 200) {
+    const oldest = priceCache.keys().next().value;
+    if (oldest) priceCache.delete(oldest);
+  }
+  priceCache.set(key, { data, timestamp: Date.now() });
+}
+
 // Mapping from our internal commodity names to OilPriceAPI codes
 const OIL_BLEND_CODES: Record<string, string> = {
   // Crude Oil Benchmarks
@@ -74,6 +97,17 @@ serve(async (req) => {
         );
       }
 
+      // Check cache first
+      const cacheKey = `single:${code}`;
+      const cached = getCached(cacheKey, SINGLE_CACHE_TTL);
+      if (cached) {
+        console.log(`Cache hit for ${code}`);
+        return new Response(
+          JSON.stringify({ data: cached }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       const response = await fetch(`${OIL_API_BASE}/prices/latest?by_code=${code}`, {
         headers: { 'Authorization': `Token ${apiKey}` },
       });
@@ -85,18 +119,19 @@ serve(async (req) => {
       }
 
       const result = await response.json();
-      console.log(`OilPriceAPI response for ${code}:`, JSON.stringify(result));
+      const responseData = {
+        price: result.data?.price || 0,
+        formatted: result.data?.formatted || '$0.00',
+        code: result.data?.code || code,
+        timestamp: result.data?.created_at || new Date().toISOString(),
+        source: result.data?.source || 'oilpriceapi',
+      };
+      
+      setCache(cacheKey, responseData);
+      console.log(`OilPriceAPI response for ${code}: $${responseData.price} (cached)`);
 
       return new Response(
-        JSON.stringify({
-          data: {
-            price: result.data?.price || 0,
-            formatted: result.data?.formatted || '$0.00',
-            code: result.data?.code || code,
-            timestamp: result.data?.created_at || new Date().toISOString(),
-            source: result.data?.source || 'oilpriceapi',
-          }
-        }),
+        JSON.stringify({ data: responseData }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -104,42 +139,71 @@ serve(async (req) => {
     // Batch request for multiple commodities
     if (commodities && Array.isArray(commodities)) {
       const results: Record<string, any> = {};
+      const uncachedNames: string[] = [];
 
-      // Fetch prices in parallel for all requested commodities
-      const fetchPromises = commodities
-        .filter((name: string) => OIL_BLEND_CODES[name])
-        .map(async (name: string) => {
-          const code = OIL_BLEND_CODES[name];
-          try {
-            const response = await fetch(`${OIL_API_BASE}/prices/latest?by_code=${code}`, {
-              headers: { 'Authorization': `Token ${apiKey}` },
-            });
+      // Check cache for each commodity first
+      for (const name of commodities) {
+        if (!OIL_BLEND_CODES[name]) continue;
+        const cacheKey = `single:${OIL_BLEND_CODES[name]}`;
+        const cached = getCached(cacheKey, BATCH_CACHE_TTL);
+        if (cached) {
+          results[name] = {
+            price: cached.price,
+            change: 0,
+            changePercent: 0,
+            timestamp: cached.timestamp,
+            source: 'oilpriceapi',
+            code: OIL_BLEND_CODES[name],
+          };
+        } else {
+          uncachedNames.push(name);
+        }
+      }
 
-            if (!response.ok) {
-              const errorText = await response.text();
-              console.warn(`OilPriceAPI error for ${code}: ${response.status} - ${errorText}`);
-              return;
-            }
+      console.log(`Batch: ${Object.keys(results).length} cached, ${uncachedNames.length} to fetch`);
 
-            const result = await response.json();
-            if (result.data?.price) {
-              results[name] = {
-                price: result.data.price,
-                change: 0, // OilPriceAPI latest doesn't include change
-                changePercent: 0,
-                timestamp: result.data.created_at || new Date().toISOString(),
-                source: 'oilpriceapi',
-                code: code,
-              };
-            }
-          } catch (err) {
-            console.warn(`Failed to fetch ${code} from OilPriceAPI:`, err);
+      // Only fetch uncached commodities
+      const fetchPromises = uncachedNames.map(async (name: string) => {
+        const code = OIL_BLEND_CODES[name];
+        try {
+          const response = await fetch(`${OIL_API_BASE}/prices/latest?by_code=${code}`, {
+            headers: { 'Authorization': `Token ${apiKey}` },
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.warn(`OilPriceAPI error for ${code}: ${response.status} - ${errorText}`);
+            return;
           }
-        });
+
+          const result = await response.json();
+          if (result.data?.price) {
+            const priceEntry = {
+              price: result.data.price,
+              change: 0,
+              changePercent: 0,
+              timestamp: result.data.created_at || new Date().toISOString(),
+              source: 'oilpriceapi',
+              code: code,
+            };
+            results[name] = priceEntry;
+            // Cache individual result
+            setCache(`single:${code}`, {
+              price: result.data.price,
+              formatted: result.data.formatted || `$${result.data.price}`,
+              code,
+              timestamp: result.data.created_at || new Date().toISOString(),
+              source: 'oilpriceapi',
+            });
+          }
+        } catch (err) {
+          console.warn(`Failed to fetch ${code} from OilPriceAPI:`, err);
+        }
+      });
 
       await Promise.all(fetchPromises);
 
-      console.log(`OilPriceAPI batch: fetched prices for ${Object.keys(results).length} commodities`);
+      console.log(`OilPriceAPI batch: ${Object.keys(results).length} total (${uncachedNames.length} fetched, rest cached)`);
 
       return new Response(
         JSON.stringify({ data: results }),
