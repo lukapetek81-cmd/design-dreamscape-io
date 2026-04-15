@@ -1,6 +1,27 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+// In-memory cache with TTL for historical data
+const historyCache = new Map<string, { data: any; source: string; timestamp: number }>();
+const HISTORY_CACHE_TTL = 10 * 60 * 1000; // 10 minutes (historical data changes less frequently)
+
+function getCachedHistory(key: string): { data: any; source: string } | null {
+  const entry = historyCache.get(key);
+  if (entry && Date.now() - entry.timestamp < HISTORY_CACHE_TTL) {
+    return { data: entry.data, source: entry.source };
+  }
+  if (entry) historyCache.delete(key);
+  return null;
+}
+
+function setCachedHistory(key: string, data: any, source: string): void {
+  if (historyCache.size > 300) {
+    const oldest = historyCache.keys().next().value;
+    if (oldest) historyCache.delete(oldest);
+  }
+  historyCache.set(key, { data, source, timestamp: Date.now() });
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -242,6 +263,28 @@ serve(async (req) => {
     }
 
     console.log(`Fetching data for ${commodityName}, timeframe: ${timeframe}, chartType: ${chartType || 'line'}`)
+
+    // Check cache first
+    const cacheKey = `history:${commodityName}:${timeframe}:${chartType || 'line'}:${dataDelay}`;
+    const cached = getCachedHistory(cacheKey);
+    if (cached) {
+      console.log(`Cache hit for ${commodityName} ${timeframe}`);
+      return new Response(
+        JSON.stringify({
+          data: cached.data,
+          source: cached.source,
+          commodity: commodityName,
+          symbol: COMMODITY_SYMBOLS[commodityName] || commodityName,
+          realTime: isPremium || false,
+          dataPoints: cached.data?.length || 0,
+          chartType: chartType || 'line',
+          dataDelay,
+          isDelayed: dataDelay === '15min',
+          cached: true,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     const fmpApiKey = Deno.env.get('FMP_API_KEY')
     let symbol = contractSymbol || COMMODITY_SYMBOLS[commodityName]
@@ -487,6 +530,11 @@ serve(async (req) => {
           return { ...item, date: delayedDate.toISOString(), price: item.price * adjustment };
         }
       });
+    }
+
+    // Cache the result if from a real API source
+    if (dataSourceUsed !== 'fallback' && historicalData) {
+      setCachedHistory(cacheKey, historicalData, dataSourceUsed);
     }
 
     return new Response(
