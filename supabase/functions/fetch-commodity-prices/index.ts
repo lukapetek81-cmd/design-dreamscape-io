@@ -26,30 +26,39 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// FMP symbols for non-energy commodities — only those confirmed working on basic plan
-const FMP_SYMBOLS: Record<string, string> = {
-  // Metals
-  'Gold Futures': 'GCUSD', 'Silver Futures': 'SIUSD', 'Platinum': 'PLUSD',
-  'Palladium': 'PAUSD', 'Copper': 'HGUSD',
-  'Aluminum': 'ALIUSD', 'Zinc': 'ZNUSD',
-  // Grains (USX for CBOT grains)
-  'Corn Futures': 'ZCUSX', 'Soybean Futures': 'ZSUSX',
-  'Soybean Oil': 'ZLUSX', 'Soybean Meal': 'ZMUSD', 'Oat Futures': 'ZOUSX',
-  'Rough Rice': 'ZRUSD',
-  // Softs
-  'Coffee Arabica': 'KCUSX', 'Sugar #11': 'SBUSD',
-  'Cotton': 'CTUSX', 'Cocoa': 'CCUSD', 'Orange Juice': 'OJUSX',
-  // Livestock
-  'Live Cattle Futures': 'LEUSX', 'Lean Hogs Futures': 'HEUSX',
-  'Feeder Cattle Futures': 'GFUSX',
-  'Milk Class III': 'DCUSD',
-  // Other
-  'Lumber Futures': 'LBSUSD', 'Random Length Lumber': 'LBUSD',
+// CommodityPriceAPI v2 symbol mapping: commodity name → CPAPI symbol
+const CPAPI_SYMBOLS: Record<string, string> = {
+  'Gold Futures': 'XAU',
+  'Silver Futures': 'XAG',
+  'Platinum': 'PL',
+  'Palladium': 'PA',
+  'Copper': 'HG-SPOT',
+  'Aluminum': 'AL-SPOT',
+  'Zinc': 'ZINC',
+  'Corn Futures': 'CORN',
+  'Soybean Futures': 'SOYBEAN-FUT',
+  'Soybean Oil': 'ZL',
+  'Soybean Meal': 'ZM',
+  'Oat Futures': 'OAT-SPOT',
+  'Rough Rice': 'RR-FUT',
+  'Coffee Arabica': 'CA',
+  'Sugar #11': 'LS',
+  'Cotton': 'CT',
+  'Cocoa': 'CC',
+  'Orange Juice': 'OJ',
+  'Milk Class III': 'MILK',
+  'Lumber Futures': 'LB-FUT',
+  'Random Length Lumber': 'LB-FUT',
+  'Live Cattle Futures': 'BEEF',
+  'Lean Hogs Futures': 'BEEF',
+  'Feeder Cattle Futures': 'BEEF',
 };
+
+// Symbols priced in US cents — divide by 100
+const CENT_SYMBOLS = new Set(['CORN', 'SOYBEAN-FUT', 'ZL']);
 
 // ALL energy commodities use OilPriceAPI exclusively
 const OIL_API_CODES: Record<string, string> = {
-  // Crude Oil Benchmarks
   'WTI Crude Oil': 'WTI_USD',
   'Brent Crude Oil': 'BRENT_CRUDE_USD',
   'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
@@ -60,12 +69,10 @@ const OIL_API_CODES: Record<string, string> = {
   'Tapis Crude Oil': 'TAPIS_CRUDE_USD',
   'Urals Crude Oil': 'URALS_CRUDE_USD',
   'Western Canadian Select': 'WCS_CRUDE_USD',
-  // Regional Crude Benchmarks
   'WTI Midland': 'WTI_MIDLAND_USD',
   'Alaska North Slope': 'ANS_WEST_COAST_USD',
   'Mars Blend': 'MARS_USD',
   'Louisiana Light Sweet': 'LOUISIANA_LIGHT_USD',
-  // Refined Products
   'Gasoline RBOB': 'GASOLINE_RBOB_USD',
   'Heating Oil': 'HEATING_OIL_USD',
   'Jet Fuel': 'JET_FUEL_USD',
@@ -74,13 +81,11 @@ const OIL_API_CODES: Record<string, string> = {
   'Naphtha': 'NAPHTHA_USD',
   'Propane': 'PROPANE_MONT_BELVIEU_USD',
   'Ethanol': 'ETHANOL_USD',
-  // Natural Gas & LNG
   'Natural Gas': 'NATURAL_GAS_USD',
   'Natural Gas UK': 'NATURAL_GAS_GBP',
   'Dutch TTF Gas': 'DUTCH_TTF_EUR',
   'Japan/Korea LNG': 'JKM_LNG_USD',
   'US Gas Storage': 'NATURAL_GAS_STORAGE',
-  // Marine Fuels
   'VLSFO Global': 'VLSFO_USD',
   'HFO 380 Global': 'HFO_380_USD',
   'MGO 0.5%S Global': 'MGO_05S_USD',
@@ -90,7 +95,6 @@ const OIL_API_CODES: Record<string, string> = {
   'VLSFO Fujairah': 'VLSFO_AEFUJ_USD',
 };
 
-// All energy commodity names — FMP is never used for these
 const ENERGY_NAMES = new Set(Object.keys(OIL_API_CODES));
 
 const getBasePriceForCommodity = (commodityName: string): number => {
@@ -119,36 +123,30 @@ serve(async (req) => {
     const body = await req.json()
     
     const commodityName = typeof body.commodityName === 'string' && body.commodityName.length > 0 && body.commodityName.length <= 100
-      ? body.commodityName
-      : null;
+      ? body.commodityName : null;
     const isPremium = typeof body.isPremium === 'boolean' ? body.isPremium : false;
     const validDelays = ['realtime', '15min'];
     const dataDelay = validDelays.includes(body.dataDelay) ? body.dataDelay : 'realtime';
     
     if (!commodityName) {
       return new Response(
-        JSON.stringify({ error: 'Missing or invalid commodityName (must be string, 1-100 chars)' }),
+        JSON.stringify({ error: 'Missing or invalid commodityName' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    console.log(`Fetching current price for ${commodityName} with ${dataDelay} data (Premium: ${isPremium || false})`)
+    console.log(`Fetching price for ${commodityName} (delay: ${dataDelay})`)
 
-    // Check cache first
+    // Check cache
     const cacheKey = `price:${commodityName}:${dataDelay}`;
     const cached = getCachedPrice(cacheKey);
     if (cached) {
       console.log(`Cache hit for ${commodityName}`);
       return new Response(
         JSON.stringify({
-          price: cached.data,
-          source: cached.source,
-          commodity: commodityName,
-          symbol: cached.data?.symbol,
-          realTime: isPremium || false,
-          dataDelay,
-          isDelayed: dataDelay === '15min',
-          cached: true,
+          price: cached.data, source: cached.source,
+          commodity: commodityName, symbol: cached.data?.symbol,
+          realTime: isPremium, dataDelay, isDelayed: dataDelay === '15min', cached: true,
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -157,104 +155,91 @@ serve(async (req) => {
     let priceData = null
     let dataSource = 'fallback'
 
-    // Check if this commodity is available from OilPriceAPI first
+    // ── Step 1: OilPriceAPI for energy commodities ──
     const oilApiCode = OIL_API_CODES[commodityName];
     const oilApiKey = Deno.env.get('OIL_PRICE_API_KEY');
     
     if (oilApiCode && oilApiKey) {
       try {
-        console.log(`Trying OilPriceAPI for ${commodityName} (${oilApiCode})`);
+        console.log(`OilPriceAPI: ${commodityName} (${oilApiCode})`);
         const oilResp = await fetch(
           `https://api.oilpriceapi.com/v1/prices/latest?by_code=${oilApiCode}`,
           { headers: { 'Authorization': `Token ${oilApiKey}` } }
         );
-        
         if (oilResp.ok) {
           const oilResult = await oilResp.json();
           if (oilResult.data?.price) {
             priceData = {
-              symbol: oilApiCode,
-              price: oilResult.data.price,
-              change: 0,
-              changePercent: 0,
+              symbol: oilApiCode, price: oilResult.data.price,
+              change: 0, changePercent: 0,
               lastUpdate: oilResult.data.created_at || new Date().toISOString()
             };
             dataSource = 'oilpriceapi';
-            console.log(`OilPriceAPI price for ${commodityName}: ${oilResult.data.price}`);
           }
-        } else {
-          const errText = await oilResp.text();
-          console.warn(`OilPriceAPI error for ${oilApiCode}: ${oilResp.status} - ${errText}`);
-        }
+        } else { await oilResp.text(); }
       } catch (err) {
         console.warn(`OilPriceAPI failed for ${commodityName}:`, err);
       }
     }
 
-    // Use FMP API only for NON-energy commodities (per-symbol endpoint)
+    // ── Step 2: CommodityPriceAPI for non-energy commodities ──
     if (!priceData && !ENERGY_NAMES.has(commodityName)) {
-      const fmpApiKey = Deno.env.get('FMP_API_KEY')
-      
-      if (fmpApiKey && fmpApiKey !== 'demo') {
+      const cpApiKey = Deno.env.get('COMMODITYPRICE_API_KEY');
+      const cpSymbol = CPAPI_SYMBOLS[commodityName];
+
+      if (cpApiKey && cpSymbol) {
         try {
-          // Try direct symbol lookup first
-          const hardcodedSymbol = FMP_SYMBOLS[commodityName];
-          const symbolToFetch = hardcodedSymbol || commodityName.replace(/\s+/g, '');
-          
-          console.log(`Using FMP /stable/quote for ${commodityName} (symbol: ${symbolToFetch})`)
-          
-          const response = await fetch(
-            `https://financialmodelingprep.com/stable/quote?symbol=${symbolToFetch}&apikey=${fmpApiKey}`
-          )
-          
-          if (response.ok) {
-            const data = await response.json()
-            
-            if (Array.isArray(data) && data.length > 0) {
-              const fmpCommodity = data[0];
-              priceData = {
-                symbol: fmpCommodity.symbol,
-                price: parseFloat(fmpCommodity.price) || 0,
-                change: parseFloat(fmpCommodity.change) || 0,
-                changePercent: parseFloat(fmpCommodity.changePercentage) || parseFloat(fmpCommodity.changesPercentage) || 0,
-                lastUpdate: new Date().toISOString()
+          console.log(`CommodityPriceAPI: ${commodityName} (${cpSymbol})`);
+          const resp = await fetch(
+            `https://api.commoditypriceapi.com/v2/rates/latest?symbols=${cpSymbol}&quote=USD&apiKey=${cpApiKey}`
+          );
+          if (resp.ok) {
+            const result = await resp.json();
+            if (result.success && result.rates && result.rates[cpSymbol] !== undefined) {
+              let price = typeof result.rates[cpSymbol] === 'number'
+                ? result.rates[cpSymbol]
+                : parseFloat(result.rates[cpSymbol]);
+              // Convert cents to dollars
+              if (CENT_SYMBOLS.has(cpSymbol) && price > 100) {
+                price = price / 100;
               }
-              dataSource = 'fmp'
-              console.log(`Successfully fetched from FMP /quote:`, priceData)
+              if (price > 0) {
+                priceData = {
+                  symbol: cpSymbol, price: Math.round(price * 100) / 100,
+                  change: 0, changePercent: 0,
+                  lastUpdate: new Date().toISOString()
+                };
+                dataSource = 'commoditypriceapi';
+              }
             }
           } else {
-            console.warn(`FMP /quote error for ${symbolToFetch}: ${response.status}`)
-            await response.text(); // consume body
+            const errText = await resp.text();
+            console.warn(`CommodityPriceAPI error: ${resp.status} - ${errText.substring(0, 150)}`);
           }
-        } catch (error) {
-          console.warn(`FMP API failed for ${commodityName}:`, error)
+        } catch (err) {
+          console.warn(`CommodityPriceAPI failed for ${commodityName}:`, err);
         }
       }
     }
 
-    // Use fallback data if both APIs failed
+    // ── Step 3: Fallback ──
     if (!priceData) {
-      console.log(`Using fallback price data for ${commodityName}`)
+      console.log(`Fallback for ${commodityName}`)
       const basePrice = getBasePriceForCommodity(commodityName)
       priceData = {
-        symbol: FMP_SYMBOLS[commodityName] || commodityName,
+        symbol: CPAPI_SYMBOLS[commodityName] || commodityName,
         price: basePrice,
         change: (Math.random() - 0.5) * basePrice * 0.02,
         changePercent: (Math.random() - 0.5) * 4,
         lastUpdate: new Date().toISOString()
       }
-      dataSource = 'fallback'
     }
 
     // Apply data delay for free users
     if (dataDelay === '15min' && priceData) {
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000)
-      const commodityHash = commodityName.split('').reduce((a, b) => {
-        a = ((a << 5) - a) + b.charCodeAt(0)
-        return a & a
-      }, 0)
-      const seededRandom = (Math.abs(commodityHash) % 100) / 100
-      
+      const hash = commodityName.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0)
+      const seededRandom = (Math.abs(hash) % 100) / 100
       priceData = {
         ...priceData,
         price: priceData.price * (0.995 + seededRandom * 0.01),
@@ -264,26 +249,22 @@ serve(async (req) => {
       }
     }
 
-    // Cache the result
+    // Cache real data
     if (dataSource !== 'fallback') {
       setCachedPrice(cacheKey, priceData, dataSource);
     }
 
     return new Response(
-      JSON.stringify({ 
-        price: priceData,
-        source: dataSource,
-        commodity: commodityName,
-        symbol: priceData?.symbol,
-        realTime: isPremium || false,
-        dataDelay: dataDelay,
-        isDelayed: dataDelay === '15min'
+      JSON.stringify({
+        price: priceData, source: dataSource,
+        commodity: commodityName, symbol: priceData?.symbol,
+        realTime: isPremium, dataDelay, isDelayed: dataDelay === '15min'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
   } catch (error) {
-    console.error('Error in fetch-commodity-prices function:', error)
+    console.error('Error in fetch-commodity-prices:', error)
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
