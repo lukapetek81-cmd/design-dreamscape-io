@@ -201,10 +201,10 @@ serve(async (req) => {
           const hardcodedSymbol = FMP_SYMBOLS[commodityName];
           const symbolToFetch = hardcodedSymbol || commodityName.replace(/\s+/g, '');
           
-          console.log(`Using FMP /quote for ${commodityName} (symbol: ${symbolToFetch})`)
+          console.log(`Using FMP /stable/quote for ${commodityName} (symbol: ${symbolToFetch})`)
           
           const response = await fetch(
-            `https://financialmodelingprep.com/api/v3/quote/${symbolToFetch}?apikey=${fmpApiKey}`
+            `https://financialmodelingprep.com/stable/quote?symbol=${symbolToFetch}&apikey=${fmpApiKey}`
           )
           
           if (response.ok) {
@@ -216,7 +216,7 @@ serve(async (req) => {
                 symbol: fmpCommodity.symbol,
                 price: parseFloat(fmpCommodity.price) || 0,
                 change: parseFloat(fmpCommodity.change) || 0,
-                changePercent: parseFloat(fmpCommodity.changesPercentage) || 0,
+                changePercent: parseFloat(fmpCommodity.changePercentage) || parseFloat(fmpCommodity.changesPercentage) || 0,
                 lastUpdate: new Date().toISOString()
               }
               dataSource = 'fmp'
