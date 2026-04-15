@@ -2,21 +2,36 @@ import { CommoditySymbol } from './types.ts';
 
 // Only commodities with confirmed live data from OilPriceAPI or FMP basic plan
 export const COMMODITY_SYMBOLS: Record<string, CommoditySymbol> = {
-  // Energy (OilPriceAPI)
+  // Energy — Crude Oil Benchmarks (OilPriceAPI)
   'WTI Crude Oil': { symbol: 'CL=F', category: 'energy', contractSize: '1,000 bbl', venue: 'NYMEX' },
   'Brent Crude Oil': { symbol: 'BZ=F', category: 'energy', contractSize: '1,000 bbl', venue: 'ICE' },
-  'Natural Gas': { symbol: 'NG=F', category: 'energy', contractSize: '10,000 MMBtu', venue: 'NYMEX' },
-  'Gasoline RBOB': { symbol: 'RB=F', category: 'energy', contractSize: '42,000 gal', venue: 'NYMEX' },
-  'Heating Oil': { symbol: 'HO=F', category: 'energy', contractSize: '42,000 gal', venue: 'NYMEX' },
   'Crude Oil Dubai': { symbol: 'DC=F', category: 'energy', contractSize: '1,000 bbl', venue: 'DME' },
+  'DME Oman Crude': { symbol: 'OQD=F', category: 'energy', contractSize: '1,000 bbl', venue: 'DME' },
+  'Murban Crude': { symbol: 'MUR=F', category: 'energy', contractSize: '1,000 bbl', venue: 'ICE' },
+  'OPEC Basket': { symbol: 'OPEC=X', category: 'energy', contractSize: '1 bbl', venue: 'OPEC' },
+  'Indian Basket': { symbol: 'INB=X', category: 'energy', contractSize: '1 bbl', venue: 'PPAC' },
   'Tapis Crude Oil': { symbol: 'TAP=F', category: 'energy', contractSize: '1,000 bbl', venue: 'SGX' },
   'Urals Crude Oil': { symbol: 'URL=F', category: 'energy', contractSize: '1,000 bbl', venue: 'ICE' },
   'Western Canadian Select': { symbol: 'WCS=F', category: 'energy', contractSize: '1,000 bbl', venue: 'CME' },
+  // Regional Crude Benchmarks (OilPriceAPI)
+  'WTI Midland': { symbol: 'WTIM=F', category: 'energy', contractSize: '1,000 bbl', venue: 'CME' },
+  'Alaska North Slope': { symbol: 'ANS=F', category: 'energy', contractSize: '1,000 bbl', venue: 'ICE' },
+  'Mars Blend': { symbol: 'MARS=F', category: 'energy', contractSize: '1,000 bbl', venue: 'CME' },
+  'Louisiana Light Sweet': { symbol: 'LLS=F', category: 'energy', contractSize: '1,000 bbl', venue: 'CME' },
+  // Natural Gas (OilPriceAPI)
+  'Natural Gas': { symbol: 'NG=F', category: 'energy', contractSize: '10,000 MMBtu', venue: 'NYMEX' },
   'Natural Gas UK': { symbol: 'M.GB=F', category: 'energy', contractSize: '1,000 therms', venue: 'ICE' },
   'Dutch TTF Gas': { symbol: 'TTF=F', category: 'energy', contractSize: '1 MWh', venue: 'ICE' },
   'Japan/Korea LNG': { symbol: 'JKM=F', category: 'energy', contractSize: '10,000 MMBtu', venue: 'ICE' },
+  // Refined Products (OilPriceAPI)
+  'Gasoline RBOB': { symbol: 'RB=F', category: 'energy', contractSize: '42,000 gal', venue: 'NYMEX' },
+  'Heating Oil': { symbol: 'HO=F', category: 'energy', contractSize: '42,000 gal', venue: 'NYMEX' },
   'Jet Fuel': { symbol: 'JET=F', category: 'energy', contractSize: '42,000 gal', venue: 'NYMEX' },
   'ULSD Diesel': { symbol: 'ULSD=F', category: 'energy', contractSize: '42,000 gal', venue: 'NYMEX' },
+  'Gasoil': { symbol: 'GO=F', category: 'energy', contractSize: '1 MT', venue: 'ICE' },
+  'Naphtha': { symbol: 'NAP=F', category: 'energy', contractSize: '1 MT', venue: 'ICE' },
+  'Propane': { symbol: 'PRP=F', category: 'energy', contractSize: '42,000 gal', venue: 'NYMEX' },
+  'Ethanol': { symbol: 'ETH=F', category: 'energy', contractSize: '29,000 gal', venue: 'CBOT' },
   
   // Metals (FMP)
   'Gold Futures': { symbol: 'GC=F', category: 'metals', contractSize: '100 oz', venue: 'COMEX' },
@@ -68,7 +83,7 @@ export const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
 
 // Category mappings for grouping
 export const CATEGORY_MAPPINGS: Record<string, string[]> = {
-  energy: ['WTI Crude Oil', 'Brent Crude Oil', 'Crude Oil Dubai', 'Tapis Crude Oil', 'Urals Crude Oil', 'Western Canadian Select', 'Natural Gas', 'Natural Gas UK', 'Dutch TTF Gas', 'Japan/Korea LNG', 'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel'],
+  energy: ['WTI Crude Oil', 'Brent Crude Oil', 'Crude Oil Dubai', 'DME Oman Crude', 'Murban Crude', 'OPEC Basket', 'Indian Basket', 'Tapis Crude Oil', 'Urals Crude Oil', 'Western Canadian Select', 'WTI Midland', 'Alaska North Slope', 'Mars Blend', 'Louisiana Light Sweet', 'Natural Gas', 'Natural Gas UK', 'Dutch TTF Gas', 'Japan/Korea LNG', 'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel', 'Gasoil', 'Naphtha', 'Propane', 'Ethanol'],
   metals: ['Gold Futures', 'Silver Futures', 'Copper', 'Platinum', 'Palladium', 'Aluminum', 'Zinc'],
   grains: ['Corn Futures', 'Soybean Futures', 'Soybean Oil', 'Soybean Meal', 'Oat Futures', 'Rough Rice'],
   livestock: ['Live Cattle Futures', 'Feeder Cattle Futures', 'Lean Hogs Futures', 'Milk Class III'],
