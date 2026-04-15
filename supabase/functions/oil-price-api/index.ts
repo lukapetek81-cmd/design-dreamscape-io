@@ -9,24 +9,38 @@ const OIL_API_BASE = 'https://api.oilpriceapi.com/v1';
 
 // Mapping from our internal commodity names to OilPriceAPI codes
 const OIL_BLEND_CODES: Record<string, string> = {
-  // All 10 oil types supported by OilPriceAPI
+  // Crude Oil Benchmarks
   'WTI Crude Oil': 'WTI_USD',
   'Brent Crude Oil': 'BRENT_CRUDE_USD',
   'Crude Oil Dubai': 'DUBAI_CRUDE_USD',
+  'DME Oman Crude': 'DME_OMAN_USD',
+  'Murban Crude': 'MURBAN_CRUDE_USD',
+  'OPEC Basket': 'OPEC_BASKET_USD',
+  'Indian Basket': 'INDIAN_BASKET_USD',
   'Tapis Crude Oil': 'TAPIS_CRUDE_USD',
-  'Western Canadian Select': 'WCS_CRUDE_USD',
   'Urals Crude Oil': 'URALS_CRUDE_USD',
+  'Western Canadian Select': 'WCS_CRUDE_USD',
+  // Regional Crude Benchmarks
+  'WTI Midland': 'WTI_MIDLAND_USD',
+  'Alaska North Slope': 'ANS_WEST_COAST_USD',
+  'Mars Blend': 'MARS_USD',
+  'Louisiana Light Sweet': 'LOUISIANA_LIGHT_USD',
+  // Refined Products
   'Gasoline RBOB': 'GASOLINE_RBOB_USD',
   'Heating Oil': 'HEATING_OIL_USD',
   'Jet Fuel': 'JET_FUEL_USD',
   'ULSD Diesel': 'ULSD_DIESEL_USD',
-  // 5 natural gas types
+  'Gasoil': 'GASOIL_USD',
+  'Naphtha': 'NAPHTHA_USD',
+  'Propane': 'PROPANE_MONT_BELVIEU_USD',
+  'Ethanol': 'ETHANOL_USD',
+  // Natural Gas & LNG
   'Natural Gas': 'NATURAL_GAS_USD',
   'Natural Gas UK': 'NATURAL_GAS_GBP',
   'Dutch TTF Gas': 'DUTCH_TTF_EUR',
   'Japan/Korea LNG': 'JKM_LNG_USD',
   'US Gas Storage': 'NATURAL_GAS_STORAGE',
-  // Marine Fuels (Base + Port-specific)
+  // Marine Fuels
   'VLSFO Global': 'VLSFO_USD',
   'HFO 380 Global': 'HFO_380_USD',
   'MGO 0.5%S Global': 'MGO_05S_USD',
