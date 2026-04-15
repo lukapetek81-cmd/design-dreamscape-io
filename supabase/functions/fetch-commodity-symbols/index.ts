@@ -272,50 +272,57 @@ serve(async (req) => {
           .map(([sym]) => sym);
 
         if (neededSymbols.length > 0) {
-          const symbolList = neededSymbols.join(',');
-          console.log(`CommodityPriceAPI: fetching ${neededSymbols.length} symbols: ${symbolList}`);
+          // Split into batches of 5 to avoid "Maximum symbols per request exceeded"
+          const BATCH_SIZE = 5;
+          let totalLoaded = 0;
+          
+          for (let i = 0; i < neededSymbols.length; i += BATCH_SIZE) {
+            const batch = neededSymbols.slice(i, i + BATCH_SIZE);
+            const symbolList = batch.join(',');
+            console.log(`CommodityPriceAPI batch ${Math.floor(i/BATCH_SIZE)+1}: ${symbolList}`);
 
-          const resp = await fetch(
-            `https://api.commoditypriceapi.com/v2/rates/latest?symbols=${symbolList}&quote=USD&apiKey=${cpApiKey}`
-          );
+            try {
+              const resp = await fetch(
+                `https://api.commoditypriceapi.com/v2/rates/latest?symbols=${symbolList}&quote=USD&apiKey=${cpApiKey}`
+              );
 
-          if (resp.ok) {
-            const result = await resp.json();
-            if (result.success && result.rates) {
-              let loadedCount = 0;
-              for (const [apiSymbol, commodityName] of Object.entries(CPAPI_SYMBOL_MAP)) {
-                if (existingNames.has(commodityName)) continue;
-                const rate = result.rates[apiSymbol];
-                if (rate !== undefined && rate !== null) {
-                  let price = typeof rate === 'number' ? rate : parseFloat(rate);
-                  // Convert cents to dollars for specific symbols
-                  if (CENT_SYMBOLS.has(apiSymbol) && price > 100) {
-                    price = price / 100;
-                  }
-                  if (price > 0) {
-                    const meta = COMMODITY_SYMBOLS[commodityName];
-                    commoditiesData.push({
-                      name: commodityName, symbol: meta.symbol,
-                      price: Math.round(price * 100) / 100,
-                      change: 0, changePercent: 0, volume: 0,
-                      ...meta, supportedByFMP: false, source: 'commoditypriceapi',
-                    });
-                    existingNames.add(commodityName);
-                    loadedCount++;
+              if (resp.ok) {
+                const result = await resp.json();
+                if (result.success && result.rates) {
+                  for (const sym of batch) {
+                    const commodityName = CPAPI_SYMBOL_MAP[sym];
+                    if (!commodityName || existingNames.has(commodityName)) continue;
+                    const rate = result.rates[sym];
+                    if (rate !== undefined && rate !== null) {
+                      let price = typeof rate === 'number' ? rate : parseFloat(rate);
+                      if (CENT_SYMBOLS.has(sym) && price > 100) price = price / 100;
+                      if (price > 0) {
+                        const meta = COMMODITY_SYMBOLS[commodityName];
+                        commoditiesData.push({
+                          name: commodityName, symbol: meta.symbol,
+                          price: Math.round(price * 100) / 100,
+                          change: 0, changePercent: 0, volume: 0,
+                          ...meta, supportedByFMP: false, source: 'commoditypriceapi',
+                        });
+                        existingNames.add(commodityName);
+                        totalLoaded++;
+                      }
+                    }
                   }
                 }
+              } else {
+                const errText = await resp.text();
+                console.warn(`CommodityPriceAPI batch error: ${resp.status} - ${errText.substring(0, 150)}`);
               }
-              if (loadedCount > 0) {
-                nonEnergyLoaded = true;
-                dataSource = 'mixed';
-                console.log(`CommodityPriceAPI: loaded ${loadedCount} non-energy commodities`);
-              }
-            } else {
-              console.warn('CommodityPriceAPI: unexpected response', JSON.stringify(result).substring(0, 200));
+            } catch (batchErr) {
+              console.warn(`CommodityPriceAPI batch failed:`, batchErr);
             }
-          } else {
-            const errText = await resp.text();
-            console.warn(`CommodityPriceAPI error: ${resp.status} - ${errText.substring(0, 200)}`);
+          }
+          
+          if (totalLoaded > 0) {
+            nonEnergyLoaded = true;
+            dataSource = 'mixed';
+            console.log(`CommodityPriceAPI: loaded ${totalLoaded} non-energy commodities total`);
           }
         }
       } catch (error) {
