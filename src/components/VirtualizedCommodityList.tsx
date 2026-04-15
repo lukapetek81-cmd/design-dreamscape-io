@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { SkeletonCard } from '@/components/ui/enhanced-skeleton';
 import { usePerformanceOptimizer } from '@/hooks/usePerformanceOptimizer';
+import { Anchor, Droplets, Flame, BarChart3 } from 'lucide-react';
 
 interface FuturesContract {
   name: string;
@@ -100,6 +101,48 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
     }
   }, [commodities, isMobile, highlightCommodity]);
 
+  // Define energy subsections for Marine Fuels separation
+  const MARINE_FUEL_NAMES = new Set([
+    'VLSFO Global', 'HFO 380 Global', 'MGO 0.5%S Global',
+    'HFO 380 Rotterdam', 'VLSFO Singapore', 'MGO Houston', 'VLSFO Fujairah',
+  ]);
+
+  const REFINED_PRODUCT_NAMES = new Set([
+    'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel',
+    'Gasoil', 'Naphtha', 'Propane', 'Ethanol',
+  ]);
+
+  const NATURAL_GAS_NAMES = new Set([
+    'Natural Gas', 'Natural Gas UK', 'Dutch TTF Gas', 'Japan/Korea LNG', 'US Gas Storage',
+  ]);
+
+  const groupedVisible = React.useMemo(() => {
+    const items = commodities.slice(0, visibleItems);
+    // Only apply subsections for energy category
+    const isEnergy = items.length > 0 && items[0]?.category === 'energy';
+    if (!isEnergy) return { sections: [{ label: null, icon: null, items }] };
+
+    const crudeOils: Commodity[] = [];
+    const naturalGas: Commodity[] = [];
+    const refinedProducts: Commodity[] = [];
+    const marineFuels: Commodity[] = [];
+
+    for (const c of items) {
+      if (MARINE_FUEL_NAMES.has(c.name)) marineFuels.push(c);
+      else if (REFINED_PRODUCT_NAMES.has(c.name)) refinedProducts.push(c);
+      else if (NATURAL_GAS_NAMES.has(c.name)) naturalGas.push(c);
+      else crudeOils.push(c);
+    }
+
+    const sections: { label: string | null; icon: React.ReactNode | null; items: Commodity[] }[] = [];
+    if (crudeOils.length > 0) sections.push({ label: 'Crude Oil Benchmarks', icon: <Droplets className="w-4 h-4" />, items: crudeOils });
+    if (naturalGas.length > 0) sections.push({ label: 'Natural Gas & LNG', icon: <Flame className="w-4 h-4" />, items: naturalGas });
+    if (refinedProducts.length > 0) sections.push({ label: 'Refined Products', icon: <BarChart3 className="w-4 h-4" />, items: refinedProducts });
+    if (marineFuels.length > 0) sections.push({ label: 'Marine Fuels', icon: <Anchor className="w-4 h-4" />, items: marineFuels });
+
+    return { sections };
+  }, [commodities, visibleItems]);
+
   const visibleCommodities = React.useMemo(() => 
     commodities.slice(0, visibleItems), 
     [commodities, visibleItems]
@@ -123,36 +166,51 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
     );
   }
 
+  let globalIndex = 0;
+
   return (
     <div className="space-y-4 pb-8">
-      <div className="grid gap-3 sm:gap-4 lg:gap-6">
-        {visibleCommodities.map((commodity, index) => {
-          // Get futures contracts for this specific commodity from the bulk query
-          const availableContracts = isPremium ? futuresQuery.data?.[commodity.name] : undefined;
-
-          const isHighlighted = commodity.name === highlightCommodity;
-          return (
-            <div 
-              key={`${commodity.symbol}-${index}`}
-              className={`animate-fade-in ${isHighlighted ? 'ring-2 ring-primary/50 rounded-2xl' : ''}`}
-              style={{ animationDelay: `${index * 0.05}s` }}
-              ref={isHighlighted ? (el) => { el?.scrollIntoView({ behavior: 'smooth', block: 'center' }); } : undefined}
-            >
-              <CommodityCard
-                name={commodity.name}
-                price={commodity.price}
-                change={commodity.change || 0}
-                changePercent={commodity.changePercent}
-                symbol={commodity.symbol}
-                venue={commodity.venue}
-                contractSize={commodity.contractSize}
-                availableContracts={availableContracts}
-                defaultOpen={commodity.name === highlightCommodity}
-              />
+      {groupedVisible.sections.map((section, sIdx) => (
+        <div key={section.label || sIdx}>
+          {section.label && (
+            <div className="flex items-center gap-2 mb-3 mt-2">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/60 border border-border/40">
+                <span className="text-muted-foreground">{section.icon}</span>
+                <span className="text-sm font-semibold text-muted-foreground">{section.label}</span>
+                <span className="text-xs text-muted-foreground/70">({section.items.length})</span>
+              </div>
+              <div className="flex-1 h-px bg-border/30" />
             </div>
-          );
-        })}
-      </div>
+          )}
+          <div className="grid gap-3 sm:gap-4 lg:gap-6">
+            {section.items.map((commodity) => {
+              const idx = globalIndex++;
+              const availableContracts = isPremium ? futuresQuery.data?.[commodity.name] : undefined;
+              const isHighlighted = commodity.name === highlightCommodity;
+              return (
+                <div 
+                  key={`${commodity.symbol}-${idx}`}
+                  className={`animate-fade-in ${isHighlighted ? 'ring-2 ring-primary/50 rounded-2xl' : ''}`}
+                  style={{ animationDelay: `${idx * 0.05}s` }}
+                  ref={isHighlighted ? (el) => { el?.scrollIntoView({ behavior: 'smooth', block: 'center' }); } : undefined}
+                >
+                  <CommodityCard
+                    name={commodity.name}
+                    price={commodity.price}
+                    change={commodity.change || 0}
+                    changePercent={commodity.changePercent}
+                    symbol={commodity.symbol}
+                    venue={commodity.venue}
+                    contractSize={commodity.contractSize}
+                    availableContracts={availableContracts}
+                    defaultOpen={commodity.name === highlightCommodity}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
       
       {/* Loading indicator for additional items */}
       {isLoadingMore && (
