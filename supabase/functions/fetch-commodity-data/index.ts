@@ -402,12 +402,19 @@ serve(async (req) => {
     // Step 2: Try FMP API if OilPriceAPI didn't provide data
     if (!historicalData && fmpApiKey && fmpApiKey !== 'demo') {
       try {
-        const dataPoints = isPremium 
+        const maxDataPoints = isPremium 
           ? (timeframe === '1d' ? 48 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : 365) 
           : (timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180);
+
+        // Use from/to params to limit data
+        const toDate = new Date();
+        const fromDate = new Date();
+        fromDate.setDate(fromDate.getDate() - maxDataPoints);
+        const fromStr = fromDate.toISOString().split('T')[0];
+        const toStr = toDate.toISOString().split('T')[0];
         
         const response = await fetch(
-          `https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=${symbol}&apikey=${fmpApiKey}`
+          `https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=${symbol}&from=${fromStr}&to=${toStr}&apikey=${fmpApiKey}`
         );
         
         if (!response.ok) {
@@ -416,13 +423,12 @@ serve(async (req) => {
         
         const data = await response.json();
         
-        if (data.historical && Array.isArray(data.historical) && data.historical.length > 0) {
-          const maxDataPoints = isPremium 
-            ? (timeframe === '1d' ? 48 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : 365)
-            : (timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180);
-          
+        // Stable API returns flat array, legacy returned { historical: [...] }
+        const historicalArray = Array.isArray(data) ? data : (data.historical || []);
+        
+        if (Array.isArray(historicalArray) && historicalArray.length > 0) {
           if (chartType === 'candlestick') {
-            historicalData = data.historical.slice(0, maxDataPoints)
+            historicalData = historicalArray.slice(0, maxDataPoints)
               .filter((item: any) => item.date && !isNaN(new Date(item.date).getTime()))
               .map((item: any) => ({
                 date: item.date,
@@ -433,7 +439,7 @@ serve(async (req) => {
                 price: parseFloat(item.close),
               })).reverse();
           } else {
-            historicalData = data.historical.slice(0, maxDataPoints)
+            historicalData = historicalArray.slice(0, maxDataPoints)
               .filter((item: any) => item.date && !isNaN(new Date(item.date).getTime()))
               .map((item: any) => ({
                 date: item.date,
