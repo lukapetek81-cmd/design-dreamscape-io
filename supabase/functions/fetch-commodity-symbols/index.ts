@@ -319,47 +319,57 @@ serve(async (req) => {
             .filter(([name]) => !existingNames.has(name) && COMMODITY_SYMBOLS[name]);
 
           if (entriesToFetch.length > 0) {
-            const symbolList = entriesToFetch.map(([_, sym]) => sym).join(',');
-            console.log(`FMP: fetching ${entriesToFetch.length} symbols via /stable/quote batch: ${symbolList}`);
+            console.log(`FMP: fetching ${entriesToFetch.length} symbols via /stable/quote individually`);
             
-            const response = await fetch(
-              `https://financialmodelingprep.com/stable/quote?symbol=${symbolList}&apikey=${fmpApiKey}`
-            );
-            
-            console.log(`FMP /quote response status: ${response.status}`);
-            
-            if (response.ok) {
-              const data = await response.json();
-              
-              if (Array.isArray(data) && data.length > 0) {
-                console.log(`FMP /quote returned ${data.length} results`);
-                
-                for (const fmpItem of data) {
-                  const matched = entriesToFetch.find(([_, sym]) => sym === fmpItem.symbol);
-                  if (matched && !existingNames.has(matched[0])) {
-                    const meta = COMMODITY_SYMBOLS[matched[0]];
-                    commoditiesData.push({
-                      name: matched[0],
-                      symbol: meta.symbol,
-                      price: parseFloat(fmpItem.price) || 0,
-                      change: parseFloat(fmpItem.change) || 0,
-                      changePercent: parseFloat(fmpItem.changePercentage) || parseFloat(fmpItem.changesPercentage) || 0,
-                      volume: parseInt(fmpItem.volume) || 0,
-                      ...meta,
-                      supportedByFMP: true,
-                      source: 'fmp',
-                    });
-                    existingNames.add(matched[0]);
+            // Fetch each symbol individually since stable API doesn't support batch
+            const fmpFetches = entriesToFetch.map(async ([name, sym]) => {
+              try {
+                const response = await fetch(
+                  `https://financialmodelingprep.com/stable/quote?symbol=${sym}&apikey=${fmpApiKey}`
+                );
+                if (!response.ok) {
+                  const errText = await response.text();
+                  if (!errText.includes('Invalid API KEY')) {
+                    console.warn(`FMP /stable/quote error for ${sym}: ${response.status}`);
                   }
+                  return null;
                 }
-                
-                nonEnergyLoaded = commoditiesData.length > 22;
-                dataSource = 'mixed';
-                console.log(`FMP: successfully loaded ${data.length} non-energy commodities with real prices`);
+                const data = await response.json();
+                if (Array.isArray(data) && data.length > 0) {
+                  return { name, fmpItem: data[0] };
+                }
+              } catch (err) {
+                // silently skip
               }
-            } else {
-              const errorBody = await response.text();
-              console.warn(`FMP /quote error: ${response.status} - ${errorBody.substring(0, 200)}`);
+              return null;
+            });
+
+            const fmpResults = await Promise.all(fmpFetches);
+            let loadedCount = 0;
+            
+            for (const result of fmpResults) {
+              if (result && !existingNames.has(result.name)) {
+                const meta = COMMODITY_SYMBOLS[result.name];
+                commoditiesData.push({
+                  name: result.name,
+                  symbol: meta.symbol,
+                  price: parseFloat(result.fmpItem.price) || 0,
+                  change: parseFloat(result.fmpItem.change) || 0,
+                  changePercent: parseFloat(result.fmpItem.changePercentage) || parseFloat(result.fmpItem.changesPercentage) || 0,
+                  volume: parseInt(result.fmpItem.volume) || 0,
+                  ...meta,
+                  supportedByFMP: true,
+                  source: 'fmp',
+                });
+                existingNames.add(result.name);
+                loadedCount++;
+              }
+            }
+                
+            if (loadedCount > 0) {
+              nonEnergyLoaded = true;
+              dataSource = 'mixed';
+              console.log(`FMP: successfully loaded ${loadedCount} non-energy commodities with real prices`);
             }
           }
         } catch (error) {
