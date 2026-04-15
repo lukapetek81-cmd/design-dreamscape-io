@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { SkeletonCard } from '@/components/ui/enhanced-skeleton';
 import { usePerformanceOptimizer } from '@/hooks/usePerformanceOptimizer';
+import { Anchor, Droplets, Flame, BarChart3 } from 'lucide-react';
 
 interface FuturesContract {
   name: string;
