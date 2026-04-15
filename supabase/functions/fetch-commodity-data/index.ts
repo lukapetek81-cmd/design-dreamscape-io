@@ -460,7 +460,7 @@ serve(async (req) => {
                 historicalData = dates.map(dateStr => {
                   const dayData = result.rates[dateStr]?.[cpSymbol];
                   if (dayData === undefined || dayData === null) return null;
-                  let price = typeof dayData === 'number' ? dayData : (dayData.close ?? parseFloat(dayData) || 0);
+                  let price = typeof dayData === 'number' ? dayData : (dayData.close ?? (parseFloat(dayData) || 0));
                   if (isCent && price > 100) price = price / 100;
                   return { date: dateStr, price };
                 }).filter(Boolean);
