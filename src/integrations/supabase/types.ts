@@ -681,6 +681,99 @@ export type Database = {
         }
         Relationships: []
       }
+      synthetic_positions: {
+        Row: {
+          closed_at: string | null
+          commodity_name: string
+          created_at: string
+          direction: string
+          entry_price: number
+          exit_price: number | null
+          id: string
+          margin_used: number
+          opened_at: string
+          quantity: number
+          realized_pnl: number | null
+          status: string
+          unrealized_pnl: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          closed_at?: string | null
+          commodity_name: string
+          created_at?: string
+          direction: string
+          entry_price: number
+          exit_price?: number | null
+          id?: string
+          margin_used: number
+          opened_at?: string
+          quantity: number
+          realized_pnl?: number | null
+          status?: string
+          unrealized_pnl?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          closed_at?: string | null
+          commodity_name?: string
+          created_at?: string
+          direction?: string
+          entry_price?: number
+          exit_price?: number | null
+          id?: string
+          margin_used?: number
+          opened_at?: string
+          quantity?: number
+          realized_pnl?: number | null
+          status?: string
+          unrealized_pnl?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      synthetic_trade_history: {
+        Row: {
+          closed_at: string
+          commodity_name: string
+          created_at: string
+          direction: string
+          entry_price: number
+          exit_price: number
+          id: string
+          quantity: number
+          realized_pnl: number
+          user_id: string
+        }
+        Insert: {
+          closed_at?: string
+          commodity_name: string
+          created_at?: string
+          direction: string
+          entry_price: number
+          exit_price: number
+          id?: string
+          quantity: number
+          realized_pnl: number
+          user_id: string
+        }
+        Update: {
+          closed_at?: string
+          commodity_name?: string
+          created_at?: string
+          direction?: string
+          entry_price?: number
+          exit_price?: number
+          id?: string
+          quantity?: number
+          realized_pnl?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       system_metrics: {
         Row: {
           created_at: string | null
@@ -936,6 +1029,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      usdc_balances: {
+        Row: {
+          balance: number
+          created_at: string
+          frozen_balance: number
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          frozen_balance?: number
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          frozen_balance?: number
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_favorites: {
         Row: {
