@@ -236,54 +236,59 @@ serve(async (req) => {
     const commodityPriceApiKey = Deno.env.get('COMMODITYPRICE_API_KEY');
     if (commodityPriceApiKey && !nonEnergyLoaded) {
       try {
-        console.log('Trying CommodityPriceAPI for non-energy symbols');
+        console.log('Trying CommodityPriceAPI v2 for non-energy symbols');
         // Build reverse mapping: API symbol -> our commodity name (non-energy only)
         const nonEnergySymbols = Object.entries(COMMODITY_PRICE_API_SYMBOLS)
           .filter(([_, name]) => !OIL_API_ONLY_NAMES.has(name) && COMMODITY_SYMBOLS[name] && !existingNames.has(name));
         
-        // Fetch prices for each symbol
-        const fetchPromises = nonEnergySymbols.map(async ([apiSymbol, commodityName]) => {
-          try {
-            const resp = await fetch(
-              `https://api.commoditypriceapi.com/api/latest?base=USD&symbols=${apiSymbol}`,
-              { headers: { 'Authorization': `Bearer ${commodityPriceApiKey}` } }
-            );
-            if (!resp.ok) {
-              await resp.text();
-              return null;
-            }
+        if (nonEnergySymbols.length > 0) {
+          const symbolList = nonEnergySymbols.map(([apiSymbol]) => apiSymbol).join(',');
+          
+          // CommodityPriceAPI v2 endpoint with apiKey query param
+          const resp = await fetch(
+            `https://api.commoditypriceapi.com/v2/rates/latest?symbols=${symbolList}&quote=USD&apiKey=${commodityPriceApiKey}`
+          );
+          
+          if (resp.ok) {
             const result = await resp.json();
-            if (result.data && result.data[apiSymbol]) {
-              const price = 1 / result.data[apiSymbol]; // API returns USD per unit inverse
-              return {
-                name: commodityName,
-                symbol: COMMODITY_SYMBOLS[commodityName].symbol,
-                price: Math.round(price * 100) / 100,
-                change: 0,
-                changePercent: 0,
-                volume: 0,
-                ...COMMODITY_SYMBOLS[commodityName],
-                supportedByFMP: false,
-                source: 'commoditypriceapi',
-              };
+            if (result.success && result.rates) {
+              let loadedCount = 0;
+              for (const [apiSymbol, commodityName] of nonEnergySymbols) {
+                const rate = result.rates[apiSymbol];
+                if (rate !== undefined && rate !== null) {
+                  const price = typeof rate === 'number' ? rate : parseFloat(rate);
+                  if (price > 0) {
+                    commoditiesData.push({
+                      name: commodityName,
+                      symbol: COMMODITY_SYMBOLS[commodityName].symbol,
+                      price: Math.round(price * 100) / 100,
+                      change: 0,
+                      changePercent: 0,
+                      volume: 0,
+                      ...COMMODITY_SYMBOLS[commodityName],
+                      supportedByFMP: false,
+                      source: 'commoditypriceapi',
+                    });
+                    existingNames.add(commodityName);
+                    loadedCount++;
+                  }
+                }
+              }
+              if (loadedCount > 0) {
+                nonEnergyLoaded = true;
+                dataSource = commoditiesData.length > loadedCount ? 'mixed' : 'commoditypriceapi';
+                console.log(`CommodityPriceAPI v2: loaded ${loadedCount} non-energy commodities`);
+              }
+            } else {
+              console.warn('CommodityPriceAPI v2: no rates in response', JSON.stringify(result).substring(0, 200));
             }
-          } catch (err) {
-            // Silently skip
+          } else {
+            const errText = await resp.text();
+            console.warn(`CommodityPriceAPI v2 error: ${resp.status} - ${errText.substring(0, 200)}`);
           }
-          return null;
-        });
-
-        const results = await Promise.all(fetchPromises);
-        const validResults = results.filter(Boolean);
-        if (validResults.length > 0) {
-          commoditiesData.push(...validResults);
-          validResults.forEach(r => existingNames.add(r.name));
-          nonEnergyLoaded = true;
-          dataSource = commoditiesData.length > validResults.length ? 'mixed' : 'commoditypriceapi';
-          console.log(`CommodityPriceAPI: loaded ${validResults.length} non-energy commodities`);
         }
       } catch (error) {
-        console.warn('CommodityPriceAPI failed:', error);
+        console.warn('CommodityPriceAPI v2 failed:', error);
       }
     }
 
