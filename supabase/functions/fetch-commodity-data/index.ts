@@ -399,14 +399,98 @@ serve(async (req) => {
       }
     }
 
-    // Step 2: Try FMP API if OilPriceAPI didn't provide data
+    // Step 2: Try CommodityPriceAPI timeseries for non-energy commodities
+    const CPAPI_HIST_SYMBOLS: Record<string, string> = {
+      'Gold Futures': 'XAU', 'Silver Futures': 'XAG', 'Platinum': 'PL',
+      'Palladium': 'PA', 'Copper': 'HG-SPOT', 'Aluminum': 'AL-SPOT', 'Zinc': 'ZINC',
+      'Corn Futures': 'CORN', 'Soybean Futures': 'SOYBEAN-FUT',
+      'Soybean Oil': 'ZL', 'Soybean Meal': 'ZM', 'Oat Futures': 'OAT-SPOT',
+      'Rough Rice': 'RR-FUT', 'Coffee Arabica': 'CA', 'Sugar #11': 'LS',
+      'Cotton': 'CT', 'Cocoa': 'CC', 'Orange Juice': 'OJ',
+      'Milk Class III': 'MILK', 'Lumber Futures': 'LB-FUT',
+      'Random Length Lumber': 'LB-FUT',
+      'Live Cattle Futures': 'BEEF', 'Lean Hogs Futures': 'BEEF',
+      'Feeder Cattle Futures': 'BEEF',
+    };
+    const CENT_HIST = new Set(['CORN', 'SOYBEAN-FUT', 'ZL']);
+
+    const cpApiKey = Deno.env.get('COMMODITYPRICE_API_KEY');
+    const cpSymbol = CPAPI_HIST_SYMBOLS[commodityName];
+
+    if (!historicalData && cpApiKey && cpSymbol) {
+      try {
+        const maxDays = isPremium
+          ? (timeframe === '1d' ? 2 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : 365)
+          : (timeframe === '1d' ? 2 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180);
+
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - maxDays);
+        const startStr = startDate.toISOString().split('T')[0];
+        const endStr = endDate.toISOString().split('T')[0];
+
+        console.log(`CommodityPriceAPI timeseries: ${cpSymbol} from ${startStr} to ${endStr}`);
+
+        const resp = await fetch(
+          `https://api.commoditypriceapi.com/v2/rates/time-series?symbols=${cpSymbol}&startDate=${startStr}&endDate=${endStr}&apiKey=${cpApiKey}`
+        );
+
+        if (resp.ok) {
+          const result = await resp.json();
+          if (result.success && result.rates) {
+            const dates = Object.keys(result.rates).sort();
+            if (dates.length > 0) {
+              const isCent = CENT_HIST.has(cpSymbol);
+              if (chartType === 'candlestick') {
+                historicalData = dates.map(dateStr => {
+                  const dayData = result.rates[dateStr]?.[cpSymbol];
+                  if (!dayData) return null;
+                  let open = dayData.open ?? dayData.close ?? dayData;
+                  let high = dayData.high ?? open;
+                  let low = dayData.low ?? open;
+                  let close = dayData.close ?? dayData;
+                  if (typeof open !== 'number') open = parseFloat(open) || 0;
+                  if (typeof high !== 'number') high = parseFloat(high) || 0;
+                  if (typeof low !== 'number') low = parseFloat(low) || 0;
+                  if (typeof close !== 'number') close = parseFloat(close) || 0;
+                  if (isCent && close > 100) { open /= 100; high /= 100; low /= 100; close /= 100; }
+                  return { date: dateStr, open, high, low, close, price: close };
+                }).filter(Boolean);
+              } else {
+                historicalData = dates.map(dateStr => {
+                  const dayData = result.rates[dateStr]?.[cpSymbol];
+                  if (dayData === undefined || dayData === null) return null;
+                  let price = typeof dayData === 'number' ? dayData : (dayData.close ?? (parseFloat(dayData) || 0));
+                  if (isCent && price > 100) price = price / 100;
+                  return { date: dateStr, price };
+                }).filter(Boolean);
+              }
+
+              if (historicalData && historicalData.length > 1) {
+                dataSourceUsed = 'commoditypriceapi';
+                console.log(`CommodityPriceAPI timeseries: ${historicalData.length} points for ${commodityName}`);
+              } else {
+                historicalData = null;
+              }
+            }
+          }
+        } else {
+          const errText = await resp.text();
+          console.warn(`CommodityPriceAPI timeseries error: ${resp.status} - ${errText.substring(0, 150)}`);
+        }
+      } catch (error) {
+        console.warn(`CommodityPriceAPI timeseries failed for ${commodityName}:`, error);
+        historicalData = null;
+      }
+    }
+
+    // Step 2b: Try FMP API as secondary fallback
     if (!historicalData && fmpApiKey && fmpApiKey !== 'demo') {
       try {
         const maxDataPoints = isPremium 
           ? (timeframe === '1d' ? 48 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : 365) 
           : (timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180);
 
-        // Use from/to params to limit data
         const toDate = new Date();
         const fromDate = new Date();
         fromDate.setDate(fromDate.getDate() - maxDataPoints);
@@ -417,40 +501,31 @@ serve(async (req) => {
           `https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=${symbol}&from=${fromStr}&to=${toStr}&apikey=${fmpApiKey}`
         );
         
-        if (!response.ok) {
-          throw new Error(`FMP API error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        // Stable API returns flat array, legacy returned { historical: [...] }
-        const historicalArray = Array.isArray(data) ? data : (data.historical || []);
-        
-        if (Array.isArray(historicalArray) && historicalArray.length > 0) {
-          if (chartType === 'candlestick') {
-            historicalData = historicalArray.slice(0, maxDataPoints)
-              .filter((item: any) => item.date && !isNaN(new Date(item.date).getTime()))
-              .map((item: any) => ({
-                date: item.date,
-                open: parseFloat(item.open),
-                high: parseFloat(item.high),
-                low: parseFloat(item.low),
-                close: parseFloat(item.close),
-                price: parseFloat(item.close),
-              })).reverse();
-          } else {
-            historicalData = historicalArray.slice(0, maxDataPoints)
-              .filter((item: any) => item.date && !isNaN(new Date(item.date).getTime()))
-              .map((item: any) => ({
-                date: item.date,
-                price: parseFloat(item.close),
-              })).reverse();
-          }
+        if (response.ok) {
+          const data = await response.json();
+          const historicalArray = Array.isArray(data) ? data : (data.historical || []);
           
-          dataSourceUsed = 'fmp';
-          console.log(`FMP historical: ${historicalData.length} data points for ${commodityName}`);
+          if (Array.isArray(historicalArray) && historicalArray.length > 0) {
+            if (chartType === 'candlestick') {
+              historicalData = historicalArray.slice(0, maxDataPoints)
+                .filter((item: any) => item.date && !isNaN(new Date(item.date).getTime()))
+                .map((item: any) => ({
+                  date: item.date, open: parseFloat(item.open),
+                  high: parseFloat(item.high), low: parseFloat(item.low),
+                  close: parseFloat(item.close), price: parseFloat(item.close),
+                })).reverse();
+            } else {
+              historicalData = historicalArray.slice(0, maxDataPoints)
+                .filter((item: any) => item.date && !isNaN(new Date(item.date).getTime()))
+                .map((item: any) => ({
+                  date: item.date, price: parseFloat(item.close),
+                })).reverse();
+            }
+            dataSourceUsed = 'fmp';
+            console.log(`FMP historical: ${historicalData.length} data points for ${commodityName}`);
+          }
         } else {
-          throw new Error('No historical data from FMP');
+          await response.text();
         }
       } catch (error) {
         console.warn(`FMP API failed for ${commodityName}:`, error);
