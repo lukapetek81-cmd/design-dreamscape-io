@@ -320,10 +320,10 @@ serve(async (req) => {
 
           if (entriesToFetch.length > 0) {
             const symbolList = entriesToFetch.map(([_, sym]) => sym).join(',');
-            console.log(`FMP: fetching ${entriesToFetch.length} symbols via /quote batch: ${symbolList}`);
+            console.log(`FMP: fetching ${entriesToFetch.length} symbols via /stable/quote batch: ${symbolList}`);
             
             const response = await fetch(
-              `https://financialmodelingprep.com/api/v3/quote/${symbolList}?apikey=${fmpApiKey}`
+              `https://financialmodelingprep.com/stable/quote?symbol=${symbolList}&apikey=${fmpApiKey}`
             );
             
             console.log(`FMP /quote response status: ${response.status}`);

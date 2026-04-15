@@ -407,7 +407,7 @@ serve(async (req) => {
           : (timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180);
         
         const response = await fetch(
-          `https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${fmpApiKey}&timeseries=${dataPoints}`
+          `https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=${symbol}&apikey=${fmpApiKey}`
         );
         
         if (!response.ok) {
