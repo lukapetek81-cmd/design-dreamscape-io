@@ -162,7 +162,6 @@ const DashboardContent = ({
           livestock: getCommodityCount('livestock'),
           softs: getCommodityCount('softs'),
           industrials: getCommodityCount('industrials'),
-          other: getCommodityCount('other')
         }}
       />
       
