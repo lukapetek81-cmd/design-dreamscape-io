@@ -217,31 +217,25 @@ export const CENT_QUOTED_SYMBOLS = new Set([
  * Premium-only commodities. Free tier sees household names; everything niche/regional/exotic
  * lives behind the paywall. See mem://monetization/strategy.
  */
+// Trimmed to ~25 high-value items (was ~55) to keep API burn sustainable.
+// Dropped: niche regional crude (ANS, Indian, Tapis, Urals), low-demand refined (Propane, Ethanol),
+// most marine fuel sub-grades, duplicate metal spot/futures pairs, grain spot duplicates,
+// niche softs (Tea, Wool), all livestock (consumer commodities — near-zero retail trader demand),
+// niche industrials (rare earth elements, fertilizers).
 export const PREMIUM_COMMODITIES = new Set<string>([
-  // Energy premium (existing)
-  'Indian Basket', 'Tapis Crude Oil', 'Urals Crude Oil', 'Western Canadian Select',
-  'WTI Midland', 'Alaska North Slope', 'Mars Blend', 'Louisiana Light Sweet',
-  'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel', 'Gasoil',
-  'Naphtha', 'Propane', 'Ethanol',
-  'VLSFO Global', 'HFO 380 Global', 'MGO 0.5%S Global', 'HFO 380 Rotterdam',
-  'VLSFO Singapore', 'MGO Houston', 'VLSFO Fujairah',
-  // Metals premium
-  'Copper Futures', 'Aluminium Futures', 'Lead Spot', 'Lead Futures',
-  'Nickel Spot', 'Nickel Futures', 'Tin', 'Steel', 'Hot-Rolled Coil Steel',
-  'Titanium', 'Magnesium', 'Lithium',
-  // Grains premium
-  'Wheat Futures Spot', 'Soybeans Spot', 'Oats Spot', 'Rough Rice Spot',
-  'Canola', 'Sunflower Oil', 'Rapeseed Oil',
-  // Softs premium
-  'UK Sugar No 5', 'Tea', 'Wool', 'Palm Oil',
-  // Livestock premium
-  'Feeder Cattle', 'Cheese', 'Eggs CH', 'Eggs US',
-  'Salmon', 'Poultry', 'Butter', 'Potato',
-  // Industrials — Free: Industrial Ethanol, Rubber, Cobalt. Rest are premium.
-  'Bitumen', 'Rhodium',
-  'Polyethylene', 'Polyvinyl Chloride', 'Polypropylene', 'Soda Ash',
-  'Neodymium', 'Tellurium', 'Diammonium Phosphate', 'Urea', 'Urea Ammonium Nitrate',
-  'Gallium', 'Indium', 'Kraft Pulp', 'Industrial Naphtha',
+  // Energy — Crude (4)
+  'Western Canadian Select', 'WTI Midland', 'Mars Blend', 'Louisiana Light Sweet',
+  // Energy — Refined (6)
+  'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel', 'Gasoil', 'Naphtha',
+  // Energy — Marine fuels (3)
+  'VLSFO Global', 'HFO 380 Rotterdam', 'MGO 0.5%S Global',
+  // Metals (8) — futures-only, drops duplicate spots
+  'Lead Futures', 'Nickel Futures', 'Tin', 'Steel', 'Hot-Rolled Coil Steel',
+  'Titanium', 'Lithium', 'Cobalt',
+  // Grains (2)
+  'Canola', 'Sunflower Oil',
+  // Softs (2)
+  'UK Sugar No 5', 'Palm Oil',
 ]);
 
 export function isPremiumCommodity(name: string): boolean {

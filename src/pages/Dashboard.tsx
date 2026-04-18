@@ -265,9 +265,6 @@ const DashboardContent = ({
             {!loading && !error && !isPremium && activeGroup === 'softs' && (
               <PremiumUpsellCard onUpgrade={handleUpgrade} variant="softs" />
             )}
-            {!loading && !error && !isPremium && activeGroup === 'livestock' && (
-              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="livestock" />
-            )}
 
             {/* Commodities List */}
             {!loading && filteredCommodities.length > 0 && (

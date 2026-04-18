@@ -1,16 +1,18 @@
 ---
 name: Commodity Catalog Scope
-description: 46 total commodities — 34 free tier + 16 premium-gated (quota-heavy energy)
+description: ~85 catalog items — ~30 free + ~21 premium-gated (trimmed 2026-04-18) + remainder unmapped/legacy
 type: feature
 ---
-**Total catalog**: 46 commodities defined in `supabase/functions/_shared/commodity-mappings.ts → COMMODITY_SYMBOLS`.
+**Total catalog**: ~85 commodities defined in `supabase/functions/_shared/commodity-mappings.ts → COMMODITY_SYMBOLS`.
 
-**Free tier (34)**: All metals (7), grains (7), softs (5), lumber (1), plus 14 energy items — crude majors (WTI, Brent, Dubai, Oman, Murban, OPEC, Indian, Tapis, Urals, WCS) and gas (NG, UK Gas, Dutch TTF, JKM LNG).
+**Premium-gated (~21)**: See mem://monetization/strategy for the full list. Trimmed from ~55 on 2026-04-18 to keep API burn sustainable.
 
-**Premium tier (+12 in catalog, +7 oil-only)**: Regional crude (WTI Midland, ANS, Mars, LLS), refined products (Gasoline RBOB, Heating Oil, Jet, ULSD, Gasoil, Naphtha, Propane, Ethanol), marine fuels (VLSFO/HFO/MGO variants — currently in `OIL_BLEND_CODES` only).
+**Free tier (~30)**: Crude majors (WTI, Brent, Dubai, Oman, Murban, OPEC), gas (NG, UK Gas, Dutch TTF, JKM LNG), all base metals (Gold, Silver, Copper, Platinum, Palladium, Aluminum, Zinc, Iron Ore), grain futures (Corn, Wheat, Soybean, Soybean Oil/Meal, Oat, Rough Rice), classic softs (Coffee, Sugar #11, Cotton, Cocoa, OJ), base livestock (Live Cattle, Lean Hogs, Milk), Industrial Ethanol/Rubber, Lumber.
 
-**Removed earlier** (no provider data): Feeder Cattle, Lean Hogs, Milk Class III.
+**Items still in catalog but not premium-promoted** (legacy — kept for free-tier display only): Indian Basket, Tapis, Urals, ANS, Propane, Ethanol, marine fuel sub-grades, livestock premium items, niche industrials. These render but no upsell card promotes them.
 
 **Premium gating**: See mem://monetization/strategy. Enforcement is at the edge function layer — `PREMIUM_COMMODITIES` set + JWT-based `includePremium` flag.
 
 **Data sources**: Energy → OilPriceAPI exclusively. Non-energy → CommodityPriceAPI v2 Lite. See mem://integrations/commoditypriceapi-config.
+
+**Cache**: 2h TTL across CPA + OilPriceAPI (raised from 1h on 2026-04-18).
