@@ -44,35 +44,21 @@ const DEACTIVATING = new Set([
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
+  if (req.method !== 'POST') {
+    return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+  }
 
-  // TEMP: selftest branch — remove after verification
-  const url = new URL(req.url);
-  const selftestUser = url.searchParams.get('selftest');
+  const expected = Deno.env.get('REVENUECAT_WEBHOOK_AUTH');
+  const auth = req.headers.get('authorization') ?? '';
+  if (!expected || auth !== `Bearer ${expected}`) {
+    return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+  }
+
   let payload: RCPayload;
-
-  if (selftestUser) {
-    payload = {
-      event: {
-        type: 'INITIAL_PURCHASE',
-        app_user_id: selftestUser,
-        entitlement_ids: ['premium'],
-        expiration_at_ms: Date.now() + 30 * 24 * 60 * 60 * 1000,
-      },
-    };
-  } else {
-    if (req.method !== 'POST') {
-      return new Response('Method not allowed', { status: 405, headers: corsHeaders });
-    }
-    const expected = Deno.env.get('REVENUECAT_WEBHOOK_AUTH');
-    const auth = req.headers.get('authorization') ?? '';
-    if (!expected || auth !== `Bearer ${expected}`) {
-      return new Response('Unauthorized', { status: 401, headers: corsHeaders });
-    }
-    try {
-      payload = await req.json();
-    } catch {
-      return new Response('Invalid JSON', { status: 400, headers: corsHeaders });
-    }
+  try {
+    payload = await req.json();
+  } catch {
+    return new Response('Invalid JSON', { status: 400, headers: corsHeaders });
   }
 
   const event = payload?.event;
