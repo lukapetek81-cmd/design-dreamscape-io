@@ -35,7 +35,7 @@ serve(async (req) => {
         // Frankfurter: free, no API key, ECB-sourced daily rates.
         // Endpoint returns USD-based rates for the requested symbols.
         const response = await fetch(
-          'https://api.frankfurter.app/latest?from=USD&to=EUR,CNY,INR'
+          'https://api.frankfurter.dev/v1/latest?base=USD&symbols=EUR,CNY,INR'
         );
 
         if (response.ok) {
