@@ -286,18 +286,17 @@ serve(async (req) => {
       );
     }
 
-    const fmpApiKey = Deno.env.get('FMP_API_KEY')
     let symbol = contractSymbol || COMMODITY_SYMBOLS[commodityName]
     let isIBKRContract = false
-    
+
     if (contractSymbol) {
-      const baseFmpSymbol = COMMODITY_SYMBOLS[commodityName]
-      if (baseFmpSymbol && contractSymbol !== baseFmpSymbol) {
-        symbol = baseFmpSymbol
+      const baseSymbol = COMMODITY_SYMBOLS[commodityName]
+      if (baseSymbol && contractSymbol !== baseSymbol) {
+        symbol = baseSymbol
         isIBKRContract = true
       }
     }
-    
+
     if (!symbol) {
       throw new Error(`Commodity ${commodityName} not found`)
     }
@@ -484,54 +483,7 @@ serve(async (req) => {
       }
     }
 
-    // Step 2b: Try FMP API as secondary fallback
-    if (!historicalData && fmpApiKey && fmpApiKey !== 'demo') {
-      try {
-        const maxDataPoints = isPremium 
-          ? (timeframe === '1d' ? 48 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : 365) 
-          : (timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180);
-
-        const toDate = new Date();
-        const fromDate = new Date();
-        fromDate.setDate(fromDate.getDate() - maxDataPoints);
-        const fromStr = fromDate.toISOString().split('T')[0];
-        const toStr = toDate.toISOString().split('T')[0];
-        
-        const response = await fetch(
-          `https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=${symbol}&from=${fromStr}&to=${toStr}&apikey=${fmpApiKey}`
-        );
-        
-        if (response.ok) {
-          const data = await response.json();
-          const historicalArray = Array.isArray(data) ? data : (data.historical || []);
-          
-          if (Array.isArray(historicalArray) && historicalArray.length > 0) {
-            if (chartType === 'candlestick') {
-              historicalData = historicalArray.slice(0, maxDataPoints)
-                .filter((item: any) => item.date && !isNaN(new Date(item.date).getTime()))
-                .map((item: any) => ({
-                  date: item.date, open: parseFloat(item.open),
-                  high: parseFloat(item.high), low: parseFloat(item.low),
-                  close: parseFloat(item.close), price: parseFloat(item.close),
-                })).reverse();
-            } else {
-              historicalData = historicalArray.slice(0, maxDataPoints)
-                .filter((item: any) => item.date && !isNaN(new Date(item.date).getTime()))
-                .map((item: any) => ({
-                  date: item.date, price: parseFloat(item.close),
-                })).reverse();
-            }
-            dataSourceUsed = 'fmp';
-            console.log(`FMP historical: ${historicalData.length} data points for ${commodityName}`);
-          }
-        } else {
-          await response.text();
-        }
-      } catch (error) {
-        console.warn(`FMP API failed for ${commodityName}:`, error);
-        historicalData = null;
-      }
-    }
+    // Step 2b: FMP fallback removed — see mem://integrations/commoditypriceapi-config
 
     // Step 3: Use fallback data if both APIs failed
     if (!historicalData) {
