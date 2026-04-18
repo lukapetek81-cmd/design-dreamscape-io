@@ -75,7 +75,7 @@ const PremiumUpsellCard: React.FC<PremiumUpsellCardProps> = ({ onUpgrade, varian
                 <CardDescription className="mt-1">
                   {description}
                   <span className="block mt-1 text-foreground/80">
-                    One subscription unlocks all 25+ professional-grade commodities across every group.
+                    One subscription unlocks all 55+ professional-grade commodities across every group.
                   </span>
                   <span className="block mt-1 font-medium text-foreground">
                     $19.99/mo or $149/yr — save ~38% annually
