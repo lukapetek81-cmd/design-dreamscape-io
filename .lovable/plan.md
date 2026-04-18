@@ -1,81 +1,93 @@
 
-The user wants a QA checklist artifact, not code changes. This is a reference deliverable. I'll present it inline as the plan — once approved I'll generate a markdown file in `/mnt/documents/` for download.
+## Scope
 
-## Pre-launch QA checklist — RevenueCat × Play Billing
+Expand the commodity catalog from **46 → ~85** items, sourcing all non-energy quotes via CommodityPriceAPI (CPA). All new symbols update ≤10 min. Free tier stays curated (household names); everything niche becomes premium.
 
-### 0. Pre-test setup (do once)
-- [ ] Signed AAB uploaded to **Internal testing** track in Play Console
-- [ ] Tester Google account added to Play Console → **Testing → Internal testing → Testers**
-- [ ] Same account added to **Setup → License testing** (gives free test purchases + faster renewals)
-- [ ] Tester opted in via Play Store internal test link, then installed the app from Play Store (NOT sideloaded — sideloads cannot complete real Billing flows)
-- [ ] RevenueCat dashboard → Products imported, `premium` entitlement attached, `default` offering published
-- [ ] `REVENUECAT_WEBHOOK_AUTH` secret matches the Authorization header in RC dashboard webhook config
-- [ ] Test account starts with `profiles.subscription_tier = 'free'`, `subscription_active = false`
+## Decisions confirmed
+- **Groups**: Energy, Metals, Grains, Softs, **Livestock**, **Industrials** (new), Other
+- **Tiering**: Free = household-name commodities only; Premium = niche, regional, exotic
+- **Spot vs Futures**: Free user gets one variant (futures preferred); the other variant is Premium
 
-### 1. Paywall display
-- [ ] Paywall opens from every premium gate (locked commodity card, premium upsell, etc.)
-- [ ] `availablePackages` renders Monthly + Annual with correct localised `priceString`
-- [ ] Annual shows "Best value · Save ~38%" badge
-- [ ] On non-native (web preview) shows the "Android app only" message
-- [ ] Loading spinner appears while offerings fetch; no flash of empty state
+---
 
-### 2. Purchase flow — Monthly
-- [ ] Tap Monthly → Google Play sheet opens with correct price + "Test card, always approves"
-- [ ] Complete purchase → toast "Welcome to Premium!"
-- [ ] Paywall closes automatically
-- [ ] `auth.refreshProfile()` fires; UI flips to premium without manual reload
-- [ ] Premium-gated commodities/features are now accessible
-- [ ] **DB check**: `profiles.subscription_tier='premium'`, `subscription_active=true`, `subscription_end` ≈ now + 5 min (license-test renewal cadence)
-- [ ] **Webhook log**: edge function log shows `RC INITIAL_PURCHASE for <user> → matched 1 row(s)`
+## 1. Sidebar — add Industrials group
+**File**: `src/components/sidebar/constants.ts`
+- Add `{ id: "industrials", label: "Industrials", icon: Factory, color: "text-cyan-500" }` between Softs and Other.
 
-### 3. Purchase flow — Annual
-- [ ] Same as above with Annual package
-- [ ] `subscription_end` reflects annual term
+## 2. Catalog mappings
+**File**: `supabase/functions/_shared/commodity-mappings.ts`
 
-### 4. Restore purchases
-- [ ] Uninstall + reinstall app (same Google account)
-- [ ] Open paywall → tap "Restore previous purchase"
-- [ ] Toast "Purchases restored"
-- [ ] Profile flips back to premium without re-paying
-- [ ] If account has no prior purchase → toast "Nothing to restore"
+Add the following entries to `COMMODITY_SYMBOLS`, `COMMODITY_PRICE_API_SYMBOLS`, `CATEGORY_MAPPINGS`, and (for niche items) `PREMIUM_COMMODITIES`.
 
-### 5. Cancellation
-- [ ] Play Store → Subscriptions → cancel premium
-- [ ] App still shows premium until period end (expected — entitlement active)
-- [ ] After expiry (~5 min on license test): webhook `EXPIRATION` fires
-- [ ] **DB check**: `subscription_tier='free'`, `subscription_active=false`
-- [ ] Premium UI re-locks on next `refreshProfile`
+### Free tier non-energy (household names)
+| Display | CPA | Group |
+|---|---|---|
+| Gold Futures | XAU | metals |
+| Silver Futures | XAG | metals |
+| Platinum | PL | metals |
+| Palladium | PA | metals |
+| Copper | HG-SPOT | metals |
+| Aluminum | AL-SPOT | metals |
+| Zinc | ZINC | metals |
+| Iron Ore | TIOC | metals (NEW — 10min interval) |
+| Corn Futures | CORN | grains |
+| Wheat Futures | ZW-SPOT | grains |
+| Soybean Futures | SOYBEAN-FUT | grains |
+| Soybean Oil | ZL | grains |
+| Soybean Meal | ZM | grains |
+| Oat Futures | OAT-SPOT | grains |
+| Rough Rice | RR-FUT | grains |
+| Coffee Arabica | CA | softs |
+| Sugar #11 | LS11 | softs (switched from LS) |
+| Cotton | CT | softs |
+| Cocoa | CC | softs |
+| Orange Juice | OJ | softs |
+| Lumber Futures | LB-FUT | other |
+| Live Cattle | LC1 | livestock (NEW) |
+| Lean Hogs | LHOGS | livestock (NEW) |
+| Milk | MILK | livestock (NEW) |
 
-### 6. Uncancellation / resubscribe
-- [ ] Resubscribe before expiry → `UNCANCELLATION` webhook → still premium
-- [ ] Resubscribe after expiry → `INITIAL_PURCHASE` (or `RENEWAL`) → flips back to premium
+### Premium tier non-energy (niche / regional / exotic)
+**Metals (premium)**: Lead Spot (LEAD-SPOT), Nickel Futures (NICKEL-FUT), Tin (TIN), Steel (STEEL), Hot-Rolled Coil Steel (HRC-STEEL), Titanium (TITAN), Magnesium (MG), Lithium (LC), Copper Futures (HG-FUT — spot variant), Aluminium Futures (AL-FUT), Lead Futures (LEAD-FUT), Nickel Spot (NICKEL-SPOT)
 
-### 7. Edge cases
-- [ ] Cancel mid-purchase (close Play sheet) → no toast error spam, no DB write, button re-enabled
-- [ ] Network offline during purchase → graceful error toast, no partial state
-- [ ] Two devices same account: purchase on A, open B → restore works
-- [ ] Account switch (sign out → sign in as different user) → premium does NOT leak to new user
-- [ ] App backgrounded mid-purchase then resumed → completes correctly
+**Grains (premium)**: Wheat Futures (ZW-FUT — spot variant), Soybeans Spot (SOYBEAN-SPOT), Oats Future (OAT-FUT), Rough Rice Spot (RR-SPOT), Canola (CANOLA), Sunflower Oil (SUNF), Rapeseed Oil (RSO)
 
-### 8. Webhook robustness
-- [ ] Wrong `Authorization` header → 401
-- [ ] Malformed JSON → 400
-- [ ] Event with no `entitlement_ids` matching `premium` → 200 ignored
-- [ ] `BILLING_ISSUE` → flips to free (grace handling acceptable for v1)
-- [ ] `TRANSFER` event → new `app_user_id` becomes premium, old one untouched
-- [ ] Edge function logs show no 500s across all test events
+**Softs (premium)**: UK Sugar No 5 (LS), Tea (TEA), Wool (WOOL), Palm Oil (PO)
 
-### 9. Compliance & store
-- [ ] Paywall lists subscription length, price, and auto-renewal in plain text (Play policy)
-- [ ] "Restore purchase" button visible (Play policy)
-- [ ] Privacy Policy + Terms accessible from paywall or settings
-- [ ] Data Safety form in Play Console declares `purchaseHistory` collection
-- [ ] Subscription products marked as such in Play Console (not one-time)
+**Livestock (premium)**: Feeder Cattle (FC1), Cheese (CHE), Eggs CH (EGGS-CH), Eggs US (EGGS-US), Salmon (SALMON), Poultry (POUL), Butter (BUTTER), Potato (POTATO)
 
-### 10. Final go/no-go
-- [ ] All boxes above checked on at least 2 devices (1 phone, 1 tablet or different OEM)
-- [ ] Revert any test users back to `free` in DB before promoting to production track
-- [ ] Promote AAB from Internal → Production (or Closed testing first)
+**Industrials (NEW group, mostly premium)**: Ethanol (ETHANOL), Rubber (RUBBER), Bitumen (BIT), Cobalt (COB), Rhodium (XRH), Polyethylene (POL), Polyvinyl Chloride (PVC), Polypropylene (PYL), Soda Ash (SODASH), Neodymium (NDYM), Tellurium (TEL), Diammonium Phosphate (DIAPH), Urea (UREA), Urea Ammonium Nitrate (UANEU), Gallium (GA), Indium (INDIUM), Kraft Pulp (K-PULP), Naphtha (NAPHTHA — note: existing `Naphtha` energy entry stays in OilPriceAPI; this is a separate industrial-grade)
 
-### Deliverable
-Save as `/mnt/documents/revenuecat-prelaunch-qa.md` for download.
+**Energy duplicates skipped**: I will NOT add CPA's energy symbols (NG-FUT, WTIOIL-FUT, BRENTOIL-SPOT, RB-SPOT, HO-SPOT, NG-SPOT, COAL, UXA, METH, URAL-OIL, PROP, TTF-GAS, UK-GAS, LB-SPOT, BRENTOIL-FUT, RB-FUT, WTIOIL-SPOT, HO-FUT) because energy is exclusively served by OilPriceAPI per the existing rule (mem://integrations/energy-data-sourcing). Adding them would double-bill quota and conflict with the energy memory.
+
+### CENT_QUOTED_SYMBOLS additions
+Add `LS11`, `SOYBEAN-SPOT`, `RUBBER` (¢-quoted per the spec).
+
+### isPremiumCommodity stays as-is
+`PREMIUM_COMMODITIES` Set just gets the new niche names appended.
+
+## 3. Cache + quota
+**File**: `supabase/functions/_shared/commodity-service.ts`
+- Bump `CACHE_TTL_MS` from 1h → **2h** to absorb the larger catalog.
+- New burn estimate: ~60 CPA symbols (free+premium) ÷ 5/req × 12 refreshes/day × 30 ≈ **4.3K calls/month** + ~1.5K for charts ≈ **5.8K/month** → comfortably under 10K cap.
+
+## 4. No frontend changes needed
+- `CommodityGroupSection`, `CommoditySidebar`, screener etc. all read groups from `CATEGORY_MAPPINGS` + `COMMODITY_GROUPS`, so they pick up Industrials + new items automatically.
+- Premium gating already flows through `PREMIUM_COMMODITIES` → `fetchAllCommodities(isPremium)`.
+
+## 5. Memory update
+Update `mem://integrations/commoditypriceapi-config` and `mem://project/commodity-catalog-scope` to reflect the new ~85-item catalog and the 2h cache.
+
+## What I will NOT touch
+- Edge function endpoints (`fetch-all-commodities`, `fetch-commodity-prices`, etc.) — schema unchanged
+- DB schema — no migration needed (commodity catalog is purely code-level)
+- Energy commodities — sourced exclusively via OilPriceAPI, untouched
+- Frontend components — they already iterate `CATEGORY_MAPPINGS`
+
+## Verification after build
+1. Hit `/fetch-all-commodities` for a free user → expect ~14 energy + ~24 non-energy = ~38 items
+2. Hit `/fetch-all-commodities` for a premium user → expect ~85 items
+3. Open dashboard → confirm new "Industrials" sidebar group appears with locked-state cards for free users
+4. Spot-check Iron Ore, Cattle, Lithium, Rhodium prices populate
+
+Ready to implement?
