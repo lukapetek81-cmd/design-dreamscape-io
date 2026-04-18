@@ -74,6 +74,9 @@ const PremiumUpsellCard: React.FC<PremiumUpsellCardProps> = ({ onUpgrade, varian
                 </CardTitle>
                 <CardDescription className="mt-1">
                   {description}
+                  <span className="block mt-1 text-foreground/80">
+                    Plus 60+ other premium commodities across all groups.
+                  </span>
                   <span className="block mt-1 font-medium text-foreground">
                     $11.99/mo or $89/yr — save ~38% annually
                   </span>
