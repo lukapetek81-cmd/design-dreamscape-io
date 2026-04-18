@@ -95,10 +95,16 @@ serve(async (req) => {
     }
 
     const body = req.method === 'POST' ? await req.json() : {};
-    const { commodityName, commodities } = body;
+    const { commodityName, commodities, includePremium } = body;
 
     // Single commodity request
     if (commodityName) {
+      if (!includePremium && PREMIUM_ENERGY.has(commodityName)) {
+        return new Response(
+          JSON.stringify({ error: 'Premium-only commodity', data: null, premium: true }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       const code = OIL_BLEND_CODES[commodityName];
       if (!code) {
         return new Response(
