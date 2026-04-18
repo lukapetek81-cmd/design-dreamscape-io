@@ -31,7 +31,7 @@ export interface ChartDataPoint {
 // Module-scoped cache (per edge instance) — sized for CPA Lite (2K calls/month).
 type CacheEntry<T> = { data: T; expiresAt: number };
 const cache = new Map<string, CacheEntry<unknown>>();
-const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+const CACHE_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours (expanded catalog ~60 CPA symbols, conserves 10K/month quota)
 
 function getCache<T>(key: string): T | null {
   const entry = cache.get(key);
