@@ -123,16 +123,21 @@ Deno.serve(async (req) => {
     });
   }
 
-  const { error } = await supabase.from('profiles').update(update).eq('id', userId);
+  const { data: updated, error } = await supabase
+    .from('profiles')
+    .update(update)
+    .eq('id', userId)
+    .select('id, subscription_tier, subscription_active');
   if (error) {
     console.error('Profile update failed', error);
-    return new Response(JSON.stringify({ error: 'update_failed' }), {
+    return new Response(JSON.stringify({ error: 'update_failed', detail: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
+  console.log(`RC ${event.type} for ${userId} → matched ${updated?.length ?? 0} row(s)`);
 
-  return new Response(JSON.stringify({ ok: true, type: event.type }), {
+  return new Response(JSON.stringify({ ok: true, type: event.type, matched: updated?.length ?? 0, updated }), {
     status: 200,
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
