@@ -1,18 +1,31 @@
 ---
 name: Commodity Catalog Scope
-description: ~85 catalog items — ~30 free + ~21 premium-gated (trimmed 2026-04-18) + remainder unmapped/legacy
+description: ~86 catalog items — 30 free + ~56 premium-gated (tightened 2026-04-18 v2 to control API burn)
 type: feature
 ---
-**Total catalog**: ~85 commodities defined in `supabase/functions/_shared/commodity-mappings.ts → COMMODITY_SYMBOLS`.
+**Total catalog**: ~86 commodities defined in `supabase/functions/_shared/commodity-mappings.ts → COMMODITY_SYMBOLS`.
 
-**Premium-gated (~21)**: See mem://monetization/strategy for the full list. Trimmed from ~55 on 2026-04-18 to keep API burn sustainable.
+**Free tier (exactly 30, household-name only)**:
+- Energy (6): WTI, Brent, Crude Oil Dubai, Murban, OPEC Basket, Natural Gas
+- Metals (8): Gold, Silver, Copper, Platinum, Palladium, Aluminum, Zinc, Iron Ore
+- Grains (5): Corn, Wheat, Soybean, Soybean Oil, Soybean Meal
+- Softs (5): Coffee Arabica, Sugar #11, Cotton, Cocoa, Orange Juice
+- Livestock (3): Live Cattle, Lean Hogs, Milk
+- Industrials (2): Rubber, Industrial Ethanol
+- Other (1): Lumber Futures
 
-**Free tier (~30)**: Crude majors (WTI, Brent, Dubai, Oman, Murban, OPEC), gas (NG, UK Gas, Dutch TTF, JKM LNG), all base metals (Gold, Silver, Copper, Platinum, Palladium, Aluminum, Zinc, Iron Ore), grain futures (Corn, Wheat, Soybean, Soybean Oil/Meal, Oat, Rough Rice), classic softs (Coffee, Sugar #11, Cotton, Cocoa, OJ), base livestock (Live Cattle, Lean Hogs, Milk), Industrial Ethanol/Rubber, Lumber.
+**Premium-gated (~56)**: Everything else. Per-group counts:
+- Energy: 20 (regional crudes, gas hubs, refined, marine fuels)
+- Metals: 12 (Lead/Nickel spot+futures, Tin, Steel, HRC, Titanium, Magnesium, Lithium, Copper/Aluminium futures)
+- Grains: 7 (Oats, Rough Rice, spot variants, Canola, Sunflower/Rapeseed Oil)
+- Softs: 4 (UK Sugar No 5, Palm Oil, Tea, Wool)
+- Livestock: 8 (Feeder Cattle, Cheese, Eggs CH/US, Salmon, Poultry, Butter, Potato)
+- Industrials: 16 (Cobalt, Rhodium, plastics, fertilizers, rare elements)
 
-**Items still in catalog but not premium-promoted** (legacy — kept for free-tier display only): Indian Basket, Tapis, Urals, ANS, Propane, Ethanol, marine fuel sub-grades, livestock premium items, niche industrials. These render but no upsell card promotes them.
+**Pricing**: $19.99/mo or $149/yr.
 
-**Premium gating**: See mem://monetization/strategy. Enforcement is at the edge function layer — `PREMIUM_COMMODITIES` set + JWT-based `includePremium` flag.
+**Premium gating**: Enforced at edge function layer via `PREMIUM_COMMODITIES` set + JWT-based `isPremium` flag. Defence-in-depth filter in `fetch-commodity-symbols`.
 
 **Data sources**: Energy → OilPriceAPI exclusively. Non-energy → CommodityPriceAPI v2 Lite. See mem://integrations/commoditypriceapi-config.
 
-**Cache**: 2h TTL across CPA + OilPriceAPI (raised from 1h on 2026-04-18).
+**Cache**: 2h TTL across CPA + OilPriceAPI.
