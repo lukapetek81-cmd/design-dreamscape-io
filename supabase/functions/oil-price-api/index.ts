@@ -73,6 +73,16 @@ const OIL_BLEND_CODES: Record<string, string> = {
   'VLSFO Fujairah': 'VLSFO_AEFUJ_USD',
 };
 
+// Premium-only energy commodities. See mem://monetization/strategy.
+// These are excluded from free-tier responses to conserve OilPriceAPI quota.
+const PREMIUM_ENERGY = new Set<string>([
+  'WTI Midland', 'Alaska North Slope', 'Mars Blend', 'Louisiana Light Sweet',
+  'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel',
+  'Gasoil', 'Naphtha', 'Propane', 'Ethanol',
+  'VLSFO Global', 'HFO 380 Global', 'MGO 0.5%S Global',
+  'HFO 380 Rotterdam', 'VLSFO Singapore', 'MGO Houston', 'VLSFO Fujairah',
+]);
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -85,10 +95,16 @@ serve(async (req) => {
     }
 
     const body = req.method === 'POST' ? await req.json() : {};
-    const { commodityName, commodities } = body;
+    const { commodityName, commodities, includePremium } = body;
 
     // Single commodity request
     if (commodityName) {
+      if (!includePremium && PREMIUM_ENERGY.has(commodityName)) {
+        return new Response(
+          JSON.stringify({ error: 'Premium-only commodity', data: null, premium: true }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       const code = OIL_BLEND_CODES[commodityName];
       if (!code) {
         return new Response(
@@ -138,11 +154,15 @@ serve(async (req) => {
 
     // Batch request for multiple commodities
     if (commodities && Array.isArray(commodities)) {
+      // Filter premium commodities for free callers — protects OilPriceAPI quota.
+      const allowed = includePremium
+        ? commodities
+        : commodities.filter((n: string) => !PREMIUM_ENERGY.has(n));
       const results: Record<string, any> = {};
       const uncachedNames: string[] = [];
 
       // Check cache for each commodity first
-      for (const name of commodities) {
+      for (const name of allowed) {
         if (!OIL_BLEND_CODES[name]) continue;
         const cacheKey = `single:${OIL_BLEND_CODES[name]}`;
         const cached = getCached(cacheKey, BATCH_CACHE_TTL);

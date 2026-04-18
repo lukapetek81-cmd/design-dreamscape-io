@@ -4,7 +4,7 @@ Updated: just now
 # Project Memory
 
 ## Core
-- **Monetization:** Paid App model only. No ads, guest access, freemium, or subscriptions.
+- **Monetization:** Freemium. Free tier = 34 commodities; Premium unlocks 16 quota-heavy energy items (regional crude, refined products, marine fuels). No ads.
 - **Styling:** Dark theme with dark purple and teal branding.
 - **Navigation:** Hub-and-spoke pattern. Every sub-page requires a '← Dashboard' back button.
 - **Data Sourcing:** Energy from OilPriceAPI exclusively. Non-energy from CommodityPriceAPI v2 (Lite plan, batched + 1h cache). FX from Frankfurter.app. FMP fully removed.
