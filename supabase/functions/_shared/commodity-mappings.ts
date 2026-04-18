@@ -115,6 +115,11 @@ export const CENT_QUOTED_SYMBOLS = new Set(['CORN', 'SOYBEAN-FUT', 'ZL']);
  *   All metals, grains, softs, lumber.
  */
 export const PREMIUM_COMMODITIES = new Set<string>([
+  // Crude benchmarks moved to premium to conserve OilPriceAPI quota
+  'Indian Basket',
+  'Tapis Crude Oil',
+  'Urals Crude Oil',
+  'Western Canadian Select',
   // Regional crude blends
   'WTI Midland',
   'Alaska North Slope',
