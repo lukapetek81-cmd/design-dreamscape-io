@@ -254,8 +254,8 @@ const DashboardContent = ({
               <PremiumUpsellCard onUpgrade={handleUpgrade} variant="energy" />
             )}
 
-            {/* Premium Upsell — Industrials is 100% premium-locked, free users see only this */}
-            {!loading && !error && activeGroup === 'industrials' && !isPremium && filteredCommodities.length === 0 && (
+            {/* Premium Upsell — Industrials: 3 free items + upsell for the other 15 */}
+            {!loading && !error && activeGroup === 'industrials' && !isPremium && (
               <PremiumUpsellCard onUpgrade={handleUpgrade} variant="industrials" />
             )}
 
