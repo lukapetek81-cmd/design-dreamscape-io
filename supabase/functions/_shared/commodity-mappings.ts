@@ -288,8 +288,8 @@ export const CATEGORY_MAPPINGS: Record<string, string[]> = {
     'Polyethylene', 'Polyvinyl Chloride', 'Polypropylene', 'Soda Ash',
     'Neodymium', 'Tellurium', 'Diammonium Phosphate', 'Urea', 'Urea Ammonium Nitrate',
     'Gallium', 'Indium', 'Kraft Pulp', 'Industrial Naphtha',
+    'Lumber Futures',
   ],
-  other: ['Lumber Futures'],
 };
 
 // Helpers
