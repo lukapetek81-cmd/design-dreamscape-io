@@ -1,69 +1,59 @@
 
-# Real USDC Deposits + Synthetic Trading + KYC
 
-## Architecture
+The user is asking a pricing/business question, not a code change. I'll answer directly based on what I know from the codebase memory.
 
-```
-User wallet (MetaMask/WalletConnect)
-        │ holds real USDC on Base/Polygon
-        ▼
-   ┌──────────┐
-   │  Lock    │  user signs tx → USDC sent to your "TradingVault" contract
-   │ Deposit  │  contract emits Deposit event (user, amount)
-   └────┬─────┘
-        ▼
-   ┌──────────┐
-   │ Indexer  │  edge function listens → credits usdc_balances
-   └────┬─────┘
-        ▼
-   ┌──────────┐
-   │Synthetic │  existing engine — open/close positions vs oracle prices
-   │ trading  │  P&L adjusts usdc_balances
-   └────┬─────┘
-        ▼
-   ┌──────────┐
-   │ Withdraw │  user request → backend signs withdrawal → sent to wallet
-   └──────────┘
-```
+## Pricing analysis for Premium Energy Markets (100 MAU)
 
-**Key principle:** Your app never holds private keys. A smart contract holds USDC; the user signs deposits, your backend signs withdrawals based on the tracked balance.
+### OilPriceAPI quota math
 
-## Phase 1 — Wallet connect + KYC (this turn)
+**Premium-only commodities**: 20 items (4 crude benchmarks + 4 regional crude + 8 refined + 7 marine — per `PREMIUM_ENERGY` set in `oil-price-api/index.ts`).
 
-### Dependencies
-- `wagmi` + `viem` + `@web3modal/wagmi` (WalletConnect — MetaMask, Coinbase, mobile, Capacitor)
-- Persona Inquiry SDK (~$1.50/verification, sandbox free, instant)
+**Cache TTL**: 30 minutes (per `SINGLE_CACHE_TTL` / `BATCH_CACHE_TTL`).
+→ Max **2 calls/hour per commodity**, regardless of user count, because cache is server-side and shared.
 
-### Database
-- `wallet_connections`: user_id, address, chain_id, verified_at
-- `kyc_verifications`: user_id, provider, status, inquiry_id, verified_at, country
-- Add `wallet_address` + `kyc_status` to `usdc_balances`
+**Per premium user, per month** (assuming 12h/day active window, ~30 days):
+- 20 commodities × 2 calls/hr × 12 hr × 30 days = **14,400 API calls/month** at the upstream
+- But this is **shared across all premium users** (server cache), so it's a fixed ceiling, not per-user.
 
-### Edge functions
-- `kyc-create-inquiry` — creates Persona inquiry
-- `kyc-webhook` — receives status updates
-- `verify-wallet-signature` — proves wallet ownership via signed message
+**Realistic ceiling** (24/7 cache refresh): 20 × 2 × 24 × 30 = **28,800 calls/month** total for premium tier, no matter if you have 1 or 1,000 premium users.
 
-### UI
-- Header: "Connect Wallet" button → shows address + balance
-- Profile: wallet + KYC status panel
-- Trade gate: trades over a threshold require KYC complete
-- Deposit/Withdraw buttons stubbed with "Phase 2 — on-chain vault coming"
+### OilPriceAPI plan costs (public pricing, approx.)
+- Free: 10K calls/mo — exhausted (current state)
+- Starter: ~$39/mo — 50K calls
+- Pro: ~$99/mo — 200K calls
+- Business: ~$299/mo — 1M calls
 
-## Phase 2 — On-chain vault (next turn, separate plan)
+For premium tier alone at 28,800 calls/mo ceiling → **Starter ($39/mo) is sufficient**.
+Add free-tier energy (10 items × 2/hr × 24 × 30 = 14,400) → total **~43K/mo** → still fits Starter, tight margin. Pro ($99) gives comfortable headroom.
 
-Solidity contract on Base, event indexer, withdrawal signer. Out of scope for one Lovable turn — the existing `usdc_balances.balance` is reused; Phase 2 only changes how credits land.
+### Pricing recommendation for 100 MAU
 
-## Phase 3 — Real on/off-ramp via MoonPay/Transak (later)
+Assume realistic conversion: **5–10% of MAU convert to premium** = 5–10 paying users at 100 MAU.
 
-## Secrets needed
-- `WALLETCONNECT_PROJECT_ID` (free, instant — cloud.walletconnect.com)
-- `PERSONA_API_KEY` (free sandbox — withpersona.com)
-- `PERSONA_WEBHOOK_SECRET`
+**Cost to cover** (monthly):
+- OilPriceAPI Pro: $99 (safe headroom for growth)
+- Supabase/edge compute: ~$25 (Cloud free tier likely covers it)
+- Buffer for FMP / news APIs: ~$20
+- **Total infra: ~$120–150/mo**
 
-## What you'll need to do
-1. Create accounts at WalletConnect Cloud and Persona (both free for sandbox)
-2. Provide the keys when I prompt for them
-3. For Phase 2 (real deposits), we'll need a Solidity dev review or use a templated vault — discuss next turn
+**Break-even pricing**:
+| Premium users | Price needed to cover $120 | Price for 50% margin |
+|---|---|---|
+| 5 | $24/mo | $36/mo |
+| 10 | $12/mo | $18/mo |
+| 20 | $6/mo | $9/mo |
 
-Approve and I'll start with the migration, then dependencies, then UI/edge functions.
+**Recommendation: $9.99/mo or $79/yr**
+- Covers infra at ~12 paying users (12% of MAU — achievable)
+- Comparable to Trading View Pro ($14.95), Investing.com Pro ($9.99)
+- Annual plan locks in cash flow and reduces churn risk
+- Add a **$19.99/mo "Pro" tier** later with alerts, exports, API access for power users
+
+### Key insight
+Because OilPriceAPI cost is **fixed (server-side cache)**, not per-user, your unit economics improve dramatically with scale. At 100 MAU the math is tight; at 1,000 MAU the same $99 OilPriceAPI bill is amortized across 50–100 paying users → 80%+ gross margin.
+
+### Action items if you want me to implement
+1. Enable Lovable Payments (Stripe recommended for SaaS subscriptions) and create a $9.99/mo + $79/yr product.
+2. Wire `subscription_active` + `subscription_tier='premium'` in `profiles` from Stripe webhook.
+3. Update `PremiumUpsellCard` CTA to launch Stripe Checkout.
+
