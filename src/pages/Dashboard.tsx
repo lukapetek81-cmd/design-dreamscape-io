@@ -19,7 +19,8 @@ const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeGroup, setActiveGroup] = useState("energy");
   const isMobile = useIsMobile();
-  const { isGuest, profile, loading: authLoading } = useAuth();
+  const auth = useAuth();
+  const { isGuest, profile, loading: authLoading, isPremium } = (auth || { isGuest: true, profile: null, loading: false, isPremium: false }) as any;
   const { data: commodities, isLoading: commoditiesLoading, error: commoditiesError, refetch: refetchCommodities } = useAvailableCommodities();
   const [highlightCommodity, setHighlightCommodity] = useState<string | null>(null);
 
@@ -65,6 +66,7 @@ const Dashboard = () => {
         error={commoditiesError?.message || null}
         onRetry={() => refetchCommodities()}
         highlightCommodity={highlightCommodity}
+        isPremium={!!isPremium}
       />
     </SidebarProvider>
   );
@@ -79,7 +81,8 @@ const DashboardContent = ({
   loading, 
   error, 
   onRetry,
-  highlightCommodity
+  highlightCommodity,
+  isPremium
 }: {
   activeGroup: string;
   setActiveGroup: (group: string) => void;
@@ -90,9 +93,18 @@ const DashboardContent = ({
   error: string | null;
   onRetry: () => void;
   highlightCommodity?: string | null;
+  isPremium: boolean;
 }) => {
   const { setOpenMobile } = useSidebar();
   const { connected: realtimeConnected, delayStatus } = useRealtimeDataContext();
+  const { toast } = useToast();
+
+  const handleUpgrade = React.useCallback(() => {
+    toast({
+      title: 'Premium subscriptions coming soon',
+      description: 'Stripe checkout will be enabled shortly. Stay tuned!',
+    });
+  }, [toast]);
 
   // Simple swipe handler for mobile sidebar
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -234,6 +246,11 @@ const DashboardContent = ({
                   Try Again
                 </Button>
               </div>
+            )}
+
+            {/* Premium Upsell — Energy section, free users only */}
+            {!loading && !error && activeGroup === 'energy' && !isPremium && (
+              <PremiumUpsellCard onUpgrade={handleUpgrade} />
             )}
 
             {/* Commodities List */}
