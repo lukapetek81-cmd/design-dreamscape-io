@@ -137,7 +137,7 @@ const DashboardContent = ({
       grains: { title: "Agricultural Commodities", icon: Wheat },
       livestock: { title: "Livestock Commodities", icon: Beef },
       softs: { title: "Soft Commodities", icon: Coffee },
-      other: { title: "Other Commodities", icon: Package }
+      industrials: { title: "Industrial Commodities", icon: Factory },
     };
     return groups[activeGroup as keyof typeof groups] || groups.energy;
   }, [activeGroup]);
