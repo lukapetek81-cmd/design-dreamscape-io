@@ -251,7 +251,12 @@ const DashboardContent = ({
 
             {/* Premium Upsell — Energy section, free users only */}
             {!loading && !error && activeGroup === 'energy' && !isPremium && (
-              <PremiumUpsellCard onUpgrade={handleUpgrade} />
+              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="energy" />
+            )}
+
+            {/* Premium Upsell — Industrials is 100% premium-locked, free users see only this */}
+            {!loading && !error && activeGroup === 'industrials' && !isPremium && filteredCommodities.length === 0 && (
+              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="industrials" />
             )}
 
             {/* Commodities List */}
@@ -263,8 +268,8 @@ const DashboardContent = ({
               />
             )}
 
-            {/* Empty State */}
-            {!loading && !error && filteredCommodities.length === 0 && (
+            {/* Empty State — only shown when no premium upsell applies */}
+            {!loading && !error && filteredCommodities.length === 0 && !(activeGroup === 'industrials' && !isPremium) && (
               <div className="text-center py-16">
                 <BarChart3 className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
                 <p className="text-xl font-semibold">No Commodities Available</p>
