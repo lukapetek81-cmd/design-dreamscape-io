@@ -52,7 +52,7 @@ const MarketSentiment = () => {
   const navigate = useNavigate();
 
   const commodityCounts = {
-    energy: 0, metals: 0, grains: 0, livestock: 0, softs: 0, other: 0
+    energy: 0, metals: 0, grains: 0, livestock: 0, softs: 0, industrials: 0, other: 0
   };
 
   useEffect(() => {
