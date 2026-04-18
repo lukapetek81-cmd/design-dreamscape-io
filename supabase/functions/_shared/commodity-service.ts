@@ -3,6 +3,7 @@ import {
   COMMODITY_SYMBOLS,
   COMMODITY_PRICE_API_SYMBOLS,
   CENT_QUOTED_SYMBOLS,
+  PREMIUM_COMMODITIES,
   getCommodityByApiSymbol,
 } from './commodity-mappings.ts';
 
