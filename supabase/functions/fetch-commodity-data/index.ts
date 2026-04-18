@@ -381,7 +381,7 @@ serve(async (req) => {
             else if (timeframe === '6m') historicalData = historicalData.slice(-180);
 
             if (historicalData.length < 2) {
-              console.warn(`OilPriceAPI returned only ${historicalData.length} valid points, will try FMP`);
+              console.warn(`OilPriceAPI returned only ${historicalData.length} valid points, will try Yahoo fallback`);
               historicalData = null;
             } else {
               dataSourceUsed = 'oilpriceapi';
