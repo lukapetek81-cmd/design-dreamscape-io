@@ -105,6 +105,44 @@ export const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
 /** CPA returns these symbols quoted in US Cents — caller should divide by 100. */
 export const CENT_QUOTED_SYMBOLS = new Set(['CORN', 'SOYBEAN-FUT', 'ZL']);
 
+/**
+ * Premium-only commodities. Not fetched / not returned to free users.
+ * Gated to conserve OilPriceAPI quota. See mem://monetization/strategy.
+ *
+ * Free tier (14 energy + 13 non-energy = 27 commodities):
+ *   Crude majors: WTI, Brent, Dubai, Oman, Murban, OPEC, Indian, Tapis, Urals, WCS
+ *   Gas: Natural Gas, Natural Gas UK, Dutch TTF, JKM LNG
+ *   All metals, grains, softs, lumber.
+ */
+export const PREMIUM_COMMODITIES = new Set<string>([
+  // Regional crude blends
+  'WTI Midland',
+  'Alaska North Slope',
+  'Mars Blend',
+  'Louisiana Light Sweet',
+  // Refined products
+  'Gasoline RBOB',
+  'Heating Oil',
+  'Jet Fuel',
+  'ULSD Diesel',
+  'Gasoil',
+  'Naphtha',
+  'Propane',
+  'Ethanol',
+  // Marine fuels (in OIL_BLEND_CODES but not yet in COMMODITY_SYMBOLS catalog)
+  'VLSFO Global',
+  'HFO 380 Global',
+  'MGO 0.5%S Global',
+  'HFO 380 Rotterdam',
+  'VLSFO Singapore',
+  'MGO Houston',
+  'VLSFO Fujairah',
+]);
+
+export function isPremiumCommodity(name: string): boolean {
+  return PREMIUM_COMMODITIES.has(name);
+}
+
 // Category mappings for grouping
 export const CATEGORY_MAPPINGS: Record<string, string[]> = {
   energy: ['WTI Crude Oil', 'Brent Crude Oil', 'Crude Oil Dubai', 'DME Oman Crude', 'Murban Crude', 'OPEC Basket', 'Indian Basket', 'Tapis Crude Oil', 'Urals Crude Oil', 'Western Canadian Select', 'WTI Midland', 'Alaska North Slope', 'Mars Blend', 'Louisiana Light Sweet', 'Natural Gas', 'Natural Gas UK', 'Dutch TTF Gas', 'Japan/Korea LNG', 'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel', 'Gasoil', 'Naphtha', 'Propane', 'Ethanol'],
