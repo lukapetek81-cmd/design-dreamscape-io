@@ -4,6 +4,7 @@ export interface CommodityCounts {
   grains: number;
   livestock: number;
   softs: number;
+  industrials: number;
   other: number;
 }
 

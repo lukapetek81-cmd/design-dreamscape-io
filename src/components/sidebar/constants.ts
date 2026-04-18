@@ -1,4 +1,4 @@
-import { Zap, Coins, Wheat, TrendingUp, Beef, Coffee, Package, Newspaper, Moon, Sun, Monitor, Briefcase, Settings, BarChart3, Star, Filter, Calendar, Calculator, MessageSquare, Lightbulb, GraduationCap, Users, Activity, Database, CircleDollarSign } from "lucide-react";
+import { Zap, Coins, Wheat, TrendingUp, Beef, Coffee, Package, Newspaper, Moon, Sun, Monitor, Briefcase, Settings, BarChart3, Star, Filter, Calendar, Calculator, MessageSquare, Lightbulb, GraduationCap, Users, Activity, Database, CircleDollarSign, Milk, Factory } from "lucide-react";
 import { CommodityGroup, MarketTool } from "./types";
 
 export const COMMODITY_GROUPS: CommodityGroup[] = [
@@ -7,6 +7,7 @@ export const COMMODITY_GROUPS: CommodityGroup[] = [
   { id: "grains", label: "Grains", icon: Wheat, color: "text-green-500" },
   { id: "livestock", label: "Livestock", icon: Beef, color: "text-red-500" },
   { id: "softs", label: "Softs", icon: Coffee, color: "text-amber-600" },
+  { id: "industrials", label: "Industrials", icon: Factory, color: "text-cyan-500" },
   { id: "other", label: "Other", icon: Package, color: "text-gray-500" },
 ];
 
