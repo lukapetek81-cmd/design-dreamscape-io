@@ -76,6 +76,7 @@ const OIL_BLEND_CODES: Record<string, string> = {
 // Premium-only energy commodities. See mem://monetization/strategy.
 // These are excluded from free-tier responses to conserve OilPriceAPI quota.
 const PREMIUM_ENERGY = new Set<string>([
+  'Indian Basket', 'Tapis Crude Oil', 'Urals Crude Oil', 'Western Canadian Select',
   'WTI Midland', 'Alaska North Slope', 'Mars Blend', 'Louisiana Light Sweet',
   'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel',
   'Gasoil', 'Naphtha', 'Propane', 'Ethanol',
