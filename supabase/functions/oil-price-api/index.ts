@@ -73,6 +73,16 @@ const OIL_BLEND_CODES: Record<string, string> = {
   'VLSFO Fujairah': 'VLSFO_AEFUJ_USD',
 };
 
+// Premium-only energy commodities. See mem://monetization/strategy.
+// These are excluded from free-tier responses to conserve OilPriceAPI quota.
+const PREMIUM_ENERGY = new Set<string>([
+  'WTI Midland', 'Alaska North Slope', 'Mars Blend', 'Louisiana Light Sweet',
+  'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel',
+  'Gasoil', 'Naphtha', 'Propane', 'Ethanol',
+  'VLSFO Global', 'HFO 380 Global', 'MGO 0.5%S Global',
+  'HFO 380 Rotterdam', 'VLSFO Singapore', 'MGO Houston', 'VLSFO Fujairah',
+]);
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
