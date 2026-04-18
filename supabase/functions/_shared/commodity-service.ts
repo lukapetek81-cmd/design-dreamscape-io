@@ -77,7 +77,7 @@ export class CommodityService {
       }
 
       const [cpaResults, oilResults] = await Promise.all([
-        this.fetchAllFromCPA(),
+        this.fetchAllFromCPA(includePremium),
         this.fetchAllFromOilPriceApi(includePremium),
       ]);
 
