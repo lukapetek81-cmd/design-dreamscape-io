@@ -1,9 +1,9 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
 // Fallback rates (approximate) if API is unavailable
 const FALLBACK_RATES: Record<string, number> = {
@@ -11,43 +11,50 @@ const FALLBACK_RATES: Record<string, number> = {
   EUR: 0.92,
   CNY: 7.25,
   INR: 83.50,
-}
+};
+
+// Simple in-memory cache (per edge instance) — refresh every hour
+let cache: { rates: Record<string, number>; ts: number } | null = null;
+const CACHE_TTL_MS = 60 * 60 * 1000;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const fmpApiKey = Deno.env.get('FMP_API_KEY')
-    let rates: Record<string, number> = { ...FALLBACK_RATES }
-    let source = 'fallback'
+    let rates: Record<string, number> = { ...FALLBACK_RATES };
+    let source = 'fallback';
 
-    if (fmpApiKey && fmpApiKey !== 'demo') {
+    // Serve from cache if fresh
+    if (cache && Date.now() - cache.ts < CACHE_TTL_MS) {
+      rates = cache.rates;
+      source = 'frankfurter-cache';
+    } else {
       try {
-        // FMP forex quotes endpoint
-        const pairs = ['EURUSD', 'USDCNY', 'USDINR']
+        // Frankfurter: free, no API key, ECB-sourced daily rates.
+        // Endpoint returns USD-based rates for the requested symbols.
         const response = await fetch(
-          `https://financialmodelingprep.com/api/v3/quote/${pairs.join(',')}?apikey=${fmpApiKey}`
-        )
+          'https://api.frankfurter.dev/v1/latest?base=USD&symbols=EUR,CNY,INR'
+        );
 
         if (response.ok) {
-          const data = await response.json()
-          if (Array.isArray(data)) {
-            for (const quote of data) {
-              if (quote.symbol === 'EURUSD' && quote.price) {
-                rates.EUR = 1 / quote.price
-              } else if (quote.symbol === 'USDCNY' && quote.price) {
-                rates.CNY = quote.price
-              } else if (quote.symbol === 'USDINR' && quote.price) {
-                rates.INR = quote.price
-              }
-            }
-            source = 'fmp'
+          const data = await response.json();
+          if (data && typeof data.rates === 'object') {
+            rates = {
+              USD: 1,
+              EUR: typeof data.rates.EUR === 'number' ? data.rates.EUR : FALLBACK_RATES.EUR,
+              CNY: typeof data.rates.CNY === 'number' ? data.rates.CNY : FALLBACK_RATES.CNY,
+              INR: typeof data.rates.INR === 'number' ? data.rates.INR : FALLBACK_RATES.INR,
+            };
+            cache = { rates, ts: Date.now() };
+            source = 'frankfurter';
           }
+        } else {
+          console.warn(`Frankfurter API returned ${response.status}, using fallback`);
         }
       } catch (error) {
-        console.warn('FMP forex API failed, using fallback rates:', error)
+        console.warn('Frankfurter API failed, using fallback rates:', error);
       }
     }
 
@@ -59,12 +66,12 @@ serve(async (req) => {
         timestamp: new Date().toISOString(),
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    );
   } catch (error) {
-    console.error('Error in currency-rates function:', error)
+    console.error('Error in currency-rates function:', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    );
   }
-})
+});
