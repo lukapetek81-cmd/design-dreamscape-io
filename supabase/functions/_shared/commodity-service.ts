@@ -101,7 +101,13 @@ export class CommodityService {
         }
       }
 
-      setCache('all-commodities', merged);
+      // Only cache if we got real data from BOTH providers — otherwise we'd lock in zeros
+      // for an hour after a transient OilPriceAPI rate-limit.
+      if (cpaResults.length > 0 && oilResults.length > 0) {
+        setCache('all-commodities', merged);
+      } else {
+        this.logger.warn(`Skipping cache: cpa=${cpaResults.length}, oil=${oilResults.length}`);
+      }
       this.logger.info(`Fetched ${merged.length} commodities (cpa=${cpaResults.length}, oil=${oilResults.length})`);
       return merged;
     } catch (error) {
