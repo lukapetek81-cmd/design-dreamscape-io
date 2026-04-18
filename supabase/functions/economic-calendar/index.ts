@@ -5,70 +5,44 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Curated list of high-impact US economic releases tracked via FRED.
-// release_id = FRED release ID, series_id = primary data series for previous/actual values.
-const TRACKED_RELEASES: Array<{
-  release_id: number;
+// Curated US economic indicators tracked via FRED.
+// We resolve each series's release_id at runtime (avoids stale hardcoded IDs).
+const TRACKED_SERIES: Array<{
   series_id: string;
   title: string;
   impact: 'low' | 'medium' | 'high';
   category: string;
   commodityImpact: string[];
-  releaseTimeET: string; // typical release time (Eastern), HH:MM
+  releaseTimeET: string;
 }> = [
-  { release_id: 50,  series_id: 'PAYEMS',     title: 'Nonfarm Payrolls',                 impact: 'high',   category: 'employment',   commodityImpact: ['Gold Futures', 'WTI Crude Oil', 'Silver Futures'], releaseTimeET: '08:30' },
-  { release_id: 50,  series_id: 'UNRATE',     title: 'Unemployment Rate',                impact: 'high',   category: 'employment',   commodityImpact: ['Gold Futures', 'Silver Futures'],                  releaseTimeET: '08:30' },
-  { release_id: 10,  series_id: 'CPIAUCSL',   title: 'Consumer Price Index (CPI)',       impact: 'high',   category: 'inflation',    commodityImpact: ['Gold Futures', 'Silver Futures', 'Copper'],        releaseTimeET: '08:30' },
-  { release_id: 46,  series_id: 'PPIACO',     title: 'Producer Price Index (PPI)',       impact: 'medium', category: 'inflation',    commodityImpact: ['Gold Futures', 'Copper'],                          releaseTimeET: '08:30' },
-  { release_id: 53,  series_id: 'GDPC1',      title: 'Real GDP',                         impact: 'high',   category: 'gdp',          commodityImpact: ['WTI Crude Oil', 'Copper', 'Gold Futures'],         releaseTimeET: '08:30' },
-  { release_id: 101, series_id: 'DFF',        title: 'Federal Funds Rate (FOMC)',        impact: 'high',   category: 'monetary',     commodityImpact: ['Gold Futures', 'Silver Futures', 'WTI Crude Oil'], releaseTimeET: '14:00' },
-  { release_id: 21,  series_id: 'INDPRO',     title: 'Industrial Production',            impact: 'medium', category: 'manufacturing',commodityImpact: ['Copper', 'WTI Crude Oil', 'Aluminum'],             releaseTimeET: '09:15' },
-  { release_id: 24,  series_id: 'RSAFS',      title: 'Retail Sales',                     impact: 'medium', category: 'consumer',     commodityImpact: ['Gold Futures', 'WTI Crude Oil'],                   releaseTimeET: '08:30' },
-  { release_id: 17,  series_id: 'HOUST',      title: 'Housing Starts',                   impact: 'medium', category: 'housing',      commodityImpact: ['Lumber', 'Copper'],                                releaseTimeET: '08:30' },
-  { release_id: 175, series_id: 'UMCSENT',    title: 'Consumer Sentiment (U. Michigan)', impact: 'medium', category: 'consumer',     commodityImpact: ['Gold Futures'],                                    releaseTimeET: '10:00' },
-  { release_id: 13,  series_id: 'BOPGSTB',    title: 'Trade Balance',                    impact: 'medium', category: 'trade',        commodityImpact: ['WTI Crude Oil', 'Copper', 'Gold Futures'],         releaseTimeET: '08:30' },
-  { release_id: 215, series_id: 'WCESTUS1',   title: 'EIA Crude Oil Inventories',        impact: 'high',   category: 'energy',       commodityImpact: ['WTI Crude Oil', 'Brent Crude Oil'],                releaseTimeET: '10:30' },
-  { release_id: 215, series_id: 'WGTSTUS1',   title: 'EIA Natural Gas Storage',          impact: 'medium', category: 'energy',       commodityImpact: ['Natural Gas'],                                     releaseTimeET: '10:30' },
+  { series_id: 'PAYEMS',   title: 'Nonfarm Payrolls',                 impact: 'high',   category: 'employment',   commodityImpact: ['Gold Futures', 'WTI Crude Oil', 'Silver Futures'], releaseTimeET: '08:30' },
+  { series_id: 'UNRATE',   title: 'Unemployment Rate',                impact: 'high',   category: 'employment',   commodityImpact: ['Gold Futures', 'Silver Futures'],                  releaseTimeET: '08:30' },
+  { series_id: 'ICSA',     title: 'Initial Jobless Claims',           impact: 'medium', category: 'employment',   commodityImpact: ['Gold Futures'],                                    releaseTimeET: '08:30' },
+  { series_id: 'CPIAUCSL', title: 'Consumer Price Index (CPI)',       impact: 'high',   category: 'inflation',    commodityImpact: ['Gold Futures', 'Silver Futures', 'Copper'],        releaseTimeET: '08:30' },
+  { series_id: 'CPILFESL', title: 'Core CPI',                         impact: 'high',   category: 'inflation',    commodityImpact: ['Gold Futures', 'Silver Futures'],                  releaseTimeET: '08:30' },
+  { series_id: 'PPIACO',   title: 'Producer Price Index (PPI)',       impact: 'medium', category: 'inflation',    commodityImpact: ['Gold Futures', 'Copper'],                          releaseTimeET: '08:30' },
+  { series_id: 'PCEPI',    title: 'PCE Price Index',                  impact: 'high',   category: 'inflation',    commodityImpact: ['Gold Futures', 'Silver Futures'],                  releaseTimeET: '08:30' },
+  { series_id: 'GDPC1',    title: 'Real GDP',                         impact: 'high',   category: 'gdp',          commodityImpact: ['WTI Crude Oil', 'Copper', 'Gold Futures'],         releaseTimeET: '08:30' },
+  { series_id: 'INDPRO',   title: 'Industrial Production',            impact: 'medium', category: 'manufacturing',commodityImpact: ['Copper', 'WTI Crude Oil', 'Aluminum'],             releaseTimeET: '09:15' },
+  { series_id: 'RSAFS',    title: 'Retail Sales',                     impact: 'medium', category: 'consumer',     commodityImpact: ['Gold Futures', 'WTI Crude Oil'],                   releaseTimeET: '08:30' },
+  { series_id: 'HOUST',    title: 'Housing Starts',                   impact: 'medium', category: 'housing',      commodityImpact: ['Lumber', 'Copper'],                                releaseTimeET: '08:30' },
+  { series_id: 'UMCSENT',  title: 'Consumer Sentiment (U. Michigan)', impact: 'medium', category: 'consumer',     commodityImpact: ['Gold Futures'],                                    releaseTimeET: '10:00' },
+  { series_id: 'BOPGSTB',  title: 'Trade Balance',                    impact: 'medium', category: 'trade',        commodityImpact: ['WTI Crude Oil', 'Copper', 'Gold Futures'],         releaseTimeET: '08:30' },
+  { series_id: 'WCESTUS1', title: 'EIA Crude Oil Inventories',        impact: 'high',   category: 'energy',       commodityImpact: ['WTI Crude Oil', 'Brent Crude Oil'],                releaseTimeET: '10:30' },
+  { series_id: 'WGTSTUS1', title: 'EIA Natural Gas Storage',          impact: 'medium', category: 'energy',       commodityImpact: ['Natural Gas'],                                     releaseTimeET: '10:30' },
 ];
 
-interface FredReleaseDate {
-  release_id: number;
-  release_name: string;
-  date: string; // YYYY-MM-DD
-}
+interface FredObservation { date: string; value: string; }
+interface FredReleaseDate { release_id: number; release_name: string; date: string; }
 
-interface FredObservation {
-  date: string;
-  value: string;
-}
-
-async function fetchReleaseDates(apiKey: string, fromDate: string, toDate: string): Promise<FredReleaseDate[]> {
-  const url = `https://api.stlouisfed.org/fred/releases/dates?api_key=${apiKey}&file_type=json` +
-    `&realtime_start=${fromDate}&realtime_end=${toDate}` +
-    `&include_release_dates_with_no_data=true&sort_order=asc&limit=1000`;
-
-  const res = await fetch(url);
+async function fredFetch(path: string, params: Record<string, string>, apiKey: string): Promise<any> {
+  const qs = new URLSearchParams({ ...params, api_key: apiKey, file_type: 'json' });
+  const res = await fetch(`https://api.stlouisfed.org/fred/${path}?${qs}`);
   if (!res.ok) {
-    const errText = await res.text();
-    console.error(`FRED releases/dates error: ${res.status} - ${errText}`);
+    console.error(`FRED ${path} error: ${res.status} ${await res.text()}`);
     throw new Error(`FRED API error: ${res.status}`);
   }
-  const data = await res.json();
-  return data.release_dates || [];
-}
-
-async function fetchLastTwoObservations(apiKey: string, seriesId: string): Promise<FredObservation[]> {
-  const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}` +
-    `&api_key=${apiKey}&file_type=json&sort_order=desc&limit=2`;
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.observations || [];
-  } catch (err) {
-    console.warn(`Failed to fetch observations for ${seriesId}:`, err);
-    return [];
-  }
+  return res.json();
 }
 
 serve(async (req) => {
@@ -77,83 +51,108 @@ serve(async (req) => {
   }
 
   try {
-    const fredApiKey = Deno.env.get('FRED_API_KEY');
-    if (!fredApiKey) {
-      throw new Error('FRED_API_KEY not configured');
-    }
+    const apiKey = Deno.env.get('FRED_API_KEY');
+    if (!apiKey) throw new Error('FRED_API_KEY not configured');
 
     let body: { from?: string; to?: string } = {};
-    try {
-      body = await req.json();
-    } catch {
-      // empty body is fine
-    }
+    try { body = await req.json(); } catch { /* empty body ok */ }
 
     const now = new Date();
     const fromDate = body.from || now.toISOString().split('T')[0];
     const toDate = body.to || new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const today = now.toISOString().split('T')[0];
 
-    console.log(`[FRED] Fetching economic calendar from ${fromDate} to ${toDate}`);
+    console.log(`[FRED] Calendar window ${fromDate} → ${toDate}`);
 
-    // 1. Pull all release dates in window
-    const releaseDates = await fetchReleaseDates(fredApiKey, fromDate, toDate);
-    console.log(`[FRED] Got ${releaseDates.length} release dates in window`);
-
-    // 2. Pre-fetch latest observations for each tracked series (parallel, dedup by series_id)
-    const uniqueSeries = Array.from(new Set(TRACKED_RELEASES.map(r => r.series_id)));
-    const observationsMap = new Map<string, FredObservation[]>();
-    await Promise.all(
-      uniqueSeries.map(async (seriesId) => {
-        const obs = await fetchLastTwoObservations(fredApiKey, seriesId);
-        observationsMap.set(seriesId, obs);
+    // For each tracked series, fetch in parallel:
+    //   1. its release metadata (resolves release_id + name)
+    //   2. its last 2 observations (previous + actual)
+    // Then fetch release dates per unique release_id.
+    const seriesData = await Promise.all(
+      TRACKED_SERIES.map(async (s) => {
+        try {
+          const [releaseInfo, obsData] = await Promise.all([
+            fredFetch('series/release', { series_id: s.series_id }, apiKey),
+            fredFetch('series/observations', {
+              series_id: s.series_id,
+              sort_order: 'desc',
+              limit: '2',
+            }, apiKey),
+          ]);
+          const release = releaseInfo.releases?.[0];
+          const observations: FredObservation[] = obsData.observations || [];
+          return { ...s, release_id: release?.id as number | undefined, release_name: release?.name as string | undefined, observations };
+        } catch (err) {
+          console.warn(`[FRED] Failed metadata for ${s.series_id}:`, err);
+          return { ...s, release_id: undefined, release_name: undefined, observations: [] as FredObservation[] };
+        }
       })
     );
 
-    // 3. Cross-reference: for each tracked release, find its scheduled dates in the window
+    // Get unique release_ids and fetch their scheduled dates in window
+    const uniqueReleaseIds = Array.from(new Set(seriesData.map(s => s.release_id).filter(Boolean) as number[]));
+
+    const releaseDatesMap = new Map<number, FredReleaseDate[]>();
+    await Promise.all(
+      uniqueReleaseIds.map(async (rid) => {
+        try {
+          const data = await fredFetch('release/dates', {
+            release_id: String(rid),
+            realtime_start: fromDate,
+            realtime_end: toDate,
+            include_release_dates_with_no_data: 'true',
+            sort_order: 'asc',
+            limit: '100',
+          }, apiKey);
+          releaseDatesMap.set(rid, data.release_dates || []);
+        } catch (err) {
+          console.warn(`[FRED] Failed dates for release ${rid}:`, err);
+          releaseDatesMap.set(rid, []);
+        }
+      })
+    );
+
+    // Build events: one per (series × scheduled date in window)
     const events: any[] = [];
-    const today = now.toISOString().split('T')[0];
+    for (const s of seriesData) {
+      if (!s.release_id) continue;
+      const dates = releaseDatesMap.get(s.release_id) || [];
+      const latestObs = s.observations[0];
+      const priorObs = s.observations[1];
 
-    for (const tracked of TRACKED_RELEASES) {
-      const matchingDates = releaseDates.filter(rd => rd.release_id === tracked.release_id);
-      const obs = observationsMap.get(tracked.series_id) || [];
+      for (const rd of dates) {
+        // Filter dates strictly inside our window (FRED sometimes returns extras)
+        if (rd.date < fromDate || rd.date > toDate) continue;
 
-      // "actual" = most recent observation if its date is in the past (already released)
-      // "previous" = the one before
-      const latestObs = obs[0];
-      const priorObs = obs[1];
-
-      for (const rd of matchingDates) {
         const isFuture = rd.date >= today;
         const previous = priorObs?.value && priorObs.value !== '.' ? priorObs.value : undefined;
         const actual = !isFuture && latestObs?.value && latestObs.value !== '.' ? latestObs.value : undefined;
 
         events.push({
-          id: `fred-${tracked.release_id}-${tracked.series_id}-${rd.date}`,
-          title: tracked.title,
-          description: `${tracked.title} - United States (FRED Release: ${rd.release_name})`,
+          id: `fred-${s.release_id}-${s.series_id}-${rd.date}`,
+          title: s.title,
+          description: `${s.title} — United States${s.release_name ? ` (${s.release_name})` : ''}`,
           date: rd.date,
-          time: tracked.releaseTimeET,
-          impact: tracked.impact,
+          time: s.releaseTimeET,
+          impact: s.impact,
           country: 'US',
-          category: tracked.category,
+          category: s.category,
           previous,
-          forecast: undefined, // FRED does not provide consensus forecasts
+          forecast: undefined, // FRED does not provide consensus
           actual,
           change: undefined,
           changePercentage: undefined,
-          commodityImpact: tracked.commodityImpact,
+          commodityImpact: s.commodityImpact,
         });
       }
     }
 
-    // Sort by date then time
     events.sort((a, b) => {
-      const dateCompare = a.date.localeCompare(b.date);
-      if (dateCompare !== 0) return dateCompare;
-      return a.time.localeCompare(b.time);
+      const d = a.date.localeCompare(b.date);
+      return d !== 0 ? d : a.time.localeCompare(b.time);
     });
 
-    console.log(`[FRED] Returning ${events.length} enriched events`);
+    console.log(`[FRED] Returning ${events.length} events`);
 
     return new Response(
       JSON.stringify({
@@ -162,7 +161,7 @@ serve(async (req) => {
         from: fromDate,
         to: toDate,
         source: 'FRED (Federal Reserve Economic Data)',
-        note: 'Forecast/consensus values are not available from FRED. Showing scheduled releases with previous and actual values.',
+        note: 'Forecast/consensus not provided by FRED. Showing scheduled releases with previous and (when available) actual values.',
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
