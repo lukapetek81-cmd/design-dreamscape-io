@@ -1,134 +1,29 @@
 import { CommodityData } from './types.ts';
 import { EdgeLogger, retryWithBackoff, getCachedData, setCachedData } from './utils.ts';
-import { COMMODITY_PRICE_API_SYMBOLS, getCommodityByApiSymbol } from './commodity-mappings.ts';
+import {
+  COMMODITY_PRICE_API_SYMBOLS,
+  CENT_QUOTED_SYMBOLS,
+  getCommodityByApiSymbol,
+  getCommodityCategory,
+} from './commodity-mappings.ts';
 
-// API client interfaces
+// API client interface
 export interface ApiClient {
   fetchCommodities(): Promise<CommodityData[]>;
-  fetchCommodityPrice(symbol: string): Promise<CommodityData | null>;
+  fetchCommodityPrice(commodityName: string): Promise<CommodityData | null>;
 }
 
-// Financial Modeling Prep API Client
-export class FMPApiClient implements ApiClient {
-  private apiKey: string;
-  private baseUrl = 'https://financialmodelingprep.com/api/v3';
-  private logger: EdgeLogger;
-
-  constructor(apiKey: string, logger: EdgeLogger) {
-    this.apiKey = apiKey;
-    this.logger = logger;
-  }
-
-  async fetchCommodities(): Promise<CommodityData[]> {
-    const cacheKey = 'fmp-commodities';
-    const cached = getCachedData<CommodityData[]>(cacheKey);
-    
-    if (cached) {
-      this.logger.info('Returning cached FMP data');
-      return cached;
-    }
-
-    try {
-      const response = await retryWithBackoff(async () => {
-        const url = `${this.baseUrl}/quotes/commodity?apikey=${this.apiKey}`;
-        const res = await fetch(url);
-        
-        if (!res.ok) {
-          throw new Error(`FMP API error: ${res.status} ${res.statusText}`);
-        }
-        
-        return res.json();
-      });
-
-      const commodities = this.transformFMPData(response);
-      setCachedData(cacheKey, commodities, 300000); // 5 minutes
-      
-      this.logger.info(`Fetched ${commodities.length} commodities from FMP`);
-      return commodities;
-    } catch (error) {
-      this.logger.error('Failed to fetch from FMP API', error);
-      throw error;
-    }
-  }
-
-  async fetchCommodityPrice(symbol: string): Promise<CommodityData | null> {
-    try {
-      const response = await retryWithBackoff(async () => {
-        const url = `${this.baseUrl}/quote/${symbol}?apikey=${this.apiKey}`;
-        const res = await fetch(url);
-        
-        if (!res.ok) {
-          throw new Error(`FMP API error: ${res.status} ${res.statusText}`);
-        }
-        
-        return res.json();
-      });
-
-      if (!response || response.length === 0) {
-        return null;
-      }
-
-      return this.transformFMPSingleData(response[0]);
-    } catch (error) {
-      this.logger.error(`Failed to fetch ${symbol} from FMP API`, error);
-      return null;
-    }
-  }
-
-  private transformFMPData(data: any[]): CommodityData[] {
-    if (!Array.isArray(data)) return [];
-
-    return data
-      .map(item => this.transformFMPSingleData(item))
-      .filter(Boolean) as CommodityData[];
-  }
-
-  private transformFMPSingleData(item: any): CommodityData | null {
-    if (!item || typeof item !== 'object') return null;
-
-    try {
-      return {
-        name: item.name || item.symbol,
-        symbol: item.symbol,
-        price: parseFloat(item.price) || 0,
-        change: parseFloat(item.change) || 0,
-        changePercent: parseFloat(item.changesPercentage) || 0,
-        volume: item.volume ? parseInt(item.volume) : undefined,
-        lastUpdate: new Date().toISOString(),
-        category: this.inferCategory(item.name || item.symbol),
-      };
-    } catch (error) {
-      this.logger.warn('Failed to transform FMP data item', { item, error });
-      return null;
-    }
-  }
-
-  private inferCategory(name: string): string {
-    const nameLower = name.toLowerCase();
-    if (nameLower.includes('oil') || nameLower.includes('gas') || nameLower.includes('energy')) {
-      return 'energy';
-    }
-    if (nameLower.includes('gold') || nameLower.includes('silver') || nameLower.includes('metal')) {
-      return 'metals';
-    }
-    if (nameLower.includes('corn') || nameLower.includes('wheat') || nameLower.includes('grain')) {
-      return 'grains';
-    }
-    if (nameLower.includes('cattle') || nameLower.includes('hog')) {
-      return 'livestock';
-    }
-    if (nameLower.includes('coffee') || nameLower.includes('sugar') || nameLower.includes('cotton')) {
-      return 'softs';
-    }
-    return 'other';
-  }
-}
-
-// CommodityPriceAPI Client
+/**
+ * CommodityPriceAPI v2 client.
+ * - Auth via `x-api-key` header.
+ * - `/rates/latest?symbols=A,B,C,D,E` returns up to 5 symbols per request on Lite plan.
+ * - Rate-limited to 10 req/min on Lite — caller MUST cache aggressively.
+ */
 export class CommodityPriceApiClient implements ApiClient {
   private apiKey: string;
-  private baseUrl = 'https://api.commodityprice.com/api/v1';
+  private baseUrl = 'https://api.commoditypriceapi.com/v2';
   private logger: EdgeLogger;
+  private maxSymbolsPerRequest = 5; // Lite plan cap
 
   constructor(apiKey: string, logger: EdgeLogger) {
     this.apiKey = apiKey;
@@ -136,151 +31,102 @@ export class CommodityPriceApiClient implements ApiClient {
   }
 
   async fetchCommodities(): Promise<CommodityData[]> {
-    const cacheKey = 'commodity-price-api-data';
+    const cacheKey = 'cpa-all-commodities';
     const cached = getCachedData<CommodityData[]>(cacheKey);
-    
     if (cached) {
       this.logger.info('Returning cached CommodityPriceAPI data');
       return cached;
     }
 
-    try {
-      const allCommodities: CommodityData[] = [];
-      const symbols = Object.keys(COMMODITY_PRICE_API_SYMBOLS);
-      
-      // Fetch in batches to avoid rate limits
-      const batchSize = 10;
-      for (let i = 0; i < symbols.length; i += batchSize) {
-        const batch = symbols.slice(i, i + batchSize);
-        const batchPromises = batch.map(symbol => this.fetchSingleCommodity(symbol));
-        const batchResults = await Promise.allSettled(batchPromises);
-        
-        batchResults.forEach((result, index) => {
-          if (result.status === 'fulfilled' && result.value) {
-            allCommodities.push(result.value);
-          } else if (result.status === 'rejected') {
-            this.logger.warn(`Failed to fetch ${batch[index]}`, result.reason);
-          }
-        });
+    const allCommodities: CommodityData[] = [];
+    const cpaSymbols = Object.values(COMMODITY_PRICE_API_SYMBOLS);
 
-        // Rate limiting delay
-        if (i + batchSize < symbols.length) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
+    // Batch into groups of 5 (Lite plan cap)
+    for (let i = 0; i < cpaSymbols.length; i += this.maxSymbolsPerRequest) {
+      const batch = cpaSymbols.slice(i, i + this.maxSymbolsPerRequest);
+      try {
+        const batchData = await this.fetchBatch(batch);
+        allCommodities.push(...batchData);
+      } catch (error) {
+        this.logger.warn(`CPA batch ${i}-${i + batch.length} failed`, error);
       }
-
-      setCachedData(cacheKey, allCommodities, 300000); // 5 minutes
-      this.logger.info(`Fetched ${allCommodities.length} commodities from CommodityPriceAPI`);
-      return allCommodities;
-    } catch (error) {
-      this.logger.error('Failed to fetch from CommodityPriceAPI', error);
-      throw error;
+      // Throttle to stay under 10 req/min (≥6s spacing)
+      if (i + this.maxSymbolsPerRequest < cpaSymbols.length) {
+        await new Promise((resolve) => setTimeout(resolve, 6500));
+      }
     }
+
+    // Cache for 1 hour to fit Lite plan's 2,000 calls/month quota.
+    setCachedData(cacheKey, allCommodities, 60 * 60 * 1000);
+    this.logger.info(`Fetched ${allCommodities.length} commodities from CommodityPriceAPI`);
+    return allCommodities;
   }
 
-  async fetchCommodityPrice(symbol: string): Promise<CommodityData | null> {
-    return this.fetchSingleCommodity(symbol);
-  }
-
-  private async fetchSingleCommodity(apiSymbol: string): Promise<CommodityData | null> {
-    try {
-      const cacheKey = `commodity-${apiSymbol}`;
-      const cached = getCachedData<CommodityData>(cacheKey);
-      
-      if (cached) {
-        return cached;
-      }
-
-      const response = await retryWithBackoff(async () => {
-        const url = `${this.baseUrl}/commodities/${apiSymbol}?access_key=${this.apiKey}`;
-        const res = await fetch(url);
-        
-        if (!res.ok) {
-          if (res.status === 404) {
-            return null; // Commodity not found
-          }
-          throw new Error(`CommodityPriceAPI error: ${res.status} ${res.statusText}`);
-        }
-        
-        return res.json();
-      });
-
-      if (!response || !response.data) {
-        return null;
-      }
-
-      const commodityData = this.transformCommodityPriceData(response.data, apiSymbol);
-      if (commodityData) {
-        setCachedData(cacheKey, commodityData, 300000); // 5 minutes
-      }
-      
-      return commodityData;
-    } catch (error) {
-      this.logger.error(`Failed to fetch ${apiSymbol} from CommodityPriceAPI`, error);
+  async fetchCommodityPrice(commodityName: string): Promise<CommodityData | null> {
+    const cpaSymbol = COMMODITY_PRICE_API_SYMBOLS[commodityName];
+    if (!cpaSymbol) {
+      this.logger.warn(`No CPA symbol mapped for ${commodityName}`);
       return null;
     }
+    const cacheKey = `cpa-${cpaSymbol}`;
+    const cached = getCachedData<CommodityData>(cacheKey);
+    if (cached) return cached;
+
+    const batchData = await this.fetchBatch([cpaSymbol]);
+    const data = batchData[0] ?? null;
+    if (data) setCachedData(cacheKey, data, 60 * 60 * 1000);
+    return data;
   }
 
-  private transformCommodityPriceData(data: any, apiSymbol: string): CommodityData | null {
-    if (!data || typeof data !== 'object') return null;
+  /** Fetch up to `maxSymbolsPerRequest` symbols in one CPA call. */
+  private async fetchBatch(symbols: string[]): Promise<CommodityData[]> {
+    if (symbols.length === 0) return [];
+    const symbolsParam = symbols.join(',');
+    const url = `${this.baseUrl}/rates/latest?symbols=${encodeURIComponent(symbolsParam)}`;
 
-    try {
-      const commodityName = getCommodityByApiSymbol(apiSymbol);
-      if (!commodityName) {
-        this.logger.warn(`Unknown commodity for API symbol: ${apiSymbol}`);
-        return null;
+    const response = await retryWithBackoff(async () => {
+      const res = await fetch(url, { headers: { 'x-api-key': this.apiKey } });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`CommodityPriceAPI error ${res.status}: ${text.slice(0, 200)}`);
       }
+      return res.json();
+    });
 
-      const price = parseFloat(data.price || data.value) || 0;
-      const previousPrice = parseFloat(data.prev_price || data.previous_close) || price;
-      const change = price - previousPrice;
-      const changePercent = previousPrice !== 0 ? (change / previousPrice) * 100 : 0;
+    if (!response?.success || !response.rates) {
+      this.logger.warn('CommodityPriceAPI returned no rates', response);
+      return [];
+    }
 
-      return {
+    const out: CommodityData[] = [];
+    for (const cpaSymbol of symbols) {
+      let rawPrice = response.rates[cpaSymbol];
+      if (typeof rawPrice !== 'number') continue;
+      // CPA returns some grains in US cents — normalize to USD.
+      if (CENT_QUOTED_SYMBOLS.has(cpaSymbol)) rawPrice = rawPrice / 100;
+
+      const commodityName = getCommodityByApiSymbol(cpaSymbol);
+      if (!commodityName) continue;
+
+      // CPA latest endpoint doesn't include change/% — these are computed downstream
+      // by callers that retain a previous snapshot.
+      out.push({
         name: commodityName,
-        symbol: apiSymbol,
-        price,
-        change,
-        changePercent,
-        lastUpdate: data.date || new Date().toISOString(),
-        category: this.getCategoryFromSymbol(apiSymbol),
-      };
-    } catch (error) {
-      this.logger.warn('Failed to transform CommodityPriceAPI data', { data, apiSymbol, error });
-      return null;
+        symbol: cpaSymbol,
+        price: rawPrice,
+        change: 0,
+        changePercent: 0,
+        lastUpdate: new Date(
+          (response.timestamp ? response.timestamp * 1000 : Date.now())
+        ).toISOString(),
+        category: getCommodityCategory(commodityName),
+      });
     }
-  }
-
-  private getCategoryFromSymbol(apiSymbol: string): string {
-    // Energy symbols
-    if (['WTIOIL', 'BRENTOIL', 'NG', 'HO', 'RB', 'COAL', 'UXA'].includes(apiSymbol)) {
-      return 'energy';
-    }
-    // Precious metals
-    if (['XAU', 'XAG', 'XPT', 'XPD'].includes(apiSymbol)) {
-      return 'metals';
-    }
-    // Base metals
-    if (['HG', 'ALU', 'ZNC', 'LEAD', 'NICKEL'].includes(apiSymbol)) {
-      return 'metals';
-    }
-    // Grains
-    if (['CORN', 'WHEAT', 'SOYBEAN', 'OATS', 'RICE'].includes(apiSymbol)) {
-      return 'grains';
-    }
-    // Livestock
-    if (['CATTLE', 'FCATTLE', 'HOGS'].includes(apiSymbol)) {
-      return 'livestock';
-    }
-    // Softs
-    if (['COFFEE', 'SUGAR', 'COTTON', 'COCOA', 'OJ'].includes(apiSymbol)) {
-      return 'softs';
-    }
-    return 'other';
+    return out;
   }
 }
 
-// Multi-source data aggregator
+// Multi-source data aggregator — kept for callers that combine OilPriceAPI + CPA.
 export class CommodityDataAggregator {
   private clients: ApiClient[];
   private logger: EdgeLogger;
@@ -297,8 +143,6 @@ export class CommodityDataAggregator {
     for (const client of this.clients) {
       try {
         const data = await client.fetchCommodities();
-        
-        // Deduplicate by commodity name, preferring newer data
         for (const commodity of data) {
           if (!seenCommodities.has(commodity.name)) {
             allData.push(commodity);
@@ -307,27 +151,24 @@ export class CommodityDataAggregator {
         }
       } catch (error) {
         this.logger.warn('Client failed to fetch data', error);
-        // Continue with other clients
       }
     }
 
-    this.logger.info(`Aggregated ${allData.length} unique commodities from ${this.clients.length} sources`);
+    this.logger.info(
+      `Aggregated ${allData.length} unique commodities from ${this.clients.length} sources`
+    );
     return allData;
   }
 
-  async fetchCommodityPrice(commodityName: string, symbol: string): Promise<CommodityData | null> {
+  async fetchCommodityPrice(commodityName: string, _symbol: string): Promise<CommodityData | null> {
     for (const client of this.clients) {
       try {
-        const data = await client.fetchCommodityPrice(symbol);
-        if (data) {
-          return data;
-        }
+        const data = await client.fetchCommodityPrice(commodityName);
+        if (data) return data;
       } catch (error) {
         this.logger.warn(`Client failed to fetch ${commodityName}`, error);
-        // Continue with next client
       }
     }
-
     this.logger.warn(`No client could fetch data for ${commodityName}`);
     return null;
   }

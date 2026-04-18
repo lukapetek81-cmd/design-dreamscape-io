@@ -13,18 +13,15 @@ const NewsSettings: React.FC = () => {
   const { toast } = useToast();
   const [apiKeys, setApiKeys] = React.useState({
     marketauxApiKey: '',
-    fmpApiKey: ''
   });
-  
+
   const [testResults, setTestResults] = React.useState<Record<string, boolean>>({});
   const [testing, setTesting] = React.useState<Record<string, boolean>>({});
 
   React.useEffect(() => {
-    // Load existing API keys from encrypted storage
     const loadKeys = async () => {
       const marketaux = await secureStorage.getItem('marketauxApiKey') || '';
-      const fmp = await secureStorage.getItem('fmpApiKey') || '';
-      setApiKeys({ marketauxApiKey: marketaux, fmpApiKey: fmp });
+      setApiKeys({ marketauxApiKey: marketaux });
     };
     loadKeys();
   }, []);
@@ -47,11 +44,6 @@ const NewsSettings: React.FC = () => {
       let isValid = false;
       
       switch (keyName) {
-        case 'fmpApiKey': {
-          const fmpResponse = await fetch(`https://financialmodelingprep.com/api/v3/profile/AAPL?apikey=${apiKey}`);
-          isValid = fmpResponse.ok;
-          break;
-        }
         case 'marketauxApiKey': {
           const marketauxResponse = await fetch(`https://api.marketaux.com/v1/news/all?api_token=${apiKey}&limit=1`);
           isValid = marketauxResponse.ok;
@@ -86,14 +78,6 @@ const NewsSettings: React.FC = () => {
       description: 'Real-time financial news aggregator with market sentiment',
       placeholder: 'Your Marketaux API token',
       website: 'https://www.marketaux.com/',
-      priority: 'Primary'
-    },
-    {
-      key: 'fmpApiKey',
-      name: 'Financial Modeling Prep',
-      description: 'Comprehensive financial news and company analysis',
-      placeholder: 'Your FMP API key',
-      website: 'https://financialmodelingprep.com/',
       priority: 'Primary'
     }
   ];

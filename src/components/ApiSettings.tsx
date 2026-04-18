@@ -8,22 +8,16 @@ import { toast } from 'sonner';
 import { secureStorage } from '@/utils/security';
 
 const ApiSettings = () => {
-  const [fmpApiKey, setFmpApiKey] = React.useState('');
   const [newsApiKey, setNewsApiKey] = React.useState('');
   const [alphaVantageApiKey, setAlphaVantageApiKey] = React.useState('');
-  const [showFmp, setShowFmp] = React.useState(false);
   const [showNews, setShowNews] = React.useState(false);
   const [showAlpha, setShowAlpha] = React.useState(false);
   const [isOpen, setIsOpen] = React.useState(false);
 
   React.useEffect(() => {
-    // Load saved API keys from encrypted storage
     const loadKeys = async () => {
-      const savedFmp = await secureStorage.getItem('fmpApiKey');
       const savedNews = await secureStorage.getItem('newsApiKey');
       const savedAlpha = await secureStorage.getItem('alphaVantageApiKey');
-      
-      if (savedFmp) setFmpApiKey(savedFmp);
       if (savedNews) setNewsApiKey(savedNews);
       if (savedAlpha) setAlphaVantageApiKey(savedAlpha);
     };
@@ -32,20 +26,14 @@ const ApiSettings = () => {
 
   const handleSave = async () => {
     try {
-      if (fmpApiKey) {
-        await secureStorage.setItem('fmpApiKey', fmpApiKey);
-      }
       if (newsApiKey) {
         await secureStorage.setItem('newsApiKey', newsApiKey);
       }
       if (alphaVantageApiKey) {
         await secureStorage.setItem('alphaVantageApiKey', alphaVantageApiKey);
       }
-      
       toast.success('API keys saved successfully!');
       setIsOpen(false);
-      
-      // Reload the page to use new API keys
       window.location.reload();
     } catch (error) {
       toast.error('Failed to save API keys');
@@ -80,43 +68,6 @@ const ApiSettings = () => {
         </div>
 
         <div className="space-y-6">
-          {/* Financial Modeling Prep API */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="fmp-key">Financial Modeling Prep API Key</Label>
-              <a
-                href="https://financialmodelingprep.com/developer/docs"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline text-xs flex items-center gap-1"
-              >
-                Get API Key <ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
-            <div className="relative">
-              <Input
-                id="fmp-key"
-                type={showFmp ? "text" : "password"}
-                value={fmpApiKey}
-                onChange={(e) => setFmpApiKey(e.target.value)}
-                placeholder="Enter your FMP API key"
-                className="pr-10"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                onClick={() => setShowFmp(!showFmp)}
-              >
-                {showFmp ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Used for commodity prices and general market news
-            </p>
-          </div>
-
           {/* NewsAPI */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -204,9 +155,9 @@ const ApiSettings = () => {
 
         <div className="mt-4 p-4 bg-muted/50 rounded-lg">
           <p className="text-xs text-muted-foreground">
-            <strong>Multiple News Sources:</strong> The app now combines news from Financial Modeling Prep, 
-            NewsAPI, and Alpha Vantage to provide more comprehensive and relevant commodity news. 
-            API keys are encrypted and stored locally in your browser. Without API keys, the app will use fallback data.
+            <strong>News Sources:</strong> The app combines news from NewsAPI and Alpha Vantage.
+            Commodity prices come from CommodityPriceAPI and OilPriceAPI (managed in backend secrets).
+            Your API keys are encrypted and stored locally in your browser.
           </p>
         </div>
       </Card>

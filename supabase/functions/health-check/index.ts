@@ -7,7 +7,6 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -41,33 +40,37 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const healthChecks = [];
+    const healthChecks: Array<{
+      service: string;
+      status: string;
+      responseTime?: number;
+      error?: string;
+    }> = [];
 
     // Database health check
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('count')
-        .limit(1);
-      
+      const t0 = performance.now();
+      const { error } = await supabase.from('profiles').select('count').limit(1);
       healthChecks.push({
         service: 'database',
         status: error ? 'unhealthy' : 'healthy',
-        responseTime: performance.now(),
-        error: error?.message
+        responseTime: performance.now() - t0,
+        error: error?.message,
       });
     } catch (error) {
       healthChecks.push({
         service: 'database',
         status: 'unhealthy',
-        error: error.message
+        error: (error as Error).message,
       });
     }
 
-    // API endpoints health check - test connectivity without exposing keys in URLs
+    // External provider readiness — just verify secret presence (avoids quota burn).
     const apiChecks = [
-      { name: 'FMP API', key: 'FMP_API_KEY' },
-      { name: 'Alpha Vantage', key: 'ALPHA_VANTAGE_API_KEY' }
+      { name: 'CommodityPriceAPI', key: 'COMMODITYPRICE_API_KEY' },
+      { name: 'OilPriceAPI', key: 'OIL_PRICE_API_KEY' },
+      { name: 'Alpha Vantage', key: 'ALPHA_VANTAGE_API_KEY' },
+      { name: 'FRED API', key: 'FRED_API_KEY' },
     ];
 
     for (const apiCheck of apiChecks) {
@@ -79,43 +82,35 @@ serve(async (req) => {
     }
 
     // Overall health status
-    const overallStatus = healthChecks.every(check => 
-      check.status === 'healthy' || check.status === 'configured'
-    ) ? 'healthy' : 'degraded';
-
-    const response = {
-      status: overallStatus,
-      timestamp: new Date().toISOString(),
-      checks: healthChecks,
-      version: '1.0.0'
-    };
+    const overallStatus = healthChecks.every(
+      (check) => check.status === 'healthy' || check.status === 'configured'
+    )
+      ? 'healthy'
+      : 'degraded';
 
     return new Response(
-      JSON.stringify(response),
-      { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        },
-        status: overallStatus === 'healthy' ? 200 : 503
+      JSON.stringify({
+        status: overallStatus,
+        timestamp: new Date().toISOString(),
+        checks: healthChecks,
+        version: '1.1.0',
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: overallStatus === 'healthy' ? 200 : 503,
       }
     );
-
   } catch (error) {
     console.error('Health check error:', error);
-    
     return new Response(
       JSON.stringify({
         status: 'unhealthy',
         timestamp: new Date().toISOString(),
-        error: 'Internal health check error'
+        error: 'Internal health check error',
       }),
-      { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        },
-        status: 503
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 503,
       }
     );
   }
