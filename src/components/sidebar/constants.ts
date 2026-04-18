@@ -8,7 +8,6 @@ export const COMMODITY_GROUPS: CommodityGroup[] = [
   { id: "livestock", label: "Livestock", icon: Beef, color: "text-red-500" },
   { id: "softs", label: "Softs", icon: Coffee, color: "text-amber-600" },
   { id: "industrials", label: "Industrials", icon: Factory, color: "text-cyan-500" },
-  { id: "other", label: "Other", icon: Package, color: "text-gray-500" },
 ];
 
 export const MARKET_TOOLS: MarketTool[] = [

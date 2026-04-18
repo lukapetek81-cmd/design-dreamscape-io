@@ -5,7 +5,7 @@ import VirtualizedCommodityList from '@/components/VirtualizedCommodityList';
 import UserProfile from '@/components/UserProfile';
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import CommoditySidebar from '@/components/CommoditySidebar';
-import { BarChart3, Menu, Loader, Zap, Coins, Wheat, Beef, Coffee, Package } from 'lucide-react';
+import { BarChart3, Menu, Loader, Zap, Coins, Wheat, Beef, Coffee, Factory } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRealtimeDataContext } from '@/contexts/RealtimeDataContext';
@@ -137,7 +137,7 @@ const DashboardContent = ({
       grains: { title: "Agricultural Commodities", icon: Wheat },
       livestock: { title: "Livestock Commodities", icon: Beef },
       softs: { title: "Soft Commodities", icon: Coffee },
-      other: { title: "Other Commodities", icon: Package }
+      industrials: { title: "Industrial Commodities", icon: Factory },
     };
     return groups[activeGroup as keyof typeof groups] || groups.energy;
   }, [activeGroup]);
@@ -162,7 +162,6 @@ const DashboardContent = ({
           livestock: getCommodityCount('livestock'),
           softs: getCommodityCount('softs'),
           industrials: getCommodityCount('industrials'),
-          other: getCommodityCount('other')
         }}
       />
       

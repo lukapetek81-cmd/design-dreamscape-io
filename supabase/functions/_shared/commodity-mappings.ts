@@ -117,8 +117,8 @@ export const COMMODITY_SYMBOLS: Record<string, CommoditySymbol> = {
   'Kraft Pulp': { symbol: 'KP=X', category: 'industrials', contractSize: '1 MT', venue: 'OTC' },
   'Industrial Naphtha': { symbol: 'NAPI=X', category: 'industrials', contractSize: '1 MT', venue: 'OTC' },
 
-  // ============ OTHER ============
-  'Lumber Futures': { symbol: 'LBS=F', category: 'other', contractSize: '110,000 bd ft', venue: 'CME' },
+  // ============ INDUSTRIALS — Lumber (free) ============
+  'Lumber Futures': { symbol: 'LBS=F', category: 'industrials', contractSize: '110,000 bd ft', venue: 'CME' },
 };
 
 /**
@@ -288,8 +288,8 @@ export const CATEGORY_MAPPINGS: Record<string, string[]> = {
     'Polyethylene', 'Polyvinyl Chloride', 'Polypropylene', 'Soda Ash',
     'Neodymium', 'Tellurium', 'Diammonium Phosphate', 'Urea', 'Urea Ammonium Nitrate',
     'Gallium', 'Indium', 'Kraft Pulp', 'Industrial Naphtha',
+    'Lumber Futures',
   ],
-  other: ['Lumber Futures'],
 };
 
 // Helpers
