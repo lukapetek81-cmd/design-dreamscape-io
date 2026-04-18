@@ -237,8 +237,8 @@ export const PREMIUM_COMMODITIES = new Set<string>([
   // Livestock premium
   'Feeder Cattle', 'Cheese', 'Eggs CH', 'Eggs US',
   'Salmon', 'Poultry', 'Butter', 'Potato',
-  // Industrials (entire group is premium)
-  'Industrial Ethanol', 'Rubber', 'Bitumen', 'Cobalt', 'Rhodium',
+  // Industrials — Free: Industrial Ethanol, Rubber, Cobalt. Rest are premium.
+  'Bitumen', 'Rhodium',
   'Polyethylene', 'Polyvinyl Chloride', 'Polypropylene', 'Soda Ash',
   'Neodymium', 'Tellurium', 'Diammonium Phosphate', 'Urea', 'Urea Ammonium Nitrate',
   'Gallium', 'Indium', 'Kraft Pulp', 'Industrial Naphtha',
