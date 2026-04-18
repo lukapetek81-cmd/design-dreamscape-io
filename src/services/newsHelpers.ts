@@ -20,7 +20,6 @@ export interface EnhancedNewsItem extends NewsItem {
 
 const NEWS_SOURCES: Record<string, NewsSourceConfig> = {
   marketaux: { name: 'Marketaux', priority: 1, maxArticles: 12, enabled: true },
-  fmp: { name: 'FMP', priority: 2, maxArticles: 10, enabled: true }
 };
 
 // Utility functions first
@@ -152,74 +151,6 @@ export const fetchNewsFromMarketaux = async (commodityName: string): Promise<Enh
     }));
   } catch (error) {
     console.warn('Marketaux edge function failed:', error);
-    return [];
-  }
-};
-
-// Enhanced news fetching with backend API key support
-export const fetchNewsFromFMP = async (commodityName: string): Promise<EnhancedNewsItem[]> => {
-  try {
-    // Try to fetch via edge function first (uses backend API keys)
-    const { data, error } = await supabase.functions.invoke('fetch-fmp-news', {
-      body: { commodity: commodityName }
-    });
-    
-    if (!error && data?.articles) {
-      return data.articles.map((article: any, index: number) => ({
-        id: `fmp_${commodityName}_${index}_${Date.now()}`,
-        title: article.title || `${commodityName} Market Update`,
-        description: article.text ? article.text.substring(0, 200) + '...' : `Latest market news about ${commodityName}`,
-        url: article.url || '#',
-        source: article.site || 'Financial News',
-        publishedAt: article.publishedDate || new Date().toISOString(),
-        urlToImage: article.image,
-        sentiment: analyzeSentiment(article.title, article.text),
-        category: categorizeNews(article.title, article.text, commodityName),
-        relevanceScore: calculateEnhancedRelevanceScore(article, commodityName),
-        tags: extractTags(article.title, article.text, commodityName)
-      }));
-    }
-  } catch (error) {
-    console.warn('FMP edge function failed, trying direct API:', error);
-  }
-  
-  // Fallback to direct API call with encrypted storage key
-  const { secureStorage } = await import('@/utils/security');
-  const apiKey = (await secureStorage.getItem('fmpApiKey')) || '';
-  
-  if (!apiKey) {
-    console.warn('No FMP API key available');
-    return [];
-  }
-  
-  try {
-    const response = await fetch(
-      `https://financialmodelingprep.com/api/v3/general_news?page=0&apikey=${apiKey}`
-    );
-    
-    if (!response.ok) throw new Error(`FMP API error: ${response.status}`);
-    
-    const data = await response.json();
-    if (!Array.isArray(data)) return [];
-    
-    return data
-      .filter(article => isRelevantToCommodity(article.title, article.text, commodityName))
-      .slice(0, 10)
-      .map((article: any, index: number) => ({
-        id: `fmp_${commodityName}_${index}_${Date.now()}`,
-        title: article.title || `${commodityName} Market Update`,
-        description: article.text ? article.text.substring(0, 200) + '...' : `Latest market news about ${commodityName}`,
-        url: article.url || '#',
-        source: article.site || 'Financial News',
-        publishedAt: article.publishedDate || new Date().toISOString(),
-        urlToImage: article.image,
-        sentiment: analyzeSentiment(article.title, article.text),
-        category: categorizeNews(article.title, article.text, commodityName),
-        relevanceScore: calculateEnhancedRelevanceScore(article, commodityName),
-        tags: extractTags(article.title, article.text, commodityName)
-      }));
-  } catch (error) {
-    console.warn('FMP API failed:', error);
     return [];
   }
 };

@@ -29,7 +29,7 @@ serve(async (req) => {
     const commodity = typeof body.commodity === 'string' && body.commodity.length > 0 && body.commodity.length <= 100
       ? body.commodity.replace(/[^a-zA-Z0-9\s\-]/g, '')
       : null;
-    const validSources = ['all', 'marketaux', 'fmp', 'news'];
+    const validSources = ['all', 'marketaux', 'news'];
     const source = validSources.includes(body.source) ? body.source : 'all';
     
     console.log('Request params:', { commodity, source });
@@ -40,7 +40,6 @@ serve(async (req) => {
 
     const newsApiKey = Deno.env.get('NEWS_API_KEY');
     const marketauxApiKey = Deno.env.get('MARKETAUX_API_KEY');
-    const fmpApiKey = Deno.env.get('FMP_API_KEY');
     
     let articles: NewsItem[] = [];
 
@@ -75,38 +74,7 @@ serve(async (req) => {
       }
     }
 
-    // Try FMP General News API
-    if (source === 'fmp' || source === 'all') {
-      if (fmpApiKey) {
-        try {
-          const fmpResponse = await fetch(
-            `https://financialmodelingprep.com/api/v3/general_news?page=0&apikey=${fmpApiKey}`
-          );
-          
-          if (fmpResponse.ok) {
-            const fmpData = await fmpResponse.json();
-            if (Array.isArray(fmpData)) {
-              const relevantArticles = fmpData
-                .filter(article => isRelevantToCommodity(article.title, article.text, commodity))
-                .slice(0, 10)
-                .map((article: any, index: number) => ({
-                  id: `fmp_${commodity}_${index}_${Date.now()}`,
-                  title: article.title || `${commodity} Market News`,
-                  description: article.text ? article.text.substring(0, 200) + '...' : `Market analysis for ${commodity}`,
-                  url: article.url || generateCommodityUrl(commodity, 'reuters'),
-                  source: article.site || 'Financial News',
-                  publishedAt: article.publishedDate || new Date().toISOString(),
-                  urlToImage: article.image,
-                  category: categorizeCommodityNews(article.title, article.text, commodity)
-                }));
-              articles.push(...relevantArticles);
-            }
-          }
-        } catch (error) {
-          console.warn('FMP API failed:', error);
-        }
-      }
-    }
+    // FMP source removed — see mem://integrations/commoditypriceapi-config
 
     // Try News API as fallback
     if (articles.length < 5 && newsApiKey) {

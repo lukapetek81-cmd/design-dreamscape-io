@@ -27,9 +27,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// FMP symbols for historical chart data — only supported commodities
+// Yahoo Finance fallback symbols for historical chart data (only used if
+// CommodityPriceAPI/OilPriceAPI history is unavailable). Not provided by FMP.
 const COMMODITY_SYMBOLS: Record<string, string> = {
-  // Energy (FMP symbols for fallback historical)
+  // Energy
   'WTI Crude Oil': 'CL=F',
   'Brent Crude Oil': 'BZ=F',
   'Natural Gas': 'NG=F',
@@ -380,7 +381,7 @@ serve(async (req) => {
             else if (timeframe === '6m') historicalData = historicalData.slice(-180);
 
             if (historicalData.length < 2) {
-              console.warn(`OilPriceAPI returned only ${historicalData.length} valid points, will try FMP`);
+              console.warn(`OilPriceAPI returned only ${historicalData.length} valid points, will try Yahoo fallback`);
               historicalData = null;
             } else {
               dataSourceUsed = 'oilpriceapi';
