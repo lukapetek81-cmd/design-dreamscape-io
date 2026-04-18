@@ -23,8 +23,8 @@ const COPY: Record<UpsellVariant, {
     Icon: Zap,
   },
   industrials: {
-    title: 'Unlock 18 Industrial Commodities',
-    description: 'Cobalt, lithium, rhodium, rubber, fertilizers, plastics, and rare elements.',
+    title: 'Unlock 15 More Industrial Commodities',
+    description: 'Rhodium, lithium-tier rare metals, plastics, fertilizers, and rare elements.',
     Icon: Factory,
   },
 };
