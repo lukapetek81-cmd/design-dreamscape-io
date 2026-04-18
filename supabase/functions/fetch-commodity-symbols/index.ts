@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4'
+import { PREMIUM_COMMODITIES } from '../_shared/commodity-mappings.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -168,8 +169,9 @@ const OIL_API_BLENDS: Record<string, string> = {
   'Ethanol': 'ETHANOL_USD',
 };
 
-// In-memory cache for the symbols list
-let symbolsCache: { data: any[]; timestamp: number } | null = null;
+// In-memory cache for the symbols list (keyed by tier)
+let symbolsCacheFree: { data: any[]; timestamp: number } | null = null;
+let symbolsCachePremium: { data: any[]; timestamp: number } | null = null;
 const SYMBOLS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 serve(async (req) => {
@@ -198,17 +200,19 @@ serve(async (req) => {
     const body = req.method === 'POST' ? await req.json() : {}
     const { dataDelay = 'realtime' } = body
 
-    // Check cache
-    if (symbolsCache && Date.now() - symbolsCache.timestamp < SYMBOLS_CACHE_TTL) {
-      console.log(`Cache hit: returning ${symbolsCache.data.length} commodities`);
+    // Check cache (per tier)
+    const cache = isPremium ? symbolsCachePremium : symbolsCacheFree;
+    if (cache && Date.now() - cache.timestamp < SYMBOLS_CACHE_TTL) {
+      console.log(`Cache hit (${isPremium ? 'premium' : 'free'}): returning ${cache.data.length} commodities`);
       return new Response(
         JSON.stringify({
-          commodities: symbolsCache.data,
+          commodities: cache.data,
           source: 'cached',
-          count: symbolsCache.data.length,
+          count: cache.data.length,
           timestamp: new Date().toISOString(),
           dataDelay,
           isDelayed: dataDelay === '15min',
+          isPremium,
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -353,17 +357,27 @@ serve(async (req) => {
       ? new Date(Date.now() - 15 * 60 * 1000).toISOString()
       : new Date().toISOString();
 
-    // Cache the result
-    symbolsCache = { data: commoditiesData, timestamp: Date.now() };
+    // Filter premium commodities for free users
+    const filteredData = isPremium
+      ? commoditiesData
+      : commoditiesData.filter((c: any) => !PREMIUM_COMMODITIES.has(c.name));
+
+    // Cache the result (per tier)
+    if (isPremium) {
+      symbolsCachePremium = { data: filteredData, timestamp: Date.now() };
+    } else {
+      symbolsCacheFree = { data: filteredData, timestamp: Date.now() };
+    }
 
     return new Response(
       JSON.stringify({
-        commodities: commoditiesData,
+        commodities: filteredData,
         source: dataSource,
-        count: commoditiesData.length,
+        count: filteredData.length,
         timestamp: currentTimestamp,
         dataDelay,
         isDelayed: dataDelay === '15min',
+        isPremium,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
