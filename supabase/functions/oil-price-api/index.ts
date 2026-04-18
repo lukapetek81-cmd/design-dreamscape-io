@@ -9,8 +9,8 @@ const OIL_API_BASE = 'https://api.oilpriceapi.com/v1';
 
 // In-memory cache with TTL (5 minutes for single, 3 minutes for batch)
 const priceCache = new Map<string, { data: any; timestamp: number }>();
-const SINGLE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-const BATCH_CACHE_TTL = 3 * 60 * 1000;  // 3 minutes
+const SINGLE_CACHE_TTL = 30 * 60 * 1000; // 30 minutes — OilPriceAPI free tier is heavily rate-limited
+const BATCH_CACHE_TTL = 30 * 60 * 1000;  // 30 minutes
 
 function getCached(key: string, ttl: number): any | null {
   const entry = priceCache.get(key);
