@@ -333,6 +333,48 @@ export type Database = {
         }
         Relationships: []
       }
+      kyc_verifications: {
+        Row: {
+          country: string | null
+          created_at: string
+          id: string
+          inquiry_id: string | null
+          provider: string
+          reference_id: string | null
+          rejection_reason: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          id?: string
+          inquiry_id?: string | null
+          provider?: string
+          reference_id?: string | null
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          id?: string
+          inquiry_id?: string | null
+          provider?: string
+          reference_id?: string | null
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       market_status_config: {
         Row: {
           close_time: string
@@ -1036,6 +1078,7 @@ export type Database = {
           created_at: string
           frozen_balance: number
           id: string
+          kyc_required_threshold: number
           updated_at: string
           user_id: string
         }
@@ -1044,6 +1087,7 @@ export type Database = {
           created_at?: string
           frozen_balance?: number
           id?: string
+          kyc_required_threshold?: number
           updated_at?: string
           user_id: string
         }
@@ -1052,6 +1096,7 @@ export type Database = {
           created_at?: string
           frozen_balance?: number
           id?: string
+          kyc_required_threshold?: number
           updated_at?: string
           user_id?: string
         }
@@ -1081,6 +1126,36 @@ export type Database = {
           commodity_symbol?: string | null
           id?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      wallet_connections: {
+        Row: {
+          chain_id: number
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+          wallet_address: string
+        }
+        Insert: {
+          chain_id: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+          wallet_address: string
+        }
+        Update: {
+          chain_id?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+          wallet_address?: string
         }
         Relationships: []
       }
