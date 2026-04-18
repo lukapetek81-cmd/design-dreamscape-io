@@ -43,14 +43,14 @@ export interface Commodity {
 }
 
 export const useAvailableCommodities = () => {
-  const { getDataDelay, shouldDelayData } = useDelayedData();
+  const { getDataDelay, shouldDelayData, isPremium } = useDelayedData();
   const { getOptimizedQuerySettings } = useCacheOptimization();
   
   // Get optimized settings for commodity data
   const optimizedSettings = getOptimizedQuerySettings('price');
   
   return useQuery({
-    queryKey: ['all-commodities', getDataDelay()],
+    queryKey: ['all-commodities', getDataDelay(), isPremium],
     queryFn: async (): Promise<Commodity[]> => {
       try {
         const { data, error } = await supabase.functions.invoke('fetch-commodity-symbols', {
