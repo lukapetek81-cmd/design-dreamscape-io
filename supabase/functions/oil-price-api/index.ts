@@ -9,8 +9,8 @@ const OIL_API_BASE = 'https://api.oilpriceapi.com/v1';
 
 // In-memory cache with TTL (5 minutes for single, 3 minutes for batch)
 const priceCache = new Map<string, { data: any; timestamp: number }>();
-const SINGLE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-const BATCH_CACHE_TTL = 3 * 60 * 1000;  // 3 minutes
+const SINGLE_CACHE_TTL = 30 * 60 * 1000; // 30 minutes — OilPriceAPI free tier is heavily rate-limited
+const BATCH_CACHE_TTL = 30 * 60 * 1000;  // 30 minutes
 
 function getCached(key: string, ttl: number): any | null {
   const entry = priceCache.get(key);
@@ -162,48 +162,63 @@ serve(async (req) => {
 
       console.log(`Batch: ${Object.keys(results).length} cached, ${uncachedNames.length} to fetch`);
 
-      // Only fetch uncached commodities
-      const fetchPromises = uncachedNames.map(async (name: string) => {
-        const code = OIL_BLEND_CODES[name];
-        try {
-          const response = await fetch(`${OIL_API_BASE}/prices/latest?by_code=${code}`, {
-            headers: { 'Authorization': `Token ${apiKey}` },
-          });
+      // Sequential fetch with throttling — OilPriceAPI rate-limits aggressive parallel calls (429).
+      // Concurrency=4 with small inter-batch delay keeps us under typical free-tier limits
+      // while still finishing 33 commodities in a few seconds.
+      const CONCURRENCY = 4;
+      const INTER_BATCH_DELAY_MS = 1100;
+      let rateLimited = false;
 
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.warn(`OilPriceAPI error for ${code}: ${response.status} - ${errorText}`);
-            return;
-          }
-
-          const result = await response.json();
-          if (result.data?.price) {
-            const priceEntry = {
-              price: result.data.price,
-              change: 0,
-              changePercent: 0,
-              timestamp: result.data.created_at || new Date().toISOString(),
-              source: 'oilpriceapi',
-              code: code,
-            };
-            results[name] = priceEntry;
-            // Cache individual result
-            setCache(`single:${code}`, {
-              price: result.data.price,
-              formatted: result.data.formatted || `$${result.data.price}`,
-              code,
-              timestamp: result.data.created_at || new Date().toISOString(),
-              source: 'oilpriceapi',
+      for (let i = 0; i < uncachedNames.length; i += CONCURRENCY) {
+        if (rateLimited) break; // Stop hammering the API once we hit a 429
+        const slice = uncachedNames.slice(i, i + CONCURRENCY);
+        await Promise.all(slice.map(async (name: string) => {
+          const code = OIL_BLEND_CODES[name];
+          try {
+            const response = await fetch(`${OIL_API_BASE}/prices/latest?by_code=${code}`, {
+              headers: { 'Authorization': `Token ${apiKey}` },
             });
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              if (response.status === 429) {
+                rateLimited = true;
+                console.warn(`OilPriceAPI 429 on ${code}; aborting remaining batch`);
+              } else {
+                console.warn(`OilPriceAPI error for ${code}: ${response.status} - ${errorText.slice(0, 100)}`);
+              }
+              return;
+            }
+
+            const result = await response.json();
+            if (result.data?.price) {
+              const priceEntry = {
+                price: result.data.price,
+                change: 0,
+                changePercent: 0,
+                timestamp: result.data.created_at || new Date().toISOString(),
+                source: 'oilpriceapi',
+                code: code,
+              };
+              results[name] = priceEntry;
+              setCache(`single:${code}`, {
+                price: result.data.price,
+                formatted: result.data.formatted || `$${result.data.price}`,
+                code,
+                timestamp: result.data.created_at || new Date().toISOString(),
+                source: 'oilpriceapi',
+              });
+            }
+          } catch (err) {
+            console.warn(`Failed to fetch ${code} from OilPriceAPI:`, err);
           }
-        } catch (err) {
-          console.warn(`Failed to fetch ${code} from OilPriceAPI:`, err);
+        }));
+        if (i + CONCURRENCY < uncachedNames.length && !rateLimited) {
+          await new Promise((r) => setTimeout(r, INTER_BATCH_DELAY_MS));
         }
-      });
+      }
 
-      await Promise.all(fetchPromises);
-
-      console.log(`OilPriceAPI batch: ${Object.keys(results).length} total (${uncachedNames.length} fetched, rest cached)`);
+      console.log(`OilPriceAPI batch: ${Object.keys(results).length} total (${uncachedNames.length} requested, ${rateLimited ? 'RATE-LIMITED' : 'ok'})`);
 
       return new Response(
         JSON.stringify({ data: results }),

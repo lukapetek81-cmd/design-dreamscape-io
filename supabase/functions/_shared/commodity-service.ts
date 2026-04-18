@@ -101,7 +101,13 @@ export class CommodityService {
         }
       }
 
-      setCache('all-commodities', merged);
+      // Only cache if we got real data from BOTH providers — otherwise we'd lock in zeros
+      // for an hour after a transient OilPriceAPI rate-limit.
+      if (cpaResults.length > 0 && oilResults.length > 0) {
+        setCache('all-commodities', merged);
+      } else {
+        this.logger.warn(`Skipping cache: cpa=${cpaResults.length}, oil=${oilResults.length}`);
+      }
       this.logger.info(`Fetched ${merged.length} commodities (cpa=${cpaResults.length}, oil=${oilResults.length})`);
       return merged;
     } catch (error) {
@@ -185,17 +191,24 @@ export class CommodityService {
         this.logger.warn(`oil-price-api proxy failed ${res.status}`);
         return [];
       }
-      const data = await res.json();
-      const items = data?.commodities || data?.data || [];
+      const json = await res.json();
+      // oil-price-api batch returns `{ data: { "<commodityName>": { price, ... } } }`.
+      // Older callers used arrays — handle both shapes.
       const out: CommodityData[] = [];
-      for (const item of items) {
-        const name = item.commodityName || item.name;
+      const payload = json?.data ?? json?.commodities ?? {};
+      const entries: Array<[string, any]> = Array.isArray(payload)
+        ? payload.map((p) => [p.commodityName || p.name, p])
+        : Object.entries(payload);
+
+      for (const [name, item] of entries) {
         const meta = COMMODITY_SYMBOLS[name];
-        if (!meta) continue;
+        if (!meta || !item) continue;
+        const price = parseFloat(item.price) || 0;
+        if (price <= 0) continue; // Skip zero-prices so we don't poison the cache
         out.push({
           name,
           symbol: meta.symbol,
-          price: parseFloat(item.price) || 0,
+          price,
           change: parseFloat(item.change) || 0,
           changePercent: parseFloat(item.changePercent || item.changesPercentage) || 0,
           category: meta.category,
