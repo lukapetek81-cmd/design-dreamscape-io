@@ -169,8 +169,9 @@ const OIL_API_BLENDS: Record<string, string> = {
   'Ethanol': 'ETHANOL_USD',
 };
 
-// In-memory cache for the symbols list
-let symbolsCache: { data: any[]; timestamp: number } | null = null;
+// In-memory cache for the symbols list (keyed by tier)
+let symbolsCacheFree: { data: any[]; timestamp: number } | null = null;
+let symbolsCachePremium: { data: any[]; timestamp: number } | null = null;
 const SYMBOLS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 serve(async (req) => {
