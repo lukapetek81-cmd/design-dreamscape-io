@@ -1,5 +1,6 @@
 import React from 'react';
-import { useAccount, useBalance, useChainId } from 'wagmi';
+import { useAccount, useBalance, useChainId, useReadContract } from 'wagmi';
+import { formatUnits, erc20Abi } from 'viem';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Wallet, Coins } from 'lucide-react';
 import ConnectWalletButton from './ConnectWalletButton';
@@ -18,11 +19,18 @@ const WalletStatusCard: React.FC = () => {
     query: { enabled: isConnected },
   });
 
-  const { data: usdcBalance, isLoading: usdcLoading } = useBalance({
-    address,
-    token: usdcAddress,
-    query: { enabled: isConnected && !!usdcAddress },
+  const { data: usdcRaw, isLoading: usdcLoading } = useReadContract({
+    address: usdcAddress,
+    abi: erc20Abi,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    query: { enabled: isConnected && !!usdcAddress && !!address },
   });
+
+  const usdcFormatted = usdcRaw !== undefined ? Number(formatUnits(usdcRaw as bigint, 6)).toFixed(2) : '0.00';
+  const nativeFormatted = nativeBalance
+    ? Number(formatUnits(nativeBalance.value, nativeBalance.decimals)).toFixed(4)
+    : '0.0000';
 
   return (
     <Card className="border-border/50">
@@ -59,9 +67,7 @@ const WalletStatusCard: React.FC = () => {
                 {usdcLoading ? (
                   <Skeleton className="h-4 w-20" />
                 ) : (
-                  <span className="text-sm font-semibold text-foreground">
-                    {usdcBalance ? Number(usdcBalance.formatted).toFixed(2) : '0.00'} USDC
-                  </span>
+                  <span className="text-sm font-semibold text-foreground">{usdcFormatted} USDC</span>
                 )}
               </div>
               <div className="flex items-center justify-between">
@@ -69,9 +75,7 @@ const WalletStatusCard: React.FC = () => {
                 {nativeLoading ? (
                   <Skeleton className="h-4 w-20" />
                 ) : (
-                  <span className="text-xs font-medium">
-                    {nativeBalance ? Number(nativeBalance.formatted).toFixed(4) : '0.0000'}
-                  </span>
+                  <span className="text-xs font-medium">{nativeFormatted}</span>
                 )}
               </div>
             </div>
