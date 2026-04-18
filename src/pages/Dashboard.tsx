@@ -12,6 +12,8 @@ import { useRealtimeDataContext } from '@/contexts/RealtimeDataContext';
 import { useAvailableCommodities, Commodity } from '@/hooks/useCommodityData';
 import { Button } from '@/components/ui/button';
 import { OfflineIndicator } from '@/components/OfflineIndicator';
+import PremiumUpsellCard from '@/components/PremiumUpsellCard';
+import { useToast } from '@/hooks/use-toast';
 
 const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
