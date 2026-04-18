@@ -69,47 +69,51 @@ export class CommodityService {
   /**
    * Fetches ALL commodities from CommodityPriceAPI (non-energy) and
    * OilPriceAPI (energy). Heavily cached (1h) to fit CPA Lite plan quota.
+   *
+   * @param includePremium  If false (default), premium commodities are excluded
+   *                        and not fetched — protects OilPriceAPI quota for free users.
    */
-  async fetchAllCommodities(): Promise<CommodityData[]> {
+  async fetchAllCommodities(includePremium = false): Promise<CommodityData[]> {
     const endTimer = this.performanceMonitor.startTimer('fetch-all-commodities');
     try {
-      const cached = getCache<CommodityData[]>('all-commodities');
+      const cacheKey = includePremium ? 'all-commodities:premium' : 'all-commodities:free';
+      const cached = getCache<CommodityData[]>(cacheKey);
       if (cached) {
-        this.logger.info('Returning cached all-commodities snapshot');
+        this.logger.info(`Returning cached snapshot (${cacheKey})`);
         return cached;
       }
 
       const [cpaResults, oilResults] = await Promise.all([
         this.fetchAllFromCPA(),
-        this.fetchAllFromOilPriceApi(),
+        this.fetchAllFromOilPriceApi(includePremium),
       ]);
 
       const merged = [...oilResults, ...cpaResults];
-      // Fill in any missing commodities with zero-price stubs so the catalog stays stable.
+      // Fill in missing commodities with zero-price stubs (free tier excludes premium).
       const seen = new Set(merged.map((c) => c.name));
       for (const [name, info] of Object.entries(COMMODITY_SYMBOLS)) {
-        if (!seen.has(name)) {
-          merged.push({
-            name,
-            symbol: info.symbol,
-            price: 0,
-            change: 0,
-            changePercent: 0,
-            category: info.category,
-            contractSize: info.contractSize,
-            venue: info.venue,
-          });
-        }
+        if (seen.has(name)) continue;
+        if (!includePremium && PREMIUM_COMMODITIES.has(name)) continue;
+        merged.push({
+          name,
+          symbol: info.symbol,
+          price: 0,
+          change: 0,
+          changePercent: 0,
+          category: info.category,
+          contractSize: info.contractSize,
+          venue: info.venue,
+        });
       }
 
       // Only cache if we got real data from BOTH providers — otherwise we'd lock in zeros
       // for an hour after a transient OilPriceAPI rate-limit.
       if (cpaResults.length > 0 && oilResults.length > 0) {
-        setCache('all-commodities', merged);
+        setCache(cacheKey, merged);
       } else {
-        this.logger.warn(`Skipping cache: cpa=${cpaResults.length}, oil=${oilResults.length}`);
+        this.logger.warn(`Skipping cache (${cacheKey}): cpa=${cpaResults.length}, oil=${oilResults.length}`);
       }
-      this.logger.info(`Fetched ${merged.length} commodities (cpa=${cpaResults.length}, oil=${oilResults.length})`);
+      this.logger.info(`Fetched ${merged.length} commodities (cpa=${cpaResults.length}, oil=${oilResults.length}, premium=${includePremium})`);
       return merged;
     } catch (error) {
       this.logger.error('Failed to fetch commodities', error);
