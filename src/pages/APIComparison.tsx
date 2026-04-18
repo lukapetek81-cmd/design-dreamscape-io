@@ -19,6 +19,7 @@ const APIComparison = () => {
     grains: 0,
     livestock: 0,
     softs: 0,
+    industrials: 0,
     other: 0
   };
 
