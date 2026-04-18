@@ -357,17 +357,27 @@ serve(async (req) => {
       ? new Date(Date.now() - 15 * 60 * 1000).toISOString()
       : new Date().toISOString();
 
-    // Cache the result
-    symbolsCache = { data: commoditiesData, timestamp: Date.now() };
+    // Filter premium commodities for free users
+    const filteredData = isPremium
+      ? commoditiesData
+      : commoditiesData.filter((c: any) => !PREMIUM_COMMODITIES.has(c.name));
+
+    // Cache the result (per tier)
+    if (isPremium) {
+      symbolsCachePremium = { data: filteredData, timestamp: Date.now() };
+    } else {
+      symbolsCacheFree = { data: filteredData, timestamp: Date.now() };
+    }
 
     return new Response(
       JSON.stringify({
-        commodities: commoditiesData,
+        commodities: filteredData,
         source: dataSource,
-        count: commoditiesData.length,
+        count: filteredData.length,
         timestamp: currentTimestamp,
         dataDelay,
         isDelayed: dataDelay === '15min',
+        isPremium,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
