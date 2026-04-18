@@ -5,7 +5,7 @@ import VirtualizedCommodityList from '@/components/VirtualizedCommodityList';
 import UserProfile from '@/components/UserProfile';
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import CommoditySidebar from '@/components/CommoditySidebar';
-import { BarChart3, Menu, Loader, Zap, Coins, Wheat, Beef, Coffee, Package } from 'lucide-react';
+import { BarChart3, Menu, Loader, Zap, Coins, Wheat, Beef, Coffee, Factory } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRealtimeDataContext } from '@/contexts/RealtimeDataContext';
