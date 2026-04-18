@@ -97,7 +97,7 @@ export const getCSPHeaders = () => ({
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: https: blob:",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.commodityprice.com https://www.alphavantage.co https://financialmodelingprep.com",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.commoditypriceapi.com https://api.oilpriceapi.com https://api.frankfurter.dev https://www.alphavantage.co",
     "frame-src 'none'",
     "object-src 'none'",
     "base-uri 'self'",

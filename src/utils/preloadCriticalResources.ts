@@ -39,7 +39,7 @@ export const preloadCriticalResources = () => {
   // Execute preloading
   try {
     // DNS prefetch for external APIs
-    addDNSPrefetch('//financialmodelingprep.com');
+    addDNSPrefetch('//api.commoditypriceapi.com');
     addDNSPrefetch('//www.alphavantage.co');
     addDNSPrefetch('//fonts.googleapis.com');
     addDNSPrefetch('//fonts.gstatic.com');
