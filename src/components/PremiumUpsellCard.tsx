@@ -1,11 +1,11 @@
 import React from 'react';
-import { Lock, Sparkles, Factory, Zap } from 'lucide-react';
+import { Lock, Factory, Zap, Gem, Wheat, Coffee, Beef } from 'lucide-react';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import PremiumPaywall from '@/components/PremiumPaywall';
 
-type UpsellVariant = 'energy' | 'industrials';
+type UpsellVariant = 'energy' | 'industrials' | 'metals' | 'grains' | 'softs' | 'livestock';
 
 interface PremiumUpsellCardProps {
   onUpgrade?: () => void;
@@ -26,6 +26,26 @@ const COPY: Record<UpsellVariant, {
     title: 'Unlock 15 More Industrial Commodities',
     description: 'Rhodium, lithium-tier rare metals, plastics, fertilizers, and rare elements.',
     Icon: Factory,
+  },
+  metals: {
+    title: 'Unlock 12 More Industrial & Specialty Metals',
+    description: 'Lead, Nickel, Tin, Steel, HRC Steel, Titanium, Magnesium, Lithium, and more.',
+    Icon: Gem,
+  },
+  grains: {
+    title: 'Unlock 7 More Grain & Oil Markets',
+    description: 'Canola, Sunflower Oil, Rapeseed Oil, plus Wheat, Soybeans, Oats, and Rough Rice spot.',
+    Icon: Wheat,
+  },
+  softs: {
+    title: 'Unlock 4 More Soft Commodities',
+    description: 'UK Sugar No 5, Tea, Wool, and Palm Oil.',
+    Icon: Coffee,
+  },
+  livestock: {
+    title: 'Unlock 8 More Livestock & Dairy Markets',
+    description: 'Feeder Cattle, Cheese, Eggs (CH/US), Salmon, Poultry, Butter, and Potato.',
+    Icon: Beef,
   },
 };
 

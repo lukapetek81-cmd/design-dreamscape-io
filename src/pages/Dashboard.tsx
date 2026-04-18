@@ -249,14 +249,24 @@ const DashboardContent = ({
               </div>
             )}
 
-            {/* Premium Upsell — Energy section, free users only */}
-            {!loading && !error && activeGroup === 'energy' && !isPremium && (
+            {/* Premium Upsells — free users only */}
+            {!loading && !error && !isPremium && activeGroup === 'energy' && (
               <PremiumUpsellCard onUpgrade={handleUpgrade} variant="energy" />
             )}
-
-            {/* Premium Upsell — Industrials: 3 free items + upsell for the other 15 */}
-            {!loading && !error && activeGroup === 'industrials' && !isPremium && (
+            {!loading && !error && !isPremium && activeGroup === 'industrials' && (
               <PremiumUpsellCard onUpgrade={handleUpgrade} variant="industrials" />
+            )}
+            {!loading && !error && !isPremium && activeGroup === 'metals' && (
+              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="metals" />
+            )}
+            {!loading && !error && !isPremium && activeGroup === 'grains' && (
+              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="grains" />
+            )}
+            {!loading && !error && !isPremium && activeGroup === 'softs' && (
+              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="softs" />
+            )}
+            {!loading && !error && !isPremium && activeGroup === 'livestock' && (
+              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="livestock" />
             )}
 
             {/* Commodities List */}
