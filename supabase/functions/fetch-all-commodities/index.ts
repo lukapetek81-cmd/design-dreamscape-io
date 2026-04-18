@@ -33,11 +33,11 @@ serve(async (req) => {
         .select('subscription_active, subscription_tier')
         .eq('id', user.id)
         .single();
-      isPremium = !!(profile?.subscription_active && profile?.subscription_tier === 'premium');
+      isPremium = !!(profile?.subscription_active && profile?.subscription_tier && profile.subscription_tier !== 'free');
     }
 
     const service = new CommodityService('fetch-all-commodities');
-    let commoditiesData = await service.fetchAllCommodities();
+    let commoditiesData = await service.fetchAllCommodities(isPremium);
 
     if (dataDelay === '15min') {
       commoditiesData = service.applyDataDelay(commoditiesData, '15min');
