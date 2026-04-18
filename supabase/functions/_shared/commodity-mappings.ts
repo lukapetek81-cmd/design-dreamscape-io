@@ -225,7 +225,6 @@ export const CENT_QUOTED_SYMBOLS = new Set([
 // Lean Hogs, Milk, Rubber, Industrial Ethanol, Lumber Futures.
 export const PREMIUM_COMMODITIES = new Set<string>([
   // Energy — premium (20)
-  'Crude Oil Dubai', // wait — Dubai is free, not here
   'DME Oman Crude', 'Indian Basket', 'Tapis Crude Oil', 'Urals Crude Oil',
   'Western Canadian Select', 'WTI Midland', 'Alaska North Slope', 'Mars Blend', 'Louisiana Light Sweet',
   'Natural Gas UK', 'Dutch TTF Gas', 'Japan/Korea LNG',
