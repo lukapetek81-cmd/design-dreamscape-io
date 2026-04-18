@@ -124,12 +124,9 @@ const DashboardContent = ({
     }
   };
 
-  // Get filtered commodities — hide zero-priced items (failed fetches / unpriced fallbacks)
-  // so free users don't see broken $0.00 cards that look like locked premium content.
+  // Get filtered commodities
   const filteredCommodities = React.useMemo(() => {
-    return commodities.filter(
-      commodity => commodity.category === activeGroup && commodity.price > 0
-    );
+    return commodities.filter(commodity => commodity.category === activeGroup);
   }, [commodities, activeGroup]);
 
   // Get group info
@@ -146,9 +143,7 @@ const DashboardContent = ({
   }, [activeGroup]);
 
   const getCommodityCount = React.useCallback((category: string) => {
-    return commodities.filter(
-      commodity => commodity.category === category && commodity.price > 0
-    ).length;
+    return commodities.filter(commodity => commodity.category === category).length;
   }, [commodities]);
 
   return (
