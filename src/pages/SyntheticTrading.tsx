@@ -8,6 +8,7 @@ import { useSyntheticTrading } from '@/hooks/useSyntheticTrading';
 import ActivePositions from '@/components/synthetic/ActivePositions';
 import PortfolioSummary from '@/components/synthetic/PortfolioSummary';
 import TradeHistoryPanel from '@/components/synthetic/TradeHistory';
+import WalletStatusCard from '@/components/wallet/WalletStatusCard';
 import SEOHead from '@/components/SEOHead';
 
 const SyntheticTrading = () => {
@@ -64,6 +65,8 @@ const SyntheticTrading = () => {
               Open new trades from any commodity card on the dashboard. Manage your positions here.
             </p>
           </div>
+
+          <WalletStatusCard />
 
           <PortfolioSummary
             balance={balance}

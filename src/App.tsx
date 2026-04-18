@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { RealtimeDataProvider } from '@/contexts/RealtimeDataContext';
+import { Web3Provider } from '@/providers/Web3Provider';
 import { createOptimizedQueryClient } from '@/lib/queryClient';
 import SEOHead from '@/components/SEOHead';
 import Dashboard from '@/pages/Dashboard';
@@ -37,8 +38,9 @@ const App = () => {
   const queryClient = createOptimizedQueryClient();
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
+      <Web3Provider>
+        <AuthProvider>
+          <BrowserRouter>
           <TooltipProvider>
             <RealtimeDataProvider>
               <SEOHead />
@@ -83,7 +85,8 @@ const App = () => {
             </RealtimeDataProvider>
           </TooltipProvider>
         </BrowserRouter>
-      </AuthProvider>
+        </AuthProvider>
+      </Web3Provider>
     </QueryClientProvider>
   );
 };
