@@ -77,7 +77,7 @@ export class CommodityService {
       }
 
       const [cpaResults, oilResults] = await Promise.all([
-        this.fetchAllFromCPA(),
+        this.fetchAllFromCPA(includePremium),
         this.fetchAllFromOilPriceApi(includePremium),
       ]);
 
@@ -107,14 +107,18 @@ export class CommodityService {
   }
 
   /** Batch-fetches non-energy commodities from CommodityPriceAPI v2. */
-  private async fetchAllFromCPA(): Promise<CommodityData[]> {
+  private async fetchAllFromCPA(includePremium = false): Promise<CommodityData[]> {
     if (!this.cpaApiKey) {
       this.logger.warn('No COMMODITYPRICE_API_KEY configured');
       return [];
     }
 
     const out: CommodityData[] = [];
-    const cpaSymbols = Object.values(COMMODITY_PRICE_API_SYMBOLS);
+    // Free users: only fetch CPA symbols for non-premium commodities (~24 syms).
+    // Premium users: fetch full catalog (~72 syms).
+    const cpaSymbols = Object.entries(COMMODITY_PRICE_API_SYMBOLS)
+      .filter(([name]) => includePremium || !PREMIUM_COMMODITIES.has(name))
+      .map(([, sym]) => sym);
     const batchSize = 5;
 
     for (let i = 0; i < cpaSymbols.length; i += batchSize) {
@@ -150,8 +154,9 @@ export class CommodityService {
       } catch (err) {
         this.logger.warn(`CPA batch ${i}-${i + batch.length} threw`, err);
       }
+      // CPA paid tier: 300 req/min = 5 req/sec. 250ms delay = ~4 req/sec, safe margin.
       if (i + batchSize < cpaSymbols.length) {
-        await new Promise((resolve) => setTimeout(resolve, 6500));
+        await new Promise((resolve) => setTimeout(resolve, 250));
       }
     }
     return out;
