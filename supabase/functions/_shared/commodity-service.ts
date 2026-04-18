@@ -176,12 +176,15 @@ export class CommodityService {
   }
 
   /** Calls our own oil-price-api edge function for ALL energy commodities. */
-  private async fetchAllFromOilPriceApi(): Promise<CommodityData[]> {
+  private async fetchAllFromOilPriceApi(includePremium = false): Promise<CommodityData[]> {
     if (!this.oilApiKey || !this.supabaseUrl) return [];
 
     try {
       const energyNames = Object.entries(COMMODITY_SYMBOLS)
-        .filter(([, info]) => info.category === 'energy')
+        .filter(([name, info]) =>
+          info.category === 'energy' &&
+          (includePremium || !PREMIUM_COMMODITIES.has(name))
+        )
         .map(([name]) => name);
 
       const res = await fetch(`${this.supabaseUrl}/functions/v1/oil-price-api`, {
@@ -190,7 +193,7 @@ export class CommodityService {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${this.supabaseAnonKey}`,
         },
-        body: JSON.stringify({ commodities: energyNames }),
+        body: JSON.stringify({ commodities: energyNames, includePremium }),
       });
       if (!res.ok) {
         this.logger.warn(`oil-price-api proxy failed ${res.status}`);
