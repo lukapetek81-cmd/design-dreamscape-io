@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getMarketStatus } from '@/lib/marketHours';
 import LazyChart from './LazyChart';
 import LazyNews from './LazyNews';
+import CommodityTradeActions from './synthetic/CommodityTradeActions';
 
 interface CommodityCardProps {
   name: string;
@@ -356,6 +357,7 @@ const CommodityCard = React.memo<CommodityCardProps>(({
       
       <CollapsibleContent className="overflow-hidden">
         <div className="mt-3 sm:mt-4 space-y-4 sm:space-y-6 animate-accordion-down">
+          <CommodityTradeActions commodityName={name} currentPrice={displayPrice} />
           <LazyChart 
             name={name} 
             basePrice={displayPrice || 0} 
