@@ -1,64 +1,69 @@
 
-The user is asking a strategic question about replacing BloFin with a self-built trading platform that handles KYC, custody, and live market access. This is a major architectural and regulatory question — not a quick code change. I'll lay out what's actually involved so they can make an informed decision before any building starts.
+# Real USDC Deposits + Synthetic Trading + KYC
 
-# Building Your Own Trading Platform vs. Using BloFin
+## Architecture
 
-Short answer: **Yes, technically possible — but it's a massive undertaking that's 90% legal/regulatory/operational and 10% code.** Here's an honest breakdown.
+```
+User wallet (MetaMask/WalletConnect)
+        │ holds real USDC on Base/Polygon
+        ▼
+   ┌──────────┐
+   │  Lock    │  user signs tx → USDC sent to your "TradingVault" contract
+   │ Deposit  │  contract emits Deposit event (user, amount)
+   └────┬─────┘
+        ▼
+   ┌──────────┐
+   │ Indexer  │  edge function listens → credits usdc_balances
+   └────┬─────┘
+        ▼
+   ┌──────────┐
+   │Synthetic │  existing engine — open/close positions vs oracle prices
+   │ trading  │  P&L adjusts usdc_balances
+   └────┬─────┘
+        ▼
+   ┌──────────┐
+   │ Withdraw │  user request → backend signs withdrawal → sent to wallet
+   └──────────┘
+```
 
-## What BloFin Currently Does For You
+**Key principle:** Your app never holds private keys. A smart contract holds USDC; the user signs deposits, your backend signs withdrawals based on the tracked balance.
 
-| Function | BloFin Handles | Cost to Replace |
-|---|---|---|
-| KYC/AML compliance | ✅ Sumsub/Onfido integration, watchlist screening | $$$ + legal |
-| Custody of user funds | ✅ Hot/cold wallets, insurance | $$$$ + licenses |
-| Order matching engine | ✅ Sub-ms matching, 200+ pairs | Build or license |
-| Liquidity / market makers | ✅ Existing order book depth | Hardest part |
-| Money transmitter licenses | ✅ Per jurisdiction | $$$$$ + 12-24 mo |
-| Fiat on/off ramps | ✅ Bank partnerships | $$$ |
-| Settlement & clearing | ✅ | $$$ |
+## Phase 1 — Wallet connect + KYC (this turn)
 
-## Three Realistic Paths
+### Dependencies
+- `wagmi` + `viem` + `@web3modal/wagmi` (WalletConnect — MetaMask, Coinbase, mobile, Capacitor)
+- Persona Inquiry SDK (~$1.50/verification, sandbox free, instant)
 
-### Path A — Stay synthetic (recommended near-term)
-Keep what you have now: virtual USDC, oracle pricing, no real money movement. Zero regulatory exposure. Your current `synthetic_positions` system already does this.
+### Database
+- `wallet_connections`: user_id, address, chain_id, verified_at
+- `kyc_verifications`: user_id, provider, status, inquiry_id, verified_at, country
+- Add `wallet_address` + `kyc_status` to `usdc_balances`
 
-**Effort:** None. Ship it.
+### Edge functions
+- `kyc-create-inquiry` — creates Persona inquiry
+- `kyc-webhook` — receives status updates
+- `verify-wallet-signature` — proves wallet ownership via signed message
 
-### Path B — White-label / Brokerage-as-a-Service
-Use providers like **Alpaca Crypto, Fireblocks, Fortress Trust, Bakkt, or Paxos** that handle KYC + custody + execution under their licenses while you own the UX.
+### UI
+- Header: "Connect Wallet" button → shows address + balance
+- Profile: wallet + KYC status panel
+- Trade gate: trades over a threshold require KYC complete
+- Deposit/Withdraw buttons stubbed with "Phase 2 — on-chain vault coming"
 
-- KYC: Persona, Sumsub, or Onfido (~$1–3 per verification)
-- Custody: Fireblocks or BitGo (institutional, ~$5K+/mo minimum)
-- Execution: Alpaca / Talos / FalconX aggregated liquidity
-- You stay a "tech provider" — they hold the licenses
+## Phase 2 — On-chain vault (next turn, separate plan)
 
-**Effort:** 3–6 months, $10K–50K/mo minimum operating cost.
+Solidity contract on Base, event indexer, withdrawal signer. Out of scope for one Lovable turn — the existing `usdc_balances.balance` is reused; Phase 2 only changes how credits land.
 
-### Path C — Full self-built exchange
-Money transmitter licenses in every state/country, your own matching engine, custody infrastructure, market-maker relationships, banking partners.
+## Phase 3 — Real on/off-ramp via MoonPay/Transak (later)
 
-- US: 49 state MTLs + FinCEN MSB (~$2M+ in bonds/legal)
-- EU: MiCA license under new framework (~€150K + capital)
-- Build matching engine (or license one — DXmatch, Connamara)
-- Hire compliance officer, AML team, security team
+## Secrets needed
+- `WALLETCONNECT_PROJECT_ID` (free, instant — cloud.walletconnect.com)
+- `PERSONA_API_KEY` (free sandbox — withpersona.com)
+- `PERSONA_WEBHOOK_SECRET`
 
-**Effort:** 18–36 months, $5M–20M+ in capital and ops.
+## What you'll need to do
+1. Create accounts at WalletConnect Cloud and Persona (both free for sandbox)
+2. Provide the keys when I prompt for them
+3. For Phase 2 (real deposits), we'll need a Solidity dev review or use a templated vault — discuss next turn
 
-## What I'd Recommend Discussing
-
-Before any code changes, we should clarify:
-
-1. **What's the actual goal?** Better UX? Lower fees? Avoiding BloFin's geo-restrictions? Brand control? Each points to a different path.
-2. **Who is the user?** Retail in one country, global retail, institutional? Determines license scope.
-3. **Real money or simulated?** You're currently 100% simulated for commodities. Real money changes everything.
-4. **Budget reality?** Path B is the only realistic option for a single dev / small team.
-
-## My Suggestion
-
-Given your current architecture (paid app, synthetic USDC trading, BloFin as the only live-money piece for crypto):
-
-- **Keep BloFin** for crypto live trading — replacing it isn't worth it for a feature most users probably don't use heavily
-- **Expand the synthetic engine** you just built — it's the differentiator (Polymarket-style commodities is unique)
-- **If/when ready for real money on commodities**, go Path B with Alpaca or Fireblocks rather than building Path C
-
-No code changes needed for this conversation — it's a strategy decision. Once you tell me which direction interests you, I can plan the technical work.
+Approve and I'll start with the migration, then dependencies, then UI/edge functions.
