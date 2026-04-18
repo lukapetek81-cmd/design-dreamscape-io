@@ -217,25 +217,37 @@ export const CENT_QUOTED_SYMBOLS = new Set([
  * Premium-only commodities. Free tier sees household names; everything niche/regional/exotic
  * lives behind the paywall. See mem://monetization/strategy.
  */
-// Trimmed to ~25 high-value items (was ~55) to keep API burn sustainable.
-// Dropped: niche regional crude (ANS, Indian, Tapis, Urals), low-demand refined (Propane, Ethanol),
-// most marine fuel sub-grades, duplicate metal spot/futures pairs, grain spot duplicates,
-// niche softs (Tea, Wool), all livestock (consumer commodities — near-zero retail trader demand),
-// niche industrials (rare earth elements, fertilizers).
+// Free tier strictly limited to 30 household-name commodities to control API burn.
+// Everything else (regional/niche/exotic/spot-or-futures variants) is premium-gated.
+// Free tier (30): WTI, Brent, Dubai, Murban, OPEC, Natural Gas, Gold, Silver, Copper,
+// Platinum, Palladium, Aluminum, Zinc, Iron Ore, Corn, Wheat, Soybean, Soybean Oil,
+// Soybean Meal, Coffee Arabica, Sugar #11, Cotton, Cocoa, Orange Juice, Live Cattle,
+// Lean Hogs, Milk, Rubber, Industrial Ethanol, Lumber Futures.
 export const PREMIUM_COMMODITIES = new Set<string>([
-  // Energy — Crude (4)
-  'Western Canadian Select', 'WTI Midland', 'Mars Blend', 'Louisiana Light Sweet',
-  // Energy — Refined (6)
-  'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel', 'Gasoil', 'Naphtha',
-  // Energy — Marine fuels (3)
-  'VLSFO Global', 'HFO 380 Rotterdam', 'MGO 0.5%S Global',
-  // Metals (8) — futures-only, drops duplicate spots
-  'Lead Futures', 'Nickel Futures', 'Tin', 'Steel', 'Hot-Rolled Coil Steel',
-  'Titanium', 'Lithium', 'Cobalt',
-  // Grains (2)
-  'Canola', 'Sunflower Oil',
-  // Softs (2)
-  'UK Sugar No 5', 'Palm Oil',
+  // Energy — premium (20)
+  'Crude Oil Dubai', // wait — Dubai is free, not here
+  'DME Oman Crude', 'Indian Basket', 'Tapis Crude Oil', 'Urals Crude Oil',
+  'Western Canadian Select', 'WTI Midland', 'Alaska North Slope', 'Mars Blend', 'Louisiana Light Sweet',
+  'Natural Gas UK', 'Dutch TTF Gas', 'Japan/Korea LNG',
+  'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel', 'Gasoil', 'Naphtha', 'Propane', 'Ethanol',
+  // Metals — premium (12)
+  'Copper Futures', 'Aluminium Futures', 'Lead Spot', 'Lead Futures',
+  'Nickel Spot', 'Nickel Futures', 'Tin', 'Steel', 'Hot-Rolled Coil Steel',
+  'Titanium', 'Magnesium', 'Lithium',
+  // Grains — premium (7)
+  'Oat Futures', 'Rough Rice',
+  'Wheat Futures Spot', 'Soybeans Spot', 'Oats Spot', 'Rough Rice Spot',
+  'Canola', 'Sunflower Oil', 'Rapeseed Oil',
+  // Softs — premium (4)
+  'UK Sugar No 5', 'Tea', 'Wool', 'Palm Oil',
+  // Livestock — premium (8)
+  'Feeder Cattle', 'Cheese', 'Eggs CH', 'Eggs US',
+  'Salmon', 'Poultry', 'Butter', 'Potato',
+  // Industrials — premium (16)
+  'Bitumen', 'Cobalt', 'Rhodium',
+  'Polyethylene', 'Polyvinyl Chloride', 'Polypropylene', 'Soda Ash',
+  'Neodymium', 'Tellurium', 'Diammonium Phosphate', 'Urea', 'Urea Ammonium Nitrate',
+  'Gallium', 'Indium', 'Kraft Pulp', 'Industrial Naphtha',
 ]);
 
 export function isPremiumCommodity(name: string): boolean {
