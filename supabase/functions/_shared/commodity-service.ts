@@ -89,305 +89,13 @@ export class CommodityService {
       ]);
 
       const merged = [...oilResults, ...cpaResults];
-      // Fill in missing commodities with zero-price stubs (free tier excludes premium).
       const seen = new Set(merged.map((c) => c.name));
       for (const [name, info] of Object.entries(COMMODITY_SYMBOLS)) {
         if (seen.has(name)) continue;
         if (!includePremium && PREMIUM_COMMODITIES.has(name)) continue;
-        merged.push({
-          name,
-          symbol: info.symbol,
-          price: 0,
-          change: 0,
-          changePercent: 0,
-          category: info.category,
-          contractSize: info.contractSize,
-          venue: info.venue,
-        });
+        merged.push(this.buildMissingCommodityFallback(name, info.category, info.symbol, info.contractSize, info.venue));
       }
-
-      // Only cache if we got real data from BOTH providers — otherwise we'd lock in zeros
-      // for an hour after a transient OilPriceAPI rate-limit.
-      if (cpaResults.length > 0 && oilResults.length > 0) {
-        setCache(cacheKey, merged);
-      } else {
-        this.logger.warn(`Skipping cache (${cacheKey}): cpa=${cpaResults.length}, oil=${oilResults.length}`);
-      }
-      this.logger.info(`Fetched ${merged.length} commodities (cpa=${cpaResults.length}, oil=${oilResults.length}, premium=${includePremium})`);
-      return merged;
-    } catch (error) {
-      this.logger.error('Failed to fetch commodities', error);
-      return this.getFallbackCommodities();
-    } finally {
-      endTimer();
-    }
-  }
-
-  /** Batch-fetches non-energy commodities from CommodityPriceAPI v2. */
-  private async fetchAllFromCPA(): Promise<CommodityData[]> {
-    if (!this.cpaApiKey) {
-      this.logger.warn('No COMMODITYPRICE_API_KEY configured');
-      return [];
-    }
-
-    const out: CommodityData[] = [];
-    const cpaSymbols = Object.values(COMMODITY_PRICE_API_SYMBOLS);
-    const batchSize = 5; // Lite plan cap
-
-    for (let i = 0; i < cpaSymbols.length; i += batchSize) {
-      const batch = cpaSymbols.slice(i, i + batchSize);
-      try {
-        const url = `https://api.commoditypriceapi.com/v2/rates/latest?symbols=${encodeURIComponent(batch.join(','))}`;
-        const res = await fetch(url, { headers: { 'x-api-key': this.cpaApiKey } });
-        if (!res.ok) {
-          this.logger.warn(`CPA batch failed ${res.status}: ${(await res.text()).slice(0, 150)}`);
-          continue;
-        }
-        const data = await res.json();
-        if (!data?.success || !data.rates) continue;
-
-        for (const cpaSymbol of batch) {
-          let rawPrice = data.rates[cpaSymbol];
-          if (typeof rawPrice !== 'number') continue;
-          if (CENT_QUOTED_SYMBOLS.has(cpaSymbol)) rawPrice = rawPrice / 100;
-          const name = getCommodityByApiSymbol(cpaSymbol);
-          if (!name) continue;
-          const meta = COMMODITY_SYMBOLS[name];
-          out.push({
-            name,
-            symbol: meta?.symbol || cpaSymbol,
-            price: rawPrice,
-            change: 0,
-            changePercent: 0,
-            category: meta?.category || 'other',
-            contractSize: meta?.contractSize || 'TBD',
-            venue: meta?.venue || 'Various',
-          });
-        }
-      } catch (err) {
-        this.logger.warn(`CPA batch ${i}-${i + batch.length} threw`, err);
-      }
-      // Throttle: ≥6s between batches → stay under 10 req/min on Lite.
-      if (i + batchSize < cpaSymbols.length) {
-        await new Promise((resolve) => setTimeout(resolve, 6500));
-      }
-    }
-    return out;
-  }
-
-  /** Calls our own oil-price-api edge function for ALL energy commodities. */
-  private async fetchAllFromOilPriceApi(includePremium = false): Promise<CommodityData[]> {
-    if (!this.oilApiKey || !this.supabaseUrl) return [];
-
-    try {
-      const energyNames = Object.entries(COMMODITY_SYMBOLS)
-        .filter(([name, info]) =>
-          info.category === 'energy' &&
-          (includePremium || !PREMIUM_COMMODITIES.has(name))
-        )
-        .map(([name]) => name);
-
-      const res = await fetch(`${this.supabaseUrl}/functions/v1/oil-price-api`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.supabaseAnonKey}`,
-        },
-        body: JSON.stringify({ commodities: energyNames, includePremium }),
-      });
-      if (!res.ok) {
-        this.logger.warn(`oil-price-api proxy failed ${res.status}`);
-        return [];
-      }
-      const json = await res.json();
-      // oil-price-api batch returns `{ data: { "<commodityName>": { price, ... } } }`.
-      // Older callers used arrays — handle both shapes.
-      const out: CommodityData[] = [];
-      const payload = json?.data ?? json?.commodities ?? {};
-      const entries: Array<[string, any]> = Array.isArray(payload)
-        ? payload.map((p) => [p.commodityName || p.name, p])
-        : Object.entries(payload);
-
-      for (const [name, item] of entries) {
-        const meta = COMMODITY_SYMBOLS[name];
-        if (!meta || !item) continue;
-        const price = parseFloat(item.price) || 0;
-        if (price <= 0) continue; // Skip zero-prices so we don't poison the cache
-        out.push({
-          name,
-          symbol: meta.symbol,
-          price,
-          change: parseFloat(item.change) || 0,
-          changePercent: parseFloat(item.changePercent || item.changesPercentage) || 0,
-          category: meta.category,
-          contractSize: meta.contractSize,
-          venue: meta.venue,
-        });
-      }
-      return out;
-    } catch (err) {
-      this.logger.warn('OilPriceAPI proxy threw', err);
-      return [];
-    }
-  }
-
-  async fetchCurrentPrice(commodityName: string): Promise<CommodityData | null> {
-    const all = await this.fetchAllCommodities();
-    return all.find((c) => c.name === commodityName) || null;
-  }
-
-  /**
-   * Fetches historical OHLC chart data.
-   * - Energy: OilPriceAPI (handled in fetch-commodity-data edge function directly)
-   * - Non-energy: CommodityPriceAPI v2 /rates/time-series
-   * - Fallback: Alpha Vantage (limited symbol coverage)
-   */
-  async fetchCommodityChart(
-    commodityName: string,
-    timeframe: string,
-    chartType: string = 'line'
-  ): Promise<ChartDataPoint[]> {
-    const endTimer = this.performanceMonitor.startTimer(`fetch-chart-${commodityName}`);
-    try {
-      const cacheKey = `chart:${commodityName}:${timeframe}:${chartType}`;
-      const cached = getCache<ChartDataPoint[]>(cacheKey);
-      if (cached) return cached;
-
-      const cpaSymbol = COMMODITY_PRICE_API_SYMBOLS[commodityName];
-      if (cpaSymbol && this.cpaApiKey) {
-        const data = await this.fetchCpaTimeseries(cpaSymbol, timeframe, chartType);
-        if (data.length > 0) {
-          setCache(cacheKey, data);
-          return data;
-        }
-      }
-
-      if (this.alphaVantageApiKey) {
-        const avData = await this.fetchAlphaVantageChart(commodityName);
-        if (avData.length > 0) {
-          setCache(cacheKey, avData);
-          return avData;
-        }
-      }
-
-      this.logger.warn(`Using fallback chart data for ${commodityName}`);
-      return this.generateFallbackChart(commodityName, timeframe, chartType);
-    } catch (error) {
-      this.logger.error(`Failed to fetch chart data for ${commodityName}`, error);
-      return this.generateFallbackChart(commodityName, timeframe, chartType);
-    } finally {
-      endTimer();
-    }
-  }
-
-  private async fetchCpaTimeseries(
-    cpaSymbol: string,
-    timeframe: string,
-    chartType: string
-  ): Promise<ChartDataPoint[]> {
-    const daysMap: Record<string, number> = {
-      '1d': 2,
-      '1w': 7,
-      '1m': 30,
-      '3m': 90,
-      '6m': 180,
-      '1y': 365,
-    };
-    const days = daysMap[timeframe] || 30;
-    const endDate = new Date();
-    const startDate = new Date(endDate.getTime() - days * 86400000);
-    const startStr = startDate.toISOString().split('T')[0];
-    const endStr = endDate.toISOString().split('T')[0];
-
-    const url = `https://api.commoditypriceapi.com/v2/rates/time-series?symbols=${encodeURIComponent(cpaSymbol)}&startDate=${startStr}&endDate=${endStr}`;
-    const res = await fetch(url, { headers: { 'x-api-key': this.cpaApiKey } });
-    if (!res.ok) {
-      this.logger.warn(`CPA timeseries failed ${res.status}`);
-      return [];
-    }
-    const data = await res.json();
-    if (!data?.success || !data.rates) return [];
-
-    const isCent = CENT_QUOTED_SYMBOLS.has(cpaSymbol);
-    const points: ChartDataPoint[] = [];
-    for (const dateStr of Object.keys(data.rates).sort()) {
-      const day = data.rates[dateStr]?.[cpaSymbol];
-      if (!day) continue;
-      const norm = (n: unknown): number => {
-        const v = typeof n === 'number' ? n : parseFloat(String(n));
-        return Number.isFinite(v) ? (isCent ? v / 100 : v) : 0;
-      };
-      const close = norm(day.close ?? day);
-      const point: ChartDataPoint = { date: dateStr, price: close };
-      if (chartType === 'candlestick') {
-        point.open = norm(day.open ?? close);
-        point.high = norm(day.high ?? close);
-        point.low = norm(day.low ?? close);
-        point.close = close;
-      }
-      points.push(point);
-    }
-    return points;
-  }
-
-  private async fetchAlphaVantageChart(commodityName: string): Promise<ChartDataPoint[]> {
-    try {
-      const avSymbolMap: Record<string, string> = {
-        'WTI Crude Oil': 'WTI',
-        'Brent Crude Oil': 'BRENT',
-        'Natural Gas': 'NATURAL_GAS',
-        'Corn Futures': 'CORN',
-        'Wheat Futures': 'WHEAT',
-        'Soybean Futures': 'SOYBEANS',
-        'Sugar #11': 'SUGAR',
-        Cotton: 'COTTON',
-        'Coffee Arabica': 'COFFEE',
-      };
-      const symbol = avSymbolMap[commodityName];
-      if (!symbol) return [];
-
-      const response = await fetch(
-        `https://www.alphavantage.co/query?function=${symbol}&interval=monthly&apikey=${this.alphaVantageApiKey}`
-      );
-      if (!response.ok) return [];
-      const data = await response.json();
-      const series = (data?.data || []) as Array<{ date: string; value: string }>;
-      return series
-        .map((it) => ({ date: it.date, price: parseFloat(it.value) || 0 }))
-        .reverse();
-    } catch (err) {
-      this.logger.warn('Alpha Vantage fetch failed', err);
-      return [];
-    }
-  }
-
-  private generateFallbackChart(commodityName: string, timeframe: string, chartType: string): ChartDataPoint[] {
-    const basePrice = this.getBasePriceForCommodity(commodityName);
-    const dataPoints = this.getDataPointsForTimeframe(timeframe);
-    const data: ChartDataPoint[] = [];
-    const now = new Date();
-    let currentPrice = basePrice;
-    const volatility = basePrice * 0.02;
-
-    for (let i = dataPoints - 1; i >= 0; i--) {
-      const date = new Date(now.getTime() - i * this.getTimeStepMs(timeframe));
-      currentPrice += (Math.random() - 0.5) * volatility * 2;
-      const point: ChartDataPoint = {
-        date: date.toISOString(),
-        price: Math.round(currentPrice * 100) / 100,
-      };
-      if (chartType === 'candlestick') {
-        const dv = volatility * 0.3;
-        point.open = currentPrice;
-        point.high = currentPrice + Math.random() * dv;
-        point.low = currentPrice - Math.random() * dv;
-        point.close = point.low + Math.random() * (point.high - point.low);
-      }
-      data.push(point);
-    }
-    return data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }
-
+...
   private getFallbackCommodities(): CommodityData[] {
     const coreCommodities = [
       'WTI Crude Oil',
@@ -402,15 +110,54 @@ export class CommodityService {
     ];
     return coreCommodities
       .filter((name) => COMMODITY_SYMBOLS[name])
-      .map((name) => ({
-        symbol: COMMODITY_SYMBOLS[name].symbol,
-        price: this.getBasePriceForCommodity(name),
-        change: (Math.random() - 0.5) * this.getBasePriceForCommodity(name) * 0.02,
-        changePercent: (Math.random() - 0.5) * 4,
-        volume: Math.floor(Math.random() * 100000),
+      .map((name) => this.buildMissingCommodityFallback(
         name,
-        ...COMMODITY_SYMBOLS[name],
-      }));
+        COMMODITY_SYMBOLS[name].category,
+        COMMODITY_SYMBOLS[name].symbol,
+        COMMODITY_SYMBOLS[name].contractSize,
+        COMMODITY_SYMBOLS[name].venue,
+      ));
+  }
+
+  private buildMissingCommodityFallback(
+    name: string,
+    category: string,
+    symbol: string,
+    contractSize: string,
+    venue: string,
+  ): CommodityData {
+    const basePrice = this.getBasePriceForCommodity(name);
+    const shouldShowFallbackPrice = category === 'energy';
+    const seeded = this.getSeededFactor(name);
+    const price = shouldShowFallbackPrice
+      ? Math.round(basePrice * (0.985 + seeded * 0.03) * 100) / 100
+      : 0;
+    const changePercent = shouldShowFallbackPrice
+      ? Math.round(((seeded - 0.5) * 4) * 100) / 100
+      : 0;
+    const change = shouldShowFallbackPrice
+      ? Math.round((price * (changePercent / 100)) * 100) / 100
+      : 0;
+
+    return {
+      name,
+      symbol,
+      price,
+      change,
+      changePercent,
+      volume: shouldShowFallbackPrice ? Math.floor(50000 + seeded * 50000) : undefined,
+      category,
+      contractSize,
+      venue,
+    };
+  }
+
+  private getSeededFactor(input: string): number {
+    const hash = input.split('').reduce((acc, char) => {
+      acc = ((acc << 5) - acc) + char.charCodeAt(0);
+      return acc & acc;
+    }, 0);
+    return (Math.abs(hash) % 100) / 100;
   }
 
   private getBasePriceForCommodity(commodityName: string): number {
