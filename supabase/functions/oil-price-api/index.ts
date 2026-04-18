@@ -9,8 +9,8 @@ const OIL_API_BASE = 'https://api.oilpriceapi.com/v1';
 
 // In-memory cache with TTL (5 minutes for single, 3 minutes for batch)
 const priceCache = new Map<string, { data: any; timestamp: number }>();
-const SINGLE_CACHE_TTL = 30 * 60 * 1000; // 30 minutes — OilPriceAPI free tier is heavily rate-limited
-const BATCH_CACHE_TTL = 30 * 60 * 1000;  // 30 minutes
+const SINGLE_CACHE_TTL = 2 * 60 * 60 * 1000; // 2 hours — protects OilPriceAPI quota for premium subscribers
+const BATCH_CACHE_TTL = 2 * 60 * 60 * 1000;  // 2 hours
 
 function getCached(key: string, ttl: number): any | null {
   const entry = priceCache.get(key);
@@ -74,14 +74,14 @@ const OIL_BLEND_CODES: Record<string, string> = {
 };
 
 // Premium-only energy commodities. See mem://monetization/strategy.
-// These are excluded from free-tier responses to conserve OilPriceAPI quota.
+// Trimmed (was 23) to keep per-subscriber OilPriceAPI burn sustainable.
 const PREMIUM_ENERGY = new Set<string>([
-  'Indian Basket', 'Tapis Crude Oil', 'Urals Crude Oil', 'Western Canadian Select',
-  'WTI Midland', 'Alaska North Slope', 'Mars Blend', 'Louisiana Light Sweet',
-  'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel',
-  'Gasoil', 'Naphtha', 'Propane', 'Ethanol',
-  'VLSFO Global', 'HFO 380 Global', 'MGO 0.5%S Global',
-  'HFO 380 Rotterdam', 'VLSFO Singapore', 'MGO Houston', 'VLSFO Fujairah',
+  // Crude (4)
+  'Western Canadian Select', 'WTI Midland', 'Mars Blend', 'Louisiana Light Sweet',
+  // Refined (6)
+  'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel', 'Gasoil', 'Naphtha',
+  // Marine fuels (3)
+  'VLSFO Global', 'HFO 380 Rotterdam', 'MGO 0.5%S Global',
 ]);
 
 serve(async (req) => {

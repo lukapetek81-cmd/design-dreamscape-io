@@ -56,8 +56,8 @@ export class CommodityPriceApiClient implements ApiClient {
       }
     }
 
-    // Cache for 1 hour to fit Lite plan's 2,000 calls/month quota.
-    setCachedData(cacheKey, allCommodities, 60 * 60 * 1000);
+    // Cache for 2 hours to halve burn against CPA Lite plan's 2,000 calls/month quota.
+    setCachedData(cacheKey, allCommodities, 2 * 60 * 60 * 1000);
     this.logger.info(`Fetched ${allCommodities.length} commodities from CommodityPriceAPI`);
     return allCommodities;
   }
@@ -74,7 +74,7 @@ export class CommodityPriceApiClient implements ApiClient {
 
     const batchData = await this.fetchBatch([cpaSymbol]);
     const data = batchData[0] ?? null;
-    if (data) setCachedData(cacheKey, data, 60 * 60 * 1000);
+    if (data) setCachedData(cacheKey, data, 2 * 60 * 60 * 1000);
     return data;
   }
 
