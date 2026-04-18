@@ -200,17 +200,19 @@ serve(async (req) => {
     const body = req.method === 'POST' ? await req.json() : {}
     const { dataDelay = 'realtime' } = body
 
-    // Check cache
-    if (symbolsCache && Date.now() - symbolsCache.timestamp < SYMBOLS_CACHE_TTL) {
-      console.log(`Cache hit: returning ${symbolsCache.data.length} commodities`);
+    // Check cache (per tier)
+    const cache = isPremium ? symbolsCachePremium : symbolsCacheFree;
+    if (cache && Date.now() - cache.timestamp < SYMBOLS_CACHE_TTL) {
+      console.log(`Cache hit (${isPremium ? 'premium' : 'free'}): returning ${cache.data.length} commodities`);
       return new Response(
         JSON.stringify({
-          commodities: symbolsCache.data,
+          commodities: cache.data,
           source: 'cached',
-          count: symbolsCache.data.length,
+          count: cache.data.length,
           timestamp: new Date().toISOString(),
           dataDelay,
           isDelayed: dataDelay === '15min',
+          isPremium,
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
