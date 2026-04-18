@@ -69,8 +69,6 @@ const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; cont
   
   // Livestock & Dairy
   'Live Cattle Futures': { symbol: 'LE=F', category: 'livestock', contractSize: '40,000 lbs', venue: 'CME' },
-  'Feeder Cattle Futures': { symbol: 'GF=F', category: 'livestock', contractSize: '50,000 lbs', venue: 'CME' },
-  'Lean Hogs Futures': { symbol: 'HE=F', category: 'livestock', contractSize: '40,000 lbs', venue: 'CME' },
   'Milk Class III': { symbol: 'DC=F', category: 'livestock', contractSize: '200,000 lbs', venue: 'CME' },
   
   // Soft Commodities
@@ -82,7 +80,6 @@ const COMMODITY_SYMBOLS: Record<string, { symbol: string; category: string; cont
   
   // Forest Products
   'Lumber Futures': { symbol: 'LBS=F', category: 'forest', contractSize: '110,000 bd ft', venue: 'CME' },
-  'Random Length Lumber': { symbol: 'LB=F', category: 'forest', contractSize: '110,000 bd ft', venue: 'CME' },
 };
 
 // CommodityPriceAPI v2 symbol mapping for NON-energy commodities
@@ -225,40 +222,51 @@ serve(async (req) => {
     // ──────────────────────────────────────────────
     // Step 1: Fetch energy commodities from OilPriceAPI
     // ──────────────────────────────────────────────
-    const oilApiKey = Deno.env.get('OIL_PRICE_API_KEY');
-    if (oilApiKey) {
+    // Use the oil-price-api proxy edge function — it batches, throttles, and shares
+    // a 30-min in-memory cache across callers, avoiding 429s from parallel direct hits.
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+    if (supabaseUrl && supabaseAnonKey) {
       try {
-        console.log('Fetching energy commodities from OilPriceAPI...');
-        const oilApiFetches = Object.entries(OIL_API_BLENDS)
+        console.log('Fetching energy commodities via oil-price-api proxy...');
+        const energyNames = Object.entries(OIL_API_BLENDS)
           .filter(([name]) => COMMODITY_SYMBOLS[name])
-          .map(async ([name, code]) => {
-            try {
-              const resp = await fetch(
-                `https://api.oilpriceapi.com/v1/prices/latest?by_code=${code}`,
-                { headers: { 'Authorization': `Token ${oilApiKey}` } }
-              );
-              if (!resp.ok) { await resp.text(); return null; }
-              const result = await resp.json();
-              if (result.data?.price) {
-                return {
-                  name, symbol: COMMODITY_SYMBOLS[name].symbol,
-                  price: result.data.price, change: 0, changePercent: 0, volume: 0,
-                  ...COMMODITY_SYMBOLS[name],
-                  supportedByFMP: false, source: 'oilpriceapi',
-                };
-              }
-            } catch (_) { /* skip */ }
-            return null;
-          });
+          .map(([name]) => name);
 
-        const results = await Promise.all(oilApiFetches);
-        for (const r of results) {
-          if (r) { commoditiesData.push(r); existingNames.add(r.name); }
+        const proxyResp = await fetch(`${supabaseUrl}/functions/v1/oil-price-api`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${supabaseAnonKey}`,
+          },
+          body: JSON.stringify({ commodities: energyNames, includePremium: isPremium }),
+        });
+
+        if (proxyResp.ok) {
+          const proxyJson = await proxyResp.json();
+          const payload = proxyJson?.data ?? {};
+          for (const [name, item] of Object.entries<any>(payload)) {
+            const meta = COMMODITY_SYMBOLS[name];
+            if (!meta || !item) continue;
+            const price = parseFloat(item.price) || 0;
+            if (price <= 0) continue;
+            commoditiesData.push({
+              name, symbol: meta.symbol,
+              price, change: parseFloat(item.change) || 0,
+              changePercent: parseFloat(item.changePercent) || 0,
+              volume: 0,
+              ...meta,
+              supportedByFMP: false, source: 'oilpriceapi',
+            });
+            existingNames.add(name);
+          }
+          console.log(`OilPriceAPI proxy: loaded ${existingNames.size} energy commodities`);
+          if (existingNames.size > 0) dataSource = 'oilpriceapi';
+        } else {
+          console.warn(`oil-price-api proxy failed: ${proxyResp.status}`);
         }
-        console.log(`OilPriceAPI: loaded ${commoditiesData.length} energy commodities`);
-        if (commoditiesData.length > 0) dataSource = 'oilpriceapi';
       } catch (err) {
-        console.warn('OilPriceAPI batch fetch failed:', err);
+        console.warn('oil-price-api proxy threw:', err);
       }
     }
 
