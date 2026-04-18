@@ -154,11 +154,15 @@ serve(async (req) => {
 
     // Batch request for multiple commodities
     if (commodities && Array.isArray(commodities)) {
+      // Filter premium commodities for free callers — protects OilPriceAPI quota.
+      const allowed = includePremium
+        ? commodities
+        : commodities.filter((n: string) => !PREMIUM_ENERGY.has(n));
       const results: Record<string, any> = {};
       const uncachedNames: string[] = [];
 
       // Check cache for each commodity first
-      for (const name of commodities) {
+      for (const name of allowed) {
         if (!OIL_BLEND_CODES[name]) continue;
         const cacheKey = `single:${OIL_BLEND_CODES[name]}`;
         const cached = getCached(cacheKey, BATCH_CACHE_TTL);
