@@ -5,7 +5,6 @@ export interface CommodityCounts {
   livestock: number;
   softs: number;
   industrials: number;
-  other: number;
 }
 
 export interface CommodityGroup {
