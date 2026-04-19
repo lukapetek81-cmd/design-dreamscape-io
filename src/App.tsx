@@ -26,6 +26,8 @@ import NewsSettings from '@/pages/NewsSettings';
 import ResetPassword from '@/pages/ResetPassword';
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsOfService from "@/pages/TermsOfService";
+import RiskDisclosure from "@/pages/RiskDisclosure";
+import Compliance from "@/pages/Compliance";
 import RiskManagement from '@/pages/RiskManagement';
 import TradingCommunity from '@/pages/TradingCommunity';
 import Watchlists from '@/pages/Watchlists';
@@ -51,6 +53,8 @@ const App = () => {
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms-of-service" element={<TermsOfService />} />
+                <Route path="/risk-disclosure" element={<RiskDisclosure />} />
+                <Route path="/compliance" element={<Compliance />} />
                 
                 
                 <Route path="/trading" element={<Trading />} />
