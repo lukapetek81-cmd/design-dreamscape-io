@@ -101,12 +101,6 @@ const CommodityTradeActions: React.FC<CommodityTradeActionsProps> = ({ commodity
         onClose={() => setRiskOpen(false)}
         onAccept={handleRiskAccepted}
       />
-
-      <RiskAcceptanceModal
-        open={riskOpen}
-        onClose={() => setRiskOpen(false)}
-        onAccept={handleRiskAccepted}
-      />
     </>
   );
 };
