@@ -17,7 +17,9 @@ const CommodityTradeActions: React.FC<CommodityTradeActionsProps> = ({ commodity
   const { user } = useAuth();
   const navigate = useNavigate();
   const { balance, openPosition } = useSyntheticTrading();
+  const { isAccepted, accept } = useLegalAcceptance();
   const [modalOpen, setModalOpen] = useState(false);
+  const [riskOpen, setRiskOpen] = useState(false);
   const [direction, setDirection] = useState<'long' | 'short'>('long');
 
   if (!user) {
@@ -35,7 +37,17 @@ const CommodityTradeActions: React.FC<CommodityTradeActionsProps> = ({ commodity
 
   const handleClick = (dir: 'long' | 'short') => {
     setDirection(dir);
+    if (!isAccepted) {
+      setRiskOpen(true);
+      return;
+    }
     setModalOpen(true);
+  };
+
+  const handleRiskAccepted = async () => {
+    const ok = await accept();
+    if (ok) setModalOpen(true);
+    return ok;
   };
 
   const handleConfirm = async (amount: number) => {
