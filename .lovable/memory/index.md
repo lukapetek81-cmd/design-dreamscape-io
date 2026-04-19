@@ -37,3 +37,4 @@ Updated: just now
 - [CommodityPriceAPI Config](mem://integrations/commoditypriceapi-config) — CPA v2 Lite plan, FX via Frankfurter, FMP fully removed
 - [Commodity Catalog](mem://project/commodity-catalog-scope) — 46 items, limited to live data availability
 - [Economic Calendar](mem://features/economic-calendar-integration) — FMP integration with dashboard deep linking
+- [EU Compliance](mem://compliance/eu-positioning) — Synthetic = paper-only, MiCA/MiFID outside scope, first-trade acceptance gate via user_legal_acceptance
