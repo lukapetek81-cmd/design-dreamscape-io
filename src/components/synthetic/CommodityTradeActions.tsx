@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 import { useSyntheticTrading } from '@/hooks/useSyntheticTrading';
+import { useLegalAcceptance } from '@/hooks/useLegalAcceptance';
 import { useAuth } from '@/contexts/AuthContext';
 import PositionEntryModal from './PositionEntryModal';
+import RiskAcceptanceModal from './RiskAcceptanceModal';
 import { useNavigate } from 'react-router-dom';
 
 interface CommodityTradeActionsProps {
