@@ -27,6 +27,7 @@ import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsOfService from "@/pages/TermsOfService";
 import Watchlists from '@/pages/Watchlists';
 import DeleteAccount from '@/pages/DeleteAccount';
+import PlayStoreCompliance from '@/pages/PlayStoreCompliance';
 
 const App = () => {
   // Create QueryClient directly without useMemo to avoid React hooks issues
@@ -67,6 +68,7 @@ const App = () => {
                 
                 <Route path="/watchlists" element={<Watchlists />} />
                 <Route path="/delete-account" element={<DeleteAccount />} />
+                <Route path="/play-store-compliance" element={<PlayStoreCompliance />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <Toaster />
