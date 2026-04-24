@@ -11,6 +11,7 @@ import { Clock, CheckCircle, XCircle, AlertCircle, ArrowLeft } from "lucide-reac
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useCommodityCounts } from "@/hooks/useCommodityCounts";
 
 interface MarketConfig {
   id: string;
@@ -39,10 +40,7 @@ const MarketStatus = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  const commodityCounts = {
-    energy: 0, metals: 0, grains: 0, livestock: 0, softs: 0, industrials: 0, other: 0
-  };
+  const commodityCounts = useCommodityCounts();
 
   useEffect(() => {
     fetchMarketConfigs();
