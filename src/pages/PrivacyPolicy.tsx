@@ -13,7 +13,7 @@ const PrivacyPolicy = () => {
       <SEOHead 
         title="Privacy Policy - Commodity Hub"
         description="Learn how Commodity Hub protects your privacy and handles your personal data in compliance with global privacy regulations."
-        keywords={["privacy policy", "data protection", "GDPR", "CCPA", "commodity trading", "data security"]}
+        keywords={["privacy policy", "data protection", "GDPR", "CCPA", "commodity prices", "data security"]}
       />
       
       <div className="min-h-screen bg-background">
@@ -62,7 +62,7 @@ const PrivacyPolicy = () => {
                 <div className="space-y-4 text-muted-foreground">
                   <p>We use the information we collect to:</p>
                   <ul className="list-disc list-inside space-y-2 ml-4">
-                    <li>Provide and maintain our trading platform services</li>
+                    <li>Provide and maintain our commodity price tracking service</li>
                     <li>Personalize your experience and recommendations</li>
                     <li>Send you important updates and market alerts</li>
                     <li>Improve our services through analytics</li>

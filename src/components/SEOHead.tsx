@@ -16,13 +16,13 @@ interface SEOHeadProps {
 
 const SEOHead: React.FC<SEOHeadProps> = ({
   title = "Commodity Hub - Professional Trading Analytics",
-  description = "Advanced commodity trading platform with real-time data, analytics, and portfolio management tools for professional traders.",
+  description = "Live commodity prices, charts, and market insights across energy, metals, grains, softs, and livestock.",
   canonical,
   type = 'website',
   image = '/icon.png',
   siteName = 'Commodity Hub',
   author = 'Commodity Hub Team',
-  keywords = ['commodity trading', 'analytics', 'real-time data', 'portfolio management', 'trading platform'],
+  keywords = ['commodity prices', 'live commodity data', 'oil price', 'gold price', 'market insights', 'price tracker'],
   noIndex = false,
   structuredData
 }) => {
