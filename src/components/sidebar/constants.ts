@@ -1,4 +1,4 @@
-import { Zap, Coins, Wheat, Beef, Coffee, Briefcase, BarChart3, Star, Filter, Calendar, Lightbulb, GraduationCap, Users, Activity, Factory, ShieldCheck } from "lucide-react";
+import { Zap, Coins, Wheat, Beef, Coffee, Briefcase, BarChart3, Star, Filter, Calendar, Lightbulb, GraduationCap, Users, Activity, Factory } from "lucide-react";
 import { CommodityGroup, MarketTool } from "./types";
 
 export const COMMODITY_GROUPS: CommodityGroup[] = [
@@ -26,5 +26,4 @@ export const COMMUNITY_TOOLS: MarketTool[] = [
 
 export const ACTIVITY_TOOLS: MarketTool[] = [
   { id: "market-status", label: "Market Status", icon: Activity, color: "bg-slate-50 dark:bg-slate-950/20 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400", path: "/market-status" },
-  { id: "compliance", label: "Play Store Compliance", icon: ShieldCheck, color: "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400", path: "/play-store-compliance" },
 ];
