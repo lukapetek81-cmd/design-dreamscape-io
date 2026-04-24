@@ -23,7 +23,8 @@ interface ScreenerFilters {
 
 const MarketScreener = () => {
   const navigate = useNavigate();
-  const { data: commodities, isLoading, error } = useAvailableCommodities();
+  // Lightweight mode = no polling, no refetch on mount; reuses Dashboard's cache.
+  const { data: commodities, isLoading, error } = useAvailableCommodities({ lightweight: true });
   const { profile } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
