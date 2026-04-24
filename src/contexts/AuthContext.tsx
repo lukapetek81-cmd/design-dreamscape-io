@@ -281,6 +281,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       if (error) {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('auth:error', { detail: { message: error.message } })
+          );
+        }
         toast({
           title: "Google Sign In Error",
           description: error.message,
@@ -291,6 +296,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { error };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('auth:error', { detail: { message: errorMessage } })
+        );
+      }
       toast({
         title: "Google Sign In Error",
         description: errorMessage,
