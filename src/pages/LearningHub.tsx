@@ -167,10 +167,10 @@ const LearningHub = () => {
             <div className="max-w-6xl mx-auto space-y-6">
               <div>
                 <h2 className="text-2xl font-bold tracking-tight">
-                  Commodity Trading Education
+                  Commodity Markets Education
                 </h2>
                 <p className="text-muted-foreground">
-                  Master commodity trading with our comprehensive learning resources
+                  Understand commodity markets with our comprehensive learning resources
                 </p>
               </div>
 

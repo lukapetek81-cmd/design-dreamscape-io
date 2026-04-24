@@ -37,8 +37,8 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, onSkip }) =
   const steps: OnboardingStep[] = [
     {
       id: 'welcome',
-      title: 'Welcome to CommodityFlow',
-      description: 'Your comprehensive platform for commodity trading insights and market analysis.',
+      title: 'Welcome to Commodity Hub',
+      description: 'Live commodity prices, charts, and market insights — all in one app.',
       icon: Sparkles,
       content: (
         <div className="space-y-4">
@@ -47,14 +47,14 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, onSkip }) =
               <Sparkles className="w-12 h-12 text-white" />
             </div>
             <p className="text-muted-foreground">
-              Get real-time commodity prices, market analysis, and trading insights all in one place.
+              Track real-time prices for oil, gold, grains, metals, and more — with expert market insights.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center p-4 rounded-lg bg-muted/30">
               <TrendingUp className="w-8 h-8 mx-auto mb-2 text-primary" />
-              <h4 className="font-medium">Real-time Data</h4>
-              <p className="text-sm text-muted-foreground">Live commodity prices</p>
+              <h4 className="font-medium">Live Prices</h4>
+              <p className="text-sm text-muted-foreground">Energy, metals, grains, softs</p>
             </div>
             <div className="text-center p-4 rounded-lg bg-muted/30">
               <BookOpen className="w-8 h-8 mx-auto mb-2 text-primary" />
@@ -68,7 +68,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, onSkip }) =
     {
       id: 'dashboard',
       title: 'Explore Your Dashboard',
-      description: 'Your central hub for monitoring market movements and portfolio performance.',
+      description: 'Your central hub for monitoring commodity markets at a glance.',
       icon: TrendingUp,
       content: (
         <div className="space-y-4">
@@ -77,19 +77,19 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, onSkip }) =
             <ul className="space-y-2 text-sm">
               <li className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-green-500" />
-                Interactive price charts and technical indicators
+                Interactive price charts with technical indicators
               </li>
               <li className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-green-500" />
-                Portfolio tracking and performance metrics
+                Multi-currency pricing (USD, EUR, CNY, INR)
               </li>
               <li className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-green-500" />
-                Real-time market news and sentiment analysis
+                Real-time commodity news and sentiment
               </li>
               <li className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-green-500" />
-                Customizable watchlists and alerts
+                Custom watchlists and price alerts
               </li>
             </ul>
           </div>
@@ -102,7 +102,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, onSkip }) =
     {
       id: 'features',
       title: 'Powerful Features',
-      description: 'Discover advanced tools for market analysis and portfolio management.',
+      description: 'Advanced tools for commodity market research and analysis.',
       icon: BookOpen,
       content: (
         <div className="space-y-4">
@@ -113,7 +113,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, onSkip }) =
               </div>
               <div>
                 <h4 className="font-medium">Market Screener</h4>
-                <p className="text-sm text-muted-foreground">Filter and analyze commodities by various criteria</p>
+                <p className="text-sm text-muted-foreground">Filter and compare commodities across categories</p>
               </div>
             </div>
             <div className="flex items-start gap-3 p-3 rounded-lg border bg-card">
@@ -122,7 +122,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, onSkip }) =
               </div>
               <div>
                 <h4 className="font-medium">Learning Hub</h4>
-                <p className="text-sm text-muted-foreground">Educational resources and trading strategies</p>
+                <p className="text-sm text-muted-foreground">Educational resources on commodity markets</p>
               </div>
             </div>
             <div className="flex items-start gap-3 p-3 rounded-lg border bg-card">
@@ -130,8 +130,8 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, onSkip }) =
                 <Settings className="w-4 h-4 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <h4 className="font-medium">Risk Calculator</h4>
-                <p className="text-sm text-muted-foreground">Assess and manage your trading risk</p>
+                <h4 className="font-medium">Premium Commodities</h4>
+                <p className="text-sm text-muted-foreground">Unlock 60+ specialty markets with a subscription</p>
               </div>
             </div>
           </div>
@@ -141,7 +141,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, onSkip }) =
     {
       id: 'settings',
       title: 'Customize Your Experience',
-      description: 'Set up your preferences and API connections for the best experience.',
+      description: 'Set up your preferences for the best experience.',
       icon: Settings,
       content: (
         <div className="space-y-4">
@@ -155,8 +155,8 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, onSkip }) =
             </div>
             <div className="flex items-center justify-between p-3 rounded-lg border bg-card">
               <div>
-                <h4 className="font-medium">API Configuration</h4>
-                <p className="text-sm text-muted-foreground">Connect your trading accounts</p>
+                <h4 className="font-medium">Currency Preference</h4>
+                <p className="text-sm text-muted-foreground">View prices in USD, EUR, CNY, or INR</p>
               </div>
               <Badge variant="secondary">Optional</Badge>
             </div>

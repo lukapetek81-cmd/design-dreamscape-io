@@ -111,7 +111,7 @@ const Auth = () => {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gradient">Commodity Hub</h1>
-              <p className="text-sm text-muted-foreground">Real-time commodity trading platform</p>
+              <p className="text-sm text-muted-foreground">Real-time commodity prices & insights</p>
             </div>
           </div>
         </div>
@@ -128,7 +128,7 @@ const Auth = () => {
               <div className="text-center space-y-2">
                 <h2 className="text-xl font-semibold">Welcome back</h2>
                 <p className="text-sm text-muted-foreground">
-                  Sign in to access your commodity dashboard
+                  Sign in to track live commodity prices
                 </p>
               </div>
 
@@ -237,7 +237,7 @@ const Auth = () => {
               <div className="text-center space-y-2">
                 <h2 className="text-xl font-semibold">Create account</h2>
                 <p className="text-sm text-muted-foreground">
-                  Get started with your commodity trading journey
+                  Track global commodity prices in real time
                 </p>
               </div>
 

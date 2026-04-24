@@ -42,7 +42,7 @@ const CommoditySidebar = React.memo(({ activeGroup, onGroupSelect, commodityCoun
           {!collapsed && (
             <div>
               <h2 className="font-bold text-base">Commodity Hub</h2>
-              <p className="text-xs text-muted-foreground">Trading Platform</p>
+              <p className="text-xs text-muted-foreground">Commodity Prices</p>
             </div>
           )}
         </div>
