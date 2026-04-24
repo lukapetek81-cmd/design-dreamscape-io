@@ -9,10 +9,7 @@ import { TouchRipple } from './mobile/TouchRipple';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useAuth } from '@/contexts/AuthContext';
-import { getMarketStatus } from '@/lib/marketHours';
 import LazyChart from './LazyChart';
-import LazyNews from './LazyNews';
-import CommodityTradeActions from './synthetic/CommodityTradeActions';
 
 interface CommodityCardProps {
   name: string;
@@ -58,7 +55,6 @@ const CommodityCard = React.memo<CommodityCardProps>(({
   const isMobile = useIsMobile();
   const { vibrateTouch } = useHaptics();
   const { profile } = useAuth();
-  const marketStatus = getMarketStatus(name);
 
   // Get current price data for selected contract
   const selectedContractData = React.useMemo(() => {
@@ -221,9 +217,7 @@ const CommodityCard = React.memo<CommodityCardProps>(({
                             {selectedContractData.expirationDate ? new Date(selectedContractData.expirationDate).toLocaleDateString() : 'N/A'}
                           </span>
                         )}
-                        <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${
-                          marketStatus.isOpen ? 'bg-green-500' : 'bg-red-500'
-                        }`}></div>
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
                       </div>
                     </div>
                   </div>
@@ -338,15 +332,8 @@ const CommodityCard = React.memo<CommodityCardProps>(({
                     <p className="text-xs font-semibold text-muted-foreground number-display">{getPriceUnits(name)}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Market Status</p>
-                    <div className="flex items-center justify-center gap-1">
-                      <div className={`w-1.5 h-1.5 rounded-full ${
-                        marketStatus.isOpen ? 'bg-green-500' : 'bg-red-500'
-                      }`}></div>
-                      <span className="text-xs font-semibold text-muted-foreground">
-                        {marketStatus.isOpen ? 'Open' : 'Closed'}
-                      </span>
-                    </div>
+                    <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Live</p>
+                    <span className="text-xs font-semibold text-muted-foreground">Real-time</span>
                   </div>
                 </div>
               </div>
@@ -357,7 +344,6 @@ const CommodityCard = React.memo<CommodityCardProps>(({
       
       <CollapsibleContent className="overflow-hidden">
         <div className="mt-3 sm:mt-4 space-y-4 sm:space-y-6 animate-accordion-down">
-          <CommodityTradeActions commodityName={name} currentPrice={displayPrice} />
           <LazyChart 
             name={name} 
             basePrice={displayPrice || 0} 
@@ -371,7 +357,6 @@ const CommodityCard = React.memo<CommodityCardProps>(({
               venue: selectedContractData.venue || venue || 'NYMEX'
             } : undefined}
           />
-          <LazyNews commodity={name} />
         </div>
       </CollapsibleContent>
     </Collapsible>
