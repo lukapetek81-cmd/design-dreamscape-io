@@ -269,10 +269,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signInWithGoogle = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/`,
+          skipBrowserRedirect: true,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -291,9 +292,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           description: error.message,
           variant: "destructive",
         });
+        return { error };
       }
 
-      return { error };
+      if (!data?.url) {
+        const redirectError = new Error('Google OAuth URL was not returned by Supabase');
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('auth:error', { detail: { message: redirectError.message } })
+          );
+        }
+        toast({
+          title: "Google Sign In Error",
+          description: redirectError.message,
+          variant: "destructive",
+        });
+        return { error: redirectError };
+      }
+
+      if (typeof window !== 'undefined') {
+        try {
+          if (window.top && window.top !== window) {
+            window.top.location.href = data.url;
+          } else {
+            window.location.assign(data.url);
+          }
+        } catch {
+          window.location.assign(data.url);
+        }
+      }
+
+      return { error: null };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
       if (typeof window !== 'undefined') {
