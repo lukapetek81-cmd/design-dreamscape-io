@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useCommodityCounts } from "@/hooks/useCommodityCounts";
 
 interface SentimentAggregate {
   id: string;
@@ -50,10 +51,7 @@ const MarketSentiment = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  const commodityCounts = {
-    energy: 0, metals: 0, grains: 0, livestock: 0, softs: 0, industrials: 0, other: 0
-  };
+  const commodityCounts = useCommodityCounts();
 
   useEffect(() => {
     fetchSentimentData();
