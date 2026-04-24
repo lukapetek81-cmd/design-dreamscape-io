@@ -10,11 +10,13 @@ max_rows = 1000
 [auth]
 enabled = true
 port = 54320
-site_url = "https://commodity-hub.lovableproject.com"
+site_url = "https://commodity-hub.lovable.app"
 additional_redirect_urls = [
-  "https://c8fabd7a-96c7-4aff-8d7b-001690ec23c7.lovableproject.com",
+  "https://id-preview--0cea242b-6aba-4f5a-9e49-91997ef3b761.lovable.app",
+  "https://0cea242b-6aba-4f5a-9e49-91997ef3b761.lovableproject.com",
+  "https://commodity-hub.lovableproject.com",
   "https://commodity-hub.vercel.app",
-  "https://yourdomain.com"
+  "http://localhost:5173"
 ]
 jwt_expiry = 3600
 refresh_token_rotation_enabled = true
