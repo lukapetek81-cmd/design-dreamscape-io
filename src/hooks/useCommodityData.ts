@@ -42,12 +42,24 @@ export interface Commodity {
   marketCap: string | null;
 }
 
-export const useAvailableCommodities = () => {
+export const useAvailableCommodities = (options?: { lightweight?: boolean }) => {
   const { getDataDelay, shouldDelayData, isPremium } = useDelayedData();
   const { getOptimizedQuerySettings } = useCacheOptimization();
   
   // Get optimized settings for commodity data
   const optimizedSettings = getOptimizedQuerySettings('price');
+
+  // Lightweight mode: re-use whatever's in cache, never poll, long stale time.
+  // Used by pages that only need a snapshot (e.g. Market Screener) to avoid
+  // burning CommodityPriceAPI quota on background refetches.
+  const lightweightOverrides = options?.lightweight
+    ? {
+        refetchInterval: false as const,
+        refetchOnMount: false as const,
+        refetchOnWindowFocus: false,
+        staleTime: 30 * 60 * 1000, // 30 min
+      }
+    : {};
   
   return useQuery({
     queryKey: ['all-commodities', getDataDelay(), isPremium],
@@ -71,6 +83,7 @@ export const useAvailableCommodities = () => {
     ...optimizedSettings,
     refetchOnWindowFocus: false, // Prevent unnecessary refetches on mobile
     refetchOnReconnect: 'always', // But refetch when connection restored
+    ...lightweightOverrides,
   });
 };
 
