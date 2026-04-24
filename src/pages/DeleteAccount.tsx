@@ -56,18 +56,10 @@ const DeleteAccount = () => {
       // Delete user data from all tables in parallel
       await Promise.allSettled([
         supabase.from('portfolio_positions').delete().eq('user_id', userId),
-        supabase.from('portfolio_snapshots').delete().eq('user_id', userId),
         supabase.from('price_comparisons').delete().eq('user_id', userId),
         supabase.from('recent_activities').delete().eq('user_id', userId),
-        supabase.from('risk_metrics').delete().eq('user_id', userId),
         supabase.from('sentiment_votes').delete().eq('user_id', userId),
-        supabase.from('trading_orders').delete().eq('user_id', userId),
-        supabase.from('trading_sessions').delete().eq('user_id', userId),
-        supabase.from('trade_executions').delete().eq('user_id', userId),
         supabase.from('user_favorites').delete().eq('user_id', userId),
-        supabase.from('ibkr_credentials').delete().eq('user_id', userId),
-        supabase.from('forum_posts').delete().eq('user_id', userId),
-        supabase.from('forum_topics').delete().eq('user_id', userId),
       ]);
 
       // Delete profile
