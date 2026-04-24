@@ -217,32 +217,35 @@ export const CENT_QUOTED_SYMBOLS = new Set([
  * Premium-only commodities. Free tier sees household names; everything niche/regional/exotic
  * lives behind the paywall. See mem://monetization/strategy.
  */
-// Free tier strictly limited to 30 household-name commodities to control API burn.
-// Everything else (regional/niche/exotic/spot-or-futures variants) is premium-gated.
-// Free tier (30): WTI, Brent, Dubai, Murban, OPEC, Natural Gas, Gold, Silver, Copper,
-// Platinum, Palladium, Aluminum, Zinc, Iron Ore, Corn, Wheat, Soybean, Soybean Oil,
-// Soybean Meal, Coffee Arabica, Sugar #11, Cotton, Cocoa, Orange Juice, Live Cattle,
-// Lean Hogs, Milk, Rubber, Industrial Ethanol, Lumber Futures.
+// Free tier: 17 household-name commodities — top 2-4 from each group.
+// Everything else is premium-gated. See mem://monetization/strategy.
+// Free (17): WTI, Brent, Natural Gas, Gold Futures, Silver Futures, Copper, Platinum,
+// Corn Futures, Wheat Futures, Soybean Futures, Coffee Arabica, Sugar #11, Cotton,
+// Cocoa, Live Cattle, Lean Hogs, Lumber Futures.
 export const PREMIUM_COMMODITIES = new Set<string>([
-  // Energy — premium (20)
-  'DME Oman Crude', 'Indian Basket', 'Tapis Crude Oil', 'Urals Crude Oil',
+  // Energy — premium (23)
+  'Crude Oil Dubai', 'DME Oman Crude', 'Murban Crude', 'OPEC Basket',
+  'Indian Basket', 'Tapis Crude Oil', 'Urals Crude Oil',
   'Western Canadian Select', 'WTI Midland', 'Alaska North Slope', 'Mars Blend', 'Louisiana Light Sweet',
   'Natural Gas UK', 'Dutch TTF Gas', 'Japan/Korea LNG',
   'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel', 'Gasoil', 'Naphtha', 'Propane', 'Ethanol',
-  // Metals — premium (12)
+  // Metals — premium (14)
+  'Palladium', 'Aluminum', 'Zinc', 'Iron Ore',
   'Copper Futures', 'Aluminium Futures', 'Lead Spot', 'Lead Futures',
   'Nickel Spot', 'Nickel Futures', 'Tin', 'Steel', 'Hot-Rolled Coil Steel',
   'Titanium', 'Magnesium', 'Lithium',
-  // Grains — premium (7)
+  // Grains — premium (9)
+  'Soybean Oil', 'Soybean Meal',
   'Oat Futures', 'Rough Rice',
   'Wheat Futures Spot', 'Soybeans Spot', 'Oats Spot', 'Rough Rice Spot',
   'Canola', 'Sunflower Oil', 'Rapeseed Oil',
-  // Softs — premium (4)
-  'UK Sugar No 5', 'Tea', 'Wool', 'Palm Oil',
-  // Livestock — premium (8)
-  'Feeder Cattle', 'Cheese', 'Eggs CH', 'Eggs US',
+  // Softs — premium (5)
+  'Orange Juice', 'UK Sugar No 5', 'Tea', 'Wool', 'Palm Oil',
+  // Livestock — premium (9)
+  'Milk', 'Feeder Cattle', 'Cheese', 'Eggs CH', 'Eggs US',
   'Salmon', 'Poultry', 'Butter', 'Potato',
-  // Industrials — premium (16)
+  // Industrials — premium (18)
+  'Industrial Ethanol', 'Rubber',
   'Bitumen', 'Cobalt', 'Rhodium',
   'Polyethylene', 'Polyvinyl Chloride', 'Polypropylene', 'Soda Ash',
   'Neodymium', 'Tellurium', 'Diammonium Phosphate', 'Urea', 'Urea Ammonium Nitrate',

@@ -3,23 +3,9 @@ import CommodityCard from './CommodityCard';
 import { Commodity } from '@/hooks/useCommodityData';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { SkeletonCard } from '@/components/ui/enhanced-skeleton';
 import { usePerformanceOptimizer } from '@/hooks/usePerformanceOptimizer';
 import { Anchor, Droplets, Flame, BarChart3 } from 'lucide-react';
-
-interface FuturesContract {
-  name: string;
-  symbol: string;
-  price: number;
-  change: number;
-  changePercent: number;
-  volume?: number;
-  expirationDate: string;
-  contractSize?: string;
-  venue?: string;
-}
 
 interface VirtualizedCommodityListProps {
   commodities: Commodity[];
@@ -36,36 +22,6 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
   const { isPremium } = useAuth();
   const [visibleItems, setVisibleItems] = React.useState(10); // Start with 10 items
   const [isLoadingMore, setIsLoadingMore] = React.useState(false);
-
-  // Fetch IBKR futures contracts for all commodities at once for premium users
-  const commodityNames = commodities.map(c => c.name);
-  const futuresQuery = useQuery({
-    queryKey: ['ibkr-futures-bulk', commodityNames],
-    queryFn: async () => {
-      if (!isPremium) return {};
-      
-      const contractsMap: Record<string, FuturesContract[]> = {};
-      
-      // Fetch contracts for each commodity
-      for (const commodityName of commodityNames.slice(0, visibleItems)) {
-        try {
-          const { data, error } = await supabase.functions.invoke('fetch-ibkr-futures', {
-            body: { commodity: commodityName }
-          });
-          
-          if (!error && data?.contracts) {
-            contractsMap[commodityName] = data.contracts;
-          }
-        } catch (error) {
-          console.error(`Error fetching contracts for ${commodityName}:`, error);
-        }
-      }
-      
-      return contractsMap;
-    },
-    enabled: isPremium && commodityNames.length > 0,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
 
   // Increase visible items when scrolling near bottom
   React.useEffect(() => {
@@ -185,7 +141,7 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
           <div className="grid gap-3 sm:gap-4 lg:gap-6">
             {section.items.map((commodity) => {
               const idx = globalIndex++;
-              const availableContracts = isPremium ? futuresQuery.data?.[commodity.name] : undefined;
+              const availableContracts = undefined;
               const isHighlighted = commodity.name === highlightCommodity;
               return (
                 <div 

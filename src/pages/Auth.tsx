@@ -434,20 +434,11 @@ const Auth = () => {
                 <a href="/terms-of-service" className="underline hover:text-primary">
                   terms of service
                 </a>
-                ,{" "}
+                {" and "}
                 <a href="/privacy-policy" className="underline hover:text-primary">
                   privacy policy
                 </a>
-                , and{" "}
-                <a href="/risk-disclosure" className="underline hover:text-primary">
-                  risk disclosure
-                </a>
                 .
-              </p>
-              <p className="text-xs">
-                <a href="/compliance" className="text-muted-foreground/70 hover:text-primary underline">
-                  Compliance & legal hub →
-                </a>
               </p>
           </div>
         </Card>

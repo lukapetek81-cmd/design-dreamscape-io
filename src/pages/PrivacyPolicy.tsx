@@ -105,27 +105,6 @@ const PrivacyPolicy = () => {
 
               <section>
                 <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <Database className="h-5 w-5" />
-                  Synthetic Trading Data
-                </h2>
-                <div className="space-y-3 text-sm text-muted-foreground">
-                  <p>
-                    When you use the synthetic trading feature, we store your virtual USDC balance, open positions,
-                    closed trade history, and a record of which Terms and Risk Disclosure versions you accepted.
-                    This data is stored under your account, visible only to you, and is permanently deleted when you
-                    delete your account.
-                  </p>
-                  <p className="text-xs italic">
-                    KYC notice — applies once identity verification is enabled: if and when we introduce real-money
-                    features, identity-verification data (such as government-ID images, country of residence, and
-                    verification status) will be collected by a regulated third-party KYC provider and processed under
-                    a separate notice presented at that time.
-                  </p>
-                </div>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                   <Bell className="h-5 w-5" />
                   Your Rights
                 </h2>
