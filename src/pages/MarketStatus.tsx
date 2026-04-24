@@ -206,7 +206,7 @@ const MarketStatus = () => {
       <div className="min-h-screen flex w-full">
         <CommoditySidebar 
           activeGroup={activeGroup}
-          onGroupSelect={setActiveGroup}
+          onGroupSelect={(group) => navigate(`/?group=${group}`)}
           commodityCounts={commodityCounts}
         />
         <SidebarInset className="flex-1">
