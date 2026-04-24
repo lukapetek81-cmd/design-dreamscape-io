@@ -449,6 +449,8 @@ const Auth = () => {
             Need help? Contact our support team for assistance.
           </p>
         </div>
+
+        <AuthHealthPanel />
       </div>
     </div>
   );
