@@ -214,17 +214,33 @@ export const CENT_QUOTED_SYMBOLS = new Set([
 ]);
 
 /**
- * Premium-only commodities. Free tier sees household names; everything niche/regional/exotic
- * lives behind the paywall. See mem://monetization/strategy.
+ * Free tier = "basics": the headline market in each commodity family.
+ * Premium unlocks specialty energy (regional blends, marine fuels, refined products),
+ * premium variants of metals/grains/softs/livestock, all industrials, plus ad-free.
+ * See mem://monetization/strategy.
  */
-// Aggressive free tier: only 6 headline commodities are free. Everything else is premium.
 export const FREE_COMMODITIES = new Set<string>([
+  // Energy basics
   'WTI Crude Oil',
   'Brent Crude Oil',
   'Natural Gas',
+  // Metals basics
   'Gold Futures',
+  'Silver Futures',
   'Copper',
+  'Platinum',
+  // Grains basics
   'Corn Futures',
+  'Wheat Futures',
+  'Soybean Futures',
+  // Softs basics
+  'Coffee Arabica',
+  'Sugar #11',
+  'Cotton',
+  'Cocoa',
+  // Livestock basics
+  'Live Cattle',
+  'Lean Hogs',
 ]);
 
 export function isPremiumCommodity(name: string): boolean {
