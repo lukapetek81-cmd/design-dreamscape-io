@@ -1,7 +1,7 @@
 {
-  "name": "Commodity Hub - Professional Trading Analytics",
+  "name": "Commodity Hub - Live Prices & Insights",
   "short_name": "Commodity Hub",
-  "description": "Advanced commodity trading platform with real-time data, analytics, and portfolio management tools for professional traders.",
+  "description": "Live commodity prices, charts, and market insights across energy, metals, grains, softs, and livestock. Track 17 headline commodities free, unlock 60+ specialty markets with Premium.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#8B5CF6",
