@@ -24,6 +24,17 @@ const Dashboard = () => {
   const { data: commodities, isLoading: commoditiesLoading, error: commoditiesError, refetch: refetchCommodities } = useAvailableCommodities();
   const [highlightCommodity, setHighlightCommodity] = useState<string | null>(null);
 
+  // Handle ?group= URL param — jump straight to a commodity group from other pages
+  useEffect(() => {
+    const groupParam = searchParams.get('group');
+    const validGroups = ['energy', 'metals', 'grains', 'livestock', 'softs', 'industrials'];
+    if (groupParam && validGroups.includes(groupParam)) {
+      setActiveGroup(groupParam);
+      searchParams.delete('group');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams]);
+
   // Handle ?commodity= URL param — switch to correct group and highlight
   useEffect(() => {
     const commodityParam = searchParams.get('commodity');
