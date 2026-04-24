@@ -27,11 +27,11 @@ interface PremiumPaywallProps {
 }
 
 const FEATURES = [
-  'Full commodity catalogue (40+ markets)',
-  'All metals, grains, softs, livestock & industrials',
-  'Regional crude blends and refined products',
-  'Extended price history & charts',
-  'Ad-free experience',
+  '20 additional premium energy markets',
+  'Regional crude blends (WCS, Tapis, Urals, Indian Basket)',
+  'Refined products (RBOB, Heating Oil, Jet Fuel, Naphtha…)',
+  'Marine bunker fuels (VLSFO, HFO, MGO) per port',
+  'Priority data refresh & extended history',
 ];
 
 const PremiumPaywall: React.FC<PremiumPaywallProps> = ({ open, onOpenChange }) => {
@@ -100,11 +100,11 @@ const PremiumPaywall: React.FC<PremiumPaywallProps> = ({ open, onOpenChange }) =
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-primary" />
             </div>
-          <DialogTitle>Commodity Hub Premium</DialogTitle>
+            <DialogTitle>Commodity Hub Premium</DialogTitle>
             <Badge variant="secondary" className="text-[10px]">PREMIUM</Badge>
           </div>
           <DialogDescription>
-            Unlock the full commodity catalogue with a single subscription.
+            Unlock all 20 premium energy markets with a single subscription.
           </DialogDescription>
         </DialogHeader>
 

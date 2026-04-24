@@ -238,7 +238,7 @@ serve(async (req) => {
     // Apply data delay for free users
     if (dataDelay === '15min' && priceData) {
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000)
-      const hash = commodityName.split('').reduce((a: number, b: string) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0)
+      const hash = commodityName.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0)
       const seededRandom = (Math.abs(hash) % 100) / 100
       priceData = {
         ...priceData,

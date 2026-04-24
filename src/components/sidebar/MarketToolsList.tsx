@@ -6,7 +6,7 @@ import {
 import { useSidebar } from "@/components/ui/sidebar";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { MARKET_TOOLS } from "./constants";
+import { MARKET_TOOLS, COMMUNITY_TOOLS, ACTIVITY_TOOLS } from "./constants";
 
 const MarketToolsList = () => {
   const { setOpenMobile } = useSidebar();
@@ -55,6 +55,27 @@ const MarketToolsList = () => {
         <SidebarGroupContent>
           <div className={`space-y-4 ${isMobile ? 'px-4 py-3' : 'px-2 py-3'}`}>
             {MARKET_TOOLS.map(renderToolButton)}
+          </div>
+        </SidebarGroupContent>
+      </SidebarGroup>
+      
+      <SidebarGroup className="mt-8">
+        <SidebarGroupLabel className={`font-bold text-muted-foreground uppercase tracking-wider ${isMobile ? 'text-sm px-4 py-4' : 'text-xs px-2 py-3'}`}>
+          Community & Learning
+        </SidebarGroupLabel>
+        <SidebarGroupContent>
+          <div className={`space-y-4 ${isMobile ? 'px-4 py-3' : 'px-2 py-3'}`}>
+            {COMMUNITY_TOOLS.map(renderToolButton)}
+          </div>
+        </SidebarGroupContent>
+      </SidebarGroup>
+      <SidebarGroup className="mt-8">
+        <SidebarGroupLabel className={`font-bold text-muted-foreground uppercase tracking-wider ${isMobile ? 'text-sm px-4 py-4' : 'text-xs px-2 py-3'}`}>
+          Activity & Tracking
+        </SidebarGroupLabel>
+        <SidebarGroupContent>
+          <div className={`space-y-4 ${isMobile ? 'px-4 py-3' : 'px-2 py-3'}`}>
+            {ACTIVITY_TOOLS.map(renderToolButton)}
           </div>
         </SidebarGroupContent>
       </SidebarGroup>

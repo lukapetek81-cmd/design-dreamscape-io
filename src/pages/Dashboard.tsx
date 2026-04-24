@@ -12,8 +12,8 @@ import { useRealtimeDataContext } from '@/contexts/RealtimeDataContext';
 import { useAvailableCommodities, Commodity } from '@/hooks/useCommodityData';
 import { Button } from '@/components/ui/button';
 import { OfflineIndicator } from '@/components/OfflineIndicator';
+import PremiumUpsellCard from '@/components/PremiumUpsellCard';
 import { useToast } from '@/hooks/use-toast';
-import PremiumPaywall from '@/components/PremiumPaywall';
 
 const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -98,8 +98,13 @@ const DashboardContent = ({
   const { setOpenMobile } = useSidebar();
   const { connected: realtimeConnected, delayStatus } = useRealtimeDataContext();
   const { toast } = useToast();
-  const [paywallOpen, setPaywallOpen] = React.useState(false);
-  const handleUpgrade = React.useCallback(() => setPaywallOpen(true), []);
+
+  const handleUpgrade = React.useCallback(() => {
+    toast({
+      title: 'Premium subscriptions coming soon',
+      description: 'Stripe checkout will be enabled shortly. Stay tuned!',
+    });
+  }, [toast]);
 
   // Simple swipe handler for mobile sidebar
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -243,15 +248,24 @@ const DashboardContent = ({
               </div>
             )}
 
-            {/* Premium upsell banner — free users only */}
-            {!loading && !error && !isPremium && (
-              <div className="mb-4 rounded-xl border border-primary/30 bg-gradient-to-r from-primary/10 to-accent/10 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-sm">Unlock all commodities</p>
-                  <p className="text-xs text-muted-foreground">Free tier shows 6 headline markets. Upgrade for the full catalogue.</p>
-                </div>
-                <Button size="sm" onClick={handleUpgrade}>Upgrade</Button>
-              </div>
+            {/* Premium Upsells — free users only */}
+            {!loading && !error && !isPremium && activeGroup === 'energy' && (
+              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="energy" />
+            )}
+            {!loading && !error && !isPremium && activeGroup === 'industrials' && (
+              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="industrials" />
+            )}
+            {!loading && !error && !isPremium && activeGroup === 'metals' && (
+              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="metals" />
+            )}
+            {!loading && !error && !isPremium && activeGroup === 'grains' && (
+              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="grains" />
+            )}
+            {!loading && !error && !isPremium && activeGroup === 'softs' && (
+              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="softs" />
+            )}
+            {!loading && !error && !isPremium && activeGroup === 'livestock' && (
+              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="livestock" />
             )}
 
             {/* Commodities List */}
@@ -279,7 +293,6 @@ const DashboardContent = ({
           </div>
         </main>
       </div>
-      <PremiumPaywall open={paywallOpen} onOpenChange={setPaywallOpen} />
     </div>
   );
 };
