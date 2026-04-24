@@ -13,6 +13,7 @@ import { BookOpen, GraduationCap, Clock, Search, Filter, ArrowLeft } from "lucid
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useCommodityCounts } from "@/hooks/useCommodityCounts";
 
 interface TutorialCategory {
   id: string;
@@ -52,10 +53,7 @@ const LearningHub = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  const commodityCounts = {
-    energy: 0, metals: 0, grains: 0, livestock: 0, softs: 0, industrials: 0, other: 0
-  };
+  const commodityCounts = useCommodityCounts();
 
   useEffect(() => {
     fetchData();
