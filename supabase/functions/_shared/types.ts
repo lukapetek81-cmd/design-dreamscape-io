@@ -1,9 +1,5 @@
 // Shared types for edge functions
-export interface CorsHeaders {
-  'Access-Control-Allow-Origin': string;
-  'Access-Control-Allow-Headers': string;
-  'Access-Control-Allow-Methods'?: string;
-}
+export type CorsHeaders = Record<string, string>;
 
 export interface ApiResponse<T = any> {
   success: boolean;
