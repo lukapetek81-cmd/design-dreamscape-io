@@ -86,15 +86,8 @@ export const getBundleInfo = () => {
 
 // Tree shaking helpers
 export const importOnlyUsed = {
-  // Import only needed lodash functions
-  debounce: () => import('lodash/debounce'),
-  throttle: () => import('lodash/throttle'),
-  
-  // Import only needed date-fns functions
   format: () => import('date-fns/format'),
   parseISO: () => import('date-fns/parseISO'),
-  
-  // Import only needed chart components
   LineChart: () => import('recharts').then(m => ({ default: m.LineChart })),
   BarChart: () => import('recharts').then(m => ({ default: m.BarChart })),
 };

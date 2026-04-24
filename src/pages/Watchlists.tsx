@@ -1,353 +1,115 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, GripVertical, Star, Trash2, Edit, Eye } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useAvailableCommodities } from '@/hooks/useCommodityData';
+import React from 'react';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { MobilePageHeader } from '@/components/mobile/MobilePageHeader';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { ArrowLeft, Star, Trash2, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-interface Watchlist {
+interface Favorite {
   id: string;
-  name: string;
-  description: string;
-  commodities: string[];
-  color: string;
-  isDefault?: boolean;
-}
-
-interface WatchlistItem {
-  id: string;
-  commodityName: string;
-  symbol: string;
-  price: number;
-  change: number;
-  volume?: string;
+  commodity_name: string;
+  commodity_symbol: string | null;
+  commodity_group: string | null;
+  added_at: string;
 }
 
 const Watchlists = () => {
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { data: commodities } = useAvailableCommodities();
-  const { profile } = useAuth();
-  const [selectedWatchlist, setSelectedWatchlist] = useState<string | null>(null);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [newWatchlistName, setNewWatchlistName] = useState('');
-  const [newWatchlistDescription, setNewWatchlistDescription] = useState('');
-  const [newWatchlistColor, setNewWatchlistColor] = useState('blue');
+  const { toast } = useToast();
+  const qc = useQueryClient();
 
-  // Mock watchlists data
-  const [watchlists, setWatchlists] = useState<Watchlist[]>([
-    {
-      id: '1',
-      name: 'Energy Focus',
-      description: 'Key energy commodities for trading',
-      commodities: ['WTI Crude Oil', 'Natural Gas', 'Gasoline RBOB'],
-      color: 'orange',
-      isDefault: true
+  const { data: favorites, isLoading } = useQuery({
+    queryKey: ['user-favorites', user?.id],
+    enabled: !!user,
+    queryFn: async (): Promise<Favorite[]> => {
+      const { data, error } = await supabase
+        .from('user_favorites')
+        .select('*')
+        .order('added_at', { ascending: false });
+      if (error) throw error;
+      return data as Favorite[];
     },
-    {
-      id: '2',
-      name: 'Precious Metals',
-      description: 'Safe haven assets and precious metals',
-      commodities: ['Gold Futures', 'Silver Futures', 'Platinum'],
-      color: 'yellow'
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('user_favorites').delete().eq('id', id);
+      if (error) throw error;
     },
-    {
-      id: '3',
-      name: 'Agricultural Basics',
-      description: 'Core agricultural commodities',
-      commodities: ['Corn Futures', 'Wheat Futures', 'Soybean Futures'],
-      color: 'green'
-    }
-  ]);
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['user-favorites'] });
+      toast({ title: 'Removed from watchlist' });
+    },
+  });
 
-  const colorOptions = [
-    { value: 'blue', label: 'Blue', class: 'bg-blue-500' },
-    { value: 'green', label: 'Green', class: 'bg-green-500' },
-    { value: 'orange', label: 'Orange', class: 'bg-orange-500' },
-    { value: 'red', label: 'Red', class: 'bg-red-500' },
-    { value: 'purple', label: 'Purple', class: 'bg-purple-500' },
-    { value: 'yellow', label: 'Yellow', class: 'bg-yellow-500' }
-  ];
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin" />
+      </div>
+    );
+  }
 
-  const getWatchlistItems = (watchlist: Watchlist): WatchlistItem[] => {
-    return watchlist.commodities.map(commodityName => {
-      const commodity = commodities.find(c => c.name === commodityName);
-      return {
-        id: commodityName,
-        commodityName,
-        symbol: commodity?.symbol || 'N/A',
-        price: commodity?.price || 0,
-        change: commodity?.changePercent || 0,
-        volume: '1.2M' // Mock volume data
-      };
-    });
-  };
-
-  const createWatchlist = () => {
-    if (!newWatchlistName.trim()) return;
-    
-    const newWatchlist: Watchlist = {
-      id: Date.now().toString(),
-      name: newWatchlistName,
-      description: newWatchlistDescription,
-      commodities: [],
-      color: newWatchlistColor
-    };
-
-    setWatchlists([...watchlists, newWatchlist]);
-    setNewWatchlistName('');
-    setNewWatchlistDescription('');
-    setNewWatchlistColor('blue');
-    setIsCreateDialogOpen(false);
-  };
-
-  const deleteWatchlist = (id: string) => {
-    setWatchlists(watchlists.filter(w => w.id !== id));
-    if (selectedWatchlist === id) {
-      setSelectedWatchlist(null);
-    }
-  };
-
-  const getColorClass = (color: string) => {
-    const colorMap: { [key: string]: string } = {
-      blue: 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/20',
-      green: 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20',
-      orange: 'border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/20',
-      red: 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/20',
-      purple: 'border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-950/20',
-      yellow: 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950/20'
-    };
-    return colorMap[color] || colorMap.blue;
-  };
-
-  const selectedWatchlistData = watchlists.find(w => w.id === selectedWatchlist);
+  if (!user) return <Navigate to="/auth" replace />;
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Mobile-optimized header */}
-      <MobilePageHeader
-        title="Watchlists"
-        subtitle="Create and manage custom commodity watchlists with drag-and-drop sorting"
-      >
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-2 touch-manipulation">
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">New Watchlist</span>
-              <span className="sm:hidden">New</span>
-            </Button>
-          </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Watchlist</DialogTitle>
-                <DialogDescription>
-                  Create a custom watchlist to track your favorite commodities
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
+      <div className="container mx-auto px-4 py-8 max-w-3xl">
+        <Button variant="ghost" onClick={() => navigate('/')} className="mb-6">
+          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Dashboard
+        </Button>
+
+        <div className="flex items-center gap-3 mb-6">
+          <Star className="h-6 w-6 text-amber-500" />
+          <h1 className="text-2xl font-bold">My Watchlist</h1>
+        </div>
+
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin" />
+          </div>
+        ) : !favorites || favorites.length === 0 ? (
+          <Card className="p-8 text-center">
+            <Star className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
+            <p className="font-medium mb-1">No favorites yet</p>
+            <p className="text-sm text-muted-foreground mb-4">
+              Tap the star on any commodity to add it to your watchlist.
+            </p>
+            <Button asChild><Link to="/">Browse commodities</Link></Button>
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            {favorites.map(fav => (
+              <Card key={fav.id} className="p-4 flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium">Name</label>
-                  <Input
-                    placeholder="Enter watchlist name"
-                    value={newWatchlistName}
-                    onChange={(e) => setNewWatchlistName(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Description</label>
-                  <Input
-                    placeholder="Enter description (optional)"
-                    value={newWatchlistDescription}
-                    onChange={(e) => setNewWatchlistDescription(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Color</label>
-                  <Select value={newWatchlistColor} onValueChange={setNewWatchlistColor}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {colorOptions.map(color => (
-                        <SelectItem key={color.value} value={color.value}>
-                          <div className="flex items-center gap-2">
-                            <div className={`w-4 h-4 rounded-full ${color.class}`}></div>
-                            {color.label}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={createWatchlist}>Create Watchlist</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-      </MobilePageHeader>
-      
-      <div className="container mx-auto p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Watchlists Sidebar */}
-        <div className="lg:col-span-1 space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">My Watchlists</CardTitle>
-              <CardDescription>Select a watchlist to view and edit</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {watchlists.map(watchlist => (
-                <div
-                  key={watchlist.id}
-                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
-                    selectedWatchlist === watchlist.id 
-                      ? getColorClass(watchlist.color) + ' ring-2 ring-primary'
-                      : 'border-border hover:border-primary/50'
-                  }`}
-                  onClick={() => setSelectedWatchlist(watchlist.id)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-full bg-${watchlist.color}-500`}></div>
-                      <div>
-                        <h4 className="font-semibold text-sm">
-                          {watchlist.name}
-                          {watchlist.isDefault && (
-                            <Badge variant="secondary" className="ml-2 text-xs">Default</Badge>
-                          )}
-                        </h4>
-                        <p className="text-xs text-muted-foreground">{watchlist.commodities.length} items</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-8 h-8 p-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Edit functionality
-                        }}
-                      >
-                        <Edit className="w-3 h-3" />
-                      </Button>
-                      {!watchlist.isDefault && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="w-8 h-8 p-0 text-red-500 hover:text-red-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteWatchlist(watchlist.id);
-                          }}
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                  {watchlist.description && (
-                    <p className="text-xs text-muted-foreground mt-2">{watchlist.description}</p>
+                  <p className="font-medium">{fav.commodity_name}</p>
+                  {fav.commodity_symbol && (
+                    <p className="text-xs text-muted-foreground">{fav.commodity_symbol}</p>
                   )}
                 </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Watchlist Content */}
-        <div className="lg:col-span-2">
-          {selectedWatchlistData ? (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <div className={`w-4 h-4 rounded-full bg-${selectedWatchlistData.color}-500`}></div>
-                      {selectedWatchlistData.name}
-                    </CardTitle>
-                    <CardDescription>{selectedWatchlistData.description}</CardDescription>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Commodity
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" asChild>
+                    <Link to={`/?commodity=${encodeURIComponent(fav.commodity_name)}`}>View</Link>
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => removeMutation.mutate(fav.id)}
+                    disabled={removeMutation.isPending}
+                    aria-label="Remove from watchlist"
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </div>
-              </CardHeader>
-              <CardContent>
-                {getWatchlistItems(selectedWatchlistData).length > 0 ? (
-                  <div className="space-y-3">
-                    {getWatchlistItems(selectedWatchlistData).map((item, index) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                      >
-                        <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
-                        <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
-                          <div>
-                            <p className="font-semibold text-sm">{item.commodityName}</p>
-                            <p className="text-xs text-muted-foreground">{item.symbol}</p>
-                          </div>
-                          <div>
-                            <p className="font-bold">${item.price.toFixed(2)}</p>
-                            <p className="text-xs text-muted-foreground">Price</p>
-                          </div>
-                          <div>
-                            <p className={`font-bold ${item.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                              {item.change >= 0 ? '+' : ''}{item.change.toFixed(2)}%
-                            </p>
-                            <p className="text-xs text-muted-foreground">Change</p>
-                          </div>
-                          <div>
-                            <p className="font-medium">{item.volume}</p>
-                            <p className="text-xs text-muted-foreground">Volume</p>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Eye className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="font-semibold text-lg mb-2">Empty Watchlist</h3>
-                    <p className="text-muted-foreground mb-4">Add commodities to start tracking their performance</p>
-                    <Button>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Your First Commodity
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardContent className="text-center py-8">
-                <Star className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="font-semibold text-lg mb-2">Select a Watchlist</h3>
-                <p className="text-muted-foreground">Choose a watchlist from the sidebar to view and manage your tracked commodities</p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-        </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
-
     </div>
   );
 };

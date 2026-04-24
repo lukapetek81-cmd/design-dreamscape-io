@@ -3,154 +3,92 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import SEOHead from '@/components/SEOHead';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Shield, Eye, Lock, Database, Bell, Share2 } from 'lucide-react';
+import { ArrowLeft, Shield } from 'lucide-react';
 
 const PrivacyPolicy = () => {
   const navigate = useNavigate();
 
   return (
     <>
-      <SEOHead 
+      <SEOHead
         title="Privacy Policy - Commodity Hub"
-        description="Learn how Commodity Hub protects your privacy and handles your personal data in compliance with global privacy regulations."
-        keywords={["privacy policy", "data protection", "GDPR", "CCPA", "commodity trading", "data security"]}
+        description="How Commodity Hub collects and protects your personal data."
+        keywords={["privacy policy", "data protection", "GDPR", "commodity prices"]}
       />
-      
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate(-1)}
-            className="mb-6"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+          <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6">
+            <ArrowLeft className="h-4 w-4 mr-2" /> Back
           </Button>
 
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-2xl">
-                <Shield className="h-6 w-6" />
-                Privacy Policy
+                <Shield className="h-6 w-6" /> Privacy Policy
               </CardTitle>
-              <CardDescription>
-                Last updated: {new Date().toLocaleDateString()}
-              </CardDescription>
+              <CardDescription>Last updated: {new Date().toLocaleDateString()}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-8">
+            <CardContent className="space-y-6 text-sm text-muted-foreground">
               <section>
-                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <Eye className="h-5 w-5" />
-                  Information We Collect
-                </h2>
-                <div className="space-y-4 text-muted-foreground">
-                  <p>We collect information you provide directly to us, such as:</p>
-                  <ul className="list-disc list-inside space-y-2 ml-4">
-                    <li>Account information (email, name, profile data)</li>
-                    <li>Trading preferences and watchlist data</li>
-                    <li>Device information and usage analytics</li>
-                    <li>Communication preferences</li>
-                  </ul>
-                </div>
+                <h2 className="text-lg font-semibold text-foreground mb-2">What We Collect</h2>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li>Account info: email, display name, avatar (if you sign in)</li>
+                  <li>Watchlist favorites and recently viewed commodities</li>
+                  <li>Subscription status from Google Play</li>
+                  <li>Anonymous usage analytics and crash reports</li>
+                </ul>
               </section>
 
               <section>
-                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <Database className="h-5 w-5" />
-                  How We Use Your Information
-                </h2>
-                <div className="space-y-4 text-muted-foreground">
-                  <p>We use the information we collect to:</p>
-                  <ul className="list-disc list-inside space-y-2 ml-4">
-                    <li>Provide and maintain our trading platform services</li>
-                    <li>Personalize your experience and recommendations</li>
-                    <li>Send you important updates and market alerts</li>
-                    <li>Improve our services through analytics</li>
-                    <li>Ensure security and prevent fraud</li>
-                  </ul>
-                </div>
+                <h2 className="text-lg font-semibold text-foreground mb-2">How We Use It</h2>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li>Provide the commodity price service</li>
+                  <li>Sync your watchlist across devices</li>
+                  <li>Validate your premium subscription</li>
+                  <li>Improve the app via aggregated analytics</li>
+                </ul>
               </section>
 
               <section>
-                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <Lock className="h-5 w-5" />
-                  Data Security
-                </h2>
-                <div className="space-y-4 text-muted-foreground">
-                  <p>We implement industry-standard security measures including:</p>
-                  <ul className="list-disc list-inside space-y-2 ml-4">
-                    <li>End-to-end encryption for sensitive data</li>
-                    <li>Secure cloud infrastructure with SOC 2 compliance</li>
-                    <li>Regular security audits and monitoring</li>
-                    <li>Multi-factor authentication options</li>
-                  </ul>
-                </div>
+                <h2 className="text-lg font-semibold text-foreground mb-2">Data Sharing</h2>
+                <p>
+                  We do not sell personal data. We share only with: Supabase (hosting & auth),
+                  Google Play (subscription validation), and analytics providers under strict data
+                  agreements.
+                </p>
               </section>
 
               <section>
-                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <Share2 className="h-5 w-5" />
-                  Information Sharing
-                </h2>
-                <div className="space-y-4 text-muted-foreground">
-                  <p>We do not sell your personal information. We may share information only in these limited circumstances:</p>
-                  <ul className="list-disc list-inside space-y-2 ml-4">
-                    <li>With your explicit consent</li>
-                    <li>To comply with legal requirements</li>
-                    <li>With trusted service providers under strict agreements</li>
-                    <li>To protect our rights and prevent fraud</li>
-                  </ul>
-                </div>
+                <h2 className="text-lg font-semibold text-foreground mb-2">Security</h2>
+                <p>
+                  Data is encrypted in transit (TLS) and at rest. Row-level security restricts
+                  access so each user can only read their own data.
+                </p>
               </section>
 
               <section>
-                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <Database className="h-5 w-5" />
-                  Synthetic Trading Data
-                </h2>
-                <div className="space-y-3 text-sm text-muted-foreground">
-                  <p>
-                    When you use the synthetic trading feature, we store your virtual USDC balance, open positions,
-                    closed trade history, and a record of which Terms and Risk Disclosure versions you accepted.
-                    This data is stored under your account, visible only to you, and is permanently deleted when you
-                    delete your account.
-                  </p>
-                  <p className="text-xs italic">
-                    KYC notice — applies once identity verification is enabled: if and when we introduce real-money
-                    features, identity-verification data (such as government-ID images, country of residence, and
-                    verification status) will be collected by a regulated third-party KYC provider and processed under
-                    a separate notice presented at that time.
-                  </p>
-                </div>
+                <h2 className="text-lg font-semibold text-foreground mb-2">Your Rights (GDPR)</h2>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li>Access and download your data</li>
+                  <li>Correct inaccurate information</li>
+                  <li>Delete your account and all associated data via Settings → Delete Account</li>
+                  <li>Object to or restrict processing</li>
+                </ul>
               </section>
 
               <section>
-                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <Bell className="h-5 w-5" />
-                  Your Rights
-                </h2>
-                <div className="space-y-4 text-muted-foreground">
-                  <p>You have the right to:</p>
-                  <ul className="list-disc list-inside space-y-2 ml-4">
-                    <li>Access and download your personal data</li>
-                    <li>Correct inaccurate information</li>
-                    <li>Delete your account and data</li>
-                    <li>Opt-out of marketing communications</li>
-                    <li>Data portability to other services</li>
-                  </ul>
-                </div>
+                <h2 className="text-lg font-semibold text-foreground mb-2">Children</h2>
+                <p>The app is not directed at children under 13 (or 16 in the EU).</p>
               </section>
 
-              <section className="border-t pt-6">
-                <h2 className="text-xl font-semibold mb-4">Contact Us</h2>
-                <div className="text-muted-foreground">
-                  <p>If you have questions about this Privacy Policy, please contact us at:</p>
-                  <p className="mt-2">
-                    <strong>Commodity Hub Team</strong><br />
-                    Email: support@commodityhub.com<br />
-                    Address: 1234 Financial District, Suite 567, New York, NY 10004
-                  </p>
-                </div>
+              <section>
+                <h2 className="text-lg font-semibold text-foreground mb-2">Contact</h2>
+                <p>
+                  Privacy questions:{' '}
+                  <a href="mailto:support@commodityhub.com" className="text-primary hover:underline">
+                    support@commodityhub.com
+                  </a>
+                </p>
               </section>
             </CardContent>
           </Card>

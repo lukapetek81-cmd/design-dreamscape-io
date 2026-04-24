@@ -217,41 +217,22 @@ export const CENT_QUOTED_SYMBOLS = new Set([
  * Premium-only commodities. Free tier sees household names; everything niche/regional/exotic
  * lives behind the paywall. See mem://monetization/strategy.
  */
-// Free tier strictly limited to 30 household-name commodities to control API burn.
-// Everything else (regional/niche/exotic/spot-or-futures variants) is premium-gated.
-// Free tier (30): WTI, Brent, Dubai, Murban, OPEC, Natural Gas, Gold, Silver, Copper,
-// Platinum, Palladium, Aluminum, Zinc, Iron Ore, Corn, Wheat, Soybean, Soybean Oil,
-// Soybean Meal, Coffee Arabica, Sugar #11, Cotton, Cocoa, Orange Juice, Live Cattle,
-// Lean Hogs, Milk, Rubber, Industrial Ethanol, Lumber Futures.
-export const PREMIUM_COMMODITIES = new Set<string>([
-  // Energy — premium (20)
-  'DME Oman Crude', 'Indian Basket', 'Tapis Crude Oil', 'Urals Crude Oil',
-  'Western Canadian Select', 'WTI Midland', 'Alaska North Slope', 'Mars Blend', 'Louisiana Light Sweet',
-  'Natural Gas UK', 'Dutch TTF Gas', 'Japan/Korea LNG',
-  'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel', 'Gasoil', 'Naphtha', 'Propane', 'Ethanol',
-  // Metals — premium (12)
-  'Copper Futures', 'Aluminium Futures', 'Lead Spot', 'Lead Futures',
-  'Nickel Spot', 'Nickel Futures', 'Tin', 'Steel', 'Hot-Rolled Coil Steel',
-  'Titanium', 'Magnesium', 'Lithium',
-  // Grains — premium (7)
-  'Oat Futures', 'Rough Rice',
-  'Wheat Futures Spot', 'Soybeans Spot', 'Oats Spot', 'Rough Rice Spot',
-  'Canola', 'Sunflower Oil', 'Rapeseed Oil',
-  // Softs — premium (4)
-  'UK Sugar No 5', 'Tea', 'Wool', 'Palm Oil',
-  // Livestock — premium (8)
-  'Feeder Cattle', 'Cheese', 'Eggs CH', 'Eggs US',
-  'Salmon', 'Poultry', 'Butter', 'Potato',
-  // Industrials — premium (16)
-  'Bitumen', 'Cobalt', 'Rhodium',
-  'Polyethylene', 'Polyvinyl Chloride', 'Polypropylene', 'Soda Ash',
-  'Neodymium', 'Tellurium', 'Diammonium Phosphate', 'Urea', 'Urea Ammonium Nitrate',
-  'Gallium', 'Indium', 'Kraft Pulp', 'Industrial Naphtha',
+// Aggressive free tier: only 6 headline commodities are free. Everything else is premium.
+export const FREE_COMMODITIES = new Set<string>([
+  'WTI Crude Oil',
+  'Brent Crude Oil',
+  'Natural Gas',
+  'Gold Futures',
+  'Copper',
+  'Corn Futures',
 ]);
 
 export function isPremiumCommodity(name: string): boolean {
-  return PREMIUM_COMMODITIES.has(name);
+  return !FREE_COMMODITIES.has(name);
 }
+
+// Kept for backward compat with any imports.
+export const PREMIUM_COMMODITIES = new Set<string>();
 
 // Category groupings (used by frontend sidebar/screener)
 export const CATEGORY_MAPPINGS: Record<string, string[]> = {
