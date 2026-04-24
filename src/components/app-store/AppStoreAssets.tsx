@@ -122,7 +122,7 @@ Commodity Hub is the ultimate trading companion for serious investors and trader
 • Advanced charting tools
 • Extended historical data
 • Priority customer support
-• IBKR integration (coming soon)
+• 60+ specialty commodities unlocked
 
 ⚠️ IMPORTANT DISCLAIMER
 Trading commodities involves substantial risk and may not be suitable for all investors. Past performance is not indicative of future results. This app provides information and tools but not investment advice. Always consult with qualified financial advisors before making trading decisions.

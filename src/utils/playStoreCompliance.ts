@@ -164,18 +164,16 @@ Commodity Hub is a comprehensive trading platform designed for serious commodity
 • Price comparison and correlation analysis
 • Customizable watchlists and alerts
 
-📊 TRADING TOOLS:
+📊 ANALYTICS TOOLS:
 • Interactive price charts with multiple timeframes
-• Technical indicators and drawing tools
 • Market correlation analysis
 • Economic calendar integration
-• Risk calculator and position sizing
+• Market sentiment tracker
 
-🎯 FOR PROFESSIONALS:
-• Premium data feeds and advanced analytics
-• IBKR integration for direct trading (coming soon)
-• Institutional-grade security and encryption
-• Comprehensive market screening tools
+🎯 PREMIUM TIER:
+• 60+ specialty commodities (regional crudes, rare metals, specialty softs)
+• Advanced data feeds and analytics
+• Ad-free experience
 
 💼 PORTFOLIO MANAGEMENT:
 • Track your commodity investments
