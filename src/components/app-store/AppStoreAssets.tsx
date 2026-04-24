@@ -63,16 +63,16 @@ export const PLAY_STORE_SCREENSHOTS = {
 export const FEATURE_GRAPHIC = {
   url: '/store-assets/feature-graphic.png',
   dimensions: '1024x500',
-  description: 'Professional commodity trading platform with real-time analytics'
+  description: 'Live commodity prices and market insights across energy, metals, grains, softs, and livestock'
 };
 
 // App store description with key features
 export const APP_STORE_DESCRIPTION = {
-  short: "Professional commodity trading platform with real-time data and analytics",
-  
-  full: `🚀 Transform your commodity trading with professional-grade tools and real-time market intelligence.
+  short: "Live commodity prices, charts, and market insights — energy, metals, grains, softs & livestock.",
 
-Commodity Hub is the ultimate trading companion for serious investors and traders in commodities markets. Whether you're trading crude oil, gold, agricultural products, or other commodities, our platform provides the insights and tools you need to make informed decisions.
+  full: `🚀 Stay on top of global commodity markets with live prices and professional charts.
+
+Commodity Hub is the easiest way to track commodity prices in real time. From crude oil and natural gas to gold, copper, wheat, and coffee — get clean charts, market news, and expert insights in one place.
 
 ✨ KEY FEATURES
 
@@ -85,14 +85,13 @@ Commodity Hub is the ultimate trading companion for serious investors and trader
 📈 ADVANCED ANALYTICS
 • Technical analysis tools and indicators
 • Market correlation analysis
-• Historical price data and backtesting
-• Risk assessment calculators
+• Historical price data
+• Multi-currency pricing (USD, EUR, CNY, INR)
 
-📱 PORTFOLIO MANAGEMENT
-• Track your commodity investments
-• Performance analytics and reporting
-• Position sizing and risk management
-• P&L tracking and tax reporting
+📱 WATCHLISTS & PORTFOLIO
+• Track favorite commodities in custom watchlists
+• Manual portfolio for personal price tracking
+• Performance overview at a glance
 
 🔍 MARKET INTELLIGENCE
 • Breaking news and market analysis
@@ -100,17 +99,15 @@ Commodity Hub is the ultimate trading companion for serious investors and trader
 • Expert insights and research reports
 • Supply and demand forecasts
 
-⚡ PROFESSIONAL TOOLS
+⚡ HANDY TOOLS
 • Market screening and filtering
 • Price comparison across commodities
-• Custom watchlists and alerts
-• Export data for analysis
+• Custom watchlists and price alerts
 
-🎯 FOR TRADERS & INVESTORS
-• Suitable for beginners to professionals
-• Educational content and market guides
-• Paper trading for practice
-• Community insights and discussions
+🎯 FOR EVERYONE
+• Suitable from beginners to market professionals
+• Educational content and commodity guides
+• Clean, distraction-free interface
 
 🔒 SECURITY & RELIABILITY
 • Bank-level encryption and security
@@ -124,14 +121,14 @@ Commodity Hub is the ultimate trading companion for serious investors and trader
 • Priority customer support
 • 60+ specialty commodities unlocked
 
-⚠️ IMPORTANT DISCLAIMER
-Trading commodities involves substantial risk and may not be suitable for all investors. Past performance is not indicative of future results. This app provides information and tools but not investment advice. Always consult with qualified financial advisors before making trading decisions.
+ℹ️ DISCLAIMER
+Commodity Hub is a market data and information app. It does not provide investment advice and does not allow trade execution. Always consult a qualified financial advisor before making investment decisions.
 
-Download Commodity Hub today and elevate your trading game with professional tools and real-time market intelligence!`,
+Download Commodity Hub today and follow the world's commodity markets in real time!`,
 
   keywords: [
-    "commodity trading",
-    "trading platform", 
+    "commodity prices",
+    "price tracker",
     "market data",
     "investment tools",
     "portfolio tracker",
