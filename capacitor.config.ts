@@ -23,9 +23,6 @@ const config: CapacitorConfig = {
     StatusBar: {
       style: "DARK",
       backgroundColor: "#8B5CF6"
-    },
-    AdMob: {
-      appId: 'ca-app-pub-8597609154479605~4310240399',
     }
   },
   android: {

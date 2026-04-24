@@ -2,7 +2,7 @@ import { Capacitor } from '@capacitor/core';
 
 /**
  * Hook to detect the current platform (web, iOS, Android)
- * Used to determine which ad SDK to use (AdSense for web, AdMob for native)
+ * Used to determine native vs web platform behaviour.
  */
 export const usePlatform = () => {
   const isNative = Capacitor.isNativePlatform();
