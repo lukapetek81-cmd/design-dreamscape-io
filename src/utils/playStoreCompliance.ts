@@ -12,7 +12,7 @@ export const PRIVACY_SETTINGS = {
       userIds: true,
     },
     financialInfo: {
-      userPaymentInfo: false, // We don't store payment info
+      userPaymentInfo: false, // Payments handled by Google Play Billing / RevenueCat
       purchaseHistory: true,
     },
     appActivity: {
@@ -52,27 +52,19 @@ export const PRIVACY_SETTINGS = {
 
 // Content rating requirements
 export const CONTENT_RATING = {
-  targetAudience: 'Teen', // 13+ due to financial content
+  targetAudience: 'Everyone', // Read-only price data, no trading, no UGC
   contentDescriptors: [
-    'simulated_gambling', // Trading simulations
-    'digital_purchases', // Premium features
-    'user_generated_content', // Community features
+    'digital_purchases', // Premium subscription
   ],
   interactiveElements: [
-    'shares_info', // Data sharing
-    'users_interact_online', // Community features
-    'digital_purchases', // In-app purchases
+    'shares_info', // Account email for auth
+    'digital_purchases', // In-app subscription
   ]
 };
 
 // Required permissions and justifications
 export const PERMISSIONS = {
-  INTERNET: 'Required for real-time market data and trading functionality',
-  ACCESS_NETWORK_STATE: 'Check network connectivity for offline mode',
-  WAKE_LOCK: 'Keep screen on during active trading sessions',
-  VIBRATE: 'Haptic feedback for mobile interactions',
-  CAMERA: 'QR code scanning for quick setup (optional)',
-  NOTIFICATIONS: 'Market alerts and price notifications',
+  INTERNET: 'Required to fetch live commodity prices and market data',
 };
 
 // Validate app compliance before release
