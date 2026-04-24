@@ -141,7 +141,7 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
           <div className="grid gap-3 sm:gap-4 lg:gap-6">
             {section.items.map((commodity) => {
               const idx = globalIndex++;
-              const availableContracts = isPremium ? futuresQuery.data?.[commodity.name] : undefined;
+              const availableContracts = undefined;
               const isHighlighted = commodity.name === highlightCommodity;
               return (
                 <div 
