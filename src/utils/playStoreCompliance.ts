@@ -29,13 +29,19 @@ export const PRIVACY_SETTINGS = {
     },
     deviceIdentifiers: {
       deviceId: true,
-    }
+    },
+    // App ships without ads — no advertising IDs collected or shared.
+    advertisingData: {
+      advertisingId: false,
+      adMeasurement: false,
+      adTargeting: false,
+    },
   },
   
   // Data sharing
   DATA_SHARING: {
     analytics: true,
-    advertising: false,
+    advertising: false, // No AdMob, AdSense, or third-party ad networks
     appFunctionality: true,
     accountManagement: true,
   },
