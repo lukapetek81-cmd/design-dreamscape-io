@@ -27,7 +27,7 @@ interface AuthContextType {
   requiresAuth: () => boolean;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signInWithGoogle: () => Promise<{ error: any }>;
+  signInWithGoogle: (popupWindow?: Window | null) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
@@ -267,7 +267,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (popupWindow?: Window | null) => {
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -308,6 +308,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           variant: "destructive",
         });
         return { error: redirectError };
+      }
+
+      if (popupWindow && !popupWindow.closed) {
+        popupWindow.location.href = data.url;
+        return { error: null };
       }
 
       if (typeof window !== 'undefined') {
