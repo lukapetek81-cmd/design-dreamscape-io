@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { TrendingUp, Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import AuthHealthPanel from '@/components/auth/AuthHealthPanel';
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -448,6 +449,8 @@ const Auth = () => {
             Need help? Contact our support team for assistance.
           </p>
         </div>
+
+        <AuthHealthPanel />
       </div>
     </div>
   );
