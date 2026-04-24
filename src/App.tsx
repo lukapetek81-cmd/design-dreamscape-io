@@ -5,44 +5,24 @@ import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { RealtimeDataProvider } from '@/contexts/RealtimeDataContext';
-import { Web3Provider } from '@/providers/Web3Provider';
 import { createOptimizedQueryClient } from '@/lib/queryClient';
 import SEOHead from '@/components/SEOHead';
 import Dashboard from '@/pages/Dashboard';
 import Auth from '@/pages/Auth';
-
 import NotFound from '@/pages/NotFound';
-import Portfolio from '@/pages/Portfolio';
-import MarketStatus from '@/pages/MarketStatus';
-import APIComparison from '@/pages/APIComparison';
-import EconomicCalendar from '@/pages/EconomicCalendar';
-import ExpertInsights from '@/pages/ExpertInsights';
-import LearningHub from '@/pages/LearningHub';
-import MarketCorrelation from '@/pages/MarketCorrelation';
-import MarketScreener from '@/pages/MarketScreener';
-import MarketSentiment from '@/pages/MarketSentiment';
 import NewsSettings from '@/pages/NewsSettings';
-
 import ResetPassword from '@/pages/ResetPassword';
-import PrivacyPolicy from "@/pages/PrivacyPolicy";
-import TermsOfService from "@/pages/TermsOfService";
-import RiskDisclosure from "@/pages/RiskDisclosure";
-import Compliance from "@/pages/Compliance";
-import RiskManagement from '@/pages/RiskManagement';
-import TradingCommunity from '@/pages/TradingCommunity';
+import PrivacyPolicy from '@/pages/PrivacyPolicy';
+import TermsOfService from '@/pages/TermsOfService';
 import Watchlists from '@/pages/Watchlists';
-import Trading from '@/pages/Trading';
 import DeleteAccount from '@/pages/DeleteAccount';
-import SyntheticTrading from '@/pages/SyntheticTrading';
 
 const App = () => {
-  // Create QueryClient directly without useMemo to avoid React hooks issues
   const queryClient = createOptimizedQueryClient();
   return (
     <QueryClientProvider client={queryClient}>
-      <Web3Provider>
-        <AuthProvider>
-          <BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
           <TooltipProvider>
             <RealtimeDataProvider>
               <SEOHead />
@@ -53,35 +33,8 @@ const App = () => {
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms-of-service" element={<TermsOfService />} />
-                <Route path="/risk-disclosure" element={<RiskDisclosure />} />
-                <Route path="/compliance" element={<Compliance />} />
-                
-                
-                <Route path="/trading" element={<Trading />} />
-                <Route path="/market-status" element={<MarketStatus />} />
-                <Route path="/api-comparison" element={<APIComparison />} />
-                <Route path="/economic-calendar" element={<EconomicCalendar />} />
-                <Route path="/expert-insights" element={<ExpertInsights />} />
-                <Route path="/learning-hub" element={<LearningHub />} />
-                <Route path="/market-correlation" element={<MarketCorrelation />} />
-                <Route path="/correlation" element={<MarketCorrelation />} />
-                <Route path="/market-screener" element={<MarketScreener />} />
-                <Route path="/screener" element={<MarketScreener />} />
-                <Route path="/market-sentiment" element={<MarketSentiment />} />
-                <Route path="/sentiment" element={<MarketSentiment />} />
-                <Route path="/insights" element={<ExpertInsights />} />
-                <Route path="/learning" element={<LearningHub />} />
-                <Route path="/community" element={<TradingCommunity />} />
-                <Route path="/calendar" element={<EconomicCalendar />} />
-                <Route path="/news-settings" element={<NewsSettings />} />
-                
-                <Route path="/portfolio" element={<Portfolio />} />
-                
-                <Route path="/risk-calculator" element={<RiskManagement />} />
-                <Route path="/risk-management" element={<RiskManagement />} />
-                <Route path="/trading-community" element={<TradingCommunity />} />
                 <Route path="/watchlists" element={<Watchlists />} />
-                <Route path="/synthetic-trading" element={<SyntheticTrading />} />
+                <Route path="/news-settings" element={<NewsSettings />} />
                 <Route path="/delete-account" element={<DeleteAccount />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
@@ -89,8 +42,7 @@ const App = () => {
             </RealtimeDataProvider>
           </TooltipProvider>
         </BrowserRouter>
-        </AuthProvider>
-      </Web3Provider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 };
