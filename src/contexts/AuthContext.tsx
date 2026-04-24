@@ -27,7 +27,7 @@ interface AuthContextType {
   requiresAuth: () => boolean;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signInWithGoogle: (popupWindow?: Window | null) => Promise<{ error: any }>;
+  signInWithGoogle: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
@@ -267,13 +267,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signInWithGoogle = async (popupWindow?: Window | null) => {
+  const signInWithGoogle = async () => {
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/`,
-          skipBrowserRedirect: true,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -293,38 +292,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           variant: "destructive",
         });
         return { error };
-      }
-
-      if (!data?.url) {
-        const redirectError = new Error('Google OAuth URL was not returned by Supabase');
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(
-            new CustomEvent('auth:error', { detail: { message: redirectError.message } })
-          );
-        }
-        toast({
-          title: "Google Sign In Error",
-          description: redirectError.message,
-          variant: "destructive",
-        });
-        return { error: redirectError };
-      }
-
-      if (popupWindow && !popupWindow.closed) {
-        popupWindow.location.href = data.url;
-        return { error: null };
-      }
-
-      if (typeof window !== 'undefined') {
-        try {
-          if (window.top && window.top !== window) {
-            window.top.location.href = data.url;
-          } else {
-            window.location.assign(data.url);
-          }
-        } catch {
-          window.location.assign(data.url);
-        }
       }
 
       return { error: null };

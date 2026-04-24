@@ -63,21 +63,11 @@ const Auth = () => {
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
-    const popup = typeof window !== 'undefined'
-      ? window.open('', 'google-oauth', 'popup=yes,width=520,height=720,noopener,noreferrer')
-      : null;
-
-    if (popup) {
-      popup.document.write('<!doctype html><title>Connecting…</title><body style="margin:0;display:grid;place-items:center;min-height:100vh;font:14px system-ui;background:#111;color:#fff;">Connecting to Google…</body>');
-      popup.document.close();
+    const { error } = await signInWithGoogle();
+    if (error) {
+      setIsLoading(false);
+      return;
     }
-
-    const { error } = await signInWithGoogle(popup);
-
-    if (error && popup && !popup.closed) {
-      popup.close();
-    }
-
     setIsLoading(false);
   };
 
