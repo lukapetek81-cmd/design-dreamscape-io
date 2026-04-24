@@ -8,6 +8,40 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
+// Guard: clear any malformed Supabase auth tokens left in localStorage from
+// previous sessions. A token without a `sub` claim causes /auth/v1/user to
+// return 403 ("invalid claim: missing sub claim"), which breaks sign-in
+// (including Google OAuth callbacks) until the bad token is removed.
+if (typeof window !== 'undefined') {
+  try {
+    const keys: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.startsWith('sb-') || k.includes('supabase.auth'))) keys.push(k);
+    }
+    for (const k of keys) {
+      const raw = localStorage.getItem(k);
+      if (!raw) continue;
+      try {
+        const parsed = JSON.parse(raw);
+        const token: string | undefined =
+          parsed?.currentSession?.access_token ?? parsed?.access_token;
+        if (typeof token === 'string' && token.split('.').length === 3) {
+          const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+          if (!payload?.sub) {
+            localStorage.removeItem(k);
+            console.warn('Cleared malformed Supabase auth token (missing sub claim):', k);
+          }
+        }
+      } catch {
+        // Non-JSON or undecodable token entry — leave alone
+      }
+    }
+  } catch {
+    // localStorage unavailable — ignore
+  }
+}
+
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     storage: localStorage,
