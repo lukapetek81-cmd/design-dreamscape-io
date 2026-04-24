@@ -150,49 +150,46 @@ export const validatePlayStoreCompliance = (): {
 export const generatePlayStoreMetadata = () => {
   return {
     title: "Commodity Hub - Live Prices & Insights",
-    shortDescription: "Live commodity prices, charts, and market insights across energy, metals, grains & more",
+    shortDescription: "One-time purchase. Live commodity prices, charts & insights — no ads, no subs.",
+    // Pricing model: paid app, one-time purchase, no in-app purchases, no ads, no subscriptions.
+    pricing: {
+      model: "paid_app" as const,
+      priceEUR: 4.99,
+      priceUSD: 4.99,
+      hasInAppPurchases: false,
+      hasAds: false,
+      hasSubscriptions: false,
+    },
     fullDescription: `
 Commodity Hub is the easiest way to follow live commodity prices and market insights — built for everyone from curious beginners to market professionals.
 
+One-time purchase. No ads. No subscriptions. No in-app purchases. Buy it once, own it forever.
+
 🚀 KEY FEATURES:
-• Real-time market data for major commodities
-• Advanced charting and technical analysis tools  
-• Manual portfolio and watchlists
-• Market news and expert insights
+• Live market data for 60+ commodities (energy, metals, grains, softs, livestock, industrials)
+• Interactive charts with multiple timeframes
+• Manual portfolio and customizable watchlists
+• Curated market news and expert insights
 • Price comparison and correlation analysis
-• Customizable watchlists and alerts
+• Economic calendar and market sentiment tracker
 
-📊 ANALYTICS TOOLS:
-• Interactive price charts with multiple timeframes
-• Market correlation analysis
-• Economic calendar integration
-• Market sentiment tracker
-
-🎯 PREMIUM TIER:
-• 60+ specialty commodities (regional crudes, rare metals, specialty softs)
-• Advanced data feeds and analytics
-• Ad-free experience
-
-💼 WATCHLISTS & PORTFOLIO:
-• Track favorite commodities in custom watchlists
-• Manual portfolio for personal price tracking
-• Performance overview at a glance
+📊 EVERYTHING UNLOCKED FROM DAY ONE:
+• Specialty commodities (regional crudes, rare metals, specialty softs)
+• All charting timeframes and tools
+• Full watchlist and portfolio capacity
+• Ad-free, distraction-free experience
 
 ⚡ REAL-TIME UPDATES:
-• Live market data and price alerts
+• Live market data refreshed throughout the trading day
 • Breaking news and market analysis
 • Economic indicator releases
-• Earnings and supply reports
 
 🔒 SECURITY & PRIVACY:
-• Bank-level encryption and security
-• Secure cloud infrastructure
-• No sharing of personal trading data
-• GDPR and privacy compliant
+• Encrypted in transit and at rest
+• No advertising IDs collected, no third-party ad SDKs
+• GDPR compliant; account deletion available in-app
 
 Whether you follow crude oil, gold, agricultural products, or specialty metals, Commodity Hub gives you the prices and insights you need at a glance.
-
-Download now and start tracking the world's commodity markets!
 
 IMPORTANT: Commodity Hub is a market data and information app. It does not provide investment advice and does not allow trade execution. Always consult a qualified financial advisor before making investment decisions.
     `,
