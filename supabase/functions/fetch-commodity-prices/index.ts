@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { corsHeaders } from '../_shared/utils.ts'
 
 // In-memory cache with TTL
 const priceCache = new Map<string, { data: any; source: string; timestamp: number }>();
@@ -19,11 +20,6 @@ function setCachedPrice(key: string, data: any, source: string): void {
     if (oldest) priceCache.delete(oldest);
   }
   priceCache.set(key, { data, source, timestamp: Date.now() });
-}
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
 // CommodityPriceAPI v2 symbol mapping: commodity name → CPAPI symbol
