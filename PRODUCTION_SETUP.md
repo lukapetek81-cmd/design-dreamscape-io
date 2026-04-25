@@ -89,3 +89,21 @@ ALERT_WEBHOOK_URL=your_monitoring_webhook
 6. ⚠️ SSL certificates and custom domain
 7. ⚠️ Performance testing completed
 8. ⚠️ Backup and recovery tested
+## Updating the launcher icon
+
+The single source of truth for the app icon is `public/icon.png` (512×512 RGBA).
+This same file is used for the Play Store listing (`public/icons/icon-512-playstore.png` is a byte-identical copy) and as the input for every Android mipmap density.
+
+To regenerate every Android launcher icon (mdpi → xxxhdpi, square + round + adaptive foreground):
+
+```bash
+python scripts/generate-android-icons.py
+npx cap sync android
+```
+
+The script writes to `android/app/src/main/res/mipmap-*/`:
+- `ic_launcher.png` — square legacy icon on brand background `#1e3a5f`
+- `ic_launcher_round.png` — circular legacy icon
+- `ic_launcher_foreground.png` — adaptive-icon foreground (logo in inner 66% safe-zone, transparent bleed; composed by Android over `@color/ic_launcher_background` via `mipmap-anydpi-v26/ic_launcher.xml`)
+
+After regenerating: in Android Studio do **Build → Clean Project → Rebuild**, uninstall the previous APK from the device (Android caches launcher icons aggressively), then install the new build.
