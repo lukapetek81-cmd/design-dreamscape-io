@@ -41,7 +41,7 @@ const config: CapacitorConfig = {
   ios: {
     contentInset: 'automatic',
     icon: 'icon.png',
-    scheme: 'Commodity Hub',
+    scheme: 'commodityhub',
     allowsLinkPreview: false
   },
   // Global icon configuration
