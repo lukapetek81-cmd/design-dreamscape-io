@@ -9,7 +9,7 @@ const config: CapacitorConfig = {
   // Before building a production/Play Store release, COMMENT OUT this server block,
   // run `npm run build && npx cap sync android`, then build the signed AAB.
   server: {
-    url: 'https://id-preview--0cea242b-6aba-4f5a-9e49-91997ef3b761.lovable.app?forceHideBadge=true',
+    url: 'https://0cea242b-6aba-4f5a-9e49-91997ef3b761.lovableproject.com?forceHideBadge=true',
     cleartext: true,
   },
   plugins: {
