@@ -1,49 +1,80 @@
-## Root cause found
+## Problem
 
-The "publish or update your Lovable project" placeholder is not a WebView/asset issue — it's caused by a **project-ID mismatch** between your Capacitor config and the actual sandbox host.
+The Android launcher icon currently shipped at every density is the **default Capacitor "C" placeholder**, not the Commodity Hub brand logo. Confirmed by inspecting the mipmap PNGs: `ic_launcher_foreground.png` (432×432) and `ic_launcher.png` (192×192 / 48×48 / etc.) do not match `public/icon.png` (the canonical 512×512 brand asset, identical to `public/icons/icon-512-playstore.png`).
 
-| Place | UUID being used |
-|---|---|
-| `capacitor.config.ts` → `appId` | `c8fabd7a96c74aff8d7b001690ec23c7` |
-| `capacitor.config.ts` → `server.url` | `0cea242b-6aba-4f5a-9e49-91997ef3b761` |
-| Actual project preview URL | `0cea242b-6aba-4f5a-9e49-91997ef3b761` |
-| Android `applicationId` / `namespace` / `package_name` | `c8fabd7a96c74aff8d7b001690ec23c7` |
+Result: even after the package-ID fix, the device home-screen icon still shows the generic Capacitor logo instead of Commodity Hub.
 
-When the WebView loads `https://0cea242b-….lovableproject.com`, the Lovable sandbox checks the requesting app's identity against the project that owns that UUID. Because the Android package is `…c8fabd7a…` (a different project), the sandbox refuses to serve the live app and shows the **"publish or update your Lovable project"** placeholder instead.
+## Goal
 
-Launcher icons, manifest, AndroidManifest.xml, splash screen, and WebView config are all fine — the problem is purely the identity mismatch.
+Regenerate every Android launcher density from the single canonical source (`public/icon.png`) so:
+- The home-screen icon on every Android device shows the Commodity Hub logo.
+- The adaptive icon (Android 8+) uses the same logo on the existing dark-blue background `#1e3a5f`.
+- The Play Store 512×512 icon stays consistent with what users see on-device.
 
-## Plan to fix
+## Canonical source
 
-1. **Align `capacitor.config.ts` `appId`** to match this project:
-   - Change `app.lovable.c8fabd7a96c74aff8d7b001690ec23c7` → `app.lovable.0cea242b6aba4f5a9e4991997ef3b761`
+`public/icon.png` — 512×512 RGBA, the Commodity Hub brand mark.
+This becomes the single source of truth; all other icon files are derived from it.
 
-2. **Update Android native identifiers** to the same value:
-   - `android/app/build.gradle` → `namespace` and `applicationId`
-   - `android/app/src/main/res/values/strings.xml` → `package_name` and `custom_url_scheme`
-   - Rename the Java/Kotlin package directory under `android/app/src/main/java/app/lovable/…` to the new UUID folder (and update `package` declaration in `MainActivity`).
+## What will change
 
-3. **Verify launcher icon assets** are present in every mipmap density (they are — `ic_launcher.png`, `ic_launcher_round.png`, `ic_launcher_foreground.png` exist in `mipmap-hdpi…xxxhdpi` and `mipmap-anydpi-v26`). No regeneration needed.
+### 1. Regenerate Android mipmap PNGs (all densities)
 
-4. **Document the rebuild step** the user must perform locally:
-   - `git pull`
-   - `npx cap sync android`
-   - In Android Studio: **Build → Clean Project**, then **Rebuild**, then reinstall the APK (uninstall the old one first, since the package name is changing).
+Replace the placeholder PNGs in:
 
-## Important caveat for the user
+```text
+android/app/src/main/res/
+  mipmap-mdpi/      ic_launcher.png (48)    ic_launcher_round.png (48)    ic_launcher_foreground.png (108)
+  mipmap-hdpi/      ic_launcher.png (72)    ic_launcher_round.png (72)    ic_launcher_foreground.png (162)
+  mipmap-xhdpi/     ic_launcher.png (96)    ic_launcher_round.png (96)    ic_launcher_foreground.png (216)
+  mipmap-xxhdpi/    ic_launcher.png (144)   ic_launcher_round.png (144)   ic_launcher_foreground.png (324)
+  mipmap-xxxhdpi/   ic_launcher.png (192)   ic_launcher_round.png (192)   ic_launcher_foreground.png (432)
+```
 
-Because step 2 changes the Android `applicationId`, the rebuilt app is treated as a **brand-new app** by Android:
-- You must **uninstall** the existing test APK before installing the new one.
-- If this `applicationId` is already what you registered in **Google Play Console**, changing it will break the Play listing — in that case we'd instead change the `server.url` UUID (but that UUID is fixed by which Lovable project you're editing, so it can't be changed). Confirm whether the Play Console entry was created yet.
+Generation rules (run as a Python/Pillow script during the build mode):
+- `ic_launcher.png` (square legacy): downscale `public/icon.png` to the density size with high-quality Lanczos resampling, on the brand background `#1e3a5f`.
+- `ic_launcher_round.png`: same as above but with a circular alpha mask.
+- `ic_launcher_foreground.png` (adaptive): place the logo centered within the inner 66% safe-zone of a transparent canvas at the foreground size, leaving the surrounding bleed area transparent (Android composes it with the `ic_launcher_background` color via `mipmap-anydpi-v26/ic_launcher.xml`).
 
-## Why not just change `server.url` instead?
+### 2. Keep the adaptive-icon XML and background color
 
-The sandbox URL UUID is bound to this Lovable project and cannot be reassigned. The native package ID is the only side that's flexible, so we align it to the project.
+No changes needed — they already reference the correct drawables:
+- `mipmap-anydpi-v26/ic_launcher.xml` and `ic_launcher_round.xml` → `@mipmap/ic_launcher_foreground` over `@color/ic_launcher_background`
+- `values/ic_launcher_background.xml` → `#1e3a5f` (matches brand)
 
-## Files to change (technical)
+### 3. Confirm Play Store icon parity
 
-- `capacitor.config.ts` — `appId`
-- `android/app/build.gradle` — `namespace`, `applicationId`
-- `android/app/src/main/res/values/strings.xml` — `package_name`, `custom_url_scheme`
-- `android/app/src/main/java/app/lovable/c8fabd7a96c74aff8d7b001690ec23c7/MainActivity.java` (or `.kt`) — move to new package path, update `package` line
-- `PRODUCTION_SETUP.md` — note the package-ID change and uninstall-before-reinstall step
+`public/icons/icon-512-playstore.png` is already byte-identical to `public/icon.png`. No change needed; just document it.
+
+### 4. Add a launcher-icon regeneration script
+
+Create `scripts/generate-android-icons.mjs` (or `.py`) that takes `public/icon.png` as input and rewrites every mipmap file deterministically. This becomes the "pipeline" so future logo updates are a single command:
+
+```bash
+node scripts/generate-android-icons.mjs
+npx cap sync android
+```
+
+The script will be documented in `PRODUCTION_SETUP.md` under a new "Updating the launcher icon" section.
+
+### 5. QA
+
+After regeneration the script will dump a small contact-sheet PNG to `/tmp` showing every generated density side-by-side, and I'll visually inspect it to confirm the logo (not the Capacitor "C") appears correctly framed at every size before delivering.
+
+## Files that will be created / edited
+
+- **Replaced (10 PNGs)**: every `ic_launcher.png`, `ic_launcher_round.png`, `ic_launcher_foreground.png` under `android/app/src/main/res/mipmap-*`.
+- **Created**: `scripts/generate-android-icons.mjs`.
+- **Edited**: `PRODUCTION_SETUP.md` — add "Updating the launcher icon" section.
+
+## What you'll need to do after approval
+
+On your local machine:
+
+```bash
+git pull
+npx cap sync android
+```
+
+Then in Android Studio: **Build → Clean Project → Rebuild → Run**.
+Uninstall the previous APK first so Android picks up the new icon (Android caches launcher icons aggressively).
