@@ -1,5 +1,25 @@
 # Production Environment Setup Guide
 
+## Capacitor Build Modes (READ FIRST)
+
+`capacitor.config.ts` has two modes — switch before building the APK:
+
+### Dev mode (current) — live reload from Lovable
+The `server.url` block is enabled, pointing at the Lovable preview. The installed APK loads your live app over HTTPS — every code change in Lovable appears instantly on the phone with no rebuild.
+- `allowMixedContent: true`
+- `webContentsDebuggingEnabled: true`
+- Use for: day-to-day testing on a physical device.
+- Limitation: Google OAuth deep-link (`commodityhub://auth-callback`) won't fully round-trip in this mode — verify OAuth in production mode.
+
+### Production mode — bundled `dist/` (Play Store)
+Before generating the signed AAB:
+1. Comment out the `server` block in `capacitor.config.ts`
+2. Set `allowMixedContent: false` and `webContentsDebuggingEnabled: false`
+3. Run `npm run build && npx cap sync android`
+4. Build the signed release in Android Studio
+
+After making changes in either direction, run `git pull` locally, then `npx cap sync android`, then rebuild the APK in Android Studio.
+
 ## Critical Production URLs & Services
 
 ### Health Check Endpoint

@@ -5,11 +5,13 @@ const config: CapacitorConfig = {
   appId: 'app.lovable.c8fabd7a96c74aff8d7b001690ec23c7',
   appName: 'Commodity Hub',
   webDir: 'dist',
-  // Remove server config for production build
-  // server: {
-  //   url: "https://c8fabd7a-96c7-4aff-8d7b-001690ec23c7.lovableproject.com?forceHideBadge=true",
-  //   cleartext: true
-  // },
+  // DEV MODE: live-reload from Lovable preview.
+  // Before building a production/Play Store release, COMMENT OUT this server block,
+  // run `npm run build && npx cap sync android`, then build the signed AAB.
+  server: {
+    url: 'https://id-preview--0cea242b-6aba-4f5a-9e49-91997ef3b761.lovable.app?forceHideBadge=true',
+    cleartext: true,
+  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
@@ -34,9 +36,9 @@ const config: CapacitorConfig = {
       foreground: 'icon.png',
       background: '#1e3a5f'
     },
-    allowMixedContent: false, // Set to false for production
+    allowMixedContent: true, // DEV: set to false for production
     captureInput: true,
-    webContentsDebuggingEnabled: false // Set to false for production
+    webContentsDebuggingEnabled: true // DEV: set to false for production
   },
   ios: {
     contentInset: 'automatic',
