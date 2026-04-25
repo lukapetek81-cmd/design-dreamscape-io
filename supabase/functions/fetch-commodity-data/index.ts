@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { corsHeaders } from '../_shared/utils.ts'
 
 // In-memory cache with TTL for historical data
 const historyCache = new Map<string, { data: any; source: string; timestamp: number }>();
@@ -20,11 +21,6 @@ function setCachedHistory(key: string, data: any, source: string): void {
     if (oldest) historyCache.delete(oldest);
   }
   historyCache.set(key, { data, source, timestamp: Date.now() });
-}
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
 // Yahoo Finance fallback symbols for historical chart data (only used if

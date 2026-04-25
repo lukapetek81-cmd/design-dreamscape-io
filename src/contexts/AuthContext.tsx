@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { validateFormData } from '@/utils/validation';
 import { authRateLimiter } from '@/utils/security';
+import { Capacitor } from '@capacitor/core';
 
 interface Profile {
   id: string;
@@ -269,10 +270,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signInWithGoogle = async () => {
     try {
+      const isNative = Capacitor.isNativePlatform();
+      const redirectTo = isNative
+        ? 'commodityhub://auth-callback'
+        : `${window.location.origin}/`;
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo,
+          skipBrowserRedirect: isNative,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -292,6 +299,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           variant: "destructive",
         });
         return { error };
+      }
+
+      // On native, open Google's consent screen in the in-app browser.
+      // The deep-link handler (useCapacitorAuthDeepLink) completes the session.
+      if (isNative && data?.url) {
+        try {
+          const { Browser } = await import('@capacitor/browser');
+          await Browser.open({ url: data.url, presentationStyle: 'popover' });
+        } catch (browserErr) {
+          console.error('Failed to open in-app browser for OAuth:', browserErr);
+          return { error: browserErr };
+        }
       }
 
       return { error: null };
