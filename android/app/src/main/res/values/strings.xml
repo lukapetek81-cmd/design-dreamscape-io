@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">Commodity Hub</string>
     <string name="title_activity_main">Commodity Hub</string>
-    <string name="package_name">app.lovable.0cea242b6aba4f5a9e4991997ef3b761</string>
-    <string name="custom_url_scheme">app.lovable.0cea242b6aba4f5a9e4991997ef3b761</string>
+    <string name="package_name">app.lovable._0cea242b6aba4f5a9e4991997ef3b761</string>
+    <string name="custom_url_scheme">app.lovable._0cea242b6aba4f5a9e4991997ef3b761</string>
 </resources>
