@@ -1,5 +1,21 @@
 # Production Environment Setup Guide
 
+## Android Package ID
+
+The native Android `applicationId` and Capacitor `appId` are:
+
+```
+app.lovable._0cea242b6aba4f5a9e4991997ef3b761
+```
+
+This UUID matches the Lovable project that owns the live-reload sandbox URL. If the package ID does not match the project that owns the `lovableproject.com` URL, the WebView will display a **"publish or update your Lovable project"** placeholder instead of your app.
+
+The leading underscore is required because Java package segments cannot start with a digit.
+
+**If you change this ID**, you must:
+1. Uninstall the existing test APK from the device first (Android treats a changed `applicationId` as a brand-new app).
+2. Update the same value in Google Play Console — once an app is published, the `applicationId` is locked and cannot be changed there.
+
 ## Capacitor Build Modes (READ FIRST)
 
 `capacitor.config.ts` has two modes — switch before building the APK:

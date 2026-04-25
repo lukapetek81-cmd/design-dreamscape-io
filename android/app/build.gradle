@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "app.lovable.c8fabd7a96c74aff8d7b001690ec23c7"
+    namespace "app.lovable._0cea242b6aba4f5a9e4991997ef3b761"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "app.lovable.c8fabd7a96c74aff8d7b001690ec23c7"
+        applicationId "app.lovable._0cea242b6aba4f5a9e4991997ef3b761"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

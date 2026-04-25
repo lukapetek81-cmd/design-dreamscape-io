@@ -2,7 +2,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.c8fabd7a96c74aff8d7b001690ec23c7',
+  appId: 'app.lovable._0cea242b6aba4f5a9e4991997ef3b761',
   appName: 'Commodity Hub',
   webDir: 'dist',
   // DEV MODE: live-reload from Lovable preview.
