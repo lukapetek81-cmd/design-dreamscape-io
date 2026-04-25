@@ -6,6 +6,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { RealtimeDataProvider } from '@/contexts/RealtimeDataContext';
 import { createOptimizedQueryClient } from '@/lib/queryClient';
+import { useCapacitorAuthDeepLink } from '@/hooks/useCapacitorAuthDeepLink';
 import SEOHead from '@/components/SEOHead';
 import Dashboard from '@/pages/Dashboard';
 import Auth from '@/pages/Auth';
@@ -28,12 +29,18 @@ import TermsOfService from "@/pages/TermsOfService";
 import Watchlists from '@/pages/Watchlists';
 import DeleteAccount from '@/pages/DeleteAccount';
 
+const NativeAuthBridge = () => {
+  useCapacitorAuthDeepLink();
+  return null;
+};
+
 const App = () => {
   // Create QueryClient directly without useMemo to avoid React hooks issues
   const queryClient = createOptimizedQueryClient();
   return (
     <QueryClientProvider client={queryClient}>
         <AuthProvider>
+          <NativeAuthBridge />
           <BrowserRouter>
           <TooltipProvider>
             <RealtimeDataProvider>
