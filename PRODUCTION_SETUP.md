@@ -107,3 +107,27 @@ The script writes to `android/app/src/main/res/mipmap-*/`:
 - `ic_launcher_foreground.png` — adaptive-icon foreground (logo in inner 66% safe-zone, transparent bleed; composed by Android over `@color/ic_launcher_background` via `mipmap-anydpi-v26/ic_launcher.xml`)
 
 After regenerating: in Android Studio do **Build → Clean Project → Rebuild**, uninstall the previous APK from the device (Android caches launcher icons aggressively), then install the new build.
+
+## Updating the Android splash screen
+
+The native Android splash uses the same `public/icon.png` source over the brand
+background `#1e3a5f` (matching `@color/ic_launcher_background` and the
+Capacitor `SplashScreen.backgroundColor` in `capacitor.config.ts`).
+
+To regenerate every density (mdpi → xxxhdpi) for both portrait and landscape,
+plus the legacy default `drawable/splash.png`:
+
+```bash
+python scripts/generate-android-splash.py
+npx cap sync android
+```
+
+The script writes to `android/app/src/main/res/drawable-port-*/splash.png`,
+`drawable-land-*/splash.png`, and `drawable/splash.png`. It preserves the
+canonical Capacitor pixel dimensions per density (e.g. xxxhdpi portrait =
+1280×1920, landscape = 1920×1280) and centers the logo at 40% of the
+shorter side so it never clips on tall or wide devices.
+
+After regenerating, do **Build → Clean Project → Rebuild** in Android Studio
+and reinstall — the splash drawable is cached aggressively just like the
+launcher icon.
