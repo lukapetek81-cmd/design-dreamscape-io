@@ -12,6 +12,8 @@
 interface Bucket {
   count: number;
   resetAt: number; // epoch ms
+  /** Whether a breach for this bucket has already been logged. */
+  breachLogged?: boolean;
 }
 
 interface LimiterOptions {
@@ -29,6 +31,8 @@ export interface RateLimitResult {
   remaining: number;
   resetAt: number;
   retryAfterSeconds: number;
+  /** True if this is the first over-limit hit in the current window for this IP. */
+  firstBreach?: boolean;
 }
 
 export class IpRateLimiter {
@@ -82,7 +86,14 @@ export class IpRateLimiter {
       remaining,
       resetAt: bucket.resetAt,
       retryAfterSeconds,
+      firstBreach: !allowed && !bucket.breachLogged,
     };
+  }
+
+  /** Marks the current bucket for `ip` as already-logged so we don't spam. */
+  markBreachLogged(ip: string): void {
+    const b = this.buckets.get(ip);
+    if (b) b.breachLogged = true;
   }
 
   private evict(now: number) {
