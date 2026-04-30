@@ -51,11 +51,11 @@ export class IpRateLimiter {
   static getClientIp(req: Request): string {
     const headers = req.headers;
     const cfIp = headers.get("cf-connecting-ip");
-    if (cfIp) return cfIp;
+    if (cfIp) return normalizeIp(cfIp);
     const xff = headers.get("x-forwarded-for");
-    if (xff) return xff.split(",")[0].trim();
+    if (xff) return normalizeIp(xff.split(",")[0]);
     const xri = headers.get("x-real-ip");
-    if (xri) return xri.trim();
+    if (xri) return normalizeIp(xri);
     return "unknown";
   }
 
@@ -116,11 +116,48 @@ export class IpRateLimiter {
 
 /** Builds the standard rate-limit response headers. */
 export function rateLimitHeaders(result: RateLimitResult): Record<string, string> {
+  // (helpers below)
   return {
     "X-RateLimit-Limit": String(result.limit),
     "X-RateLimit-Remaining": String(result.remaining),
     "X-RateLimit-Reset": String(Math.floor(result.resetAt / 1000)),
   };
+}
+
+/**
+ * Normalize an IP string from a proxy header.
+ *
+ * Handles:
+ *  - Surrounding whitespace (`" 1.2.3.4 "` → `"1.2.3.4"`)
+ *  - Bracketed IPv6 with optional port (`"[2001:db8::42]:443"` → `"2001:db8::42"`)
+ *  - Bracketed IPv6 without port (`"[::1]"` → `"::1"`)
+ *  - IPv4 with port (`"1.2.3.4:8080"` → `"1.2.3.4"`)
+ *  - Bare IPv4 / bare unbracketed IPv6 (returned as-is, trimmed)
+ *
+ * Never throws: returns the trimmed input on unrecognized shapes so logging
+ * + bucketing remain stable. The result is the value used for hashing — it
+ * is NOT logged in raw form (see `hashIp`), so log safety is preserved.
+ */
+export function normalizeIp(raw: string): string {
+  const s = raw.trim();
+  if (!s) return "unknown";
+
+  // Bracketed IPv6: "[v6]" or "[v6]:port"
+  if (s.startsWith("[")) {
+    const close = s.indexOf("]");
+    if (close > 1) return s.slice(1, close);
+    return s; // malformed — return as-is rather than throwing
+  }
+
+  // IPv4 with port: exactly one ':' and a dot before it.
+  // (IPv6 always contains multiple ':'.)
+  const firstColon = s.indexOf(":");
+  const lastColon = s.lastIndexOf(":");
+  if (firstColon !== -1 && firstColon === lastColon && s.indexOf(".") !== -1) {
+    return s.slice(0, firstColon);
+  }
+
+  return s;
 }
 
 /** Builds a 429 Too Many Requests Response with proper headers. */

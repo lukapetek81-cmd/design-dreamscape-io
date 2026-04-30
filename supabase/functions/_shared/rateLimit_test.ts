@@ -3,6 +3,7 @@ import {
   IpRateLimiter,
   logRateLimitBreach,
   hashIp,
+  normalizeIp,
 } from "./rateLimit.ts";
 
 /** Captures console.warn output during a callback. */
@@ -246,11 +247,7 @@ Deno.test("getClientIp parses IPv6 from cf-connecting-ip and x-forwarded-for", (
   });
   assertEquals(IpRateLimiter.getClientIp(r1), v6);
 
-  // Falls back to x-forwarded-for; takes the FIRST entry, trimmed.
-  // Note: bracketed forms like "[2001:db8::42]:443" are NOT supported by the
-  // current parser. Cloudflare delivers IPv6 unbracketed in these headers, so
-  // this is acceptable in practice. If that ever changes, this test will fail
-  // and we'll add bracket-stripping.
+  // Falls back to x-forwarded-for; takes the FIRST entry, trimmed and normalized.
   const r2 = new Request("https://x.test", {
     headers: { "x-forwarded-for": `${v6}, 10.0.0.1` },
   });
@@ -259,4 +256,91 @@ Deno.test("getClientIp parses IPv6 from cf-connecting-ip and x-forwarded-for", (
   // No proxy headers → "unknown"
   const r3 = new Request("https://x.test");
   assertEquals(IpRateLimiter.getClientIp(r3), "unknown");
+});
+
+Deno.test("normalizeIp strips brackets and ports for IPv6 and IPv4", () => {
+  // Bracketed IPv6 with port
+  assertEquals(normalizeIp("[2001:db8::42]:443"), "2001:db8::42");
+  // Bracketed IPv6 without port
+  assertEquals(normalizeIp("[::1]"), "::1");
+  assertEquals(normalizeIp("[fe80::1ff:fe23:4567:890a]:8080"), "fe80::1ff:fe23:4567:890a");
+  // Bare IPv6 — left alone
+  assertEquals(normalizeIp("2001:db8::42"), "2001:db8::42");
+  assertEquals(normalizeIp("::1"), "::1");
+  // IPv4 with port
+  assertEquals(normalizeIp("1.2.3.4:8080"), "1.2.3.4");
+  // Bare IPv4
+  assertEquals(normalizeIp("203.0.113.5"), "203.0.113.5");
+  // Whitespace
+  assertEquals(normalizeIp("  192.0.2.1  "), "192.0.2.1");
+  // Empty / malformed
+  assertEquals(normalizeIp(""), "unknown");
+  assertEquals(normalizeIp("   "), "unknown");
+  // Malformed bracket — return as-is, never throw
+  assertEquals(normalizeIp("[broken"), "[broken");
+});
+
+Deno.test("getClientIp accepts bracketed IPv6 with port from proxy headers", () => {
+  const r1 = new Request("https://x.test", {
+    headers: { "cf-connecting-ip": "[2001:db8::42]:443" },
+  });
+  assertEquals(IpRateLimiter.getClientIp(r1), "2001:db8::42");
+
+  const r2 = new Request("https://x.test", {
+    headers: { "x-forwarded-for": "[2001:db8::42]:443, 10.0.0.1" },
+  });
+  assertEquals(IpRateLimiter.getClientIp(r2), "2001:db8::42");
+
+  const r3 = new Request("https://x.test", {
+    headers: { "x-real-ip": "[::1]" },
+  });
+  assertEquals(IpRateLimiter.getClientIp(r3), "::1");
+
+  // IPv4 with port via XFF
+  const r4 = new Request("https://x.test", {
+    headers: { "x-forwarded-for": "203.0.113.5:51234" },
+  });
+  assertEquals(IpRateLimiter.getClientIp(r4), "203.0.113.5");
+});
+
+Deno.test("bracketed and bare IPv6 forms bucket to the same IP after normalization", async () => {
+  // After bracket-stripping, "[v6]:port" and "v6" must resolve to the same
+  // bucket — otherwise an attacker could double their effective limit by
+  // alternating header forms.
+  const limiter = new IpRateLimiter({ limit: 2, windowMs: 60_000 });
+  const req = fakeReq();
+
+  const ipBracketed = normalizeIp("[2001:db8::beef]:443");
+  const ipBare = normalizeIp("2001:db8::beef");
+  assertEquals(ipBracketed, ipBare);
+
+  const logs = await captureWarn(async () => {
+    for (let i = 0; i < 5; i++) {
+      const rl = limiter.check(ipBracketed);
+      if (!rl.allowed) await logRateLimitBreach("test-fn", ipBracketed, rl, req, limiter);
+    }
+  });
+  assertEquals(logs.length, 1, "single bucket → single breach log");
+});
+
+Deno.test("bracketed IPv6 in headers does not leak raw form into breach logs", async () => {
+  const limiter = new IpRateLimiter({ limit: 1, windowMs: 60_000 });
+  const rawHeader = "[2001:db8::cafe]:8443";
+  const ip = normalizeIp(rawHeader);
+  const req = fakeReq();
+
+  const logs = await captureWarn(async () => {
+    limiter.check(ip);
+    const rl = limiter.check(ip);
+    await logRateLimitBreach("test-fn", ip, rl, req, limiter);
+  });
+
+  assertEquals(logs.length, 1);
+  const line = logs[0];
+  if (line.includes(rawHeader) || line.includes(ip)) {
+    throw new Error(`raw IP/header leaked into breach log: ${line}`);
+  }
+  if (line.includes("[") || line.includes("]") || line.includes("8443")) {
+    throw new Error(`bracket/port artifacts leaked into log: ${line}`);
+  }
 });
