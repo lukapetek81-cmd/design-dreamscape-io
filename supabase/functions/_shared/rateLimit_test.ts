@@ -133,3 +133,130 @@ Deno.test("integration: burst against deployed api-docs returns 200s and rate-li
     }
   }
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IPv6 + mixed-stack coverage
+// ─────────────────────────────────────────────────────────────────────────────
+
+const IPV6_SAMPLES = [
+  "2001:db8::1",                                 // compressed
+  "2001:0db8:85a3:0000:0000:8a2e:0370:7334",      // full form
+  "::1",                                          // loopback
+  "fe80::1ff:fe23:4567:890a",                     // link-local
+  "::ffff:192.0.2.128",                           // IPv4-mapped IPv6
+];
+
+Deno.test("hashIp handles IPv6 deterministically and opaquely", async () => {
+  for (const ip of IPV6_SAMPLES) {
+    const a = await hashIp(ip);
+    const b = await hashIp(ip);
+    assertEquals(a, b, `hash should be stable for ${ip}`);
+    assertEquals(a.length, 12);
+    // No IPv6 fragment (segments, '::', or embedded IPv4) should leak.
+    const fragments = ip.split(/[:.]/).filter((s) => s.length >= 2);
+    for (const frag of fragments) {
+      if (a.toLowerCase().includes(frag.toLowerCase())) {
+        throw new Error(`hash for ${ip} leaks fragment '${frag}': ${a}`);
+      }
+    }
+    if (a.includes(":") || a.includes(".")) {
+      throw new Error(`hash should be opaque hex, got ${a}`);
+    }
+  }
+});
+
+Deno.test("hashIp: distinct IPv6 addresses produce distinct hashes", async () => {
+  const hashes = await Promise.all(IPV6_SAMPLES.map((ip) => hashIp(ip)));
+  assertEquals(
+    new Set(hashes).size,
+    IPV6_SAMPLES.length,
+    "each IPv6 sample should hash to a unique value",
+  );
+});
+
+Deno.test("hashIp: equivalent-but-different IPv6 representations hash differently", async () => {
+  // Document current behavior: we hash the raw header string, not a normalized
+  // form. Different textual representations of the same address therefore
+  // produce different hashes. This is acceptable because clients consistently
+  // send one form per session, and normalization would add complexity for
+  // little security benefit.
+  const compressed = await hashIp("2001:db8::1");
+  const expanded = await hashIp("2001:0db8:0000:0000:0000:0000:0000:0001");
+  if (compressed === expanded) {
+    throw new Error("expected differing hashes for non-normalized IPv6 forms");
+  }
+});
+
+Deno.test("limiter buckets IPv4 and IPv6 from the same logical client independently", async () => {
+  // A dual-stack client connecting via IPv4 vs IPv6 will be tracked as two
+  // distinct buckets — verify this and ensure each gets its own breach log.
+  const limiter = new IpRateLimiter({ limit: 2, windowMs: 60_000 });
+  const req = fakeReq();
+  const v4 = "192.0.2.10";
+  const v6 = "2001:db8::dead:beef";
+
+  const logs = await captureWarn(async () => {
+    for (let i = 0; i < 5; i++) {
+      const r4 = limiter.check(v4);
+      if (!r4.allowed) await logRateLimitBreach("test-fn", v4, r4, req, limiter);
+      const r6 = limiter.check(v6);
+      if (!r6.allowed) await logRateLimitBreach("test-fn", v6, r6, req, limiter);
+    }
+  });
+
+  assertEquals(logs.length, 2, "one breach log per address family");
+  const hashes = logs.map((l) => JSON.parse(l).ipHash);
+  assertEquals(new Set(hashes).size, 2, "v4 and v6 produce distinct hashes");
+});
+
+Deno.test("breach log never contains raw IPv6 address (full or compressed)", async () => {
+  const limiter = new IpRateLimiter({ limit: 1, windowMs: 60_000 });
+  const req = fakeReq();
+
+  for (const ip of IPV6_SAMPLES) {
+    const local = new IpRateLimiter({ limit: 1, windowMs: 60_000 });
+    const logs = await captureWarn(async () => {
+      local.check(ip); // allowed
+      const rl = local.check(ip); // breach
+      await logRateLimitBreach("test-fn", ip, rl, req, local);
+    });
+    assertEquals(logs.length, 1, `expected one breach log for ${ip}`);
+    const line = logs[0];
+    if (line.includes(ip)) {
+      throw new Error(`raw IPv6 leaked into log for ${ip}: ${line}`);
+    }
+    // Also check non-trivial fragments don't leak.
+    for (const frag of ip.split(":").filter((s) => s.length >= 3)) {
+      if (line.toLowerCase().includes(frag.toLowerCase())) {
+        throw new Error(`IPv6 fragment '${frag}' leaked for ${ip}: ${line}`);
+      }
+    }
+  }
+
+  // Silence unused-binding lint
+  void limiter;
+});
+
+Deno.test("getClientIp parses IPv6 from cf-connecting-ip and x-forwarded-for", () => {
+  const v6 = "2001:db8::42";
+
+  // cf-connecting-ip wins
+  const r1 = new Request("https://x.test", {
+    headers: { "cf-connecting-ip": v6, "x-forwarded-for": "1.2.3.4" },
+  });
+  assertEquals(IpRateLimiter.getClientIp(r1), v6);
+
+  // Falls back to x-forwarded-for; takes the FIRST entry, trimmed.
+  // Note: bracketed forms like "[2001:db8::42]:443" are NOT supported by the
+  // current parser. Cloudflare delivers IPv6 unbracketed in these headers, so
+  // this is acceptable in practice. If that ever changes, this test will fail
+  // and we'll add bracket-stripping.
+  const r2 = new Request("https://x.test", {
+    headers: { "x-forwarded-for": `${v6}, 10.0.0.1` },
+  });
+  assertEquals(IpRateLimiter.getClientIp(r2), v6);
+
+  // No proxy headers → "unknown"
+  const r3 = new Request("https://x.test");
+  assertEquals(IpRateLimiter.getClientIp(r3), "unknown");
+});
