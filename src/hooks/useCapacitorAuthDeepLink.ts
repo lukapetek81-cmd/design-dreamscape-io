@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/integrations/supabase/client';
+import { NATIVE_AUTH_CALLBACK_URL } from '@/utils/nativeOAuth';
 
 /**
  * Listens for OAuth deep links (commodityhub://auth-callback) on native
@@ -18,28 +19,22 @@ export function useCapacitorAuthDeepLink() {
         const { App } = await import('@capacitor/app');
         const { Browser } = await import('@capacitor/browser');
 
-        const handle = await App.addListener('appUrlOpen', async ({ url }) => {
-          if (!url || !url.startsWith('commodityhub://auth-callback')) return;
+        const handleOAuthUrl = async (url?: string) => {
+          if (!url || !url.startsWith(NATIVE_AUTH_CALLBACK_URL)) return;
 
           try {
             // PKCE flow — ?code=...
-            const queryIdx = url.indexOf('?');
-            const hashIdx = url.indexOf('#');
+            const callbackUrl = new URL(url);
+            const code = callbackUrl.searchParams.get('code');
 
-            if (queryIdx !== -1) {
-              const query = url.slice(queryIdx + 1, hashIdx === -1 ? undefined : hashIdx);
-              const params = new URLSearchParams(query);
-              const code = params.get('code');
-              if (code) {
-                const { error } = await supabase.auth.exchangeCodeForSession(url);
-                if (error) console.error('exchangeCodeForSession failed:', error);
-              }
+            if (code) {
+              const { error } = await supabase.auth.exchangeCodeForSession(code);
+              if (error) console.error('exchangeCodeForSession failed:', error);
             }
 
             // Implicit flow — #access_token=...&refresh_token=...
-            if (hashIdx !== -1) {
-              const hash = url.slice(hashIdx + 1);
-              const params = new URLSearchParams(hash);
+            if (callbackUrl.hash) {
+              const params = new URLSearchParams(callbackUrl.hash.slice(1));
               const access_token = params.get('access_token');
               const refresh_token = params.get('refresh_token');
               if (access_token && refresh_token) {
@@ -50,6 +45,8 @@ export function useCapacitorAuthDeepLink() {
                 if (error) console.error('setSession failed:', error);
               }
             }
+
+            window.history.replaceState({}, document.title, '/');
           } catch (err) {
             console.error('OAuth deep-link handling failed:', err);
           } finally {
@@ -59,6 +56,13 @@ export function useCapacitorAuthDeepLink() {
               /* no-op — browser may already be closed */
             }
           }
+        };
+
+        const launchUrl = await App.getLaunchUrl();
+        await handleOAuthUrl(launchUrl?.url);
+
+        const handle = await App.addListener('appUrlOpen', async ({ url }) => {
+          await handleOAuthUrl(url);
         });
 
         removeListener = () => handle.remove();
