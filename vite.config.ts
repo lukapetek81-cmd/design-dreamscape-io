@@ -2,12 +2,30 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import { execSync } from "child_process";
+
+const getGitCommit = () => {
+  try {
+    return execSync("git rev-parse --short HEAD").toString().trim();
+  } catch {
+    return "unknown";
+  }
+};
+
+const pkg = require("./package.json");
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+  },
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version || "0.0.0"),
+    __APP_NAME__: JSON.stringify(pkg.name || "commodity-hub"),
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+    __BUILD_COMMIT__: JSON.stringify(getGitCommit()),
+    __BUILD_MODE__: JSON.stringify(mode),
   },
   plugins: [
     react(),
