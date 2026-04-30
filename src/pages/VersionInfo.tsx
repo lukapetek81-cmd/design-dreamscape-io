@@ -17,7 +17,10 @@ const VersionInfo: React.FC = () => {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
   const [platform, setPlatform] = useState<string>("web");
-  const [nativeVersion, setNativeVersion] = useState<string | null>(null);
+  const [nativeAppVersion, setNativeAppVersion] = useState<string | null>(null);
+  const [nativeBuild, setNativeBuild] = useState<string | null>(null);
+  const [bundleId, setBundleId] = useState<string | null>(null);
+  const [nativeAppName, setNativeAppName] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -28,7 +31,10 @@ const VersionInfo: React.FC = () => {
           try {
             const mod = await import(/* @vite-ignore */ "@capacitor/app");
             const info = await mod.App.getInfo();
-            setNativeVersion(`${info.version} (build ${info.build})`);
+            setNativeAppVersion(info.version ?? null);
+            setNativeBuild(info.build ?? null);
+            setBundleId(info.id ?? null);
+            setNativeAppName(info.name ?? null);
           } catch {
             // @capacitor/app not available in web build
           }
@@ -51,8 +57,23 @@ const VersionInfo: React.FC = () => {
 
   const rows: InfoRow[] = [
     { label: "App Name", value: __APP_NAME__ },
+    ...(nativeAppName ? [{ label: "Native App Name", value: nativeAppName }] : []),
     { label: "Web Version", value: __APP_VERSION__ },
-    ...(nativeVersion ? [{ label: "Native Version", value: nativeVersion }] : []),
+    ...(nativeAppVersion
+      ? [{ label: "Native Version", value: nativeAppVersion }]
+      : []),
+    ...(nativeBuild
+      ? [{ label: "Native Build Number", value: nativeBuild, mono: true }]
+      : []),
+    ...(bundleId
+      ? [
+          {
+            label: platform === "ios" ? "Bundle ID" : "Application ID",
+            value: bundleId,
+            mono: true,
+          },
+        ]
+      : []),
     { label: "Build Mode", value: __BUILD_MODE__ },
     { label: "Build Time", value: buildTime },
     { label: "Commit", value: __BUILD_COMMIT__, mono: true },
