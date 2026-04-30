@@ -2,9 +2,11 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
-import { execSync } from "child_process";
+import { execSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
-const getGitCommit = () => {
+const getGitCommit = (): string => {
   try {
     return execSync("git rev-parse --short HEAD").toString().trim();
   } catch {
@@ -12,7 +14,11 @@ const getGitCommit = () => {
   }
 };
 
-const pkg = require("./package.json");
+const pkgPath = fileURLToPath(new URL("./package.json", import.meta.url));
+const pkg = JSON.parse(readFileSync(pkgPath, "utf-8")) as {
+  name?: string;
+  version?: string;
+};
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
