@@ -28,6 +28,7 @@ import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsOfService from "@/pages/TermsOfService";
 import Watchlists from '@/pages/Watchlists';
 import DeleteAccount from '@/pages/DeleteAccount';
+import VersionInfo from '@/pages/VersionInfo';
 
 const NativeAuthBridge = () => {
   useCapacitorAuthDeepLink();
@@ -74,6 +75,8 @@ const App = () => {
                 
                 <Route path="/watchlists" element={<Watchlists />} />
                 <Route path="/delete-account" element={<DeleteAccount />} />
+                <Route path="/version" element={<VersionInfo />} />
+                <Route path="/about" element={<VersionInfo />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <Toaster />
