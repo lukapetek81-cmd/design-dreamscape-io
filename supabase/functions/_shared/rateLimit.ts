@@ -144,3 +144,53 @@ export function tooManyRequestsResponse(
     },
   );
 }
+
+/**
+ * Hashes an IP into an opaque, non-reversible 12-char token so we can
+ * correlate repeat offenders in logs without storing raw IPs (PII).
+ */
+export async function hashIp(ip: string): Promise<string> {
+  try {
+    const data = new TextEncoder().encode(`rl:${ip}`);
+    const buf = await crypto.subtle.digest("SHA-256", data);
+    return Array.from(new Uint8Array(buf))
+      .slice(0, 6)
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  } catch {
+    return "unknown";
+  }
+}
+
+/**
+ * Emits a single structured log line on the FIRST breach per IP per window.
+ * Subsequent breaches in the same window are silently suppressed to avoid
+ * log flooding under sustained abuse.
+ */
+export async function logRateLimitBreach(
+  functionName: string,
+  ip: string,
+  result: RateLimitResult,
+  req: Request,
+  limiter: IpRateLimiter,
+): Promise<void> {
+  if (!result.firstBreach) return;
+  limiter.markBreachLogged(ip);
+
+  const ipHash = await hashIp(ip);
+  const url = new URL(req.url);
+  // Structured single-line JSON log — no raw IP, no headers, no body.
+  console.warn(
+    JSON.stringify({
+      evt: "rate_limit_breach",
+      fn: functionName,
+      ipHash,
+      method: req.method,
+      path: url.pathname,
+      limit: result.limit,
+      windowResetAt: new Date(result.resetAt).toISOString(),
+      retryAfterSeconds: result.retryAfterSeconds,
+      ts: new Date().toISOString(),
+    }),
+  );
+}
