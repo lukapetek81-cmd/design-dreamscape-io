@@ -1,4 +1,5 @@
 import { CorsHeaders, LogContext, ApiResponse } from './types.ts';
+import { sanitize, sanitizeForLog } from './sanitize.ts';
 
 // Standard CORS headers for all edge functions
 export const corsHeaders: CorsHeaders = {
@@ -66,8 +67,11 @@ export class EdgeLogger {
 
   private formatMessage(level: string, message: string, details?: any): string {
     const timestamp = new Date().toISOString();
-    const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-    return `[${timestamp}] [${this.context.functionName}] ${level}: ${message}${detailsStr}`;
+    const safeMessage = typeof message === 'string'
+      ? (sanitize(message) as string)
+      : sanitizeForLog(message);
+    const detailsStr = details !== undefined ? ` - ${sanitizeForLog(details)}` : '';
+    return `[${timestamp}] [${this.context.functionName}] ${level}: ${safeMessage}${detailsStr}`;
   }
 
   info(message: string, details?: any) {
@@ -79,8 +83,9 @@ export class EdgeLogger {
   }
 
   error(message: string, error?: Error | unknown, details?: any) {
-    const errorDetails = error instanceof Error 
-      ? { message: error.message, stack: error.stack, ...details }
+    // Strip stack traces by default — they can leak file paths and inlined values.
+    const errorDetails = error instanceof Error
+      ? { errorName: error.name, errorMessage: error.message, ...details }
       : { error, ...details };
     console.error(this.formatMessage('ERROR', message, errorDetails));
   }
@@ -115,7 +120,10 @@ export function errorResponse(
 ): Response {
   // Log full error server-side, return generic message to client
   if (error instanceof Error) {
-    console.error('[errorResponse] Internal error:', error.message);
+    console.error('[errorResponse] Internal error:', sanitizeForLog({
+      name: error.name,
+      message: error.message,
+    }));
   }
   const message = typeof error === 'string' ? error : 'An error occurred processing your request';
   const response: ApiResponse = {
