@@ -1,5 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from '../_shared/utils.ts';
+import {
+  IpRateLimiter,
+  rateLimitHeaders,
+  tooManyRequestsResponse,
+} from '../_shared/rateLimit.ts';
+
+// 30 requests/minute per IP — api-docs is read-only static content; no need to
+// allow rapid polling.
+const limiter = new IpRateLimiter({ limit: 30, windowMs: 60_000 });
 
 const openApiSpec = {
   openapi: "3.0.3",
@@ -310,6 +319,13 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  const ip = IpRateLimiter.getClientIp(req);
+  const rl = limiter.check(ip);
+  if (!rl.allowed) {
+    return tooManyRequestsResponse(rl, corsHeaders);
+  }
+  const rlHeaders = rateLimitHeaders(rl);
+
   const url = new URL(req.url);
   const format = url.searchParams.get('format') || 'json';
 
@@ -331,6 +347,7 @@ info:
     return new Response(yamlContent, {
       headers: { 
         ...corsHeaders, 
+        ...rlHeaders,
         'Content-Type': 'text/yaml',
         'Content-Disposition': 'attachment; filename="api-spec.yaml"'
       }
@@ -339,6 +356,6 @@ info:
 
   // Default to JSON format
   return new Response(JSON.stringify(openApiSpec, null, 2), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    headers: { ...corsHeaders, ...rlHeaders, 'Content-Type': 'application/json' }
   });
 });
