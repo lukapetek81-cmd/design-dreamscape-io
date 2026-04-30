@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { validateFormData } from '@/utils/validation';
 import { authRateLimiter } from '@/utils/security';
 import { Capacitor } from '@capacitor/core';
+import { NATIVE_OAUTH_REDIRECT_URL } from '@/utils/nativeOAuth';
 
 interface Profile {
   id: string;
@@ -272,7 +273,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const isNative = Capacitor.isNativePlatform();
       const redirectTo = isNative
-        ? 'commodityhub://auth-callback'
+        ? NATIVE_OAUTH_REDIRECT_URL
         : `${window.location.origin}/`;
 
       const { data, error } = await supabase.auth.signInWithOAuth({
