@@ -1,11 +1,11 @@
 {
   "name": "Commodity Hub - Live Prices & Insights",
   "short_name": "Commodity Hub",
-  "description": "Live commodity prices, charts, and market insights across energy, metals, grains, softs, and livestock. Track 17 headline commodities free, unlock 60+ specialty markets with Premium.",
+  "description": "One-time purchase. Live commodity prices, charts and market insights across energy, metals, grains, softs and livestock — no ads, no subscriptions, no in-app purchases.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#8B5CF6",
-  "theme_color": "#8B5CF6",
+  "background_color": "#1e3a5f",
+  "theme_color": "#1e3a5f",
   "orientation": "portrait-primary",
   "icons": [
     {
