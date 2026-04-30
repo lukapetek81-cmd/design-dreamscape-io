@@ -82,13 +82,15 @@ ALERT_WEBHOOK_URL=your_monitoring_webhook
 
 ## Launch Day Checklist
 1. ✅ Database migrated and optimized
-2. ⚠️ Security linter issues resolved
-3. ⚠️ Production API keys configured
-4. ⚠️ Monitoring and alerting active
-5. ⚠️ Google Play Store listing ready
-6. ⚠️ SSL certificates and custom domain
-7. ⚠️ Performance testing completed
-8. ⚠️ Backup and recovery tested
+2. ✅ Capacitor switched to production mode (no `server.url`, mixed-content + webview-debug disabled)
+3. ✅ PWA manifest + index.html brand colors aligned to `#1e3a5f`
+4. ✅ Launcher icons + splash screens regenerated from `public/icon.png`
+5. ✅ Account-deletion flow live at `/delete-account` (Play Data Safety)
+6. ✅ Privacy Policy + Terms of Service pages reachable
+7. ✅ Production API keys configured in Supabase Edge Functions secrets
+8. ⚠️ Supabase linter — 17 WARN-level findings remain (16 SECURITY DEFINER function exposure + 1 leaked-password protection). All non-blocking; review post-launch.
+9. ⚠️ Generate signed AAB locally in Android Studio (see `mem://launch/android-signing`)
+10. ⚠️ Upload to Play Console Internal Testing track first, then promote to Production
 ## Updating the launcher icon
 
 The single source of truth for the app icon is `public/icon.png` (512×512 RGBA).
