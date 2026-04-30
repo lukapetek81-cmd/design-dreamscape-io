@@ -1,10 +1,25 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 import { corsHeaders } from '../_shared/utils.ts'
+import {
+  IpRateLimiter,
+  rateLimitHeaders,
+  tooManyRequestsResponse,
+} from '../_shared/rateLimit.ts'
+
+// 60 requests/minute per IP — fine for uptime monitors (typical 30–60s polling),
+// blocks scripted abuse.
+const limiter = new IpRateLimiter({ limit: 60, windowMs: 60_000 });
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  const ip = IpRateLimiter.getClientIp(req);
+  const rl = limiter.check(ip);
+  if (!rl.allowed) {
+    return tooManyRequestsResponse(rl, corsHeaders);
   }
 
   try {
@@ -72,7 +87,11 @@ serve(async (req) => {
         version: '1.1.0',
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: {
+          ...corsHeaders,
+          ...rateLimitHeaders(rl),
+          'Content-Type': 'application/json',
+        },
         status: overallStatus === 'healthy' ? 200 : 503,
       }
     );
