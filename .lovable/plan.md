@@ -1,132 +1,42 @@
-# Launch Plan — Commodity Hub (Google Play, ASAP)
+## Goal
 
-You're close. Branding, security, billing model, and Android assets are in place. What remains is **production hardening + store submission**. Below is the exact order of operations with what I (Lovable) will do vs what you must do locally.
+Close the security gap on `public.subscribers` so that Stripe customer IDs, emails, and subscription status cannot be read by unauthenticated users or via NULL `user_id` rows.
 
----
+## Current state
 
-## Phase 1 — Switch the app to production mode (Lovable does)
+- `subscribers.user_id` is **nullable**, so any row inserted without a user_id is effectively orphaned and ambiguous under RLS.
+- Existing RLS policies (`subscribers_select_own`, `_insert_own`, `_update_own`, `_delete_own`) target only the `authenticated` role with `user_id = auth.uid()`.
+- The `anon` role has no explicit deny — by default it inherits no policies, but table-level `GRANT`s could still leak access. We need an explicit lockdown.
 
-Currently `capacitor.config.ts` is in **dev/live-reload mode** — it loads the Lovable preview URL at runtime. That cannot ship to the Play Store.
+## Changes (single migration)
 
-1. **Flip `capacitor.config.ts` to production**
-   - Remove the `server: { url, cleartext }` block
-   - `allowMixedContent: false`
-   - `webContentsDebuggingEnabled: false`
-2. **Fix PWA manifest brand drift** — `public/manifest.json` still has the old purple `#8B5CF6` for `background_color` and `theme_color`. Update both to brand navy `#1e3a5f` so the PWA, splash, and status bar match.
-3. **Fix manifest description** — it still references the removed freemium model ("Track 17 headline commodities free, unlock 60+ specialty markets with Premium"). Replace with paid-app copy from `playStoreCompliance.ts`.
-4. **Verify health-check edge function** is deployed and returns 200 (used for uptime monitoring).
-5. **Run Supabase security linter** and fix any `error`-level findings (especially RLS).
-6. **Confirm production secrets** exist in Supabase Edge Functions: `FMP_API_KEY`, `OILPRICEAPI_KEY`, `MARKETAUX_API_KEY`, etc.
+1. **Backfill / clean NULL rows**
+   - Delete any rows where `user_id IS NULL` (orphaned, cannot be safely owned). These are leftover from earlier Stripe webhook flows that inserted by email only.
 
----
+2. **Enforce NOT NULL on `user_id`**
+   - `ALTER TABLE public.subscribers ALTER COLUMN user_id SET NOT NULL;`
 
-## Phase 2 — You build the signed Android release (local)
+3. **Revoke any direct grants to `anon` and `public`**
+   - `REVOKE ALL ON public.subscribers FROM anon, public;`
+   - Re-grant only what `authenticated` needs: `GRANT SELECT, INSERT, UPDATE, DELETE ON public.subscribers TO authenticated;`
 
-Cannot be done from Lovable — requires Android Studio + your keystore.
+4. **Add a restrictive deny-anon RLS policy** (defense in depth)
+   - `CREATE POLICY subscribers_deny_anon ON public.subscribers AS RESTRICTIVE FOR ALL TO anon USING (false) WITH CHECK (false);`
 
-```bash
-git pull
-npm install
-npm run build
-npx cap sync android
-```
+5. **Tighten the existing SELECT policy** to also assert non-null:
+   - Drop `subscribers_select_own` and recreate with `USING ((user_id = auth.uid()) AND (auth.uid() IS NOT NULL))` — matches the pattern already used on `portfolio_positions_select_own_verified`.
 
-Then in **Android Studio**:
-1. **Build → Clean Project → Rebuild Project**
-2. **Build → Generate Signed Bundle / AAB**
-   - Use the keystore from `mem://launch/android-signing`
-   - Output: `android/app/release/app-release.aab`
-3. Test the AAB on a physical device via `bundletool` or an internal-test track upload before promoting to production.
+6. **Mark the security finding as fixed** via the security tool after the migration runs.
 
-**Critical:** uninstall any previously sideloaded debug APK first — the `applicationId` and signing key must match what Play Console expects.
+## Edge function impact
 
----
+The `revenuecat-webhook` and any Stripe webhook code use `SUPABASE_SERVICE_ROLE_KEY`, which bypasses RLS — they continue to work. They must, however, always supply a real `user_id` on insert (no more email-only rows). I'll grep the edge functions for any insert into `subscribers` that omits `user_id` and patch them to look up the user by email first and skip the row if no match.
 
-## Phase 3 — Google Play Console submission (you do, in browser)
+## Files touched
 
-Everything needed for the listing is already generated in `src/utils/playStoreCompliance.ts` and `src/components/app-store/`.
+- New SQL migration under `supabase/migrations/`
+- Possibly `supabase/functions/revenuecat-webhook/index.ts` if it inserts without `user_id`
 
-### 3a. App setup
-- Create app in Play Console → **Paid app**, price €4.99 / $4.99
-- Category: **Finance**
-- Target audience: **18+** (per `mem://launch/play-store-listing`)
-- Content rating questionnaire: complete (Teen-rated content, no UGC, no ads)
+## Out of scope
 
-### 3b. Store listing
-- **Title:** Commodity Hub - Live Prices & Insights
-- **Short description + full description:** copy from `generatePlayStoreMetadata()` in `playStoreCompliance.ts`
-- **Icon (512×512):** `public/icons/icon-512-playstore.png`
-- **Feature graphic (1024×500):** see `mem://launch/store-assets`
-- **Screenshots:** 4–8 phone screenshots (1080×1920+). Use `/screenshots` route or take from a real build.
-- **Privacy policy URL:** `https://commodity-hub.lovable.app/privacy-policy`
-
-### 3c. Data Safety form
-Fill exactly per `PRIVACY_SETTINGS` in `playStoreCompliance.ts`:
-- Collects: email, user ID, purchase history, app interactions, device ID
-- No ads / no advertising ID / no location
-- Encrypted in transit + at rest
-- Account deletion URL: `https://commodity-hub.lovable.app/delete-account`
-
-### 3d. App content
-- Financial-services declaration (read-only market data, no trading, no advice)
-- News-publisher declaration if you keep aggregated news
-- Government-app: No
-
-### 3e. Release
-1. Upload signed AAB to **Internal testing** track first
-2. Add 2–5 testers, smoke-test for 24h
-3. Promote to **Production** when stable
-
----
-
-## Phase 4 — Web publish + custom domain (optional, parallel)
-
-1. Click **Publish** in Lovable → goes live at `commodity-hub.lovable.app`
-2. (Optional) Connect custom domain in Project Settings → Domains
-
----
-
-## Pre-flight checklist (must all be ✅ before AAB upload)
-
-| Item | Status | Owner |
-|------|--------|-------|
-| Capacitor `server` block removed | ❌ TODO | Lovable |
-| `allowMixedContent` & `webContentsDebuggingEnabled` = false | ❌ TODO | Lovable |
-| `manifest.json` colors/description fixed | ❌ TODO | Lovable |
-| Supabase RLS linter clean | ❓ Verify | Lovable |
-| Health-check endpoint live | ❓ Verify | Lovable |
-| Launcher icons (brand) | ✅ Done | — |
-| Splash screens (brand) | ✅ Done | — |
-| Package ID matches Lovable project | ✅ Done | — |
-| `applicationId` / `versionCode` set | ✅ Done | — |
-| Keystore secured + backed up | You | You |
-| Signed AAB built | — | You |
-| Privacy Policy + Terms reachable | ✅ Done | — |
-| Account deletion flow works | ✅ Done | — |
-| Play Console account ($25) | — | You |
-| Store assets uploaded | — | You |
-| Data Safety form submitted | — | You |
-
----
-
-## What I will do if you approve this plan
-
-In a single build pass:
-1. Edit `capacitor.config.ts` → production mode
-2. Edit `public/manifest.json` → brand colors + paid-app description
-3. Run Supabase linter and fix any RLS errors found
-4. Verify `health-check` edge function deploys and responds
-5. Update `PRODUCTION_SETUP.md` Launch Day Checklist with the final state
-
-Then I'll hand off to you for **Phase 2 (build AAB)** and **Phase 3 (Play submission)** — those steps require your local machine and Google Play Console access.
-
----
-
-## Realistic timeline
-
-- **Phase 1 (Lovable):** 30 min
-- **Phase 2 (you, local build):** 1–2 hours
-- **Phase 3 (Play submission):** 2–4 hours of form-filling + asset upload
-- **Google review:** typically 1–7 days for first submission
-
-**Fastest path to "live in store":** ~3–7 days from approving this plan.
+- No frontend changes. The client already only reads/writes its own row via the anon key + RLS.
