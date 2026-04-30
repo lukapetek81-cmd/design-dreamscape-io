@@ -6,6 +6,7 @@ import {
   rateLimitHeaders,
   tooManyRequestsResponse,
 } from '../_shared/rateLimit.ts'
+import { safeLog } from '../_shared/safeConsole.ts'
 
 // 60 requests/minute per IP — fine for uptime monitors (typical 30–60s polling),
 // blocks scripted abuse.
@@ -96,7 +97,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Health check error:', error);
+    safeLog.error('Health check error:', error);
     return new Response(
       JSON.stringify({
         status: 'unhealthy',
