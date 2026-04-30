@@ -51,11 +51,11 @@ export class IpRateLimiter {
   static getClientIp(req: Request): string {
     const headers = req.headers;
     const cfIp = headers.get("cf-connecting-ip");
-    if (cfIp) return cfIp;
+    if (cfIp) return normalizeIp(cfIp);
     const xff = headers.get("x-forwarded-for");
-    if (xff) return xff.split(",")[0].trim();
+    if (xff) return normalizeIp(xff.split(",")[0]);
     const xri = headers.get("x-real-ip");
-    if (xri) return xri.trim();
+    if (xri) return normalizeIp(xri);
     return "unknown";
   }
 
