@@ -5,6 +5,7 @@ import {
   IpRateLimiter,
   rateLimitHeaders,
   tooManyRequestsResponse,
+  logRateLimitBreach,
 } from '../_shared/rateLimit.ts'
 import { safeLog } from '../_shared/safeConsole.ts'
 
@@ -20,6 +21,7 @@ serve(async (req) => {
   const ip = IpRateLimiter.getClientIp(req);
   const rl = limiter.check(ip);
   if (!rl.allowed) {
+    await logRateLimitBreach('health-check', ip, rl, req, limiter);
     return tooManyRequestsResponse(rl, corsHeaders);
   }
 

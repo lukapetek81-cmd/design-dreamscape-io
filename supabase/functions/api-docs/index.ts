@@ -4,6 +4,7 @@ import {
   IpRateLimiter,
   rateLimitHeaders,
   tooManyRequestsResponse,
+  logRateLimitBreach,
 } from '../_shared/rateLimit.ts';
 
 // 30 requests/minute per IP — api-docs is read-only static content; no need to
@@ -322,6 +323,7 @@ serve(async (req) => {
   const ip = IpRateLimiter.getClientIp(req);
   const rl = limiter.check(ip);
   if (!rl.allowed) {
+    await logRateLimitBreach('api-docs', ip, rl, req, limiter);
     return tooManyRequestsResponse(rl, corsHeaders);
   }
   const rlHeaders = rateLimitHeaders(rl);
