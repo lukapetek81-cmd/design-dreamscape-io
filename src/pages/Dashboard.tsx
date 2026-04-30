@@ -301,6 +301,16 @@ const DashboardContent = ({
                 </Button>
               </div>
             )}
+
+            {/* Footer: build/version link */}
+            <div className="mt-8 pt-6 border-t border-border/50 text-center">
+              <a
+                href="/version"
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                v{__APP_VERSION__} · Build info
+              </a>
+            </div>
           </div>
         </main>
       </div>
