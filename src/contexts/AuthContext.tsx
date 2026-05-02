@@ -403,7 +403,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const isGuest = !user;
-  const isPremium = profile?.subscription_active && profile?.subscription_tier !== 'free';
+  // Paid App model: anyone running this installed build paid for it → always premium.
+  // Keeps the dashboard identical for signed-in and signed-out users on the same APK.
+  const isPremium = true;
   
   const requiresAuth = () => {
     if (!user) {
