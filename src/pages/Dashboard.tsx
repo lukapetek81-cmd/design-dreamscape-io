@@ -12,7 +12,6 @@ import { useRealtimeDataContext } from '@/contexts/RealtimeDataContext';
 import { useAvailableCommodities, Commodity } from '@/hooks/useCommodityData';
 import { Button } from '@/components/ui/button';
 import { OfflineIndicator } from '@/components/OfflineIndicator';
-import PremiumUpsellCard from '@/components/PremiumUpsellCard';
 import { useToast } from '@/hooks/use-toast';
 
 const Dashboard = () => {
@@ -20,7 +19,7 @@ const Dashboard = () => {
   const [activeGroup, setActiveGroup] = useState("energy");
   const isMobile = useIsMobile();
   const auth = useAuth();
-  const { isGuest, profile, loading: authLoading, isPremium } = (auth || { isGuest: true, profile: null, loading: false, isPremium: false }) as any;
+  const { isGuest, profile, loading: authLoading } = (auth || { isGuest: true, profile: null, loading: false }) as any;
   const { data: commodities, isLoading: commoditiesLoading, error: commoditiesError, refetch: refetchCommodities } = useAvailableCommodities();
   const [highlightCommodity, setHighlightCommodity] = useState<string | null>(null);
 
@@ -77,7 +76,6 @@ const Dashboard = () => {
         error={commoditiesError?.message || null}
         onRetry={() => refetchCommodities()}
         highlightCommodity={highlightCommodity}
-        isPremium={!!isPremium}
       />
     </SidebarProvider>
   );
@@ -93,7 +91,6 @@ const DashboardContent = ({
   error, 
   onRetry,
   highlightCommodity,
-  isPremium
 }: {
   activeGroup: string;
   setActiveGroup: (group: string) => void;
@@ -104,18 +101,10 @@ const DashboardContent = ({
   error: string | null;
   onRetry: () => void;
   highlightCommodity?: string | null;
-  isPremium: boolean;
 }) => {
   const { setOpenMobile } = useSidebar();
   const { connected: realtimeConnected, delayStatus } = useRealtimeDataContext();
   const { toast } = useToast();
-
-  const handleUpgrade = React.useCallback(() => {
-    toast({
-      title: 'Premium subscriptions coming soon',
-      description: 'Stripe checkout will be enabled shortly. Stay tuned!',
-    });
-  }, [toast]);
 
   // Simple swipe handler for mobile sidebar
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -259,26 +248,6 @@ const DashboardContent = ({
               </div>
             )}
 
-            {/* Premium Upsells — free users only */}
-            {!loading && !error && !isPremium && activeGroup === 'energy' && (
-              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="energy" />
-            )}
-            {!loading && !error && !isPremium && activeGroup === 'industrials' && (
-              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="industrials" />
-            )}
-            {!loading && !error && !isPremium && activeGroup === 'metals' && (
-              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="metals" />
-            )}
-            {!loading && !error && !isPremium && activeGroup === 'grains' && (
-              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="grains" />
-            )}
-            {!loading && !error && !isPremium && activeGroup === 'softs' && (
-              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="softs" />
-            )}
-            {!loading && !error && !isPremium && activeGroup === 'livestock' && (
-              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="livestock" />
-            )}
-
             {/* Commodities List */}
             {!loading && filteredCommodities.length > 0 && (
               <VirtualizedCommodityList 
@@ -289,7 +258,7 @@ const DashboardContent = ({
             )}
 
             {/* Empty State — only shown when no premium upsell applies */}
-            {!loading && !error && filteredCommodities.length === 0 && !(activeGroup === 'industrials' && !isPremium) && (
+            {!loading && !error && filteredCommodities.length === 0 && (
               <div className="text-center py-16">
                 <BarChart3 className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
                 <p className="text-xl font-semibold">No Commodities Available</p>
