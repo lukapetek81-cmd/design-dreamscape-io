@@ -302,12 +302,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { error };
       }
 
-      // On native, open Google's consent screen in the in-app browser.
-      // The deep-link handler (useCapacitorAuthDeepLink) completes the session.
+      // On native, open Google's consent screen in the system browser.
+      // Using a direct app-scheme redirect lets Android return to the installed app
+      // instead of leaving the confirmed session in the hosted web app/browser.
       if (isNative && data?.url) {
         try {
           const { Browser } = await import('@capacitor/browser');
-          await Browser.open({ url: data.url, presentationStyle: 'popover' });
+          await Browser.open({
+            url: data.url,
+            presentationStyle: 'fullscreen',
+            windowName: '_self',
+          });
         } catch (browserErr) {
           console.error('Failed to open in-app browser for OAuth:', browserErr);
           return { error: browserErr };

@@ -18,11 +18,23 @@ export function useCapacitorAuthDeepLink() {
         const { App } = await import('@capacitor/app');
         const { Browser } = await import('@capacitor/browser');
 
+        const closeBrowserAndRefreshSession = async () => {
+          try {
+            await Browser.close();
+          } catch {
+            /* no-op — browser may already be closed */
+          }
+
+          const { data, error } = await supabase.auth.getSession();
+          if (error) console.error('[OAuth] Session refresh after browser close failed:', error);
+          else if (data.session) console.log('[OAuth] Session available after native return');
+        };
+
         const handleOAuthUrl = async (url?: string) => {
-          if (!url) return;
+          if (!url) return false;
           // Match any commodityhub:// deep-link that carries an OAuth payload,
           // tolerating trailing slashes, host casing, or alternate paths.
-          if (!url.toLowerCase().startsWith('commodityhub://')) return;
+          if (!url.toLowerCase().startsWith('commodityhub://')) return false;
           console.log('[OAuth] Received native deep link:', url);
 
           try {
@@ -56,12 +68,10 @@ export function useCapacitorAuthDeepLink() {
           } catch (err) {
             console.error('OAuth deep-link handling failed:', err);
           } finally {
-            try {
-              await Browser.close();
-            } catch {
-              /* no-op — browser may already be closed */
-            }
+            await closeBrowserAndRefreshSession();
           }
+
+          return true;
         };
 
         const launchUrl = await App.getLaunchUrl();
@@ -71,7 +81,14 @@ export function useCapacitorAuthDeepLink() {
           await handleOAuthUrl(url);
         });
 
-        removeListener = () => handle.remove();
+        const browserHandle = await Browser.addListener('browserFinished', async () => {
+          await closeBrowserAndRefreshSession();
+        });
+
+        removeListener = () => {
+          handle.remove();
+          browserHandle.remove();
+        };
       } catch (err) {
         console.warn('Capacitor deep-link listener not registered:', err);
       }
