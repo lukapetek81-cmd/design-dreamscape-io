@@ -34,6 +34,9 @@ const FEATURES = [
   'Priority data refresh & extended history',
 ];
 
+const PLAY_STORE_URL =
+  'https://play.google.com/store/apps/details?id=com.commodityhub.app';
+
 const PremiumPaywall: React.FC<PremiumPaywallProps> = ({ open, onOpenChange }) => {
   const { toast } = useToast();
   const auth = useAuth();
@@ -118,8 +121,18 @@ const PremiumPaywall: React.FC<PremiumPaywallProps> = ({ open, onOpenChange }) =
         </ul>
 
         {!isNative ? (
-          <div className="rounded-md border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
-            In-app purchases are only available in the Android app. Install Commodity Hub from the Play Store to upgrade.
+          <div className="space-y-3">
+            <div className="rounded-md border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
+              Premium subscriptions are currently only available in the Android app. Web subscriptions are coming based on user feedback.
+            </div>
+            <Button
+              className="w-full"
+              onClick={() =>
+                window.open(PLAY_STORE_URL, '_blank', 'noopener,noreferrer')
+              }
+            >
+              Get the Android app
+            </Button>
           </div>
         ) : loading ? (
           <div className="flex items-center justify-center py-6">
