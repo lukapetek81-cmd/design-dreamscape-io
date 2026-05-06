@@ -166,9 +166,9 @@
 }
 
 @layer components {
-  /* Enhanced interactive components */
+  /* Enhanced interactive components — stripped on mobile for performance */
   .card-hover-effect {
-    @apply transition-all duration-300 hover:shadow-strong hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.98] active:translate-y-0;
+    @apply transition-shadow duration-200 hover:shadow-strong;
   }
   
   .button-press-effect {
