@@ -1,7 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/utils.ts'
+import { IpRateLimiter } from '../_shared/rateLimit.ts'
 
 const OIL_API_BASE = 'https://api.oilpriceapi.com/v1';
+
+// IP rate limit: 60 req/min/IP. Generous because cached responses are cheap;
+// uncached calls forward to OilPriceAPI which is per-call billed.
+const limiter = new IpRateLimiter({ limit: 60, windowMs: 60_000 });
 
 // In-memory cache with TTL (5 minutes for single, 3 minutes for batch)
 const priceCache = new Map<string, { data: any; timestamp: number }>();
@@ -86,13 +92,55 @@ serve(async (req) => {
   }
 
   try {
+    // 1. IP-based rate limit (defense against unauthenticated quota burn)
+    const ip = IpRateLimiter.getClientIp(req);
+    const rl = limiter.check(ip);
+    if (!rl.allowed) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded' }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+            'Retry-After': String(rl.retryAfterSeconds),
+          },
+        }
+      );
+    }
+
+    // 2. Resolve subscription status from JWT (server-side; ignores client flags)
+    let isPremium = false;
+    const authHeader = req.headers.get('Authorization');
+    if (authHeader) {
+      try {
+        const supa = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+        );
+        const { data: { user } } = await supa.auth.getUser(authHeader.replace('Bearer ', ''));
+        if (user) {
+          const { data: profile } = await supa.from('profiles')
+            .select('subscription_active, subscription_tier')
+            .eq('id', user.id)
+            .maybeSingle();
+          isPremium = !!(profile?.subscription_active && profile?.subscription_tier && profile.subscription_tier !== 'free');
+        }
+      } catch (err) {
+        console.warn('Subscription lookup failed; treating as free tier:', err);
+      }
+    }
+
     const apiKey = Deno.env.get('OIL_PRICE_API_KEY');
     if (!apiKey) {
       throw new Error('OIL_PRICE_API_KEY is not configured');
     }
 
     const body = req.method === 'POST' ? await req.json() : {};
-    const { commodityName, commodities, includePremium } = body;
+    const { commodityName, commodities } = body;
+    // SECURITY: includePremium is now derived server-side from the JWT/profile.
+    // Any client-supplied includePremium field is ignored.
+    const includePremium = isPremium;
 
     // Single commodity request
     if (commodityName) {
