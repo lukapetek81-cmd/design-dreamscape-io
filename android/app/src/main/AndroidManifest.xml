@@ -22,12 +22,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- OAuth deep link callback (Supabase Google sign-in) -->
+            <!-- OAuth deep link callback (Supabase Google sign-in).
+                 Catches every commodityhub:// URL so the system always reopens
+                 the app, regardless of host/path used by the OAuth provider. -->
             <intent-filter android:autoVerify="false">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="commodityhub" android:host="auth-callback" />
+                <data android:scheme="commodityhub" />
             </intent-filter>
 
         </activity>

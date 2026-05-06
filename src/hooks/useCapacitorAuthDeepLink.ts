@@ -20,7 +20,11 @@ export function useCapacitorAuthDeepLink() {
         const { Browser } = await import('@capacitor/browser');
 
         const handleOAuthUrl = async (url?: string) => {
-          if (!url || !url.startsWith(NATIVE_AUTH_CALLBACK_URL)) return;
+          if (!url) return;
+          // Match any commodityhub:// deep-link that carries an OAuth payload,
+          // tolerating trailing slashes, host casing, or alternate paths.
+          if (!url.toLowerCase().startsWith('commodityhub://')) return;
+          console.log('[OAuth] Received native deep link:', url);
 
           try {
             // PKCE flow — ?code=...
@@ -28,8 +32,10 @@ export function useCapacitorAuthDeepLink() {
             const code = callbackUrl.searchParams.get('code');
 
             if (code) {
+              console.log('[OAuth] Exchanging PKCE code for session');
               const { error } = await supabase.auth.exchangeCodeForSession(code);
               if (error) console.error('exchangeCodeForSession failed:', error);
+              else console.log('[OAuth] Session established via PKCE');
             }
 
             // Implicit flow — #access_token=...&refresh_token=...
@@ -38,6 +44,7 @@ export function useCapacitorAuthDeepLink() {
               const access_token = params.get('access_token');
               const refresh_token = params.get('refresh_token');
               if (access_token && refresh_token) {
+                console.log('[OAuth] Setting session via implicit tokens');
                 const { error } = await supabase.auth.setSession({
                   access_token,
                   refresh_token,
