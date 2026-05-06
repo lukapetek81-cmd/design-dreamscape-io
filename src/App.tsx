@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -11,24 +11,31 @@ import SEOHead from '@/components/SEOHead';
 import Dashboard from '@/pages/Dashboard';
 import Auth from '@/pages/Auth';
 
-import NotFound from '@/pages/NotFound';
-import Portfolio from '@/pages/Portfolio';
-import MarketStatus from '@/pages/MarketStatus';
-import APIComparison from '@/pages/APIComparison';
-import EconomicCalendar from '@/pages/EconomicCalendar';
-import ExpertInsights from '@/pages/ExpertInsights';
-import LearningHub from '@/pages/LearningHub';
-import MarketCorrelation from '@/pages/MarketCorrelation';
-import MarketScreener from '@/pages/MarketScreener';
-import MarketSentiment from '@/pages/MarketSentiment';
-import NewsSettings from '@/pages/NewsSettings';
+// Lazy-load every non-critical route so initial Dashboard paint stays fast
+// and route transitions only fetch what they need.
+const NotFound = lazy(() => import('@/pages/NotFound'));
+const Portfolio = lazy(() => import('@/pages/Portfolio'));
+const MarketStatus = lazy(() => import('@/pages/MarketStatus'));
+const APIComparison = lazy(() => import('@/pages/APIComparison'));
+const EconomicCalendar = lazy(() => import('@/pages/EconomicCalendar'));
+const ExpertInsights = lazy(() => import('@/pages/ExpertInsights'));
+const LearningHub = lazy(() => import('@/pages/LearningHub'));
+const MarketCorrelation = lazy(() => import('@/pages/MarketCorrelation'));
+const MarketScreener = lazy(() => import('@/pages/MarketScreener'));
+const MarketSentiment = lazy(() => import('@/pages/MarketSentiment'));
+const NewsSettings = lazy(() => import('@/pages/NewsSettings'));
+const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
+const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
+const Watchlists = lazy(() => import('@/pages/Watchlists'));
+const DeleteAccount = lazy(() => import('@/pages/DeleteAccount'));
+const VersionInfo = lazy(() => import('@/pages/VersionInfo'));
 
-import ResetPassword from '@/pages/ResetPassword';
-import PrivacyPolicy from "@/pages/PrivacyPolicy";
-import TermsOfService from "@/pages/TermsOfService";
-import Watchlists from '@/pages/Watchlists';
-import DeleteAccount from '@/pages/DeleteAccount';
-import VersionInfo from '@/pages/VersionInfo';
+const RouteFallback = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+  </div>
+);
 
 const NativeAuthBridge = () => {
   useCapacitorAuthDeepLink();
@@ -46,6 +53,7 @@ const App = () => {
           <TooltipProvider>
             <RealtimeDataProvider>
               <SEOHead />
+              <Suspense fallback={<RouteFallback />}>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/dashboard" element={<Dashboard />} />
@@ -79,6 +87,7 @@ const App = () => {
                 <Route path="/about" element={<VersionInfo />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              </Suspense>
               <Toaster />
             </RealtimeDataProvider>
           </TooltipProvider>
