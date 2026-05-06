@@ -1,5 +1,7 @@
 export const NATIVE_AUTH_CALLBACK_URL = 'commodityhub://auth-callback';
-export const NATIVE_OAUTH_REDIRECT_URL = NATIVE_AUTH_CALLBACK_URL;
+export const NATIVE_OAUTH_REDIRECT_URL = 'https://commodity-hub.lovable.app/?native=1';
+
+const ANDROID_PACKAGE_NAME = 'com.commodityhub.app';
 
 const OAUTH_SEARCH_KEYS = ['code', 'error', 'error_description', 'error_code'];
 const OAUTH_HASH_KEYS = [
@@ -24,6 +26,16 @@ export const buildNativeAuthCallbackUrl = (callbackHref: string) => {
   return `${NATIVE_AUTH_CALLBACK_URL}${search ? `?${search}` : ''}${callbackUrl.hash}`;
 };
 
+export const buildAndroidIntentCallbackUrl = (callbackHref: string) => {
+  const appCallbackUrl = buildNativeAuthCallbackUrl(callbackHref);
+  const parsedCallback = new URL(appCallbackUrl);
+  const fallbackUrl = encodeURIComponent(window.location.origin);
+
+  return `intent://${parsedCallback.host}${parsedCallback.pathname}${parsedCallback.search}${parsedCallback.hash}` +
+    `#Intent;scheme=${parsedCallback.protocol.replace(':', '')};package=${ANDROID_PACKAGE_NAME};` +
+    `S.browser_fallback_url=${fallbackUrl};end`;
+};
+
 export const redirectNativeOAuthCallbackFromWeb = () => {
   if (typeof window === 'undefined') return false;
 
@@ -38,6 +50,7 @@ export const redirectNativeOAuthCallbackFromWeb = () => {
   if (!hasOAuthPayload) return false;
 
   const appCallbackUrl = buildNativeAuthCallbackUrl(callbackUrl.href);
+  const androidIntentUrl = buildAndroidIntentCallbackUrl(callbackUrl.href);
 
   window.setTimeout(() => {
     document.body.innerHTML = `
@@ -45,12 +58,13 @@ export const redirectNativeOAuthCallbackFromWeb = () => {
         <div>
           <h1 style="font-size:22px;margin:0 0 8px">Opening Commodity Hub</h1>
           <p style="margin:0 0 20px;color:#cbd5e1">If the app did not open, return to your installed Commodity Hub app.</p>
-          <a href="${appCallbackUrl}" style="color:#2dd4bf">Open app</a>
+          <a href="${androidIntentUrl}" style="color:#2dd4bf">Open app</a>
         </div>
       </main>
     `;
-  }, 700);
+    window.setTimeout(() => window.location.assign(appCallbackUrl), 900);
+  }, 900);
 
-  window.location.replace(appCallbackUrl);
+  window.location.replace(androidIntentUrl);
   return true;
 };
