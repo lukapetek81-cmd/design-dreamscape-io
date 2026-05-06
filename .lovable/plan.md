@@ -1,42 +1,84 @@
 ## Goal
 
-Close the security gap on `public.subscribers` so that Stripe customer IDs, emails, and subscription status cannot be read by unauthenticated users or via NULL `user_id` rows.
+Make the "Upgrade to Premium" button actually work, on both Android (RevenueCat IAP) and web (Stripe Checkout), and keep `profiles.subscription_active` / `subscription_tier` as the single source of truth that the existing `isPremium` gating already reads.
 
-## Current state
+## Current state (verified)
 
-- `subscribers.user_id` is **nullable**, so any row inserted without a user_id is effectively orphaned and ambiguous under RLS.
-- Existing RLS policies (`subscribers_select_own`, `_insert_own`, `_update_own`, `_delete_own`) target only the `authenticated` role with `user_id = auth.uid()`.
-- The `anon` role has no explicit deny — by default it inherits no policies, but table-level `GRANT`s could still leak access. We need an explicit lockdown.
+- `AuthContext` already exposes `isPremium = profile.subscription_active && subscription_tier !== 'free'`. Gating in hooks (`useDelayedData`, `useRealtimeData`, `useCommodityData`, `usePortfolio`, etc.) is in place — no changes needed there.
+- `PremiumPaywall.tsx` already implements the RevenueCat purchase flow correctly for native. On web it just shows: *"In-app purchases are only available in the Android app."* — that branch is what we replace with Stripe.
+- `PremiumUpsellCard` already opens `PremiumPaywall`. The Dashboard "Upgrade" CTA goes through it. So the wiring on the UI side is already correct — the web branch just doesn't do anything.
+- `profiles` table has `subscription_tier`, `subscription_active`, `subscription_end` but **no** `stripe_customer_id` / `stripe_subscription_id`.
+- Secrets present: `STRIPE_SECRET_KEY`, `REVENUECAT_WEBHOOK_AUTH`, plus all Supabase keys.
 
-## Changes (single migration)
+## Pricing tiers (confirm or override)
 
-1. **Backfill / clean NULL rows**
-   - Delete any rows where `user_id IS NULL` (orphaned, cannot be safely owned). These are leftover from earlier Stripe webhook flows that inserted by email only.
+- Monthly: **€9.99**
+- Annual: **€79.99** (~33% off, matches the "Save ~38%" copy already in the paywall — close enough)
+- Single entitlement key: `premium` (already used by RevenueCat code)
 
-2. **Enforce NOT NULL on `user_id`**
-   - `ALTER TABLE public.subscribers ALTER COLUMN user_id SET NOT NULL;`
+If you want different prices, tell me before we run the Stripe product creation.
 
-3. **Revoke any direct grants to `anon` and `public`**
-   - `REVOKE ALL ON public.subscribers FROM anon, public;`
-   - Re-grant only what `authenticated` needs: `GRANT SELECT, INSERT, UPDATE, DELETE ON public.subscribers TO authenticated;`
+## Plan
 
-4. **Add a restrictive deny-anon RLS policy** (defense in depth)
-   - `CREATE POLICY subscribers_deny_anon ON public.subscribers AS RESTRICTIVE FOR ALL TO anon USING (false) WITH CHECK (false);`
+### 1. Database
 
-5. **Tighten the existing SELECT policy** to also assert non-null:
-   - Drop `subscribers_select_own` and recreate with `USING ((user_id = auth.uid()) AND (auth.uid() IS NOT NULL))` — matches the pattern already used on `portfolio_positions_select_own_verified`.
+Add to `profiles`:
+- `stripe_customer_id text`
+- `stripe_subscription_id text`
+- `subscription_provider text` (`'stripe' | 'revenuecat' | null`) — useful for the customer portal/cancel flow
 
-6. **Mark the security finding as fixed** via the security tool after the migration runs.
+No RLS changes; existing self-only policies cover the new columns.
 
-## Edge function impact
+### 2. Stripe products
 
-The `revenuecat-webhook` and any Stripe webhook code use `SUPABASE_SERVICE_ROLE_KEY`, which bypasses RLS — they continue to work. They must, however, always supply a real `user_id` on insert (no more email-only rows). I'll grep the edge functions for any insert into `subscribers` that omits `user_id` and patch them to look up the user by email first and skip the row if no match.
+Create in Stripe (test mode first):
+- Product: *Commodity Hub Premium*
+- Price 1: €9.99 / month recurring
+- Price 2: €79.99 / year recurring
 
-## Files touched
+Store the two price IDs as Supabase secrets: `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL`.
 
-- New SQL migration under `supabase/migrations/`
-- Possibly `supabase/functions/revenuecat-webhook/index.ts` if it inserts without `user_id`
+### 3. Edge functions (3 new)
 
-## Out of scope
+All deploy with `verify_jwt = false` and validate the JWT in code (per project standard).
 
-- No frontend changes. The client already only reads/writes its own row via the anon key + RLS.
+- **`create-stripe-checkout`** — auth required. Body: `{ plan: 'monthly' | 'annual' }`. Looks up/creates a Stripe customer (stores `stripe_customer_id` on profile), creates a Checkout Session in subscription mode with success/cancel URLs back to the app. Returns `{ url }`.
+- **`stripe-webhook`** — public (Stripe-signed). Verifies signature with `STRIPE_WEBHOOK_SECRET` (new secret you'll add after creating the webhook endpoint in Stripe). Handles:
+  - `checkout.session.completed` and `customer.subscription.updated` → set `subscription_tier='premium'`, `subscription_active=true`, `subscription_end=current_period_end`, store `stripe_subscription_id`, `subscription_provider='stripe'`.
+  - `customer.subscription.deleted` / `payment_failed` → set `subscription_active=false`, tier back to `'free'`.
+- **`create-stripe-portal`** — auth required. Returns Stripe Billing Portal URL so users can cancel / change plan / update card.
+
+### 4. Frontend changes
+
+- `src/services/stripe.ts` (new) — thin wrapper that calls the three edge functions via `supabase.functions.invoke`.
+- `src/components/PremiumPaywall.tsx` — replace the "only available in Android app" web branch with two real buttons (Monthly / Annual) that call `create-stripe-checkout` and redirect to the returned `url`. The native branch stays exactly as it is.
+- `src/components/SubscriptionManagement.tsx` (new, small) — shown in Profile/Settings when `isPremium` is true: shows current plan + "Manage subscription" button → opens portal (web) or deep-links to Play Store subscriptions (native).
+- Profile page: surface the manage-subscription entry point. (Quick check + add if missing.)
+
+### 5. RevenueCat → Supabase sync
+
+The existing `revenueCat.ts` purchase flow only updates RevenueCat. To keep `profiles.subscription_active` in sync on mobile, point the existing **RevenueCat webhook** at a new edge function:
+
+- **`revenuecat-webhook`** (or reuse if one already exists — will check during build) — verifies `Authorization` header against `REVENUECAT_WEBHOOK_AUTH` (already a secret), then upserts the same fields on `profiles` based on event type (`INITIAL_PURCHASE`, `RENEWAL`, `CANCELLATION`, `EXPIRATION`).
+
+### 6. Memory update
+
+Update `mem://monetization/strategy` and the index Core line from "Paid App model only" to:
+
+> Freemium: free baseline, premium tier unlocks 20 extra energy markets + priority refresh. RevenueCat for mobile IAP, Stripe for web. Single entitlement key `premium`. Source of truth: `profiles.subscription_active` + `subscription_tier`.
+
+## What you need to do (manual)
+
+1. In Stripe Dashboard (test mode):
+   - Create the product + 2 prices above; give me the price IDs (or I can create them via API once the function exists).
+   - Add a webhook endpoint pointing to the deployed `stripe-webhook` URL (I'll give it to you after deploy). Copy the signing secret.
+2. Add two Supabase secrets when prompted: `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL`.
+3. In RevenueCat dashboard, point the webhook at the new `revenuecat-webhook` URL (auth header value = your existing `REVENUECAT_WEBHOOK_AUTH` secret).
+
+## Out of scope for this pass
+
+- Apple IAP (no iOS build yet).
+- Proration / plan switching UI beyond what Stripe Billing Portal provides.
+- Trial periods (can add later via Stripe price config — no code change).
+
+Approve and I'll implement, starting with the migration + edge functions, then the paywall web branch, then memory updates.
