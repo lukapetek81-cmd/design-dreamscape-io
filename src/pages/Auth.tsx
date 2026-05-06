@@ -148,6 +148,11 @@ const Auth = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
+                    autoComplete="email"
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    inputMode="email"
                     className="mobile-input"
                   />
                 </div>
@@ -163,6 +168,10 @@ const Auth = () => {
                       value={formData.password}
                       onChange={handleInputChange}
                       required
+                      autoComplete="current-password"
+                      autoCapitalize="off"
+                      autoCorrect="off"
+                      spellCheck={false}
                       className="pr-12 mobile-input"
                     />
                     <Button
@@ -257,6 +266,7 @@ const Auth = () => {
                     value={formData.fullName}
                     onChange={handleInputChange}
                     required
+                    autoComplete="name"
                     className="mobile-input"
                   />
                 </div>
@@ -271,6 +281,11 @@ const Auth = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
+                    autoComplete="email"
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    inputMode="email"
                     className="mobile-input"
                   />
                 </div>
@@ -287,6 +302,10 @@ const Auth = () => {
                       onChange={handleInputChange}
                       required
                       minLength={6}
+                      autoComplete="new-password"
+                      autoCapitalize="off"
+                      autoCorrect="off"
+                      spellCheck={false}
                       className="pr-10 mobile-input"
                     />
                     <Button
@@ -315,6 +334,10 @@ const Auth = () => {
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     required
+                    autoComplete="new-password"
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    spellCheck={false}
                     className="mobile-input"
                   />
                   {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
@@ -399,6 +422,11 @@ const Auth = () => {
                         value={formData.email}
                         onChange={handleInputChange}
                         required
+                        autoComplete="email"
+                        autoCapitalize="off"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        inputMode="email"
                         className="mobile-input"
                       />
                     </div>
