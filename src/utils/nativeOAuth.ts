@@ -1,5 +1,6 @@
 export const NATIVE_AUTH_CALLBACK_URL = 'commodityhub://auth-callback';
-export const NATIVE_OAUTH_REDIRECT_URL = 'https://commodity-hub.lovable.app/?native=1';
+export const NATIVE_OAUTH_REDIRECT_URL = NATIVE_AUTH_CALLBACK_URL;
+export const NATIVE_OAUTH_WEB_FALLBACK_URL = 'https://commodity-hub.lovable.app/?native=1';
 
 const OAUTH_SEARCH_KEYS = ['code', 'error', 'error_description', 'error_code'];
 const OAUTH_HASH_KEYS = [
