@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/integrations/supabase/client';
-import { NATIVE_AUTH_CALLBACK_URL } from '@/utils/nativeOAuth';
 
 /**
  * Listens for OAuth deep links (commodityhub://auth-callback) on native
