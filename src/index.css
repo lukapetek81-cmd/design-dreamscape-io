@@ -82,8 +82,6 @@
   text-rendering: optimizeLegibility;
   /* Better touch handling */
   touch-action: manipulation;
-  /* Prevent zoom on input focus */
-  user-scalable: no;
   /* Optimize scrolling performance */
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
