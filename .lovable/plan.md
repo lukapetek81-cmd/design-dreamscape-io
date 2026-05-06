@@ -1,42 +1,110 @@
 ## Goal
 
-Close the security gap on `public.subscribers` so that Stripe customer IDs, emails, and subscription status cannot be read by unauthenticated users or via NULL `user_id` rows.
+Switch the app to a **Freemium with subscription** model. Free install gets baseline features; "Premium" unlocks the gated extras already wired in code (extra energy markets, real-time WS data, extended history, etc.). Make the **Upgrade to Premium** button actually purchase, on both mobile (RevenueCat / Play Billing) and web (Stripe Checkout).
 
-## Current state
+## Current state (audit)
 
-- `subscribers.user_id` is **nullable**, so any row inserted without a user_id is effectively orphaned and ambiguous under RLS.
-- Existing RLS policies (`subscribers_select_own`, `_insert_own`, `_update_own`, `_delete_own`) target only the `authenticated` role with `user_id = auth.uid()`.
-- The `anon` role has no explicit deny — by default it inherits no policies, but table-level `GRANT`s could still leak access. We need an explicit lockdown.
+Good news — most of the plumbing already exists, just disconnected:
 
-## Changes (single migration)
+- `profiles.subscription_active`, `subscription_tier`, `subscription_end` columns ✅
+- `AuthContext` exposes `isPremium` derived from those columns ✅
+- Hooks/components already gate on `isPremium`: `useDelayedData`, `useCommodityData`, `useRealtimeData`, `usePortfolio`, `CommodityChart`, `DirectExchangeFeeds`, `ChartFooter`, `Dashboard` upsell cards ✅
+- `src/services/revenueCat.ts` (configure, getOfferings, purchasePackage, restore) ✅
+- `supabase/functions/revenuecat-webhook` writes back to `profiles` ✅
+- `PremiumPaywall` dialog component exists and calls into RevenueCat ✅
 
-1. **Backfill / clean NULL rows**
-   - Delete any rows where `user_id IS NULL` (orphaned, cannot be safely owned). These are leftover from earlier Stripe webhook flows that inserted by email only.
+What's broken / missing:
+- `Dashboard.handleUpgrade` just shows a "coming soon" toast → never opens the paywall
+- `PremiumPaywall` only handles native (RevenueCat); on web it shows nothing actionable
+- No Stripe Checkout edge function, no Stripe webhook
+- No env vars for `VITE_REVENUECAT_ANDROID_KEY` / `VITE_REVENUECAT_IOS_KEY` (build secrets, user-side)
+- Memory says "Paid App, no subscriptions" — contradicts the new direction
 
-2. **Enforce NOT NULL on `user_id`**
-   - `ALTER TABLE public.subscribers ALTER COLUMN user_id SET NOT NULL;`
+## Plan
 
-3. **Revoke any direct grants to `anon` and `public`**
-   - `REVOKE ALL ON public.subscribers FROM anon, public;`
-   - Re-grant only what `authenticated` needs: `GRANT SELECT, INSERT, UPDATE, DELETE ON public.subscribers TO authenticated;`
+### 1. Update monetization memory
+Rewrite `mem://monetization/strategy` and the Core line in `mem://index.md` to: **Freemium model. Free tier = baseline. Premium tier unlocks gated features. Billing: RevenueCat on mobile (Play/App Store IAP), Stripe Checkout on web.** Remove the "no subscriptions" wording.
 
-4. **Add a restrictive deny-anon RLS policy** (defense in depth)
-   - `CREATE POLICY subscribers_deny_anon ON public.subscribers AS RESTRICTIVE FOR ALL TO anon USING (false) WITH CHECK (false);`
+### 2. Fix the Upgrade button
+In `Dashboard.tsx`, replace the toast in `handleUpgrade` with opening `PremiumPaywall` (lift the dialog state up, or render a single shared `<PremiumPaywall>` controlled at Dashboard level and pass `setPaywallOpen` to `PremiumUpsellCard`). Same for any other Upgrade entry points (Profile/Settings — to be added if missing).
 
-5. **Tighten the existing SELECT policy** to also assert non-null:
-   - Drop `subscribers_select_own` and recreate with `USING ((user_id = auth.uid()) AND (auth.uid() IS NOT NULL))` — matches the pattern already used on `portfolio_positions_select_own_verified`.
+### 3. Make `PremiumPaywall` web-aware
+Currently RevenueCat-only. Branch on `usePlatform().isNative`:
+- **Native** → existing RevenueCat flow.
+- **Web** → call new `create-stripe-checkout` edge function, then redirect to the returned Stripe Checkout URL. Show price tiers fetched from a small static config (or from Stripe via the function).
+- Add a "Restore purchases" button (native) and a "Manage subscription" link (web → Stripe billing portal).
 
-6. **Mark the security finding as fixed** via the security tool after the migration runs.
+### 4. Add Stripe billing (web)
+New edge functions (JWT-validated, Zod-validated, generic errors per project security rules):
 
-## Edge function impact
+- `create-stripe-checkout` — input `{ priceId }`. Creates/looks-up a Stripe customer keyed to `auth.uid()`, creates a Checkout Session in `subscription` mode with `success_url` / `cancel_url` back to the app, returns `{ url }`.
+- `stripe-webhook` — verifies Stripe signature, handles `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`. Updates `profiles.subscription_active`, `subscription_tier='premium'`, `subscription_end`. Mirrors what `revenuecat-webhook` already does.
+- `create-stripe-portal` — returns a Stripe Customer Portal URL for managing/cancelling.
 
-The `revenuecat-webhook` and any Stripe webhook code use `SUPABASE_SERVICE_ROLE_KEY`, which bypasses RLS — they continue to work. They must, however, always supply a real `user_id` on insert (no more email-only rows). I'll grep the edge functions for any insert into `subscribers` that omits `user_id` and patch them to look up the user by email first and skip the row if no match.
+DB migration: add `profiles.stripe_customer_id text` (nullable, unique) so we can map auth users → Stripe customers without hitting Stripe each time. RLS unchanged (user reads own profile).
 
-## Files touched
+Secrets: `STRIPE_SECRET_KEY` already exists ✅. We'll need to add `STRIPE_WEBHOOK_SECRET` and `STRIPE_PRICE_PREMIUM_MONTHLY` / `STRIPE_PRICE_PREMIUM_YEARLY` after the user creates the product in Stripe.
 
-- New SQL migration under `supabase/migrations/`
-- Possibly `supabase/functions/revenuecat-webhook/index.ts` if it inserts without `user_id`
+### 5. RevenueCat mobile finalization
+- Document required build secrets (`VITE_REVENUECAT_ANDROID_KEY`, `VITE_REVENUECAT_IOS_KEY`) — user must add these in Workspace Settings → Build Secrets.
+- Confirm `REVENUECAT_WEBHOOK_AUTH` already set ✅.
+- After purchase succeeds in `PremiumPaywall`, force-refetch the profile so `isPremium` flips immediately (don't rely solely on the webhook race).
 
-## Out of scope
+### 6. Pricing tiers (proposed — confirm before building)
+- **Free** — current baseline (delayed data, base commodity set, manual refresh)
+- **Premium Monthly** — e.g. €9.99/mo
+- **Premium Yearly** — e.g. €79.99/yr (save ~33%)
 
-- No frontend changes. The client already only reads/writes its own row via the anon key + RLS.
+One single `premium` entitlement matches the existing code (`isPremium` boolean). No multi-tier yet.
+
+### 7. UX polish on Auth/Settings
+- Add a "Manage subscription / Upgrade" row in Profile/Settings that opens the paywall or portal depending on current state.
+- Show current plan + renewal date when `isPremium`.
+
+## Out of scope (call out, don't build)
+
+- Trial periods, promo codes, family sharing — can be added later in RevenueCat/Stripe dashboard.
+- Migrating any existing "paid app" purchasers — there shouldn't be any on production yet; if there are, we can grant lifetime entitlement manually.
+- Reinstating ads — explicitly not doing this.
+
+## Technical details
+
+```text
+                      ┌────────────────────┐
+   Upgrade button ───▶│  PremiumPaywall    │
+                      │  (isNative?)       │
+                      └─────┬──────────┬───┘
+                  native    │          │   web
+                            ▼          ▼
+                  RevenueCat IAP    create-stripe-checkout (edge)
+                            │              │
+                            ▼              ▼
+                  revenuecat-webhook   stripe-webhook (edge)
+                            └──────┬───────┘
+                                   ▼
+                       profiles.subscription_active=true
+                       profiles.subscription_tier='premium'
+                       profiles.subscription_end=…
+                                   │
+                                   ▼
+                       AuthContext.isPremium = true
+                       (unlocks all already-gated features)
+```
+
+Files to touch:
+- `mem://monetization/strategy`, `mem://index.md` (Core line)
+- `src/pages/Dashboard.tsx` (real handleUpgrade, host the paywall)
+- `src/components/PremiumPaywall.tsx` (web branch + Stripe flow)
+- `src/components/PremiumUpsellCard.tsx` (use shared paywall state)
+- `src/services/stripeCheckout.ts` (new — thin client)
+- `supabase/functions/create-stripe-checkout/index.ts` (new)
+- `supabase/functions/stripe-webhook/index.ts` (new)
+- `supabase/functions/create-stripe-portal/index.ts` (new)
+- DB migration: `profiles.stripe_customer_id`
+- `src/pages/Profile.tsx` or Settings (Manage subscription row)
+
+## What I need from you after approval
+
+1. Confirm or change the proposed price points (€9.99/mo, €79.99/yr).
+2. After I scaffold Stripe, you'll need to: create the Product + 2 Prices in Stripe Dashboard, then provide `STRIPE_PRICE_PREMIUM_MONTHLY`, `STRIPE_PRICE_PREMIUM_YEARLY`, and `STRIPE_WEBHOOK_SECRET` (I'll prompt with `add_secret`).
+3. For mobile: add `VITE_REVENUECAT_ANDROID_KEY` (and iOS if you ship iOS) in Workspace Settings → Build Secrets, and create the matching product + `premium` entitlement in RevenueCat.
