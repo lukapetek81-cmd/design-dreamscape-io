@@ -1,5 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { corsHeaders } from '../_shared/utils.ts'
+import { IpRateLimiter } from '../_shared/rateLimit.ts'
+
+// Protects NewsAPI + Marketaux daily quotas.
+const limiter = new IpRateLimiter({ limit: 20, windowMs: 60_000 });
 
 interface NewsItem {
   id: string;
@@ -15,6 +19,22 @@ interface NewsItem {
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  const ip = IpRateLimiter.getClientIp(req);
+  const rl = limiter.check(ip);
+  if (!rl.allowed) {
+    return new Response(
+      JSON.stringify({ error: 'Rate limit exceeded' }),
+      {
+        status: 429,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          'Retry-After': String(rl.retryAfterSeconds),
+        },
+      }
+    );
   }
 
   try {

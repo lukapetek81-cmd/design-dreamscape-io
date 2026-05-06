@@ -1,5 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from '../_shared/utils.ts'
+import { IpRateLimiter } from '../_shared/rateLimit.ts'
+
+// FRED has generous limits but each call fans out to 30+ requests — strict cap per IP.
+const limiter = new IpRateLimiter({ limit: 10, windowMs: 60_000 });
 
 // Curated US economic indicators tracked via FRED.
 // We resolve each series's release_id at runtime (avoids stale hardcoded IDs).
@@ -44,6 +48,22 @@ async function fredFetch(path: string, params: Record<string, string>, apiKey: s
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  const ip = IpRateLimiter.getClientIp(req);
+  const rl = limiter.check(ip);
+  if (!rl.allowed) {
+    return new Response(
+      JSON.stringify({ error: 'Rate limit exceeded' }),
+      {
+        status: 429,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          'Retry-After': String(rl.retryAfterSeconds),
+        },
+      }
+    );
   }
 
   try {

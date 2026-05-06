@@ -250,6 +250,23 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  // IP rate limit — protects external paid APIs (OilPriceAPI, Yahoo, etc.) from quota burn.
+  const ip = IpRateLimiter.getClientIp(req);
+  const rl = limiter.check(ip);
+  if (!rl.allowed) {
+    return new Response(
+      JSON.stringify({ error: 'Rate limit exceeded' }),
+      {
+        status: 429,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          'Retry-After': String(rl.retryAfterSeconds),
+        },
+      }
+    );
+  }
+
   let commodityName = 'WTI Crude Oil';
   try {
     const body = await req.json();
