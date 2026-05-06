@@ -1,5 +1,5 @@
 export const NATIVE_AUTH_CALLBACK_URL = 'commodityhub://auth-callback';
-export const NATIVE_OAUTH_REDIRECT_URL = 'https://commodity-hub.lovable.app/?native=1';
+export const NATIVE_OAUTH_REDIRECT_URL = NATIVE_AUTH_CALLBACK_URL;
 
 const ANDROID_PACKAGE_NAME = 'com.commodityhub.app';
 
