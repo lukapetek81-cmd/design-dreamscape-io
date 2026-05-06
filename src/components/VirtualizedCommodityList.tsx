@@ -20,7 +20,9 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const { isPremium } = useAuth();
-  const [visibleItems, setVisibleItems] = React.useState(10); // Start with 10 items
+  // Render all commodities upfront — the cards are now lightweight enough.
+  // Lazy-loaded chart/news inside the card only mount when expanded.
+  const [visibleItems, setVisibleItems] = React.useState<number>(commodities.length || 50);
   const [isLoadingMore, setIsLoadingMore] = React.useState(false);
 
   // Increase visible items when sentinel scrolls into view (cheap, no scroll listener)
@@ -45,16 +47,10 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
     return () => observer.disconnect();
   }, [commodities.length, visibleItems, isLoadingMore, isMobile]);
 
-  // Reset visible items when commodities change, ensure highlighted item is visible
+  // Show all items whenever the list changes
   React.useEffect(() => {
-    const defaultVisible = isMobile ? 5 : 10;
-    if (highlightCommodity) {
-      const idx = commodities.findIndex(c => c.name === highlightCommodity);
-      setVisibleItems(Math.max(defaultVisible, idx + 2));
-    } else {
-      setVisibleItems(defaultVisible);
-    }
-  }, [commodities, isMobile, highlightCommodity]);
+    setVisibleItems(commodities.length);
+  }, [commodities.length]);
 
   // Define energy subsections for Marine Fuels separation
   const MARINE_FUEL_NAMES = new Set([
