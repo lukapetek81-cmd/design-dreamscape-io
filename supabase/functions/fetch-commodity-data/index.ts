@@ -1,6 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/utils.ts'
+import { IpRateLimiter } from '../_shared/rateLimit.ts'
+
+// Protect Yahoo/CommodityPriceAPI/OilPriceAPI quota from anonymous abuse.
+const limiter = new IpRateLimiter({ limit: 60, windowMs: 60_000 });
 
 // In-memory cache with TTL for historical data
 const historyCache = new Map<string, { data: any; source: string; timestamp: number }>();
