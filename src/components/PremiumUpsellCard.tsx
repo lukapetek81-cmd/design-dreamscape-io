@@ -1,9 +1,13 @@
 import React from 'react';
-import { Lock, Factory, Zap, Gem, Wheat, Coffee, Beef } from 'lucide-react';
+import { Lock, Factory, Zap, Gem, Wheat, Coffee, Beef, Smartphone } from 'lucide-react';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import PremiumPaywall from '@/components/PremiumPaywall';
+import { usePlatform } from '@/hooks/usePlatform';
+
+const PLAY_STORE_URL =
+  'https://play.google.com/store/apps/details?id=com.commodityhub.app';
 
 type UpsellVariant = 'energy' | 'industrials' | 'metals' | 'grains' | 'softs' | 'livestock';
 
@@ -52,9 +56,11 @@ const COPY: Record<UpsellVariant, {
 const PremiumUpsellCard: React.FC<PremiumUpsellCardProps> = ({ onUpgrade, variant = 'energy' }) => {
   const [paywallOpen, setPaywallOpen] = React.useState(false);
   const { title, description, Icon } = COPY[variant];
+  const { isNative } = usePlatform();
 
   const handleClick = () => {
     if (onUpgrade) onUpgrade();
+    else if (!isNative) window.open(PLAY_STORE_URL, '_blank', 'noopener,noreferrer');
     else setPaywallOpen(true);
   };
 
@@ -84,8 +90,8 @@ const PremiumUpsellCard: React.FC<PremiumUpsellCardProps> = ({ onUpgrade, varian
               </div>
             </div>
             <Button size="sm" onClick={handleClick} className="flex-shrink-0">
-              <Lock className="w-3.5 h-3.5" />
-              Upgrade to Premium
+              {isNative ? <Lock className="w-3.5 h-3.5" /> : <Smartphone className="w-3.5 h-3.5" />}
+              {isNative ? 'Upgrade to Premium' : 'Get the Android app'}
             </Button>
           </div>
         </CardHeader>
