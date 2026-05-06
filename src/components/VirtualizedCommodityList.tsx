@@ -2,9 +2,7 @@ import React from 'react';
 import CommodityCard from './CommodityCard';
 import { Commodity } from '@/hooks/useCommodityData';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useAuth } from '@/contexts/AuthContext';
 import { SkeletonCard } from '@/components/ui/enhanced-skeleton';
-import { usePerformanceOptimizer } from '@/hooks/usePerformanceOptimizer';
 import { Anchor, Droplets, Flame, BarChart3 } from 'lucide-react';
 
 interface VirtualizedCommodityListProps {
@@ -19,38 +17,8 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
   highlightCommodity
 }) => {
   const isMobile = useIsMobile();
-  const { isPremium } = useAuth();
-  // Render all commodities upfront — the cards are now lightweight enough.
-  // Lazy-loaded chart/news inside the card only mount when expanded.
-  const [visibleItems, setVisibleItems] = React.useState<number>(commodities.length || 50);
-  const [isLoadingMore, setIsLoadingMore] = React.useState(false);
-
-  // Increase visible items when sentinel scrolls into view (cheap, no scroll listener)
-  const sentinelRef = React.useRef<HTMLDivElement | null>(null);
-  React.useEffect(() => {
-    if (visibleItems >= commodities.length) return;
-    const el = sentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !isLoadingMore) {
-          setIsLoadingMore(true);
-          setTimeout(() => {
-            setVisibleItems(prev => Math.min(prev + (isMobile ? 5 : 10), commodities.length));
-            setIsLoadingMore(false);
-          }, 150);
-        }
-      },
-      { rootMargin: '400px 0px' }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [commodities.length, visibleItems, isLoadingMore, isMobile]);
-
-  // Show all items whenever the list changes
-  React.useEffect(() => {
-    setVisibleItems(commodities.length);
-  }, [commodities.length]);
+  // Render every commodity — cards are lightweight and chart/news inside
+  // only mount when the card is expanded (LazyChart / LazyNews).
 
   // Define energy subsections for Marine Fuels separation
   const MARINE_FUEL_NAMES = new Set([
@@ -68,7 +36,7 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
   ]);
 
   const groupedVisible = React.useMemo(() => {
-    const items = commodities.slice(0, visibleItems);
+    const items = commodities;
     // Only apply subsections for energy category
     const isEnergy = items.length > 0 && items[0]?.category === 'energy';
     if (!isEnergy) return { sections: [{ label: null, icon: null, items }] };
@@ -92,18 +60,13 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
     if (marineFuels.length > 0) sections.push({ label: 'Marine Fuels', icon: <Anchor className="w-4 h-4" />, items: marineFuels });
 
     return { sections };
-  }, [commodities, visibleItems]);
-
-  const visibleCommodities = React.useMemo(() => 
-    commodities.slice(0, visibleItems), 
-    [commodities, visibleItems]
-  );
+  }, [commodities]);
 
   if (loading) {
     return (
       <div className="grid gap-3 sm:gap-4 lg:gap-6">
         {Array.from({ length: isMobile ? 3 : 6 }).map((_, index) => (
-          <div key={index} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+          <div key={index}>
             <SkeletonCard 
               showImage={false}
               showTitle={true}
@@ -166,40 +129,6 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
           </div>
         </div>
       ))}
-
-      {/* Sentinel for infinite scroll */}
-      {visibleItems < commodities.length && (
-        <div ref={sentinelRef} aria-hidden="true" style={{ height: 1 }} />
-      )}
-
-      {/* Loading indicator for additional items */}
-      {isLoadingMore && (
-        <div className="animate-fade-in">
-          <div className="flex justify-center py-6">
-            <div className="flex items-center gap-3 px-4 py-2 bg-muted/50 rounded-full">
-              <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-transparent"></div>
-              <span className="text-sm text-muted-foreground font-medium">Loading more commodities...</span>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Load more indicator */}
-      {visibleItems < commodities.length && !isLoadingMore && (
-        <div className="animate-fade-in">
-          <div className="text-center py-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-card border border-border/50 rounded-full shadow-sm">
-              <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-              <p className="text-sm text-muted-foreground font-medium">
-                Showing {visibleItems} of {commodities.length} commodities
-              </p>
-              <div className="text-xs text-primary font-semibold">
-                Scroll for more
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
