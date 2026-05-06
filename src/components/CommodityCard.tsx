@@ -187,11 +187,11 @@ const CommodityCard = React.memo<CommodityCardProps>(({
                 {/* Title and badges */}
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2 sm:gap-3 flex-1">
-                    <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 text-primary transition-all duration-300">
+                    <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 text-primary">
                       <DollarSign className="w-3 h-3 sm:w-4 sm:h-4" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-base sm:text-lg lg:text-xl font-bold text-foreground transition-colors tracking-tight truncate group-hover:text-primary">
+                      <h3 className="text-base sm:text-lg lg:text-xl font-bold text-foreground tracking-tight truncate">
                         {name}
                       </h3>
                       <div className="flex flex-wrap items-center gap-2">
@@ -212,7 +212,7 @@ const CommodityCard = React.memo<CommodityCardProps>(({
                             {selectedContractData.expirationDate ? new Date(selectedContractData.expirationDate).toLocaleDateString() : 'N/A'}
                           </span>
                         )}
-                        <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                        <div className={`w-1.5 h-1.5 rounded-full ${
                           marketStatus.isOpen ? 'bg-green-500' : 'bg-red-500'
                         }`}></div>
                       </div>
@@ -221,7 +221,7 @@ const CommodityCard = React.memo<CommodityCardProps>(({
                   
                   {/* Mobile Expand Icon */}
                   <div className="flex items-center sm:hidden">
-                    <div className={`p-2 rounded-full transition-all duration-300 ${
+                    <div className={`p-2 rounded-full transition-colors duration-150 ${
                       isOpen ? 'bg-primary/20 text-primary' : 'bg-muted/50 text-muted-foreground'
                     }`}>
                       {isOpen ? (
@@ -247,11 +247,11 @@ const CommodityCard = React.memo<CommodityCardProps>(({
                     </span>
                   </div>
                   
-                  <div className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold shadow-soft transition-all duration-300 w-fit ${
+                  <div className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold shadow-soft w-fit ${
                     isPositive 
                       ? 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200 dark:from-green-950/20 dark:to-emerald-950/20 dark:text-green-400 dark:border-green-800' 
                       : 'bg-gradient-to-r from-red-50 to-rose-50 text-red-700 border border-red-200 dark:from-red-950/20 dark:to-rose-950/20 dark:text-red-400 dark:border-red-800'
-                  } ${isOpen ? 'scale-105' : ''}`}>
+                  }`}>
                     {isPositive ? <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" /> : <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4" />}
                     <span className="number-display">{Math.abs(currentChange).toFixed(2)}%</span>
                   </div>
@@ -267,7 +267,7 @@ const CommodityCard = React.memo<CommodityCardProps>(({
                   </div>
                 </div>
                 
-                <div className={`flex items-center p-2 rounded-full transition-all duration-300 ${
+                <div className={`flex items-center p-2 rounded-full transition-colors duration-150 ${
                   isOpen ? 'bg-primary/20 text-primary' : 'bg-muted/50 text-muted-foreground'
                 }`}>
                   {isOpen ? (
