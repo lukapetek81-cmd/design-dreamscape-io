@@ -233,8 +233,10 @@ const DashboardContent = ({
           </div>
         </header>
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-auto">
+        {/* Main Content — let the page (body) scroll instead of a nested
+            overflow container. Nested scrolls fight native touch momentum
+            on Android/iOS WebViews and feel laggy. */}
+        <main className="flex-1">
           <div className="container px-4 py-6">
             {/* Loading State */}
             {loading && (
