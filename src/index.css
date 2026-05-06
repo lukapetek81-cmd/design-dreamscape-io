@@ -329,12 +329,6 @@
     @apply fixed inset-4 rounded-2xl max-h-[85vh];
   }
 
-  /* Mobile performance optimizations */
-  * {
-    -webkit-overflow-scrolling: touch;
-    transform: translateZ(0);
-  }
-
   /* Better touch targets */
   button, [role="button"], .mobile-touch-target {
     min-height: 44px;
@@ -353,9 +347,14 @@
     text-rendering: optimizeSpeed;
   }
 
-  /* Optimize backdrop blur for mobile */
-  .backdrop-blur-xl {
-    backdrop-filter: blur(8px);
+  /* Disable backdrop blur on mobile — extremely expensive during scroll */
+  .backdrop-blur-xl,
+  .backdrop-blur-md,
+  .backdrop-blur-sm,
+  .backdrop-blur {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background-color: hsl(var(--background)) !important;
   }
 
   /* Better card animations */
