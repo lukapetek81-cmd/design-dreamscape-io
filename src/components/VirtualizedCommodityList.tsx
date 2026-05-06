@@ -23,27 +23,26 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
   const [visibleItems, setVisibleItems] = React.useState(10); // Start with 10 items
   const [isLoadingMore, setIsLoadingMore] = React.useState(false);
 
-  // Increase visible items when scrolling near bottom
+  // Increase visible items when sentinel scrolls into view (cheap, no scroll listener)
+  const sentinelRef = React.useRef<HTMLDivElement | null>(null);
   React.useEffect(() => {
-    const handleScroll = () => {
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const windowHeight = window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight;
-      
-      // If user scrolled to 80% of the page, load more items
-      if (scrollTop + windowHeight >= documentHeight * 0.8 && !isLoadingMore && visibleItems < commodities.length) {
-        setIsLoadingMore(true);
-        
-        // Simulate loading delay for better UX
-        setTimeout(() => {
-          setVisibleItems(prev => Math.min(prev + (isMobile ? 5 : 10), commodities.length));
-          setIsLoadingMore(false);
-        }, 300);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    if (visibleItems >= commodities.length) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoadingMore) {
+          setIsLoadingMore(true);
+          setTimeout(() => {
+            setVisibleItems(prev => Math.min(prev + (isMobile ? 5 : 10), commodities.length));
+            setIsLoadingMore(false);
+          }, 150);
+        }
+      },
+      { rootMargin: '400px 0px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
   }, [commodities.length, visibleItems, isLoadingMore, isMobile]);
 
   // Reset visible items when commodities change, ensure highlighted item is visible
@@ -146,9 +145,13 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
               return (
                 <div 
                   key={`${commodity.symbol}-${idx}`}
-                  className={`animate-fade-in ${isHighlighted ? 'ring-2 ring-primary/50 rounded-2xl' : ''}`}
-                  style={{ animationDelay: `${idx * 0.05}s` }}
-                  ref={isHighlighted ? (el) => { el?.scrollIntoView({ behavior: 'smooth', block: 'center' }); } : undefined}
+                  className={isHighlighted ? 'ring-2 ring-primary/50 rounded-2xl' : ''}
+                  ref={isHighlighted ? (el) => {
+                    if (el && !el.dataset.scrolled) {
+                      el.dataset.scrolled = '1';
+                      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                  } : undefined}
                 >
                   <CommodityCard
                     name={commodity.name}
@@ -167,7 +170,12 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
           </div>
         </div>
       ))}
-      
+
+      {/* Sentinel for infinite scroll */}
+      {visibleItems < commodities.length && (
+        <div ref={sentinelRef} aria-hidden="true" style={{ height: 1 }} />
+      )}
+
       {/* Loading indicator for additional items */}
       {isLoadingMore && (
         <div className="animate-fade-in">

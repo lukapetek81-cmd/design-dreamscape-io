@@ -1,34 +1,15 @@
-/* Smooth scrolling enhancements */
-* {
-  scroll-behavior: smooth;
-}
-
-/* Enhanced scroll handling */
+/* Smooth scrolling — only on explicit scroll containers, never globally.
+   A universal `* { scroll-behavior: smooth }` rule cripples native touch
+   momentum scrolling on Android/iOS WebViews. */
 .custom-scrollbar {
-  scroll-behavior: smooth;
   overscroll-behavior: contain;
 }
 
-/* Improve momentum scrolling on mobile */
+/* Improve momentum scrolling on mobile — no smooth-scroll override */
 @media (max-width: 768px) {
   .custom-scrollbar {
     -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
-    /* Improved scroll physics */
-    scroll-snap-type: none;
     overscroll-behavior-y: contain;
-  }
-  
-  /* Better scroll deceleration */
-  .scroll-container {
-    scroll-snap-type: y proximity;
-    scroll-padding: 1rem;
-  }
-  
-  /* Prevent jerky direction changes */
-  .scroll-smooth {
-    scroll-behavior: smooth;
-    transition: scroll-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
