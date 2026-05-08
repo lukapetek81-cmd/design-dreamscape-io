@@ -156,7 +156,7 @@ export const useCommodityHistoricalData = (commodityName: string, timeframe: str
   
   return useQuery({
     queryKey: ['commodity-historical', commodityName, timeframe, chartType, contractSymbol, getDataDelay()],
-    queryFn: async (): Promise<{ data: CommodityHistoricalData[], loading: boolean, error: string | null }> => {
+    queryFn: async (): Promise<{ data: CommodityHistoricalData[], loading: boolean, error: string | null, ohlcAvailable: boolean }> => {
       try {
         const isPremium = profile?.subscription_active && profile?.subscription_tier === 'premium';
         
@@ -175,14 +175,16 @@ export const useCommodityHistoricalData = (commodityName: string, timeframe: str
 
         if (error) {
           console.warn(`Failed to fetch historical data for ${commodityName}:`, error);
-          return { data: [], loading: false, error: error.message };
+          return { data: [], loading: false, error: error.message, ohlcAvailable: false };
         }
 
         console.log(`Raw API response for ${commodityName} (${chartType}):`, data);
 
+        const ohlcAvailable = !!data?.ohlcAvailable;
+
         // Ensure OHLC data is properly structured for candlestick charts
         const processedData = data.data?.map((item: any) => {
-          if (chartType === 'candlestick') {
+          if (chartType === 'candlestick' && ohlcAvailable && typeof item.open === 'number') {
             return {
               date: item.date,
               price: item.close || item.price,
@@ -204,14 +206,16 @@ export const useCommodityHistoricalData = (commodityName: string, timeframe: str
         return { 
           data: processedData, 
           loading: false, 
-          error: null 
+          error: null,
+          ohlcAvailable,
         };
       } catch (error) {
         console.warn(`Error fetching historical data for ${commodityName}:`, error);
         return { 
           data: [], 
           loading: false, 
-          error: error instanceof Error ? error.message : 'Unknown error' 
+          error: error instanceof Error ? error.message : 'Unknown error',
+          ohlcAvailable: false,
         };
       }
     },
