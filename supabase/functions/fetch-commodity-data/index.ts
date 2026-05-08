@@ -272,10 +272,13 @@ serve(async (req) => {
     const cached = getCachedHistory(cacheKey);
     if (cached) {
       console.log(`Cache hit for ${commodityName} ${timeframe}`);
+      const cachedOhlc = cached.source.endsWith('|ohlc') && timeframe !== '1d';
+      const cachedSource = cached.source.replace('|ohlc', '');
       return new Response(
         JSON.stringify({
           data: cached.data,
-          source: cached.source,
+          source: cachedSource,
+          ohlcAvailable: cachedOhlc,
           commodity: commodityName,
           symbol: COMMODITY_SYMBOLS[commodityName] || commodityName,
           realTime: isPremium || false,
