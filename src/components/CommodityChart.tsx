@@ -189,6 +189,7 @@ const CommodityChart = ({ name, basePrice, selectedContract, contractData }: Com
             loading={loading}
             isPositiveTrend={isPositiveTrend}
             priceChange={priceChange}
+            ohlcAvailable={ohlcAvailable}
           />
         </div>
 
@@ -247,6 +248,7 @@ const CommodityChart = ({ name, basePrice, selectedContract, contractData }: Com
           loading={loading}
           isPositiveTrend={isPositiveTrend}
           priceChange={priceChange}
+          ohlcAvailable={ohlcAvailable}
         />
 
       </div>
