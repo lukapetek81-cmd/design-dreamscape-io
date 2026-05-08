@@ -4,6 +4,7 @@ import { Toggle } from '@/components/ui/toggle';
 import { TrendingUp, Calendar, ChartCandlestick } from 'lucide-react';
 import { TIMEFRAMES } from './chartUtils';
 import CurrencySelector from '@/components/CurrencySelector';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ChartHeaderProps {
   name: string;
@@ -15,6 +16,7 @@ interface ChartHeaderProps {
   loading: boolean;
   isPositiveTrend: boolean;
   priceChange: number;
+  ohlcAvailable?: boolean;
 }
 
 const ChartHeader: React.FC<ChartHeaderProps> = ({
@@ -26,7 +28,8 @@ const ChartHeader: React.FC<ChartHeaderProps> = ({
   dataPoints,
   loading,
   isPositiveTrend,
-  priceChange
+  priceChange,
+  ohlcAvailable = false,
 }) => {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -57,16 +60,31 @@ const ChartHeader: React.FC<ChartHeaderProps> = ({
         {/* Currency Selector */}
         <CurrencySelector compact />
 
-        {/* Chart Type Toggle */}
+        {/* Chart Type Toggle — disabled when provider returns close-only data */}
         <div className="flex items-center gap-2">
-          <Toggle
-            pressed={chartType === 'candlestick'}
-            onPressedChange={(pressed) => onChartTypeChange(pressed ? 'candlestick' : 'line')}
-            className="data-[state=on]:bg-primary/20 data-[state=on]:text-primary"
-            size="sm"
-          >
-            <ChartCandlestick className="w-4 h-4" />
-          </Toggle>
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Toggle
+                    pressed={chartType === 'candlestick' && ohlcAvailable}
+                    onPressedChange={(pressed) => onChartTypeChange(pressed ? 'candlestick' : 'line')}
+                    disabled={!ohlcAvailable}
+                    aria-label="Toggle candlestick chart"
+                    className="data-[state=on]:bg-primary/20 data-[state=on]:text-primary disabled:opacity-40"
+                    size="sm"
+                  >
+                    <ChartCandlestick className="w-4 h-4" />
+                  </Toggle>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                {ohlcAvailable
+                  ? 'Toggle candlestick view'
+                  : 'Candlesticks unavailable — provider returns close-only data for this commodity/timeframe.'}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
 
         <Calendar className="w-4 h-4 text-muted-foreground" />
