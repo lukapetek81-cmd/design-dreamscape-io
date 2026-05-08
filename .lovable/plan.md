@@ -1,84 +1,66 @@
+# Restrict candlestick mode to real OHLC
+
 ## Goal
+Only allow the candlestick chart toggle when the underlying provider returns true daily OHLC. Everywhere else (energy commodities, intraday `1d`, mock fallback, CPA close-only responses), hide the toggle and force the line chart, with a brief tooltip explaining why.
 
-Make the "Upgrade to Premium" button actually work, on both Android (RevenueCat IAP) and web (Stripe Checkout), and keep `profiles.subscription_active` / `subscription_tier` as the single source of truth that the existing `isPremium` gating already reads.
+## What counts as "real OHLC" today
+After auditing `supabase/functions/fetch-commodity-data/index.ts`:
 
-## Current state (verified)
+| Source | Category | OHLC quality |
+|---|---|---|
+| OilPriceAPI | All 26 energy commodities | Close-only — code fabricates O/H/L from `price ± 0.5% * Math.random()` |
+| CommodityPriceAPI `/rates/time-series` | Non-energy (metals, grains, softs, lumber) | True daily OHLC **when** the response includes `open/high/low/close` fields; otherwise falls back to flat candles |
+| Mock fallback | Anything when both APIs fail | Random-walk synthetic |
+| Any provider, `1d` timeframe | All | No intraday OHLC available — always synthetic |
 
-- `AuthContext` already exposes `isPremium = profile.subscription_active && subscription_tier !== 'free'`. Gating in hooks (`useDelayedData`, `useRealtimeData`, `useCommodityData`, `usePortfolio`, etc.) is in place — no changes needed there.
-- `PremiumPaywall.tsx` already implements the RevenueCat purchase flow correctly for native. On web it just shows: *"In-app purchases are only available in the Android app."* — that branch is what we replace with Stripe.
-- `PremiumUpsellCard` already opens `PremiumPaywall`. The Dashboard "Upgrade" CTA goes through it. So the wiring on the UI side is already correct — the web branch just doesn't do anything.
-- `profiles` table has `subscription_tier`, `subscription_active`, `subscription_end` but **no** `stripe_customer_id` / `stripe_subscription_id`.
-- Secrets present: `STRIPE_SECRET_KEY`, `REVENUECAT_WEBHOOK_AUTH`, plus all Supabase keys.
-
-## Pricing tiers (confirm or override)
-
-- Monthly: **€9.99**
-- Annual: **€79.99** (~33% off, matches the "Save ~38%" copy already in the paywall — close enough)
-- Single entitlement key: `premium` (already used by RevenueCat code)
-
-If you want different prices, tell me before we run the Stripe product creation.
+So "real" candlesticks today = **non-energy commodities, daily timeframes (`7d`/`1m`/`3m`/`6m`), and only when CPA actually returns OHLC fields**.
 
 ## Plan
 
-### 1. Database
+### 1. Backend: stop fabricating OHLC; tag responses with provenance
+In `supabase/functions/fetch-commodity-data/index.ts`:
 
-Add to `profiles`:
-- `stripe_customer_id text`
-- `stripe_subscription_id text`
-- `subscription_provider text` (`'stripe' | 'revenuecat' | null`) — useful for the customer portal/cancel flow
+- **OilPriceAPI branch (lines ~368-393)**: stop synthesizing `open/high/low` from random noise. Always return `{date, price}` regardless of `chartType`. Set a new response flag `ohlcAvailable: false`.
+- **CPA branch (lines ~461-484)**: only emit candle rows when `dayData.open && dayData.high && dayData.low && dayData.close` are all distinct numbers. If CPA returns close-only for a symbol, return line points and `ohlcAvailable: false`.
+- **Mock fallback (lines ~198-213)**: never emit fake OHLC. Always return `{date, price}` and `ohlcAvailable: false`.
+- **Intraday (`timeframe === '1d'`)**: hard-code `ohlcAvailable: false` regardless of source.
+- Response shape becomes `{ data, source, ohlcAvailable: boolean }`.
 
-No RLS changes; existing self-only policies cover the new columns.
+### 2. Frontend: surface `ohlcAvailable` through the hook
+In `src/hooks/useCommodityData.ts → useCommodityHistoricalData`:
+- Extend the return type to include `ohlcAvailable: boolean`.
+- Pass it through alongside `data`.
 
-### 2. Stripe products
+### 3. UI: hide/disable candlestick toggle when unavailable
+In the chart container/header (`src/components/charts/ChartHeader.tsx` + `ChartContainer.tsx` + `CommodityChart.tsx`):
+- Read `ohlcAvailable` from the hook.
+- If `false` (or while loading), **disable** the candlestick button with a tooltip: *"Candlesticks unavailable for this commodity/timeframe — provider returns close-only data."*
+- If the user is currently in `candlestick` mode and the new data has `ohlcAvailable: false`, auto-switch back to `line` mode.
+- For energy commodities, the toggle will essentially always be disabled — that's intentional and honest.
 
-Create in Stripe (test mode first):
-- Product: *Commodity Hub Premium*
-- Price 1: €9.99 / month recurring
-- Price 2: €79.99 / year recurring
+### 4. Add a lightweight capability map (optional cache)
+Maintain a small constant in `_shared/commodity-mappings.ts`:
+```ts
+export const OHLC_CAPABLE_SYMBOLS = new Set([
+  // Filled from CPA after we confirm which symbols actually return OHLC
+]);
+```
+The edge function uses this as a hint to short-circuit and respond with `ohlcAvailable: false` for known close-only symbols, but the per-response check (step 1) remains the source of truth.
 
-Store the two price IDs as Supabase secrets: `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL`.
+### 5. Verification
+- Test 3 representative commodities via `supabase--curl_edge_functions`:
+  - `WTI Crude Oil` (energy) → expect `ohlcAvailable: false`
+  - `Gold Futures` `3m` (CPA, likely OHLC) → expect `ohlcAvailable: true`
+  - `Gold Futures` `1d` (intraday) → expect `ohlcAvailable: false`
+- Visually confirm the toggle is disabled for energy and enabled for gold daily.
 
-### 3. Edge functions (3 new)
+## Out of scope
+- Adding a new paid OHLC provider (Polygon/Twelve Data/etc.). Can be a follow-up if you want true candlesticks for energy.
+- Changing the candlestick rendering itself (the earlier mobile review of `CandlestickChart.tsx`).
 
-All deploy with `verify_jwt = false` and validate the JWT in code (per project standard).
-
-- **`create-stripe-checkout`** — auth required. Body: `{ plan: 'monthly' | 'annual' }`. Looks up/creates a Stripe customer (stores `stripe_customer_id` on profile), creates a Checkout Session in subscription mode with success/cancel URLs back to the app. Returns `{ url }`.
-- **`stripe-webhook`** — public (Stripe-signed). Verifies signature with `STRIPE_WEBHOOK_SECRET` (new secret you'll add after creating the webhook endpoint in Stripe). Handles:
-  - `checkout.session.completed` and `customer.subscription.updated` → set `subscription_tier='premium'`, `subscription_active=true`, `subscription_end=current_period_end`, store `stripe_subscription_id`, `subscription_provider='stripe'`.
-  - `customer.subscription.deleted` / `payment_failed` → set `subscription_active=false`, tier back to `'free'`.
-- **`create-stripe-portal`** — auth required. Returns Stripe Billing Portal URL so users can cancel / change plan / update card.
-
-### 4. Frontend changes
-
-- `src/services/stripe.ts` (new) — thin wrapper that calls the three edge functions via `supabase.functions.invoke`.
-- `src/components/PremiumPaywall.tsx` — replace the "only available in Android app" web branch with two real buttons (Monthly / Annual) that call `create-stripe-checkout` and redirect to the returned `url`. The native branch stays exactly as it is.
-- `src/components/SubscriptionManagement.tsx` (new, small) — shown in Profile/Settings when `isPremium` is true: shows current plan + "Manage subscription" button → opens portal (web) or deep-links to Play Store subscriptions (native).
-- Profile page: surface the manage-subscription entry point. (Quick check + add if missing.)
-
-### 5. RevenueCat → Supabase sync
-
-The existing `revenueCat.ts` purchase flow only updates RevenueCat. To keep `profiles.subscription_active` in sync on mobile, point the existing **RevenueCat webhook** at a new edge function:
-
-- **`revenuecat-webhook`** (or reuse if one already exists — will check during build) — verifies `Authorization` header against `REVENUECAT_WEBHOOK_AUTH` (already a secret), then upserts the same fields on `profiles` based on event type (`INITIAL_PURCHASE`, `RENEWAL`, `CANCELLATION`, `EXPIRATION`).
-
-### 6. Memory update
-
-Update `mem://monetization/strategy` and the index Core line from "Paid App model only" to:
-
-> Freemium: free baseline, premium tier unlocks 20 extra energy markets + priority refresh. RevenueCat for mobile IAP, Stripe for web. Single entitlement key `premium`. Source of truth: `profiles.subscription_active` + `subscription_tier`.
-
-## What you need to do (manual)
-
-1. In Stripe Dashboard (test mode):
-   - Create the product + 2 prices above; give me the price IDs (or I can create them via API once the function exists).
-   - Add a webhook endpoint pointing to the deployed `stripe-webhook` URL (I'll give it to you after deploy). Copy the signing secret.
-2. Add two Supabase secrets when prompted: `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL`.
-3. In RevenueCat dashboard, point the webhook at the new `revenuecat-webhook` URL (auth header value = your existing `REVENUECAT_WEBHOOK_AUTH` secret).
-
-## Out of scope for this pass
-
-- Apple IAP (no iOS build yet).
-- Proration / plan switching UI beyond what Stripe Billing Portal provides.
-- Trial periods (can add later via Stripe price config — no code change).
-
-Approve and I'll implement, starting with the migration + edge functions, then the paywall web branch, then memory updates.
+## Files to touch
+- `supabase/functions/fetch-commodity-data/index.ts` (remove synthesis, add `ohlcAvailable`)
+- `supabase/functions/_shared/commodity-service.ts` (mirror logic, used by other endpoints)
+- `supabase/functions/_shared/commodity-mappings.ts` (capability set)
+- `src/hooks/useCommodityData.ts` (propagate flag)
+- `src/components/CommodityChart.tsx` / `src/components/charts/ChartHeader.tsx` / `ChartContainer.tsx` (disable toggle, auto-revert)
