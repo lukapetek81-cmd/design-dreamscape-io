@@ -144,7 +144,10 @@ const OIL_API_BLEND_CODES: Record<string, string> = {
   'VLSFO Fujairah': 'VLSFO_AEFUJ_USD',
 };
 
-const generateFallbackData = (commodityName: string, timeframe: string, basePrice: number, isPremium: boolean = false, chartType: string = 'line') => {
+// NOTE: We never synthesize OHLC — fallback / mock data is always close-only.
+// Real candlesticks require true open/high/low/close from a provider, which is
+// only available from CommodityPriceAPI's daily timeseries for some symbols.
+const generateFallbackData = (commodityName: string, timeframe: string, basePrice: number, isPremium: boolean = false, _chartType: string = 'line') => {
   const dataPoints = isPremium 
     ? (timeframe === '1d' ? 48 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : 365) 
     : (timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180);
@@ -194,29 +197,11 @@ const generateFallbackData = (commodityName: string, timeframe: string, basePric
     let decimals = 2;
     if (basePrice >= 1000) decimals = 0;
     else if (basePrice >= 100) decimals = 1;
-    
-    if (chartType === 'candlestick') {
-      const dayVolatility = volatility * 0.3;
-      const open = currentPrice;
-      const high = open + (Math.random() * dayVolatility);
-      const low = open - (Math.random() * dayVolatility);
-      const close = low + (Math.random() * (high - low));
-      
-      data.push({
-        date: date.toISOString(),
-        open: Math.round(open * Math.pow(10, decimals)) / Math.pow(10, decimals),
-        high: Math.round(high * Math.pow(10, decimals)) / Math.pow(10, decimals),
-        low: Math.round(low * Math.pow(10, decimals)) / Math.pow(10, decimals),
-        close: Math.round(close * Math.pow(10, decimals)) / Math.pow(10, decimals),
-        price: Math.round(close * Math.pow(10, decimals)) / Math.pow(10, decimals),
-      });
-      currentPrice = close;
-    } else {
-      data.push({
-        date: date.toISOString(),
-        price: Math.round(currentPrice * Math.pow(10, decimals)) / Math.pow(10, decimals),
-      });
-    }
+
+    data.push({
+      date: date.toISOString(),
+      price: Math.round(currentPrice * Math.pow(10, decimals)) / Math.pow(10, decimals),
+    });
   }
   
   return data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -287,10 +272,13 @@ serve(async (req) => {
     const cached = getCachedHistory(cacheKey);
     if (cached) {
       console.log(`Cache hit for ${commodityName} ${timeframe}`);
+      const cachedOhlc = cached.source.endsWith('|ohlc') && timeframe !== '1d';
+      const cachedSource = cached.source.replace('|ohlc', '');
       return new Response(
         JSON.stringify({
           data: cached.data,
-          source: cached.source,
+          source: cachedSource,
+          ohlcAvailable: cachedOhlc,
           commodity: commodityName,
           symbol: COMMODITY_SYMBOLS[commodityName] || commodityName,
           realTime: isPremium || false,
@@ -321,6 +309,7 @@ serve(async (req) => {
 
     let historicalData = null
     let dataSourceUsed = 'fallback';
+    let ohlcAvailable = false;
 
     // Step 1: Try OilPriceAPI for energy commodities
     const oilApiCode = OIL_API_BLEND_CODES[commodityName];
@@ -365,32 +354,16 @@ serve(async (req) => {
               return isNaN(d.getTime()) ? '' : d.toISOString();
             };
 
-            if (chartType === 'candlestick') {
-              historicalData = prices
-                .map((item: any) => {
-                  const dateStr = safeDate(item);
-                  if (!dateStr) return null;
-                  const price = item.price || item.value || 0;
-                  const vol = price * 0.005;
-                  return {
-                    date: dateStr,
-                    open: price - vol * (Math.random() - 0.3),
-                    high: price + vol * Math.random(),
-                    low: price - vol * Math.random(),
-                    close: price,
-                    price,
-                  };
-                })
-                .filter(Boolean);
-            } else {
-              historicalData = prices
-                .map((item: any) => {
-                  const dateStr = safeDate(item);
-                  if (!dateStr) return null;
-                  return { date: dateStr, price: item.price || item.value || 0 };
-                })
-                .filter(Boolean);
-            }
+            // OilPriceAPI returns close-only points. Never fabricate OHLC —
+            // surface it as a line series and let the client disable candlesticks.
+            historicalData = prices
+              .map((item: any) => {
+                const dateStr = safeDate(item);
+                if (!dateStr) return null;
+                return { date: dateStr, price: item.price || item.value || 0 };
+              })
+              .filter(Boolean);
+            ohlcAvailable = false;
 
             historicalData.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
@@ -458,34 +431,41 @@ serve(async (req) => {
             const dates = Object.keys(result.rates).sort();
             if (dates.length > 0) {
               const isCent = CENT_HIST.has(cpSymbol);
-              if (chartType === 'candlestick') {
-                historicalData = dates.map(dateStr => {
-                  const dayData = result.rates[dateStr]?.[cpSymbol];
-                  if (!dayData) return null;
-                  let open = dayData.open ?? dayData.close ?? dayData;
-                  let high = dayData.high ?? open;
-                  let low = dayData.low ?? open;
-                  let close = dayData.close ?? dayData;
-                  if (typeof open !== 'number') open = parseFloat(open) || 0;
-                  if (typeof high !== 'number') high = parseFloat(high) || 0;
-                  if (typeof low !== 'number') low = parseFloat(low) || 0;
-                  if (typeof close !== 'number') close = parseFloat(close) || 0;
+              // Detect whether CPA returned true OHLC (object with all four fields
+              // and at least one bar where high != low) vs close-only scalars.
+              let realOhlcBars = 0;
+              const candidate = dates.map(dateStr => {
+                const dayData = result.rates[dateStr]?.[cpSymbol];
+                if (dayData === undefined || dayData === null) return null;
+                if (typeof dayData === 'object' &&
+                    typeof dayData.open === 'number' &&
+                    typeof dayData.high === 'number' &&
+                    typeof dayData.low === 'number' &&
+                    typeof dayData.close === 'number') {
+                  let { open, high, low, close } = dayData;
                   if (isCent && close > 100) { open /= 100; high /= 100; low /= 100; close /= 100; }
+                  if (high !== low || open !== close) realOhlcBars++;
                   return { date: dateStr, open, high, low, close, price: close };
-                }).filter(Boolean);
+                }
+                let price = typeof dayData === 'number' ? dayData : (dayData.close ?? (parseFloat(dayData) || 0));
+                if (isCent && price > 100) price = price / 100;
+                return { date: dateStr, price };
+              }).filter(Boolean) as any[];
+
+              // Require a meaningful share of bars to have real high≠low to call
+              // it true OHLC; otherwise downgrade to line-only.
+              const hasRealOhlc = candidate.length > 0 && realOhlcBars / candidate.length >= 0.5;
+              if (hasRealOhlc) {
+                historicalData = candidate;
+                ohlcAvailable = true;
               } else {
-                historicalData = dates.map(dateStr => {
-                  const dayData = result.rates[dateStr]?.[cpSymbol];
-                  if (dayData === undefined || dayData === null) return null;
-                  let price = typeof dayData === 'number' ? dayData : (dayData.close ?? (parseFloat(dayData) || 0));
-                  if (isCent && price > 100) price = price / 100;
-                  return { date: dateStr, price };
-                }).filter(Boolean);
+                historicalData = candidate.map(b => ({ date: b.date, price: b.price ?? b.close }));
+                ohlcAvailable = false;
               }
 
               if (historicalData && historicalData.length > 1) {
                 dataSourceUsed = 'commoditypriceapi';
-                console.log(`CommodityPriceAPI timeseries: ${historicalData.length} points for ${commodityName}`);
+                console.log(`CommodityPriceAPI timeseries: ${historicalData.length} points for ${commodityName} (ohlc=${ohlcAvailable})`);
               } else {
                 historicalData = null;
               }
@@ -507,9 +487,13 @@ serve(async (req) => {
     if (!historicalData) {
       console.log(`Using fallback data for ${commodityName}`)
       const basePrice = getBasePriceForCommodity(commodityName)
-      historicalData = generateFallbackData(commodityName, timeframe, basePrice, isPremium, chartType)
+      historicalData = generateFallbackData(commodityName, timeframe, basePrice, isPremium, 'line')
       dataSourceUsed = 'fallback';
+      ohlcAvailable = false;
     }
+
+    // Intraday: no provider gives true OHLC bars — never advertise candlesticks.
+    if (timeframe === '1d') ohlcAvailable = false;
 
     // Apply contract-specific price adjustments for IBKR contracts
     if (isIBKRContract && contractSymbol && historicalData) {
@@ -547,7 +531,7 @@ serve(async (req) => {
         const additionalVolatility = (Math.random() - 0.5) * 0.03 * volatilityMultiplier;
         const finalAdjustment = priceAdjustment * (1 + additionalVolatility);
         
-        if (chartType === 'candlestick') {
+        if (ohlcAvailable && typeof item.open === 'number') {
           return {
             ...item,
             open: item.open * finalAdjustment,
@@ -570,7 +554,7 @@ serve(async (req) => {
         const delayedDate = new Date(parsed.getTime() - 15 * 60 * 1000);
         const adjustment = 0.995 + Math.random() * 0.01;
         
-        if (chartType === 'candlestick') {
+        if (ohlcAvailable && typeof item.open === 'number') {
           return {
             ...item, date: delayedDate.toISOString(),
             open: item.open * adjustment, high: item.high * adjustment,
@@ -585,13 +569,14 @@ serve(async (req) => {
 
     // Cache the result if from a real API source
     if (dataSourceUsed !== 'fallback' && historicalData) {
-      setCachedHistory(cacheKey, historicalData, dataSourceUsed);
+      setCachedHistory(cacheKey, historicalData, dataSourceUsed + (ohlcAvailable ? '|ohlc' : ''));
     }
 
     return new Response(
       JSON.stringify({ 
         data: historicalData,
         source: dataSourceUsed,
+        ohlcAvailable,
         commodity: commodityName,
         symbol: symbol,
         realTime: isPremium || false,
@@ -611,6 +596,7 @@ serve(async (req) => {
       JSON.stringify({ 
         data: fallbackData, 
         source: 'fallback',
+        ohlcAvailable: false,
         error: 'Recovered from error with fallback data'
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
