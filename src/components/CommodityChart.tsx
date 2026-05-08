@@ -113,6 +113,14 @@ const CommodityChart = ({ name, basePrice, selectedContract, contractData }: Com
   // Extract data from query result
   const data = queryData?.data || [];
   const error = queryError?.message || queryData?.error || null;
+  const ohlcAvailable = !!queryData?.ohlcAvailable;
+
+  // Auto-revert to line chart if the active dataset can't support candles.
+  React.useEffect(() => {
+    if (chartType === 'candlestick' && !loading && !ohlcAvailable && data.length > 0) {
+      setChartType('line');
+    }
+  }, [chartType, loading, ohlcAvailable, data.length]);
   
   // Use smoothed data for trend calculation to avoid spiky data issues
   const trendData = chartType === 'line' ? smoothPriceData(data, name) : data;
