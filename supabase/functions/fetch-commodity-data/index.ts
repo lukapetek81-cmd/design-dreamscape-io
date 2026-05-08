@@ -144,7 +144,10 @@ const OIL_API_BLEND_CODES: Record<string, string> = {
   'VLSFO Fujairah': 'VLSFO_AEFUJ_USD',
 };
 
-const generateFallbackData = (commodityName: string, timeframe: string, basePrice: number, isPremium: boolean = false, chartType: string = 'line') => {
+// NOTE: We never synthesize OHLC — fallback / mock data is always close-only.
+// Real candlesticks require true open/high/low/close from a provider, which is
+// only available from CommodityPriceAPI's daily timeseries for some symbols.
+const generateFallbackData = (commodityName: string, timeframe: string, basePrice: number, isPremium: boolean = false, _chartType: string = 'line') => {
   const dataPoints = isPremium 
     ? (timeframe === '1d' ? 48 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : 365) 
     : (timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180);
@@ -194,29 +197,11 @@ const generateFallbackData = (commodityName: string, timeframe: string, basePric
     let decimals = 2;
     if (basePrice >= 1000) decimals = 0;
     else if (basePrice >= 100) decimals = 1;
-    
-    if (chartType === 'candlestick') {
-      const dayVolatility = volatility * 0.3;
-      const open = currentPrice;
-      const high = open + (Math.random() * dayVolatility);
-      const low = open - (Math.random() * dayVolatility);
-      const close = low + (Math.random() * (high - low));
-      
-      data.push({
-        date: date.toISOString(),
-        open: Math.round(open * Math.pow(10, decimals)) / Math.pow(10, decimals),
-        high: Math.round(high * Math.pow(10, decimals)) / Math.pow(10, decimals),
-        low: Math.round(low * Math.pow(10, decimals)) / Math.pow(10, decimals),
-        close: Math.round(close * Math.pow(10, decimals)) / Math.pow(10, decimals),
-        price: Math.round(close * Math.pow(10, decimals)) / Math.pow(10, decimals),
-      });
-      currentPrice = close;
-    } else {
-      data.push({
-        date: date.toISOString(),
-        price: Math.round(currentPrice * Math.pow(10, decimals)) / Math.pow(10, decimals),
-      });
-    }
+
+    data.push({
+      date: date.toISOString(),
+      price: Math.round(currentPrice * Math.pow(10, decimals)) / Math.pow(10, decimals),
+    });
   }
   
   return data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
