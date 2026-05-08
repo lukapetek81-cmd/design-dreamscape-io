@@ -12,6 +12,7 @@ export const TIMEFRAMES: TimeframeOption[] = [
   { label: '1M', value: '1m' },
   { label: '3M', value: '3m' },
   { label: '6M', value: '6m' },
+  { label: '1Y', value: '1y' },
 ];
 
 /**
@@ -133,8 +134,10 @@ export const getYAxisDomain = (
       paddingMultiplier = 0.08; // 8% padding for monthly grains
     } else if (selectedTimeframe === '3m') {
       paddingMultiplier = 0.06; // 6% padding for 3-month grains
-    } else { // 6-month
+    } else if (selectedTimeframe === '6m') {
       paddingMultiplier = 0.04; // 4% padding for 6-month grains
+    } else { // 1-year
+      paddingMultiplier = 0.03; // 3% padding for yearly grains
     }
   } else {
     // Other commodities use standard padding
@@ -144,8 +147,10 @@ export const getYAxisDomain = (
       paddingMultiplier = 0.03; // 3% padding for monthly
     } else if (selectedTimeframe === '3m') {
       paddingMultiplier = 0.02; // 2% padding for 3-month
-    } else { // 6-month
+    } else if (selectedTimeframe === '6m') {
       paddingMultiplier = 0.01; // 1% padding for 6-month
+    } else { // 1-year
+      paddingMultiplier = 0.01; // 1% padding for yearly
     }
   }
   

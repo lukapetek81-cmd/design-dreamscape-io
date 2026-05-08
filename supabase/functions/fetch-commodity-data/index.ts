@@ -149,8 +149,8 @@ const OIL_API_BLEND_CODES: Record<string, string> = {
 // only available from CommodityPriceAPI's daily timeseries for some symbols.
 const generateFallbackData = (commodityName: string, timeframe: string, basePrice: number, isPremium: boolean = false, _chartType: string = 'line') => {
   const dataPoints = isPremium 
-    ? (timeframe === '1d' ? 48 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : 365) 
-    : (timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180);
+    ? (timeframe === '1d' ? 48 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : timeframe === '6m' ? 365 : 730)
+    : (timeframe === '1d' ? 24 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : timeframe === '6m' ? 180 : 365);
   const data: any[] = [];
   const now = new Date();
   
@@ -187,7 +187,7 @@ const generateFallbackData = (commodityName: string, timeframe: string, basePric
     
     // Add cyclical patterns for longer timeframes
     let cycleFactor = 0;
-    if (timeframe === '3m' || timeframe === '6m') {
+    if (timeframe === '3m' || timeframe === '6m' || timeframe === '1y') {
       cycleFactor = Math.sin((i / dataPoints) * Math.PI * 4) * 0.02 * basePrice;
     }
     
@@ -325,7 +325,7 @@ serve(async (req) => {
         } else if (timeframe === '1m') {
           endpoint = 'past_month';
           interval = '1d';
-        } else if (timeframe === '3m' || timeframe === '6m') {
+        } else if (timeframe === '3m' || timeframe === '6m' || timeframe === '1y') {
           endpoint = 'past_year';
           interval = '1w';
         } else {
@@ -369,6 +369,7 @@ serve(async (req) => {
 
             if (timeframe === '3m') historicalData = historicalData.slice(-90);
             else if (timeframe === '6m') historicalData = historicalData.slice(-180);
+            else if (timeframe === '1y') historicalData = historicalData.slice(-365);
 
             if (historicalData.length < 2) {
               console.warn(`OilPriceAPI returned only ${historicalData.length} valid points, will try Yahoo fallback`);
@@ -410,8 +411,8 @@ serve(async (req) => {
     if (!historicalData && cpApiKey && cpSymbol) {
       try {
         const maxDays = isPremium
-          ? (timeframe === '1d' ? 2 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : 365)
-          : (timeframe === '1d' ? 2 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : 180);
+          ? (timeframe === '1d' ? 2 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : timeframe === '6m' ? 365 : 730)
+          : (timeframe === '1d' ? 2 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : timeframe === '6m' ? 180 : 365);
 
         const endDate = new Date();
         const startDate = new Date();
