@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "com.commodityhub.app"
+    namespace "app.lovable.c8fabd7a96c74aff8d7b001690ec23c7"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.commodityhub.app"
+        applicationId "app.lovable.c8fabd7a96c74aff8d7b001690ec23c7"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 2
