@@ -197,8 +197,8 @@ serve(async (req) => {
               let price = typeof result.rates[cpSymbol] === 'number'
                 ? result.rates[cpSymbol]
                 : parseFloat(result.rates[cpSymbol]);
-              // Convert cents to dollars
-              if (CENT_SYMBOLS.has(cpSymbol) && price > 100) {
+              // Convert cents to dollars (matches shared CommodityService).
+              if (CENT_SYMBOLS.has(cpSymbol)) {
                 price = price / 100;
               }
               if (price > 0) {
