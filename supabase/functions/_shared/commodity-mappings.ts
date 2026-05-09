@@ -248,7 +248,7 @@ export const PREMIUM_COMMODITIES = new Set<string>([
   'Industrial Ethanol', 'Rubber',
   'Bitumen', 'Cobalt', 'Rhodium',
   'Polyethylene', 'Polyvinyl Chloride', 'Polypropylene', 'Soda Ash',
-  'Neodymium', 'Tellurium', 'Diammonium Phosphate', 'Urea', 'Urea Ammonium Nitrate',
+  'Neodymium', 'Tellurium', 'Diammonium Phosphate', 'Urea',
   'Gallium', 'Indium', 'Kraft Pulp', 'Industrial Naphtha',
 ]);
 
@@ -289,7 +289,7 @@ export const CATEGORY_MAPPINGS: Record<string, string[]> = {
   industrials: [
     'Industrial Ethanol', 'Rubber', 'Bitumen', 'Cobalt', 'Rhodium',
     'Polyethylene', 'Polyvinyl Chloride', 'Polypropylene', 'Soda Ash',
-    'Neodymium', 'Tellurium', 'Diammonium Phosphate', 'Urea', 'Urea Ammonium Nitrate',
+    'Neodymium', 'Tellurium', 'Diammonium Phosphate', 'Urea',
     'Gallium', 'Indium', 'Kraft Pulp', 'Industrial Naphtha',
     'Lumber Futures',
   ],
