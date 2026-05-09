@@ -1,6 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/utils.ts'
 import { IpRateLimiter } from '../_shared/rateLimit.ts'
+import {
+  COMMODITY_PRICE_API_SYMBOLS,
+  CENT_QUOTED_SYMBOLS,
+} from '../_shared/commodity-mappings.ts'
 
 // Protect OilPriceAPI / CommodityPriceAPI quota.
 const limiter = new IpRateLimiter({ limit: 60, windowMs: 60_000 });
@@ -26,36 +30,14 @@ function setCachedPrice(key: string, data: any, source: string): void {
   priceCache.set(key, { data, source, timestamp: Date.now() });
 }
 
-// CommodityPriceAPI v2 symbol mapping: commodity name → CPAPI symbol
-const CPAPI_SYMBOLS: Record<string, string> = {
-  'Gold Futures': 'XAU',
-  'Silver Futures': 'XAG',
-  'Platinum': 'PL',
-  'Palladium': 'PA',
-  'Copper': 'HG-SPOT',
-  'Aluminum': 'AL-SPOT',
-  'Zinc': 'ZINC',
-  'Corn Futures': 'CORN',
-  'Soybean Futures': 'SOYBEAN-FUT',
-  'Soybean Oil': 'ZL',
-  'Soybean Meal': 'ZM',
-  'Oat Futures': 'OAT-SPOT',
-  'Rough Rice': 'RR-FUT',
-  'Coffee Arabica': 'CA',
-  'Sugar #11': 'LS',
-  'Cotton': 'CT',
-  'Cocoa': 'CC',
-  'Orange Juice': 'OJ',
-  'Milk Class III': 'MILK',
-  'Lumber Futures': 'LB-FUT',
-  'Random Length Lumber': 'LB-FUT',
-  'Live Cattle Futures': 'BEEF',
-  'Lean Hogs Futures': 'BEEF',
-  'Feeder Cattle Futures': 'BEEF',
-};
-
-// Symbols priced in US cents — divide by 100
-const CENT_SYMBOLS = new Set(['CORN', 'SOYBEAN-FUT', 'ZL']);
+// Use the canonical shared map so single-price lookups stay in sync with
+// /fetch-all-commodities. Previously a stale local map mis-priced Sugar #11
+// (LS→UK Sugar No 5), bogus-mapped all cattle/hogs to "BEEF", and used
+// "Milk Class III"/"Live Cattle Futures" name variants that no longer exist
+// in the catalog — every Softs/Livestock detail view fell through to the
+// synthetic $100 fallback.
+const CPAPI_SYMBOLS: Record<string, string> = COMMODITY_PRICE_API_SYMBOLS;
+const CENT_SYMBOLS = CENT_QUOTED_SYMBOLS;
 
 // ALL energy commodities use OilPriceAPI exclusively
 const OIL_API_CODES: Record<string, string> = {
