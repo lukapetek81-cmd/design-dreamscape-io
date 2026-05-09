@@ -8,7 +8,11 @@ import {
 import { logger } from '@/utils/logger';
 
 // Public Android SDK key from RevenueCat dashboard. Safe to ship in client.
-const REVENUECAT_ANDROID_KEY = import.meta.env.VITE_REVENUECAT_ANDROID_KEY as string | undefined;
+// Android key: prefer the dedicated VITE_REVENUECAT_ANDROID_KEY, fall back to
+// the legacy VITE_REVENUECAT_API_KEY (which is what's currently in .env).
+const REVENUECAT_ANDROID_KEY =
+  (import.meta.env.VITE_REVENUECAT_ANDROID_KEY as string | undefined) ??
+  (import.meta.env.VITE_REVENUECAT_API_KEY as string | undefined);
 const REVENUECAT_IOS_KEY = import.meta.env.VITE_REVENUECAT_IOS_KEY as string | undefined;
 
 // RevenueCat entitlement identifier configured in dashboard.
