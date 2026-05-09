@@ -1,4 +1,5 @@
 import { EdgeLogger, EdgePerformanceMonitor } from './utils.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import {
   COMMODITY_SYMBOLS,
   COMMODITY_PRICE_API_SYMBOLS,
@@ -87,6 +88,16 @@ export class CommodityService {
         if (seen.has(name)) continue;
         if (!includePremium && PREMIUM_COMMODITIES.has(name)) continue;
         merged.push(this.buildMissingCommodityFallback(name, info.category, info.symbol, info.contractSize, info.venue));
+      }
+
+      // Compute real day-over-day change against yesterday's snapshot, then
+      // upsert today's snapshot. Zero extra provider API calls — only DB I/O.
+      // Energy items already have non-zero change from OilPriceAPI; this only
+      // back-fills the CPA-sourced items (and is a no-op when change != 0).
+      try {
+        await this.applyDayOverDayChange(merged);
+      } catch (err) {
+        this.logger.warn('Day-over-day change computation failed (non-fatal)', err);
       }
 
       // Only cache if we got real data from BOTH providers — avoids locking in
