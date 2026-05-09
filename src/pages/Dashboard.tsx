@@ -254,22 +254,22 @@ const DashboardContent = ({
 
             {/* Premium Upsells — free users only */}
             {!loading && !error && !isPremium && activeGroup === 'energy' && (
-              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="energy" />
+              <PremiumUpsellCard variant="energy" />
             )}
             {!loading && !error && !isPremium && activeGroup === 'industrials' && (
-              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="industrials" />
+              <PremiumUpsellCard variant="industrials" />
             )}
             {!loading && !error && !isPremium && activeGroup === 'metals' && (
-              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="metals" />
+              <PremiumUpsellCard variant="metals" />
             )}
             {!loading && !error && !isPremium && activeGroup === 'grains' && (
-              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="grains" />
+              <PremiumUpsellCard variant="grains" />
             )}
             {!loading && !error && !isPremium && activeGroup === 'softs' && (
-              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="softs" />
+              <PremiumUpsellCard variant="softs" />
             )}
             {!loading && !error && !isPremium && activeGroup === 'livestock' && (
-              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="livestock" />
+              <PremiumUpsellCard variant="livestock" />
             )}
 
             {/* Commodities List */}
