@@ -2,7 +2,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.commodityhub.app',
+  appId: 'app.lovable.c8fabd7a96c74aff8d7b001690ec23c7',
   appName: 'Commodity Hub',
   webDir: 'dist',
   // PRODUCTION MODE: bundled `dist/` is loaded from the APK/AAB.
