@@ -83,6 +83,30 @@ export type Database = {
         }
         Relationships: []
       }
+      commodity_price_snapshots: {
+        Row: {
+          commodity_name: string
+          created_at: string
+          id: string
+          price: number
+          snapshot_date: string
+        }
+        Insert: {
+          commodity_name: string
+          created_at?: string
+          id?: string
+          price: number
+          snapshot_date?: string
+        }
+        Update: {
+          commodity_name?: string
+          created_at?: string
+          id?: string
+          price?: number
+          snapshot_date?: string
+        }
+        Relationships: []
+      }
       expert_insights: {
         Row: {
           bullish_bearish: string | null
