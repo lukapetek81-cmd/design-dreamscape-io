@@ -13,7 +13,6 @@ import { useAvailableCommodities, Commodity } from '@/hooks/useCommodityData';
 import { Button } from '@/components/ui/button';
 import { OfflineIndicator } from '@/components/OfflineIndicator';
 import PremiumUpsellCard from '@/components/PremiumUpsellCard';
-import { useToast } from '@/hooks/use-toast';
 
 const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -108,14 +107,6 @@ const DashboardContent = ({
 }) => {
   const { setOpenMobile } = useSidebar();
   const { connected: realtimeConnected, delayStatus } = useRealtimeDataContext();
-  const { toast } = useToast();
-
-  const handleUpgrade = React.useCallback(() => {
-    toast({
-      title: 'Premium subscriptions coming soon',
-      description: 'Stripe checkout will be enabled shortly. Stay tuned!',
-    });
-  }, [toast]);
 
   // Simple swipe handler for mobile sidebar
   const [touchStart, setTouchStart] = useState<number | null>(null);
