@@ -232,6 +232,71 @@ export class CommodityService {
     return all.find((c) => c.name === commodityName) || null;
   }
 
+  /**
+   * Compute change/changePercent vs yesterday's stored snapshot, then upsert
+   * today's prices. CPA `/rates/latest` doesn't return prior-close, so this
+   * is the cheapest way to get real day-over-day deltas: 0 extra API calls,
+   * just one DB read + one bulk upsert per provider refresh.
+   */
+  private async applyDayOverDayChange(merged: CommodityData[]): Promise<void> {
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    if (!this.supabaseUrl || !serviceKey || merged.length === 0) return;
+
+    const sb = createClient(this.supabaseUrl, serviceKey, {
+      auth: { persistSession: false },
+    });
+    const today = new Date().toISOString().slice(0, 10);
+    const names = merged.map((c) => c.name);
+
+    // Fetch the most recent snapshot per commodity that's older than today.
+    // Keep it simple: pull the last ~14 days for these names and pick the
+    // freshest pre-today row in JS (avoids a per-row distinct-on query).
+    const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+    const { data: rows, error } = await sb
+      .from('commodity_price_snapshots')
+      .select('commodity_name, price, snapshot_date')
+      .in('commodity_name', names)
+      .gte('snapshot_date', fourteenDaysAgo)
+      .lt('snapshot_date', today)
+      .order('snapshot_date', { ascending: false });
+
+    if (error) {
+      this.logger.warn('Snapshot read failed', error.message);
+    } else if (rows && rows.length > 0) {
+      const prevByName = new Map<string, number>();
+      for (const r of rows as Array<{ commodity_name: string; price: number }>) {
+        if (!prevByName.has(r.commodity_name)) {
+          prevByName.set(r.commodity_name, Number(r.price));
+        }
+      }
+      for (const c of merged) {
+        if (c.change !== 0 || c.changePercent !== 0) continue; // already populated
+        const prev = prevByName.get(c.name);
+        if (typeof prev !== 'number' || prev <= 0 || !Number.isFinite(prev)) continue;
+        const diff = c.price - prev;
+        c.change = Math.round(diff * 10000) / 10000;
+        c.changePercent = Math.round((diff / prev) * 10000) / 100;
+      }
+    }
+
+    // Upsert today's snapshot for every commodity with a valid price.
+    const payload = merged
+      .filter((c) => Number.isFinite(c.price) && c.price > 0)
+      .map((c) => ({
+        commodity_name: c.name,
+        price: c.price,
+        snapshot_date: today,
+      }));
+    if (payload.length > 0) {
+      const { error: upErr } = await sb
+        .from('commodity_price_snapshots')
+        .upsert(payload, { onConflict: 'commodity_name,snapshot_date' });
+      if (upErr) this.logger.warn('Snapshot upsert failed', upErr.message);
+    }
+  }
+
   async fetchCommodityChart(
     commodityName: string,
     timeframe: string,
