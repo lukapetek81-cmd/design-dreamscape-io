@@ -209,7 +209,7 @@ IMPORTANT: Commodity Hub is a market data and information app. It does not provi
     contentRating: "Teen",
     website: "https://commodity-hub.lovableproject.com",
     email: "support@commodityhub.com",
-    privacyPolicy: "https://commodity-hub.lovableproject.com/privacy-policy"
+    privacyPolicy: "https://commodity-hub.lovable.app/privacy-policy"
   };
 };
 
