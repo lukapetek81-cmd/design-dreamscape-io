@@ -13,7 +13,6 @@ import { useAvailableCommodities, Commodity } from '@/hooks/useCommodityData';
 import { Button } from '@/components/ui/button';
 import { OfflineIndicator } from '@/components/OfflineIndicator';
 import PremiumUpsellCard from '@/components/PremiumUpsellCard';
-import { useToast } from '@/hooks/use-toast';
 
 const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -108,14 +107,6 @@ const DashboardContent = ({
 }) => {
   const { setOpenMobile } = useSidebar();
   const { connected: realtimeConnected, delayStatus } = useRealtimeDataContext();
-  const { toast } = useToast();
-
-  const handleUpgrade = React.useCallback(() => {
-    toast({
-      title: 'Premium subscriptions coming soon',
-      description: 'Stripe checkout will be enabled shortly. Stay tuned!',
-    });
-  }, [toast]);
 
   // Simple swipe handler for mobile sidebar
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -263,22 +254,22 @@ const DashboardContent = ({
 
             {/* Premium Upsells — free users only */}
             {!loading && !error && !isPremium && activeGroup === 'energy' && (
-              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="energy" />
+              <PremiumUpsellCard variant="energy" />
             )}
             {!loading && !error && !isPremium && activeGroup === 'industrials' && (
-              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="industrials" />
+              <PremiumUpsellCard variant="industrials" />
             )}
             {!loading && !error && !isPremium && activeGroup === 'metals' && (
-              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="metals" />
+              <PremiumUpsellCard variant="metals" />
             )}
             {!loading && !error && !isPremium && activeGroup === 'grains' && (
-              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="grains" />
+              <PremiumUpsellCard variant="grains" />
             )}
             {!loading && !error && !isPremium && activeGroup === 'softs' && (
-              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="softs" />
+              <PremiumUpsellCard variant="softs" />
             )}
             {!loading && !error && !isPremium && activeGroup === 'livestock' && (
-              <PremiumUpsellCard onUpgrade={handleUpgrade} variant="livestock" />
+              <PremiumUpsellCard variant="livestock" />
             )}
 
             {/* Commodities List */}
