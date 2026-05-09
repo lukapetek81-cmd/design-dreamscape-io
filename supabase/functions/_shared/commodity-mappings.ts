@@ -111,7 +111,7 @@ export const COMMODITY_SYMBOLS: Record<string, CommoditySymbol> = {
   'Tellurium': { symbol: 'TEL=X', category: 'industrials', contractSize: '1 kg', venue: 'OTC' },
   'Diammonium Phosphate': { symbol: 'DAP=X', category: 'industrials', contractSize: '1 MT', venue: 'OTC' },
   'Urea': { symbol: 'UREA=X', category: 'industrials', contractSize: '1 MT', venue: 'OTC' },
-  'Urea Ammonium Nitrate': { symbol: 'UAN=X', category: 'industrials', contractSize: '1 MT', venue: 'OTC' },
+  // 'Urea Ammonium Nitrate' removed — CPA symbol UANEU deprecated 2024-04-14, no replacement.
   'Gallium': { symbol: 'GA=X', category: 'industrials', contractSize: '1 kg', venue: 'OTC' },
   'Indium': { symbol: 'IN=X', category: 'industrials', contractSize: '1 kg', venue: 'OTC' },
   'Kraft Pulp': { symbol: 'KP=X', category: 'industrials', contractSize: '1 MT', venue: 'OTC' },
@@ -198,7 +198,7 @@ export const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
   'Tellurium': 'TEL',
   'Diammonium Phosphate': 'DIAPH',
   'Urea': 'UREA',
-  'Urea Ammonium Nitrate': 'UANEU',
+  // 'Urea Ammonium Nitrate': 'UANEU' — deprecated by CPA 2024-04-14.
   'Gallium': 'GA',
   'Indium': 'INDIUM',
   'Kraft Pulp': 'K-PULP',
@@ -248,7 +248,7 @@ export const PREMIUM_COMMODITIES = new Set<string>([
   'Industrial Ethanol', 'Rubber',
   'Bitumen', 'Cobalt', 'Rhodium',
   'Polyethylene', 'Polyvinyl Chloride', 'Polypropylene', 'Soda Ash',
-  'Neodymium', 'Tellurium', 'Diammonium Phosphate', 'Urea', 'Urea Ammonium Nitrate',
+  'Neodymium', 'Tellurium', 'Diammonium Phosphate', 'Urea',
   'Gallium', 'Indium', 'Kraft Pulp', 'Industrial Naphtha',
 ]);
 
@@ -289,7 +289,7 @@ export const CATEGORY_MAPPINGS: Record<string, string[]> = {
   industrials: [
     'Industrial Ethanol', 'Rubber', 'Bitumen', 'Cobalt', 'Rhodium',
     'Polyethylene', 'Polyvinyl Chloride', 'Polypropylene', 'Soda Ash',
-    'Neodymium', 'Tellurium', 'Diammonium Phosphate', 'Urea', 'Urea Ammonium Nitrate',
+    'Neodymium', 'Tellurium', 'Diammonium Phosphate', 'Urea',
     'Gallium', 'Indium', 'Kraft Pulp', 'Industrial Naphtha',
     'Lumber Futures',
   ],
