@@ -2,10 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/utils.ts'
 import { IpRateLimiter } from '../_shared/rateLimit.ts'
-import {
-  COMMODITY_PRICE_API_SYMBOLS,
-  CENT_QUOTED_SYMBOLS,
-} from '../_shared/commodity-mappings.ts'
+import { COMMODITY_PRICE_API_SYMBOLS } from '../_shared/commodity-mappings.ts'
+import { convertCpaPriceToDisplay } from '../_shared/commodity-units.ts'
 
 // Protect Yahoo/CommodityPriceAPI/OilPriceAPI quota from anonymous abuse.
 const limiter = new IpRateLimiter({ limit: 60, windowMs: 60_000 });
@@ -397,7 +395,6 @@ serve(async (req) => {
     // Step 2: Try CommodityPriceAPI timeseries for non-energy commodities.
     // Uses the shared canonical map — never hand-roll a duplicate here.
     const CPAPI_HIST_SYMBOLS = COMMODITY_PRICE_API_SYMBOLS;
-    const CENT_HIST = CENT_QUOTED_SYMBOLS;
 
     const cpApiKey = Deno.env.get('COMMODITYPRICE_API_KEY');
     const cpSymbol = CPAPI_HIST_SYMBOLS[commodityName];
@@ -425,7 +422,19 @@ serve(async (req) => {
           if (result.success && result.rates) {
             const dates = Object.keys(result.rates).sort();
             if (dates.length > 0) {
-              const isCent = CENT_HIST.has(cpSymbol);
+              const rawUnit = result.metadata?.[cpSymbol]?.unit;
+              // Use the converter for one bar to derive a stable scale factor
+              // we can apply to all bars without per-row metadata lookups.
+              const sampleRaw = (() => {
+                for (const d of dates) {
+                  const v = result.rates[d]?.[cpSymbol];
+                  if (typeof v === 'number') return v;
+                  if (v && typeof v.close === 'number') return v.close;
+                }
+                return 1;
+              })();
+              const { price: sampleConverted } = convertCpaPriceToDisplay(sampleRaw, rawUnit, cpSymbol);
+              const scale = sampleRaw !== 0 ? sampleConverted / sampleRaw : 1;
               // Detect whether CPA returned true OHLC (object with all four fields
               // and at least one bar where high != low) vs close-only scalars.
               let realOhlcBars = 0;
@@ -438,12 +447,12 @@ serve(async (req) => {
                     typeof dayData.low === 'number' &&
                     typeof dayData.close === 'number') {
                   let { open, high, low, close } = dayData;
-                  if (isCent && close > 100) { open /= 100; high /= 100; low /= 100; close /= 100; }
+                  open *= scale; high *= scale; low *= scale; close *= scale;
                   if (high !== low || open !== close) realOhlcBars++;
                   return { date: dateStr, open, high, low, close, price: close };
                 }
                 let price = typeof dayData === 'number' ? dayData : (dayData.close ?? (parseFloat(dayData) || 0));
-                if (isCent && price > 100) price = price / 100;
+                price *= scale;
                 return { date: dateStr, price };
               }).filter(Boolean) as any[];
 
