@@ -193,6 +193,7 @@ serve(async (req) => {
           );
           if (resp.ok) {
             const result = await resp.json();
+            console.log(`[CPA-FULL] ${commodityName} sym=${cpSymbol} payload=${JSON.stringify(result).substring(0, 800)}`);
             if (result.success && result.rates && result.rates[cpSymbol] !== undefined) {
               let price = typeof result.rates[cpSymbol] === 'number'
                 ? result.rates[cpSymbol]

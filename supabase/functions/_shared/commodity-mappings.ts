@@ -207,10 +207,19 @@ export const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
   'Lumber Futures': 'LB-FUT',
 };
 
-/** CPA returns these symbols quoted in US Cents — caller should divide by 100. */
+/** CPA returns these symbols quoted in US Cents — caller should divide by 100.
+ * Audited 2026-05-11 against /rates/latest:
+ *   - CORN/SOYBEAN-FUT/SOYBEAN-SPOT/ZL/RUBBER are already returned in USD by CPA
+ *     (not cents). Removing them fixes Corn $0.05, Soybeans $0.12, Soy Oil $0.01,
+ *     Rubber $0.02 → real $/bu, $/lb, $/kg.
+ *   - ZW-SPOT/ZW-FUT (Wheat) and OAT-SPOT/OAT-FUT come back as cents/bu (~615, ~355);
+ *     dividing by 100 yields the correct ~$6/bu and ~$3.50/bu.
+ *   - LS11 (Sugar #11) stays — correctly produces $0.15/lb.
+ */
 export const CENT_QUOTED_SYMBOLS = new Set([
-  'CORN', 'SOYBEAN-FUT', 'ZL',
-  'LS11', 'SOYBEAN-SPOT', 'RUBBER',
+  'LS11',
+  'ZW-SPOT', 'ZW-FUT',
+  'OAT-SPOT', 'OAT-FUT',
 ]);
 
 /**
