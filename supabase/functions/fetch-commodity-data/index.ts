@@ -2,10 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/utils.ts'
 import { IpRateLimiter } from '../_shared/rateLimit.ts'
-import {
-  COMMODITY_PRICE_API_SYMBOLS,
-  CENT_QUOTED_SYMBOLS,
-} from '../_shared/commodity-mappings.ts'
+import { COMMODITY_PRICE_API_SYMBOLS } from '../_shared/commodity-mappings.ts'
+import { convertCpaPriceToDisplay } from '../_shared/commodity-units.ts'
 
 // Protect Yahoo/CommodityPriceAPI/OilPriceAPI quota from anonymous abuse.
 const limiter = new IpRateLimiter({ limit: 60, windowMs: 60_000 });
@@ -397,7 +395,6 @@ serve(async (req) => {
     // Step 2: Try CommodityPriceAPI timeseries for non-energy commodities.
     // Uses the shared canonical map — never hand-roll a duplicate here.
     const CPAPI_HIST_SYMBOLS = COMMODITY_PRICE_API_SYMBOLS;
-    const CENT_HIST = CENT_QUOTED_SYMBOLS;
 
     const cpApiKey = Deno.env.get('COMMODITYPRICE_API_KEY');
     const cpSymbol = CPAPI_HIST_SYMBOLS[commodityName];
