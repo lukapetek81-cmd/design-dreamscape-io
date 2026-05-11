@@ -68,24 +68,20 @@ export function parseCpaUnit(raw: string | undefined): { unit: Unit; perCount: n
  * for that symbol. Discovered empirically by comparing raw values to real-world prices.
  */
 export const SOURCE_UNIT_OVERRIDE: Record<string, { unit: Unit; perCount?: number }> = {
-  // Grains: CPA reports raw ~430/615/355 — these are cents/bu, not $/<anything>.
-  CORN:           { unit: 'cents_per_bu' },
+  // Empirically-verified overrides (CPA's metadata.unit is wrong/missing for these).
+  // Wheat/Oats futures: raw ~615/355 → cents/bu (real ~$6/bu, ~$3.5/bu).
   'ZW-SPOT':      { unit: 'cents_per_bu' },
   'ZW-FUT':       { unit: 'cents_per_bu' },
   'OAT-SPOT':     { unit: 'cents_per_bu' },
   'OAT-FUT':      { unit: 'cents_per_bu' },
-  // Soybeans raw ~1150 → cents/bu (real ~$11/bu).
-  'SOYBEAN-FUT':  { unit: 'cents_per_bu' },
-  'SOYBEAN-SPOT': { unit: 'cents_per_bu' },
-  // Soy Oil raw ~45 → cents/lb (real ~$0.45/lb). CPA mis-labels.
-  ZL:             { unit: 'cents_per_lb' },
-  // Sugar #11 raw ~15-20 → cents/lb (real ~$0.18/lb).
+  // Sugar #11 raw ~15 → cents/lb (real ~$0.18/lb).
   LS11:           { unit: 'cents_per_lb' },
-  // Cotton raw ~70 → cents/lb. CPA may label differently.
-  CT:             { unit: 'cents_per_lb' },
-  // Lean Hogs raw ~90 with unit="T" but real value is ~$0.90/lb.
+  // Lean Hogs raw ~95 with unit="T" but real value is ~$0.95/lb.
   LHOGS:          { unit: 'cents_per_lb' },
-  // Rough Rice raw ~17 → $/cwt (already correct via metadata Cwt likely).
+  // Feeder Cattle raw ~367 with bogus unit "50,000 lbs" — actually cents/lb.
+  FC1:            { unit: 'cents_per_lb' },
+  // CORN, SOYBEAN-FUT, SOYBEAN-SPOT, ZL, CT: CPA returns these in $/bu or $/lb directly
+  // (NOT cents). Trust metadata or treat as pass-through. Do NOT add overrides here.
 };
 
 /** Per-symbol target display unit. Drives both API conversion and fallback baselines. */
