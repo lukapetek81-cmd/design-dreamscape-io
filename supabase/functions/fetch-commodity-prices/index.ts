@@ -1,10 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/utils.ts'
 import { IpRateLimiter } from '../_shared/rateLimit.ts'
-import {
-  COMMODITY_PRICE_API_SYMBOLS,
-  CENT_QUOTED_SYMBOLS,
-} from '../_shared/commodity-mappings.ts'
+import { COMMODITY_PRICE_API_SYMBOLS } from '../_shared/commodity-mappings.ts'
+import { convertCpaPriceToDisplay } from '../_shared/commodity-units.ts'
 
 // Protect OilPriceAPI / CommodityPriceAPI quota.
 const limiter = new IpRateLimiter({ limit: 60, windowMs: 60_000 });
@@ -37,7 +35,6 @@ function setCachedPrice(key: string, data: any, source: string): void {
 // in the catalog — every Softs/Livestock detail view fell through to the
 // synthetic $100 fallback.
 const CPAPI_SYMBOLS: Record<string, string> = COMMODITY_PRICE_API_SYMBOLS;
-const CENT_SYMBOLS = CENT_QUOTED_SYMBOLS;
 
 // ALL energy commodities use OilPriceAPI exclusively
 const OIL_API_CODES: Record<string, string> = {
@@ -193,18 +190,16 @@ serve(async (req) => {
           );
           if (resp.ok) {
             const result = await resp.json();
-            console.log(`[CPA-FULL] ${commodityName} sym=${cpSymbol} payload=${JSON.stringify(result).substring(0, 800)}`);
             if (result.success && result.rates && result.rates[cpSymbol] !== undefined) {
-              let price = typeof result.rates[cpSymbol] === 'number'
+              const rawValue = typeof result.rates[cpSymbol] === 'number'
                 ? result.rates[cpSymbol]
                 : parseFloat(result.rates[cpSymbol]);
-              // Convert cents to dollars (matches shared CommodityService).
-              if (CENT_SYMBOLS.has(cpSymbol)) {
-                price = price / 100;
-              }
+              const rawUnit = result.metadata?.[cpSymbol]?.unit;
+              const { price, unit } = convertCpaPriceToDisplay(rawValue, rawUnit, cpSymbol);
+              console.log(`[CPA] ${commodityName} ${cpSymbol} raw=${rawValue} ${rawUnit||'?'} → ${price.toFixed(4)} ${unit}`);
               if (price > 0) {
                 priceData = {
-                  symbol: cpSymbol, price: Math.round(price * 100) / 100,
+                  symbol: cpSymbol, price: Math.round(price * 10000) / 10000,
                   change: 0, changePercent: 0,
                   lastUpdate: new Date().toISOString()
                 };
