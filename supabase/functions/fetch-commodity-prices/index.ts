@@ -193,11 +193,11 @@ serve(async (req) => {
           );
           if (resp.ok) {
             const result = await resp.json();
+            console.log(`[CPA-FULL] ${commodityName} sym=${cpSymbol} payload=${JSON.stringify(result).substring(0, 800)}`);
             if (result.success && result.rates && result.rates[cpSymbol] !== undefined) {
               let price = typeof result.rates[cpSymbol] === 'number'
                 ? result.rates[cpSymbol]
                 : parseFloat(result.rates[cpSymbol]);
-              console.log(`[CPA-RAW] ${commodityName} sym=${cpSymbol} raw=${result.rates[cpSymbol]} unit=${result.unit || 'n/a'} meta=${JSON.stringify(result.meta || {})}`);
               // Convert cents to dollars (matches shared CommodityService).
               if (CENT_SYMBOLS.has(cpSymbol)) {
                 price = price / 100;
