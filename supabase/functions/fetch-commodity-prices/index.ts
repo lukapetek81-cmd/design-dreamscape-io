@@ -82,13 +82,20 @@ const getBasePriceForCommodity = (commodityName: string): number => {
     'Gasoline RBOB': 2.1, 'Heating Oil': 2.3, 'Natural Gas UK': 90,
     'Gold Futures': 2000, 'Silver Futures': 25, 'Platinum': 1050,
     'Palladium': 1200, 'Copper': 4.2, 'Aluminum': 2200,
-    'Corn Futures': 430, 'Soybean Futures': 1150,
-    'Coffee Arabica': 165, 'Sugar #11': 19.75,
-    'Cotton': 72.80, 'Cocoa': 2850,
+    // After unit conversion, fallbacks must be in the DISPLAY_UNIT for each symbol.
+    // Grains $/bu, Softs/Livestock $/lb, Cocoa $/mt.
+    'Corn Futures': 4.30, 'Soybean Futures': 11.50,
+    'Wheat Futures': 6.30, 'Wheat Futures Spot': 6.30,
+    'Oat Futures': 3.50, 'Oats Spot': 3.50,
+    'Soybeans Spot': 11.50,
+    'Coffee Arabica': 1.65, 'Sugar #11': 0.20,
+    'Cotton': 0.73, 'Cocoa': 7800,
     'Live Cattle Futures': 170, 'Lean Hogs Futures': 75,
     'Feeder Cattle Futures': 245, 'Milk Class III': 18.50,
-    'Orange Juice': 450, 'Lumber Futures': 550, 'Oat Futures': 350,
-    'Soybean Oil': 45, 'Soybean Meal': 330, 'Rough Rice': 17,
+    'Orange Juice': 4.50, 'Lumber Futures': 550,
+    'Soybean Oil': 0.45, 'Soybean Meal': 330, 'Rough Rice': 17,
+    'Live Cattle': 1.85, 'Lean Hogs': 0.90, 'Feeder Cattle': 2.45,
+    'Rubber': 2.20,
   };
   return basePrices[commodityName] || 100;
 };
