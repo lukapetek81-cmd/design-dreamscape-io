@@ -197,6 +197,7 @@ serve(async (req) => {
               let price = typeof result.rates[cpSymbol] === 'number'
                 ? result.rates[cpSymbol]
                 : parseFloat(result.rates[cpSymbol]);
+              console.log(`[CPA-RAW] ${commodityName} sym=${cpSymbol} raw=${result.rates[cpSymbol]} unit=${result.unit || 'n/a'} meta=${JSON.stringify(result.meta || {})}`);
               // Convert cents to dollars (matches shared CommodityService).
               if (CENT_SYMBOLS.has(cpSymbol)) {
                 price = price / 100;
