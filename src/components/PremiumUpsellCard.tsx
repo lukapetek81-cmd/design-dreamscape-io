@@ -22,33 +22,33 @@ const COPY: Record<UpsellVariant, {
   Icon: React.ComponentType<{ className?: string }>;
 }> = {
   energy: {
-    title: 'Unlock 20 Premium Energy Markets',
-    description: 'Regional crude blends (WCS, WTI Midland, Mars, LLS, Urals, Tapis), gas hubs (UK, TTF, JKM), refined products, and bunker fuels.',
+    title: 'Unlock 17 Premium Energy Markets',
+    description: 'Regional crude blends (WCS, WTI Midland, Mars, LLS, Dubai, Murban), gas hubs (UK, Dutch TTF, JKM LNG), and refined products (RBOB, Heating Oil, Jet Fuel, ULSD, Gasoil, Naphtha).',
     Icon: Zap,
   },
   industrials: {
-    title: 'Unlock 16 Premium Industrial Commodities',
-    description: 'Rhodium, Cobalt, plastics (PE/PVC/PP), fertilizers, rare elements, and industrial inputs.',
+    title: 'Unlock 3 Premium Industrial Commodities',
+    description: 'Industrial Ethanol, Rubber, and Cobalt.',
     Icon: Factory,
   },
   metals: {
-    title: 'Unlock 12 More Industrial & Specialty Metals',
-    description: 'Lead, Nickel, Tin, Steel, HRC Steel, Titanium, Lithium, Magnesium, and futures contracts.',
+    title: 'Unlock 11 More Industrial & Specialty Metals',
+    description: 'Palladium, Aluminum, Zinc, Iron Ore, Lead, Nickel, Tin, Steel, HRC Steel, Titanium, and Lithium.',
     Icon: Gem,
   },
   grains: {
-    title: 'Unlock 7 More Grain & Oil Markets',
-    description: 'Oats, Rough Rice, Canola, Sunflower Oil, Rapeseed Oil, and spot-market variants.',
+    title: 'Unlock 6 More Grain & Oil Markets',
+    description: 'Soybean Oil, Soybean Meal, Oats, Rough Rice, Canola, and Sunflower Oil.',
     Icon: Wheat,
   },
   softs: {
-    title: 'Unlock 4 More Soft Commodities',
-    description: 'UK Sugar No 5 (white sugar), Palm Oil, Tea, and Wool.',
+    title: 'Unlock 3 More Soft Commodities',
+    description: 'Orange Juice, UK Sugar No 5 (white sugar), and Palm Oil.',
     Icon: Coffee,
   },
   livestock: {
-    title: 'Unlock 8 More Livestock & Dairy Markets',
-    description: 'Feeder Cattle, Cheese, Eggs (CH/US), Salmon, Poultry, Butter, and Potato.',
+    title: 'Unlock Premium Dairy Markets',
+    description: 'Class III Milk futures pricing.',
     Icon: Beef,
   },
 };
@@ -81,7 +81,7 @@ const PremiumUpsellCard: React.FC<PremiumUpsellCardProps> = ({ onUpgrade, varian
                 <CardDescription className="mt-1">
                   {description}
                   <span className="block mt-1 text-foreground/80">
-                    One subscription unlocks all 55+ professional-grade commodities across every group.
+                    One subscription unlocks all 40+ professional-grade premium commodities across every group.
                   </span>
                   <span className="block mt-1 font-medium text-foreground">
                     $19.99/mo or $149/yr — save ~38% annually
