@@ -1,8 +1,8 @@
 ---
 name: Commodity Catalog Scope
-description: ~86 catalog items — 17 free + ~69 premium-gated (price-app launch split, 2026-04-24)
+description: ~58 catalog items — 17 free + ~41 premium (niche items removed 2026-05-12)
 ---
-**Total catalog**: ~86 commodities defined in `supabase/functions/_shared/commodity-mappings.ts → COMMODITY_SYMBOLS`.
+**Total catalog**: ~58 commodities defined in `supabase/functions/_shared/commodity-mappings.ts → COMMODITY_SYMBOLS`.
 
 **Free tier (17, household-name only)**:
 - Energy (3): WTI, Brent, Natural Gas
@@ -12,18 +12,26 @@ description: ~86 catalog items — 17 free + ~69 premium-gated (price-app launch
 - Livestock (2): Live Cattle, Lean Hogs
 - Industrials (1): Lumber Futures
 
-**Premium-gated (~69)**: Everything else. Per-group counts:
-- Energy: 23 (regional crudes, gas hubs, refined, marine fuels)
-- Metals: 14 (Palladium, Aluminum, Zinc, Iron Ore, Lead/Nickel/Tin, Steel, Lithium, etc.)
-- Grains: 9 (Soybean Oil/Meal, Oats, Rice, Canola, Sunflower/Rapeseed Oil)
-- Softs: 5 (Orange Juice, UK Sugar No 5, Palm Oil, Tea, Wool)
-- Livestock: 9 (Milk, Feeder Cattle, Cheese, Eggs, Salmon, Poultry, Butter, Potato)
-- Industrials: 18 (Industrial Ethanol, Rubber, Cobalt, Rhodium, plastics, fertilizers, rare elements)
+**Premium-gated (~41)**:
+- Energy (17): Crude Oil Dubai, DME Oman, Murban, OPEC Basket, WCS, WTI Midland, Mars, LLS, Natural Gas UK, Dutch TTF, JKM LNG, Gasoline RBOB, Heating Oil, Jet Fuel, ULSD, Gasoil, Naphtha
+- Metals (11): Palladium, Aluminum, Zinc, Iron Ore, Lead Futures, Nickel Futures, Tin, Steel, HRC Steel, Titanium, Lithium
+- Grains (6): Soybean Oil, Soybean Meal, Oat Futures, Rough Rice, Canola, Sunflower Oil
+- Softs (3): Orange Juice, UK Sugar No 5, Palm Oil
+- Livestock (1): Milk
+- Industrials (3): Industrial Ethanol, Rubber, Cobalt
 
-**Pricing**: TBD — set in Play Console / RevenueCat dashboard. Code remains generic.
+**Removed 2026-05-12 (niche cull)**:
+- Energy: Indian Basket, Tapis, Urals, Alaska North Slope, Propane, Ethanol
+- Metals: Copper Futures, Aluminium Futures, Lead Spot, Nickel Spot, Magnesium
+- Grains: Wheat/Soybeans/Oats/Rough Rice Spot variants, Rapeseed Oil
+- Softs: Tea, Wool
+- Livestock: Feeder Cattle, Cheese, Eggs CH, Eggs US, Salmon, Poultry, Butter, Potato
+- Industrials: Bitumen, Rhodium, Polyethylene, PVC, Polypropylene, Soda Ash, Neodymium, Tellurium, DAP, Urea, Gallium, Indium, Kraft Pulp, Industrial Naphtha
+
+Rationale: near-zero retail demand, OTC-only with no clean live data, or duplicate spot/futures pairs. Reduces CPA/OilPriceAPI burn and simplifies catalog UX.
 
 **Premium gating**: Enforced at edge function layer via `PREMIUM_COMMODITIES` set + JWT-based `isPremium` flag.
 
-**Data sources**: Energy → OilPriceAPI exclusively. Non-energy → CommodityPriceAPI v2 Lite. See mem://integrations/commoditypriceapi-config.
+**Data sources**: Energy → OilPriceAPI exclusively. Non-energy → CommodityPriceAPI v2 Lite.
 
 **Cache**: 2h TTL across CPA + OilPriceAPI.
