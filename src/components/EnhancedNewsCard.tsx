@@ -70,14 +70,14 @@ const EnhancedNewsCard: React.FC<EnhancedNewsCardProps> = ({ news, commodityName
   };
 
   return (
-    <Card className="transition-all duration-200 hover:shadow-lg border-l-4 border-primary/20 hover:border-primary/60">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-3">
+    <Card className="w-full max-w-full overflow-hidden transition-all duration-200 hover:shadow-lg border-l-4 border-primary/20 hover:border-primary/60">
+      <CardHeader className="pb-3 px-3 sm:px-6">
+        <div className="flex items-start justify-between gap-2 sm:gap-3">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-foreground leading-snug line-clamp-2 mb-2">
+            <h3 className="text-sm sm:text-base font-semibold text-foreground leading-snug line-clamp-2 mb-2 break-words">
               {news.title}
             </h3>
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <Badge variant="outline" className="text-xs">
                 {news.source}
               </Badge>
@@ -101,7 +101,7 @@ const EnhancedNewsCard: React.FC<EnhancedNewsCardProps> = ({ news, commodityName
               <img 
                 src={news.urlToImage} 
                 alt={news.title}
-                className="w-16 h-16 object-cover rounded-md"
+                className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-md"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
@@ -111,8 +111,8 @@ const EnhancedNewsCard: React.FC<EnhancedNewsCardProps> = ({ news, commodityName
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-3">
-        <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+      <CardContent className="space-y-3 px-3 sm:px-6">
+        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3 leading-relaxed break-words">
           {news.description}
         </p>
         
@@ -134,14 +134,14 @@ const EnhancedNewsCard: React.FC<EnhancedNewsCardProps> = ({ news, commodityName
         )}
         
         {/* Footer */}
-        <div className="flex items-center justify-between pt-2 border-t">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Clock className="w-3 h-3" />
-            <span>{formatTimeAgo(news.publishedAt)}</span>
+        <div className="flex items-center justify-between gap-2 pt-2 border-t flex-wrap">
+          <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-muted-foreground flex-wrap min-w-0">
+            <Clock className="w-3 h-3 flex-shrink-0" />
+            <span className="truncate">{formatTimeAgo(news.publishedAt)}</span>
             {news.author && (
               <>
                 <span>•</span>
-                <span>{news.author}</span>
+                <span className="truncate max-w-[120px]">{news.author}</span>
               </>
             )}
             {news.relevanceScore && news.relevanceScore > 0 && (
@@ -159,7 +159,7 @@ const EnhancedNewsCard: React.FC<EnhancedNewsCardProps> = ({ news, commodityName
               variant="ghost" 
               size="sm" 
               asChild
-              className="text-xs h-7 px-2"
+              className="text-xs h-7 px-2 flex-shrink-0"
             >
               <a 
                 href={news.url} 
