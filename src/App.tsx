@@ -30,6 +30,7 @@ const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
 const Watchlists = lazy(() => import('@/pages/Watchlists'));
 const DeleteAccount = lazy(() => import('@/pages/DeleteAccount'));
 const VersionInfo = lazy(() => import('@/pages/VersionInfo'));
+const CatalogAudit = lazy(() => import('@/pages/CatalogAudit'));
 
 const RouteFallback = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -85,6 +86,7 @@ const App = () => {
                 <Route path="/delete-account" element={<DeleteAccount />} />
                 <Route path="/version" element={<VersionInfo />} />
                 <Route path="/about" element={<VersionInfo />} />
+                <Route path="/admin/catalog-audit" element={<CatalogAudit />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               </Suspense>
