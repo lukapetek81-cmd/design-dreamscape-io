@@ -19,6 +19,13 @@ export interface CommoditySymbol {
   category: string;
   contractSize: string;
   venue: string;
+  /**
+   * Data freshness tier surfaced to the UI as a badge:
+   * - 'live'      : minute/hour fresh from a real exchange feed (default)
+   * - 'eod'       : daily settlement only — Platts/Argus-style daily quote
+   * - 'reference' : weekly reference price, no intraday signal
+   */
+  dataFreshness?: 'live' | 'eod' | 'reference';
 }
 
 export interface CommodityData {
