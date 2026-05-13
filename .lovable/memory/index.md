@@ -33,3 +33,4 @@ Updated: just now
 - [CommodityPriceAPI Config](mem://integrations/commoditypriceapi-config) — CPA v2 Lite plan, FX via Frankfurter
 - [Commodity Catalog](mem://project/commodity-catalog-scope) — Free 17 / Premium ~60 split
 - [Economic Calendar](mem://features/economic-calendar-integration) — FMP integration with dashboard deep linking
+- [Catalog Freshness Audit](mem://features/catalog-freshness-audit) — Admin /admin/catalog-audit page + audit-premium-freshness edge function for empirical scope decisions

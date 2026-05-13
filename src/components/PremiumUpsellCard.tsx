@@ -22,33 +22,33 @@ const COPY: Record<UpsellVariant, {
   Icon: React.ComponentType<{ className?: string }>;
 }> = {
   energy: {
-    title: 'Unlock 17 Premium Energy Markets',
-    description: 'Regional crude blends (WCS, WTI Midland, Mars, LLS, Dubai, Murban), gas hubs (UK, Dutch TTF, JKM LNG), and refined products (RBOB, Heating Oil, Jet Fuel, ULSD, Gasoil, Naphtha).',
+    title: 'Unlock procurement-grade energy benchmarks',
+    description: 'Regional crude blends (WCS, WTI Midland, Mars, LLS, Dubai, Murban), gas hubs (UK NBP, Dutch TTF, JKM LNG) and refined products (RBOB, Heating Oil, Jet Fuel, ULSD, Gasoil, Naphtha) with transparent live / end-of-day sourcing.',
     Icon: Zap,
   },
   industrials: {
-    title: 'Unlock 3 Premium Industrial Commodities',
-    description: 'Industrial Ethanol, Rubber, and Cobalt.',
+    title: 'Unlock industrial benchmarks',
+    description: 'Industrial Ethanol, Rubber, and Cobalt — settled prices used in supply contracts.',
     Icon: Factory,
   },
   metals: {
-    title: 'Unlock 11 More Industrial & Specialty Metals',
-    description: 'Palladium, Aluminum, Zinc, Iron Ore, Lead, Nickel, Tin, Steel, HRC Steel, Titanium, and Lithium.',
+    title: 'Unlock industrial & specialty metals',
+    description: 'Palladium, Aluminum, Zinc, Iron Ore, Lead, Nickel, Tin, Steel, HRC Steel, Titanium and Lithium — exchange and reference quotes used by procurement teams.',
     Icon: Gem,
   },
   grains: {
-    title: 'Unlock 6 More Grain & Oil Markets',
-    description: 'Soybean Oil, Soybean Meal, Oats, Rough Rice, Canola, and Sunflower Oil.',
+    title: 'Unlock grain & vegetable-oil benchmarks',
+    description: 'Soybean Oil, Soybean Meal, Oats, Rough Rice, Canola and Sunflower Oil — futures + reference pricing for crushers and traders.',
     Icon: Wheat,
   },
   softs: {
-    title: 'Unlock 3 More Soft Commodities',
-    description: 'Orange Juice, UK Sugar No 5 (white sugar), and Palm Oil.',
+    title: 'Unlock soft-commodity benchmarks',
+    description: 'Orange Juice, UK Sugar No 5 (white sugar) and Palm Oil — the contracts industry buyers actually price against.',
     Icon: Coffee,
   },
   livestock: {
-    title: 'Unlock Premium Dairy Markets',
-    description: 'Class III Milk futures pricing.',
+    title: 'Unlock dairy benchmarks',
+    description: 'Class III Milk futures pricing for dairy procurement.',
     Icon: Beef,
   },
 };
@@ -81,7 +81,7 @@ const PremiumUpsellCard: React.FC<PremiumUpsellCardProps> = ({ onUpgrade, varian
                 <CardDescription className="mt-1">
                   {description}
                   <span className="block mt-1 text-foreground/80">
-                    One subscription unlocks all 40+ professional-grade premium commodities across every group.
+                    One subscription unlocks every premium benchmark across all groups, with transparent <strong>LIVE</strong> / <strong>EOD</strong> / <strong>REF</strong> sourcing labels on each market.
                   </span>
                   <span className="block mt-1 font-medium text-foreground">
                     $19.99/mo or $149/yr — save ~38% annually

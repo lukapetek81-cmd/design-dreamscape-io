@@ -24,6 +24,13 @@ interface CommodityCardProps {
   venue?: string;
   contractSize?: string;
   category?: string;
+  /**
+   * Data freshness tier surfaced as a small badge next to the venue.
+   * - 'live' (default): minute/hour-fresh exchange feed
+   * - 'eod':            daily settlement only (Platts/Argus-style)
+   * - 'reference':      weekly reference price, no intraday signal
+   */
+  dataFreshness?: 'live' | 'eod' | 'reference';
   defaultOpen?: boolean;
   availableContracts?: Array<{
     name: string;
@@ -49,6 +56,7 @@ const CommodityCard = React.memo<CommodityCardProps>(({
   venue = 'NYMEX',
   contractSize,
   category,
+  dataFreshness = 'live',
   defaultOpen = false,
   availableContracts
 }) => {
@@ -204,6 +212,22 @@ const CommodityCard = React.memo<CommodityCardProps>(({
                         {(selectedContractData?.contractSize || contractSize) && (
                           <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-medium bg-secondary/10 text-secondary-foreground rounded-full tracking-wider">
                             {selectedContractData?.contractSize || contractSize}
+                          </span>
+                        )}
+                        {dataFreshness !== 'live' && (
+                          <span
+                            className={`inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-bold rounded-full uppercase tracking-wider ${
+                              dataFreshness === 'eod'
+                                ? 'bg-blue-500/15 text-blue-300 border border-blue-500/30'
+                                : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                            }`}
+                            title={
+                              dataFreshness === 'eod'
+                                ? 'End-of-day settlement price — refreshed once per trading day.'
+                                : 'Reference price — published weekly, no intraday signal.'
+                            }
+                          >
+                            {dataFreshness === 'eod' ? 'EOD' : 'REF'}
                           </span>
                         )}
                         {selectedContractData && (

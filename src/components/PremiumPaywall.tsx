@@ -27,11 +27,12 @@ interface PremiumPaywallProps {
 }
 
 const FEATURES = [
-  '20 additional premium energy markets',
-  'Regional crude blends (WCS, Tapis, Urals, Indian Basket)',
-  'Refined products (RBOB, Heating Oil, Jet Fuel, Naphtha…)',
-  'Marine bunker fuels (VLSFO, HFO, MGO) per port',
-  'Priority data refresh & extended history',
+  'Regional crude blends (WCS, WTI Midland, Mars, LLS, Dubai, Murban)',
+  'Refined products: RBOB, Heating Oil, Jet Fuel, ULSD, Gasoil, Naphtha',
+  'Gas hubs: UK NBP, Dutch TTF, JKM LNG',
+  'Industrial & specialty metals: Aluminum, Zinc, Iron Ore, Nickel, HRC Steel, Lithium…',
+  'Grain, soft and dairy benchmarks used by procurement teams',
+  'Transparent LIVE / EOD / REF sourcing label on every market',
 ];
 
 const PLAY_STORE_URL =
@@ -107,7 +108,7 @@ const PremiumPaywall: React.FC<PremiumPaywallProps> = ({ open, onOpenChange }) =
             <Badge variant="secondary" className="text-[10px]">PREMIUM</Badge>
           </div>
           <DialogDescription>
-            Unlock all 20 premium energy markets with a single subscription.
+            Procurement-grade benchmarks across energy, metals, grains, softs and dairy — with transparent live / end-of-day sourcing on every market.
           </DialogDescription>
         </DialogHeader>
 
