@@ -74,7 +74,12 @@
   #root {
     width: 100%;
     max-width: 100%;
-    overflow-x: hidden;
+    overflow-x: hidden !important;
+  }
+
+  /* Safety net: prevent any descendant from causing horizontal page scroll */
+  body * {
+    max-width: 100%;
   }
 
   * {
