@@ -125,6 +125,9 @@ const Legal: React.FC = () => {
               </section>
             </CardContent>
           </Card>
+
+          {/* Spacer to avoid Android gesture navigation overlap */}
+          <div className="h-12 w-full shrink-0" />
         </div>
       </div>
     </>
