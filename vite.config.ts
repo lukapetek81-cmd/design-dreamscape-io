@@ -20,6 +20,28 @@ const pkg = JSON.parse(readFileSync(pkgPath, "utf-8")) as {
   version?: string;
 };
 
+// Build a meaningful, always-changing version even when package.json is
+// pinned to 0.0.0 (Lovable does not bump package.json). Format:
+//   <CalVer YY.MM.DD>.<build-counter>+<git-sha>
+// CalVer changes daily, the build counter changes every build within a day
+// (seconds-since-midnight / 60), and the git sha pins the exact source.
+const buildVersion = (): string => {
+  const now = new Date();
+  const yy = String(now.getUTCFullYear()).slice(-2);
+  const mm = String(now.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(now.getUTCDate()).padStart(2, "0");
+  const minutesIntoDay = Math.floor(
+    (now.getUTCHours() * 60) + now.getUTCMinutes()
+  );
+  const base =
+    pkg.version && pkg.version !== "0.0.0"
+      ? pkg.version
+      : `${yy}.${mm}.${dd}`;
+  return `${base}.${minutesIntoDay}+${getGitCommit()}`;
+};
+
+const APP_VERSION = buildVersion();
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
@@ -27,7 +49,7 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   define: {
-    __APP_VERSION__: JSON.stringify(pkg.version || "0.0.0"),
+    __APP_VERSION__: JSON.stringify(APP_VERSION),
     __APP_NAME__: JSON.stringify(pkg.name || "commodity-hub"),
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
     __BUILD_COMMIT__: JSON.stringify(getGitCommit()),
