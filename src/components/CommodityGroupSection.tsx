@@ -92,7 +92,7 @@ const CommodityGroupSection = React.memo(({
   if (commodities.length === 0) return null;
 
   return (
-    <Card className="overflow-hidden bg-gradient-to-r from-card via-card to-card/80 border border-border/50 shadow-soft">
+    <Card className="w-full min-w-0 max-w-full overflow-hidden bg-gradient-to-r from-card via-card to-card/80 border border-border/50 shadow-soft">
       <div 
         className="p-4 sm:p-6 border-b border-border/30 bg-gradient-to-r from-background/50 to-muted/20 cursor-pointer hover:from-background/70 hover:to-muted/30 transition-all duration-300 mobile-touch-target"
         onClick={handleToggle}
@@ -177,8 +177,8 @@ const CommodityGroupSection = React.memo(({
       </div>
       
       {isExpanded && (
-        <div className="p-4 sm:p-6">
-          <div className="grid gap-3 sm:gap-4">
+        <div className="p-3 sm:p-6 w-full min-w-0 max-w-full overflow-hidden">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:gap-4 w-full min-w-0 max-w-full overflow-hidden">
             {commodities.map((commodity, index) => (
               <div 
                 key={commodity.symbol}
