@@ -296,7 +296,7 @@ const DashboardContent = ({
             )}
 
             {/* Footer: build/version link */}
-            <div className="mt-8 pt-6 border-t border-border/50 text-center flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-2 pb-6 pb-[env(safe-area-inset-bottom)]">
+            <div className="mt-8 pt-6 border-t border-border/50 text-center flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-2 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
               <Link
                 to="/version"
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors py-2 px-2 min-h-[44px] flex items-center justify-center"
