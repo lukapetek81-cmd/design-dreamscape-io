@@ -74,11 +74,13 @@
   #root {
     width: 100%;
     max-width: 100%;
-    overflow-x: hidden !important;
+    overflow-x: clip !important;
+    overscroll-behavior-x: none;
   }
 
   /* Safety net: prevent any descendant from causing horizontal page scroll */
   body * {
+    box-sizing: border-box;
     max-width: 100%;
   }
 
@@ -94,7 +96,7 @@
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   /* Better touch handling */
-  touch-action: manipulation;
+  touch-action: pan-y;
   /* Optimize scrolling performance */
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
