@@ -31,6 +31,7 @@ const Watchlists = lazy(() => import('@/pages/Watchlists'));
 const DeleteAccount = lazy(() => import('@/pages/DeleteAccount'));
 const VersionInfo = lazy(() => import('@/pages/VersionInfo'));
 const CatalogAudit = lazy(() => import('@/pages/CatalogAudit'));
+const Legal = lazy(() => import('@/pages/Legal'));
 
 const RouteFallback = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -86,6 +87,8 @@ const App = () => {
                 <Route path="/delete-account" element={<DeleteAccount />} />
                 <Route path="/version" element={<VersionInfo />} />
                 <Route path="/about" element={<VersionInfo />} />
+                <Route path="/legal" element={<Legal />} />
+                <Route path="/imprint" element={<Legal />} />
                 <Route path="/admin/catalog-audit" element={<CatalogAudit />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
