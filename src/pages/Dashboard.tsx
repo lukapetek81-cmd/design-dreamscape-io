@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Navigate, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import CommodityCard from '@/components/CommodityCard';
 import VirtualizedCommodityList from '@/components/VirtualizedCommodityList';
 import UserProfile from '@/components/UserProfile';
@@ -297,23 +297,23 @@ const DashboardContent = ({
 
             {/* Footer: build/version link */}
             <div className="mt-8 pt-6 border-t border-border/50 text-center flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
-              <a
-                href="/version"
+              <Link
+                to="/version"
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 v{__APP_VERSION__} · Build info
-              </a>
+              </Link>
               <span className="hidden sm:inline text-xs text-muted-foreground/60">·</span>
               <span className="text-xs text-muted-foreground/70">
                 © 2026 Consilair OÜ. All rights reserved.
               </span>
               <span className="hidden sm:inline text-xs text-muted-foreground/60">·</span>
-              <a
-                href="/legal"
+              <Link
+                to="/legal"
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
               >
                 Legal & Imprint
-              </a>
+              </Link>
             </div>
           </div>
         </main>
