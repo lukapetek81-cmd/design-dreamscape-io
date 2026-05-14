@@ -32,8 +32,8 @@ const ChartHeader: React.FC<ChartHeaderProps> = ({
   ohlcAvailable = false,
 }) => {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-      <div className="flex items-center gap-3">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6 w-full min-w-0 max-w-full overflow-hidden">
+      <div className="flex items-center gap-3 min-w-0 max-w-full">
         <div className={`p-2 rounded-xl transition-all duration-300 ${
           isPositiveTrend 
             ? 'bg-green-100 dark:bg-green-950/20 text-green-600 dark:text-green-400' 
@@ -41,9 +41,9 @@ const ChartHeader: React.FC<ChartHeaderProps> = ({
         }`}>
           <TrendingUp className="w-5 h-5" />
         </div>
-        <div>
-          <h4 className="text-sm sm:text-base font-bold text-foreground">{name} Price History</h4>
-          <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+        <div className="min-w-0 max-w-full overflow-hidden">
+          <h4 className="text-sm sm:text-base font-bold text-foreground truncate">{name} Price History</h4>
+          <p className="text-xs sm:text-sm text-muted-foreground font-medium truncate">
             {selectedTimeframe.toUpperCase()} • {chartType === 'candlestick' ? 'Candlestick' : 'Line'} • {loading ? 'Loading...' : `${dataPoints} data points`}
             {dataPoints > 0 && (
               <span className={`ml-2 font-semibold ${
@@ -56,7 +56,7 @@ const ChartHeader: React.FC<ChartHeaderProps> = ({
         </div>
       </div>
       
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 flex-wrap min-w-0 max-w-full overflow-hidden">
         {/* Currency Selector */}
         <CurrencySelector compact />
 
@@ -88,7 +88,7 @@ const ChartHeader: React.FC<ChartHeaderProps> = ({
         </div>
 
         <Calendar className="w-4 h-4 text-muted-foreground" />
-        <div className="flex gap-1 sm:gap-2 p-1 bg-muted/50 rounded-lg">
+        <div className="flex gap-1 sm:gap-2 p-1 bg-muted/50 rounded-lg min-w-0 max-w-full overflow-x-auto">
           {TIMEFRAMES.map((tf) => (
             <Button
               key={tf.value}
