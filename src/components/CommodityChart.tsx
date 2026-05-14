@@ -236,8 +236,8 @@ const CommodityChart = ({ name, basePrice, selectedContract, contractData }: Com
 
   // Regular chart component
   return (
-    <Card className="p-4 sm:p-6 mt-4 sm:mt-6 bg-gradient-to-br from-card/80 to-muted/20 border border-border/50 shadow-soft hover:shadow-medium transition-all duration-300 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+    <Card className="box-border p-3 sm:p-6 mt-4 sm:mt-6 w-full min-w-0 max-w-full overflow-hidden bg-gradient-to-br from-card/80 to-muted/20 border border-border/50 shadow-soft hover:shadow-medium transition-all duration-300 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 w-full min-w-0 max-w-full overflow-hidden">
         <ChartHeader
           name={name}
           selectedTimeframe={selectedTimeframe}
@@ -253,7 +253,7 @@ const CommodityChart = ({ name, basePrice, selectedContract, contractData }: Com
 
       </div>
 
-      <div className="h-[200px] sm:h-[250px] lg:h-[300px] w-full p-2 sm:p-4 bg-gradient-to-br from-background/50 to-muted/20 rounded-xl border border-border/30">
+      <div className="h-[200px] sm:h-[250px] lg:h-[300px] w-full min-w-0 max-w-full overflow-hidden p-2 sm:p-4 bg-gradient-to-br from-background/50 to-muted/20 rounded-xl border border-border/30">
         <ChartContainer
           data={data}
           name={name}

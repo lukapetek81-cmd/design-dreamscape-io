@@ -150,7 +150,7 @@ const DashboardContent = ({
 
   return (
     <div 
-      className="min-h-screen flex w-full"
+      className="min-h-screen flex w-full max-w-full overflow-x-hidden"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -167,7 +167,7 @@ const DashboardContent = ({
         }}
       />
       
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
         {/* Simplified Header */}
         <header className="sticky top-0 z-40 w-full border-b bg-background">
           <div className="container flex h-16 items-center justify-between px-4">
@@ -227,8 +227,8 @@ const DashboardContent = ({
         {/* Main Content — let the page (body) scroll instead of a nested
             overflow container. Nested scrolls fight native touch momentum
             on Android/iOS WebViews and feel laggy. */}
-        <main className="flex-1">
-          <div className="container px-4 py-6">
+        <main className="flex-1 min-w-0 max-w-full overflow-x-hidden">
+          <div className="w-full max-w-screen-xl mx-auto px-3 sm:px-4 py-6 overflow-x-hidden">
             {/* Loading State */}
             {loading && (
               <div className="text-center py-16">
