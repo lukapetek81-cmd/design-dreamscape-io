@@ -296,13 +296,17 @@ const DashboardContent = ({
             )}
 
             {/* Footer: build/version link */}
-            <div className="mt-8 pt-6 border-t border-border/50 text-center">
+            <div className="mt-8 pt-6 border-t border-border/50 text-center flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
               <a
                 href="/version"
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 v{__APP_VERSION__} · Build info
               </a>
+              <span className="hidden sm:inline text-xs text-muted-foreground/60">·</span>
+              <span className="text-xs text-muted-foreground/70">
+                © 2026 Consilair OÜ. All rights reserved.
+              </span>
             </div>
           </div>
         </main>
