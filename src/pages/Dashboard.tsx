@@ -307,6 +307,13 @@ const DashboardContent = ({
               <span className="text-xs text-muted-foreground/70">
                 © 2026 Consilair OÜ. All rights reserved.
               </span>
+              <span className="hidden sm:inline text-xs text-muted-foreground/60">·</span>
+              <a
+                href="/legal"
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
+              >
+                Legal & Imprint
+              </a>
             </div>
           </div>
         </main>
