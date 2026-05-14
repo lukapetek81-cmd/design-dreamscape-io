@@ -296,21 +296,21 @@ const DashboardContent = ({
             )}
 
             {/* Footer: build/version link */}
-            <div className="mt-8 pt-6 border-t border-border/50 text-center flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
+            <div className="mt-8 pt-6 border-t border-border/50 text-center flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-2 pb-6 pb-[env(safe-area-inset-bottom)]">
               <Link
                 to="/version"
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors py-2 px-2 min-h-[44px] flex items-center justify-center"
               >
                 v{__APP_VERSION__} · Build info
               </Link>
               <span className="hidden sm:inline text-xs text-muted-foreground/60">·</span>
-              <span className="text-xs text-muted-foreground/70">
+              <span className="text-xs text-muted-foreground/70 py-2">
                 © 2026 Consilair OÜ. All rights reserved.
               </span>
               <span className="hidden sm:inline text-xs text-muted-foreground/60">·</span>
               <Link
                 to="/legal"
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline py-2 px-2 min-h-[44px] flex items-center justify-center"
               >
                 Legal & Imprint
               </Link>
