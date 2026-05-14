@@ -116,6 +116,9 @@ const VersionInfo: React.FC = () => {
               </div>
               <Badge variant="secondary">{__BUILD_MODE__}</Badge>
             </div>
+            <p className="mt-2 text-xs text-muted-foreground/70">
+              © 2026 Consilair OÜ. All rights reserved. This application is the property of Consilair OÜ.
+            </p>
           </CardHeader>
           <CardContent className="space-y-3">
             {rows.map((r) => (
