@@ -70,9 +70,9 @@ const EnhancedNewsCard: React.FC<EnhancedNewsCardProps> = ({ news, commodityName
   };
 
   return (
-    <Card className="w-full max-w-full overflow-hidden transition-all duration-200 hover:shadow-lg border-l-4 border-primary/20 hover:border-primary/60">
-      <CardHeader className="pb-3 px-3 sm:px-6">
-        <div className="flex items-start justify-between gap-2 sm:gap-3">
+    <Card className="box-border w-full min-w-0 max-w-full overflow-hidden transition-all duration-200 hover:shadow-lg border-l-4 border-primary/20 hover:border-primary/60">
+      <CardHeader className="pb-3 px-3 sm:px-6 min-w-0">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 sm:gap-3 min-w-0">
           <div className="flex-1 min-w-0">
             <h3 className="text-sm sm:text-base font-semibold text-foreground leading-snug line-clamp-2 mb-2 break-words">
               {news.title}
@@ -88,7 +88,7 @@ const EnhancedNewsCard: React.FC<EnhancedNewsCardProps> = ({ news, commodityName
               )}
               {news.sentiment && (
                 <Badge variant="outline" className={`text-xs ${getSentimentColor()}`}>
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1 min-w-0">
                     {getSentimentIcon()}
                     {news.sentiment}
                   </span>
@@ -97,7 +97,7 @@ const EnhancedNewsCard: React.FC<EnhancedNewsCardProps> = ({ news, commodityName
             </div>
           </div>
           {news.urlToImage && (
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 max-w-[3rem] sm:max-w-[4rem]">
               <img 
                 src={news.urlToImage} 
                 alt={news.title}
@@ -111,7 +111,7 @@ const EnhancedNewsCard: React.FC<EnhancedNewsCardProps> = ({ news, commodityName
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-3 px-3 sm:px-6">
+      <CardContent className="space-y-3 px-3 sm:px-6 min-w-0 overflow-hidden">
         <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3 leading-relaxed break-words">
           {news.description}
         </p>
@@ -134,8 +134,8 @@ const EnhancedNewsCard: React.FC<EnhancedNewsCardProps> = ({ news, commodityName
         )}
         
         {/* Footer */}
-        <div className="flex items-center justify-between gap-2 pt-2 border-t flex-wrap">
-          <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-muted-foreground flex-wrap min-w-0">
+        <div className="flex items-center justify-between gap-2 pt-2 border-t flex-wrap min-w-0">
+          <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-muted-foreground flex-wrap min-w-0 max-w-full overflow-hidden">
             <Clock className="w-3 h-3 flex-shrink-0" />
             <span className="truncate">{formatTimeAgo(news.publishedAt)}</span>
             {news.author && (
