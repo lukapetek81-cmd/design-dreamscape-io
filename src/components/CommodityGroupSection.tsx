@@ -182,7 +182,7 @@ const CommodityGroupSection = React.memo(({
             {commodities.map((commodity, index) => (
               <div 
                 key={commodity.symbol}
-                className="animate-slide-up"
+                className="animate-slide-up min-w-0 w-full"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <CommodityCard
