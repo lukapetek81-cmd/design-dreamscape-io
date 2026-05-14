@@ -53,7 +53,7 @@ const LazyNews: React.FC<LazyNewsProps> = ({ commodity, className = '' }) => {
   });
 
   return (
-    <div ref={elementRef as React.RefObject<HTMLDivElement>} className={className}>
+    <div ref={elementRef as React.RefObject<HTMLDivElement>} className={`w-full min-w-0 max-w-full ${className}`}>
       {isIntersecting ? (
         <React.Suspense fallback={<NewsSkeleton />}>
           <CommodityNews commodity={commodity} />
