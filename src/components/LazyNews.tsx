@@ -14,7 +14,7 @@ interface LazyNewsProps {
 
 // News skeleton component
 const NewsSkeleton = () => (
-  <Card className="p-4 sm:p-6 mt-4 sm:mt-6 bg-gradient-to-br from-card/80 to-muted/20 border border-border/50 shadow-soft">
+  <Card className="box-border p-3 sm:p-6 mt-4 sm:mt-6 w-full min-w-0 max-w-[calc(100vw-1rem)] sm:max-w-full overflow-hidden bg-gradient-to-br from-card/80 to-muted/20 border border-border/50 shadow-soft">
     <div className="flex items-center gap-3 mb-4">
       <div className="p-2 rounded-lg bg-primary/10 text-primary">
         <Newspaper className="w-4 h-4" />
@@ -27,10 +27,10 @@ const NewsSkeleton = () => (
     
     <div className="space-y-4">
       {Array.from({ length: 3 }).map((_, index) => (
-        <div key={index} className="space-y-3 p-4 rounded-lg border border-border/50 bg-background/50">
-          <div className="flex items-start gap-3">
+        <div key={index} className="space-y-3 p-3 sm:p-4 rounded-lg border border-border/50 bg-background/50 min-w-0 overflow-hidden">
+          <div className="flex items-start gap-3 min-w-0">
             <Skeleton variant="rectangular" className="w-16 h-16 rounded-lg" />
-            <div className="flex-1 space-y-2">
+            <div className="flex-1 min-w-0 space-y-2">
               <Skeleton variant="text" className="w-full h-4" />
               <Skeleton variant="text" className="w-3/4 h-4" />
               <div className="flex gap-2">
@@ -53,7 +53,7 @@ const LazyNews: React.FC<LazyNewsProps> = ({ commodity, className = '' }) => {
   });
 
   return (
-    <div ref={elementRef as React.RefObject<HTMLDivElement>} className={`w-full min-w-0 max-w-full ${className}`}>
+    <div ref={elementRef as React.RefObject<HTMLDivElement>} className={`box-border w-full min-w-0 max-w-[calc(100vw-1rem)] sm:max-w-full overflow-hidden ${className}`}>
       {isIntersecting ? (
         <React.Suspense fallback={<NewsSkeleton />}>
           <CommodityNews commodity={commodity} />

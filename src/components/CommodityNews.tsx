@@ -125,14 +125,14 @@ const CommodityNews = ({ commodity }: CommodityNewsProps) => {
   };
 
   return (
-    <Card className="p-3 sm:p-6 mt-4 sm:mt-6 w-full max-w-full overflow-hidden bg-gradient-to-br from-card/80 to-muted/20 border border-border/50 shadow-soft hover:shadow-medium transition-all duration-300 animate-fade-in">
-      <div className="flex items-center justify-between mb-4 sm:mb-6">
-        <div className="flex items-center gap-3">
+    <Card className="box-border p-3 sm:p-6 mt-4 sm:mt-6 w-full min-w-0 max-w-[calc(100vw-1rem)] sm:max-w-full overflow-hidden bg-gradient-to-br from-card/80 to-muted/20 border border-border/50 shadow-soft hover:shadow-medium transition-all duration-300 animate-fade-in">
+      <div className="flex items-center justify-between mb-4 sm:mb-6 min-w-0">
+        <div className="flex items-center gap-3 min-w-0">
           <div className="p-2 sm:p-3 rounded-xl bg-blue-100 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400">
             <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
-          <div>
-            <h4 className="text-sm sm:text-base font-bold text-foreground">Enhanced {commodity} News</h4>
+          <div className="min-w-0">
+            <h4 className="text-sm sm:text-base font-bold text-foreground truncate">Enhanced {commodity} News</h4>
             <p className="text-xs sm:text-sm text-muted-foreground font-medium">
               {loading ? 'Loading with sentiment analysis...' : `${news.length} articles with smart insights`}
             </p>
@@ -169,7 +169,7 @@ const CommodityNews = ({ commodity }: CommodityNewsProps) => {
       )}
 
       {!loading && !error && news.length > 0 && (
-        <div className="space-y-4">
+        <div className="space-y-4 w-full min-w-0 max-w-full overflow-hidden">
           {news.map((newsItem, index) => (
             <EnhancedNewsCard
               key={newsItem.id}
