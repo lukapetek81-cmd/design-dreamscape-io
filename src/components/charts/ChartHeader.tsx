@@ -88,7 +88,7 @@ const ChartHeader: React.FC<ChartHeaderProps> = ({
         </div>
 
         <Calendar className="w-4 h-4 text-muted-foreground" />
-        <div className="flex gap-1 sm:gap-2 p-1 bg-muted/50 rounded-lg min-w-0 max-w-full overflow-x-auto">
+        <div className="flex flex-wrap gap-1 sm:gap-2 p-1 bg-muted/50 rounded-lg min-w-0 max-w-full overflow-hidden">
           {TIMEFRAMES.map((tf) => (
             <Button
               key={tf.value}
