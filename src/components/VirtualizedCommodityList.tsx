@@ -83,9 +83,9 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
   let globalIndex = 0;
 
   return (
-    <div className="space-y-4 pb-8">
+    <div className="space-y-4 pb-8 w-full min-w-0 max-w-full overflow-x-hidden">
       {groupedVisible.sections.map((section, sIdx) => (
-        <div key={section.label || sIdx}>
+        <div key={section.label || sIdx} className="w-full min-w-0 max-w-full overflow-x-hidden">
           {section.label && (
             <div className="flex items-center gap-2 mb-3 mt-2">
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/60 border border-border/40">
@@ -96,7 +96,7 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
               <div className="flex-1 h-px bg-border/30" />
             </div>
           )}
-          <div className="grid gap-3 sm:gap-4 lg:gap-6">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:gap-4 lg:gap-6 w-full min-w-0 max-w-full overflow-x-hidden">
             {section.items.map((commodity) => {
               const idx = globalIndex++;
               const availableContracts = undefined;
@@ -104,7 +104,7 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
               return (
                 <div 
                   key={`${commodity.symbol}-${idx}`}
-                  className={isHighlighted ? 'ring-2 ring-primary/50 rounded-2xl' : ''}
+                  className={`w-full min-w-0 max-w-full overflow-x-hidden ${isHighlighted ? 'ring-2 ring-primary/50 rounded-2xl' : ''}`}
                   ref={isHighlighted ? (el) => {
                     if (el && !el.dataset.scrolled) {
                       el.dataset.scrolled = '1';
