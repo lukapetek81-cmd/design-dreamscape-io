@@ -16,7 +16,7 @@ const Legal: React.FC = () => {
         keywords={["imprint", "legal notice", "Consilair", "copyright", "ownership"]}
       />
 
-      <div className="min-h-screen bg-background pb-[env(safe-area-inset-bottom)]">
+      <div className="min-h-screen bg-background pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
         <div className="container mx-auto px-4 py-8 max-w-3xl">
           <Button
             variant="ghost"
