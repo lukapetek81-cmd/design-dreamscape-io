@@ -72,22 +72,22 @@ const EnhancedNewsCard: React.FC<EnhancedNewsCardProps> = ({ news, commodityName
   return (
     <Card className="box-border w-full min-w-0 max-w-full overflow-hidden transition-all duration-200 hover:shadow-lg border-l-4 border-primary/20 hover:border-primary/60">
       <CardHeader className="pb-3 px-3 sm:px-6 min-w-0">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 sm:gap-3 min-w-0">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 sm:gap-3 min-w-0 max-w-full overflow-hidden">
           <div className="flex-1 min-w-0">
             <h3 className="text-sm sm:text-base font-semibold text-foreground leading-snug line-clamp-2 mb-2 break-words">
               {news.title}
             </h3>
             <div className="flex items-center gap-1.5 flex-wrap">
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="max-w-full truncate text-xs">
                 {news.source}
               </Badge>
               {news.category && (
-                <Badge className={`text-xs ${getCategoryColor()}`}>
+                <Badge className={`max-w-full truncate text-xs ${getCategoryColor()}`}>
                   {formatCategory(news.category)}
                 </Badge>
               )}
               {news.sentiment && (
-                <Badge variant="outline" className={`text-xs ${getSentimentColor()}`}>
+                <Badge variant="outline" className={`max-w-full truncate text-xs ${getSentimentColor()}`}>
                   <span className="flex items-center gap-1 min-w-0">
                     {getSentimentIcon()}
                     {news.sentiment}
@@ -134,7 +134,7 @@ const EnhancedNewsCard: React.FC<EnhancedNewsCardProps> = ({ news, commodityName
         )}
         
         {/* Footer */}
-        <div className="flex items-center justify-between gap-2 pt-2 border-t flex-wrap min-w-0">
+        <div className="flex items-center justify-between gap-2 pt-2 border-t flex-wrap min-w-0 max-w-full overflow-hidden">
           <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-muted-foreground flex-wrap min-w-0 max-w-full overflow-hidden">
             <Clock className="w-3 h-3 flex-shrink-0" />
             <span className="truncate">{formatTimeAgo(news.publishedAt)}</span>
