@@ -180,7 +180,7 @@ const CommodityCard = React.memo<CommodityCardProps>(({
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full min-w-0 max-w-full overflow-hidden">
       <div className="w-full min-w-0 max-w-full overflow-hidden">
-        <Card className="group relative overflow-hidden border border-border/50 bg-card shadow-soft rounded-2xl">
+        <Card className="group relative w-full min-w-0 max-w-full overflow-hidden border border-border/50 bg-card shadow-soft rounded-2xl">
           <CardHeader className="relative p-3 sm:p-4 md:p-6 lg:p-8">
             {/* Header with click handler */}
             <div 
@@ -371,7 +371,7 @@ const CommodityCard = React.memo<CommodityCardProps>(({
       </div>
       
       <CollapsibleContent className="overflow-hidden w-full min-w-0 max-w-full">
-        <div className="mt-3 sm:mt-4 space-y-4 sm:space-y-6 animate-accordion-down w-full min-w-0 max-w-full overflow-hidden">
+        <div className="mt-3 sm:mt-4 space-y-4 sm:space-y-6 animate-accordion-down w-full min-w-0 max-w-full overflow-hidden contain-inline-size">
           <LazyChart 
             name={name} 
             basePrice={displayPrice || 0} 
