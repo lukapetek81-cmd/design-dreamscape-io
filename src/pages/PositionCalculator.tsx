@@ -57,22 +57,24 @@ const CONTRACTS: Record<string, {
   initialMargin: number;
   maintenanceMargin: number;
   dayTradeMargin: number;
+  contractSize: number;     // physical units per contract
+  unit: string;             // unit label (barrels, troy oz, bushels, lb, MMBtu)
 }> = {
-  CL:  { label: 'Crude Oil (CL)',         pointValue: 1000,  tickSize: 0.01,  tickValue: 10,    initialMargin: 6820,  maintenanceMargin: 6200,  dayTradeMargin: 500  },
-  MCL: { label: 'Micro Crude Oil (MCL)',  pointValue: 100,   tickSize: 0.01,  tickValue: 1,     initialMargin: 682,   maintenanceMargin: 620,   dayTradeMargin: 50   },
-  NG:  { label: 'Natural Gas (NG)',       pointValue: 10000, tickSize: 0.001, tickValue: 10,    initialMargin: 3300,  maintenanceMargin: 3000,  dayTradeMargin: 500  },
-  GC:  { label: 'Gold (GC)',              pointValue: 100,   tickSize: 0.10,  tickValue: 10,    initialMargin: 16500, maintenanceMargin: 15000, dayTradeMargin: 1000 },
-  MGC: { label: 'Micro Gold (MGC)',       pointValue: 10,    tickSize: 0.10,  tickValue: 1,     initialMargin: 1650,  maintenanceMargin: 1500,  dayTradeMargin: 100  },
-  SI:  { label: 'Silver (SI)',            pointValue: 5000,  tickSize: 0.005, tickValue: 25,    initialMargin: 17050, maintenanceMargin: 15500, dayTradeMargin: 2000 },
-  HG:  { label: 'Copper (HG)',            pointValue: 25000, tickSize: 0.0005,tickValue: 12.5,  initialMargin: 7150,  maintenanceMargin: 6500,  dayTradeMargin: 750  },
-  ZC:  { label: 'Corn (ZC)',              pointValue: 50,    tickSize: 0.25,  tickValue: 12.5,  initialMargin: 1650,  maintenanceMargin: 1500,  dayTradeMargin: 300  },
-  ZW:  { label: 'Wheat (ZW)',             pointValue: 50,    tickSize: 0.25,  tickValue: 12.5,  initialMargin: 2200,  maintenanceMargin: 2000,  dayTradeMargin: 400  },
-  ZS:  { label: 'Soybeans (ZS)',          pointValue: 50,    tickSize: 0.25,  tickValue: 12.5,  initialMargin: 3300,  maintenanceMargin: 3000,  dayTradeMargin: 500  },
-  KC:  { label: 'Coffee (KC)',            pointValue: 375,   tickSize: 0.05,  tickValue: 18.75, initialMargin: 15400, maintenanceMargin: 14000, dayTradeMargin: 1500 },
-  SB:  { label: 'Sugar (SB)',             pointValue: 1120,  tickSize: 0.01,  tickValue: 11.2,  initialMargin: 1540,  maintenanceMargin: 1400,  dayTradeMargin: 400  },
-  CT:  { label: 'Cotton (CT)',            pointValue: 500,   tickSize: 0.01,  tickValue: 5,     initialMargin: 3300,  maintenanceMargin: 3000,  dayTradeMargin: 750  },
-  LE:  { label: 'Live Cattle (LE)',       pointValue: 400,   tickSize: 0.025, tickValue: 10,    initialMargin: 2640,  maintenanceMargin: 2400,  dayTradeMargin: 400  },
-  HE:  { label: 'Lean Hogs (HE)',         pointValue: 400,   tickSize: 0.025, tickValue: 10,    initialMargin: 2200,  maintenanceMargin: 2000,  dayTradeMargin: 400  },
+  CL:  { label: 'Crude Oil (CL)',         pointValue: 1000,  tickSize: 0.01,  tickValue: 10,    initialMargin: 6820,  maintenanceMargin: 6200,  dayTradeMargin: 500,  contractSize: 1000,  unit: 'barrels'  },
+  MCL: { label: 'Micro Crude Oil (MCL)',  pointValue: 100,   tickSize: 0.01,  tickValue: 1,     initialMargin: 682,   maintenanceMargin: 620,   dayTradeMargin: 50,   contractSize: 100,   unit: 'barrels'  },
+  NG:  { label: 'Natural Gas (NG)',       pointValue: 10000, tickSize: 0.001, tickValue: 10,    initialMargin: 3300,  maintenanceMargin: 3000,  dayTradeMargin: 500,  contractSize: 10000, unit: 'MMBtu'    },
+  GC:  { label: 'Gold (GC)',              pointValue: 100,   tickSize: 0.10,  tickValue: 10,    initialMargin: 16500, maintenanceMargin: 15000, dayTradeMargin: 1000, contractSize: 100,   unit: 'troy oz'  },
+  MGC: { label: 'Micro Gold (MGC)',       pointValue: 10,    tickSize: 0.10,  tickValue: 1,     initialMargin: 1650,  maintenanceMargin: 1500,  dayTradeMargin: 100,  contractSize: 10,    unit: 'troy oz'  },
+  SI:  { label: 'Silver (SI)',            pointValue: 5000,  tickSize: 0.005, tickValue: 25,    initialMargin: 17050, maintenanceMargin: 15500, dayTradeMargin: 2000, contractSize: 5000,  unit: 'troy oz'  },
+  HG:  { label: 'Copper (HG)',            pointValue: 25000, tickSize: 0.0005,tickValue: 12.5,  initialMargin: 7150,  maintenanceMargin: 6500,  dayTradeMargin: 750,  contractSize: 25000, unit: 'lb'       },
+  ZC:  { label: 'Corn (ZC)',              pointValue: 50,    tickSize: 0.25,  tickValue: 12.5,  initialMargin: 1650,  maintenanceMargin: 1500,  dayTradeMargin: 300,  contractSize: 5000,  unit: 'bushels'  },
+  ZW:  { label: 'Wheat (ZW)',             pointValue: 50,    tickSize: 0.25,  tickValue: 12.5,  initialMargin: 2200,  maintenanceMargin: 2000,  dayTradeMargin: 400,  contractSize: 5000,  unit: 'bushels'  },
+  ZS:  { label: 'Soybeans (ZS)',          pointValue: 50,    tickSize: 0.25,  tickValue: 12.5,  initialMargin: 3300,  maintenanceMargin: 3000,  dayTradeMargin: 500,  contractSize: 5000,  unit: 'bushels'  },
+  KC:  { label: 'Coffee (KC)',            pointValue: 375,   tickSize: 0.05,  tickValue: 18.75, initialMargin: 15400, maintenanceMargin: 14000, dayTradeMargin: 1500, contractSize: 37500, unit: 'lb'       },
+  SB:  { label: 'Sugar (SB)',             pointValue: 1120,  tickSize: 0.01,  tickValue: 11.2,  initialMargin: 1540,  maintenanceMargin: 1400,  dayTradeMargin: 400,  contractSize: 112000,unit: 'lb'       },
+  CT:  { label: 'Cotton (CT)',            pointValue: 500,   tickSize: 0.01,  tickValue: 5,     initialMargin: 3300,  maintenanceMargin: 3000,  dayTradeMargin: 750,  contractSize: 50000, unit: 'lb'       },
+  LE:  { label: 'Live Cattle (LE)',       pointValue: 400,   tickSize: 0.025, tickValue: 10,    initialMargin: 2640,  maintenanceMargin: 2400,  dayTradeMargin: 400,  contractSize: 40000, unit: 'lb'       },
+  HE:  { label: 'Lean Hogs (HE)',         pointValue: 400,   tickSize: 0.025, tickValue: 10,    initialMargin: 2200,  maintenanceMargin: 2000,  dayTradeMargin: 400,  contractSize: 40000, unit: 'lb'       },
 };
 
 const fmtUsd = (n: number) =>
