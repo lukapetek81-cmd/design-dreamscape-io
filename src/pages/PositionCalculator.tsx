@@ -270,6 +270,13 @@ const PositionCalculator: React.FC = () => {
                     <div className="space-y-2">
                       <Label htmlFor="fe">Entry Price</Label>
                       <Input id="fe" type="number" inputMode="decimal" value={futEntry} onChange={(e) => setFutEntry(e.target.value)} />
+                      {(() => {
+                        const match = Object.values(COMMODITIES).find((c) => c.futuresSymbol === symbol);
+                        const spot = match?.spotCommodity ? spotPrices[match.spotCommodity] : undefined;
+                        return spot ? (
+                          <p className="text-xs text-muted-foreground">Live spot: {fmtUsd(spot)}</p>
+                        ) : null;
+                      })()}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="fs">Stop-Loss Price</Label>
