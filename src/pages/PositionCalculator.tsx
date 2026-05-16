@@ -9,6 +9,36 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Calculator } from 'lucide-react';
 import SEOHead from '@/components/SEOHead';
 
+// Commodity registry: native price unit + conversions to other common units.
+// `unit` is the unit the user enters Entry/Stop in. `equivalents` lets the
+// calculator translate the resulting position size into other practical units.
+type CommodityDef = {
+  label: string;
+  unit: string;                 // e.g. "barrel", "bushel", "troy oz", "lb", "MMBtu"
+  equivalents?: { label: string; factor: number }[]; // 1 native unit = factor × label
+  futuresSymbol?: keyof typeof CONTRACTS; // optional link to futures contract
+};
+
+const COMMODITIES: Record<string, CommodityDef> = {
+  CRUDE:    { label: 'Crude Oil (WTI/Brent)', unit: 'barrel',   equivalents: [{ label: 'gallons (US)', factor: 42 }, { label: 'liters', factor: 158.987 }], futuresSymbol: 'CL' },
+  NATGAS:   { label: 'Natural Gas',           unit: 'MMBtu',    equivalents: [{ label: 'therms', factor: 10 }],                                            futuresSymbol: 'NG' },
+  GASOLINE: { label: 'Gasoline (RBOB)',       unit: 'gallon',   equivalents: [{ label: 'liters', factor: 3.78541 }, { label: 'barrels', factor: 1/42 }] },
+  HEATOIL:  { label: 'Heating Oil',           unit: 'gallon',   equivalents: [{ label: 'liters', factor: 3.78541 }, { label: 'barrels', factor: 1/42 }] },
+  GOLD:     { label: 'Gold',                  unit: 'troy oz',  equivalents: [{ label: 'grams', factor: 31.1035 }, { label: 'kg', factor: 0.0311035 }],  futuresSymbol: 'GC' },
+  SILVER:   { label: 'Silver',                unit: 'troy oz',  equivalents: [{ label: 'grams', factor: 31.1035 }, { label: 'kg', factor: 0.0311035 }],  futuresSymbol: 'SI' },
+  PLATINUM: { label: 'Platinum',              unit: 'troy oz',  equivalents: [{ label: 'grams', factor: 31.1035 }, { label: 'kg', factor: 0.0311035 }] },
+  COPPER:   { label: 'Copper',                unit: 'lb',       equivalents: [{ label: 'kg', factor: 0.453592 }, { label: 'metric tons', factor: 0.000453592 }], futuresSymbol: 'HG' },
+  CORN:     { label: 'Corn',                  unit: 'bushel',   equivalents: [{ label: 'lb', factor: 56 }, { label: 'metric tons', factor: 56 * 0.000453592 }], futuresSymbol: 'ZC' },
+  WHEAT:    { label: 'Wheat',                 unit: 'bushel',   equivalents: [{ label: 'lb', factor: 60 }, { label: 'metric tons', factor: 60 * 0.000453592 }], futuresSymbol: 'ZW' },
+  SOYBEAN:  { label: 'Soybeans',              unit: 'bushel',   equivalents: [{ label: 'lb', factor: 60 }, { label: 'metric tons', factor: 60 * 0.000453592 }], futuresSymbol: 'ZS' },
+  COFFEE:   { label: 'Coffee',                unit: 'lb',       equivalents: [{ label: 'kg', factor: 0.453592 }, { label: 'bags (60kg)', factor: 0.453592 / 60 }], futuresSymbol: 'KC' },
+  SUGAR:    { label: 'Sugar',                 unit: 'lb',       equivalents: [{ label: 'kg', factor: 0.453592 }, { label: 'metric tons', factor: 0.000453592 }], futuresSymbol: 'SB' },
+  COTTON:   { label: 'Cotton',                unit: 'lb',       equivalents: [{ label: 'kg', factor: 0.453592 }, { label: 'bales (480 lb)', factor: 1 / 480 }], futuresSymbol: 'CT' },
+  CATTLE:   { label: 'Live Cattle',           unit: 'lb',       equivalents: [{ label: 'kg', factor: 0.453592 }, { label: 'cwt', factor: 0.01 }], futuresSymbol: 'LE' },
+  HOGS:     { label: 'Lean Hogs',             unit: 'lb',       equivalents: [{ label: 'kg', factor: 0.453592 }, { label: 'cwt', factor: 0.01 }], futuresSymbol: 'HE' },
+  GENERIC:  { label: 'Generic / Other',       unit: 'unit' },
+};
+
 // Standard futures contract specifications (point value $/point, typical initial margin USD).
 // Margins are indicative — exchanges/brokers update them frequently.
 const CONTRACTS: Record<string, { label: string; pointValue: number; tickSize: number; tickValue: number; initialMargin: number }> = {
@@ -37,6 +67,10 @@ const fmtUsd = (n: number) =>
 const PositionCalculator: React.FC = () => {
   const navigate = useNavigate();
 
+  // Selected commodity for unit-aware dollar-risk sizing
+  const [commodityKey, setCommodityKey] = useState<keyof typeof COMMODITIES>('CRUDE');
+  const commodity = COMMODITIES[commodityKey];
+
   // Risk-based (dollar) sizing
   const [accountSize, setAccountSize] = useState('10000');
   const [riskPct, setRiskPct] = useState('1');
@@ -48,6 +82,12 @@ const PositionCalculator: React.FC = () => {
   const [contracts, setContracts] = useState('1');
   const [futEntry, setFutEntry] = useState('80');
   const [futStop, setFutStop] = useState('78');
+
+  // When the user picks a commodity that maps to a futures contract,
+  // mirror that selection in the Futures tab for seamless cross-tab flow.
+  React.useEffect(() => {
+    if (commodity.futuresSymbol) setSymbol(commodity.futuresSymbol);
+  }, [commodityKey, commodity.futuresSymbol]);
 
   const dollar = useMemo(() => {
     const acct = parseFloat(accountSize) || 0;
@@ -120,6 +160,20 @@ const PositionCalculator: React.FC = () => {
 
                 <TabsContent value="dollar" className="space-y-4 mt-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2 sm:col-span-2">
+                      <Label>Commodity</Label>
+                      <Select value={commodityKey} onValueChange={(v) => setCommodityKey(v as keyof typeof COMMODITIES)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(COMMODITIES).map(([k, v]) => (
+                            <SelectItem key={k} value={k}>{v.label} — ${'{'}/{v.unit}{'}'}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Prices below are interpreted as USD per {commodity.unit}.
+                      </p>
+                    </div>
                     <div className="space-y-2">
                       <Label htmlFor="acct">Account Size (USD)</Label>
                       <Input id="acct" type="number" inputMode="decimal" value={accountSize} onChange={(e) => setAccountSize(e.target.value)} />
@@ -129,20 +183,41 @@ const PositionCalculator: React.FC = () => {
                       <Input id="risk" type="number" inputMode="decimal" value={riskPct} onChange={(e) => setRiskPct(e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="entry">Entry Price</Label>
+                      <Label htmlFor="entry">Entry Price (USD/{commodity.unit})</Label>
                       <Input id="entry" type="number" inputMode="decimal" value={entry} onChange={(e) => setEntry(e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="stop">Stop-Loss Price</Label>
+                      <Label htmlFor="stop">Stop-Loss Price (USD/{commodity.unit})</Label>
                       <Input id="stop" type="number" inputMode="decimal" value={stop} onChange={(e) => setStop(e.target.value)} />
                     </div>
                   </div>
 
                   <div className="rounded-lg border bg-muted/30 p-4 space-y-2 text-sm">
                     <Row label="Risk amount" value={fmtUsd(dollar.riskAmount)} />
-                    <Row label="Risk per unit" value={fmtUsd(dollar.perUnitRisk)} />
-                    <Row label="Position size (units)" value={dollar.units.toFixed(4)} />
+                    <Row label={`Risk per ${commodity.unit}`} value={fmtUsd(dollar.perUnitRisk)} />
+                    <Row label={`Position size (${commodity.unit})`} value={dollar.units.toLocaleString(undefined, { maximumFractionDigits: 4 })} />
+                    {commodity.equivalents?.map((eq) => (
+                      <Row
+                        key={eq.label}
+                        label={`= in ${eq.label}`}
+                        value={(dollar.units * eq.factor).toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                      />
+                    ))}
                     <Row label="Position value" value={fmtUsd(dollar.positionValue)} highlight />
+                    {commodity.futuresSymbol && (
+                      <Row
+                        label={`≈ ${CONTRACTS[commodity.futuresSymbol].label} contracts`}
+                        value={(() => {
+                          const spec = CONTRACTS[commodity.futuresSymbol!];
+                          const e = parseFloat(entry) || 0;
+                          const s = parseFloat(stop) || 0;
+                          const ticks = spec.tickSize > 0 ? Math.abs(e - s) / spec.tickSize : 0;
+                          const riskPerContract = ticks * spec.tickValue;
+                          if (riskPerContract <= 0 || dollar.riskAmount <= 0) return '0';
+                          return String(Math.floor(dollar.riskAmount / riskPerContract));
+                        })()}
+                      />
+                    )}
                   </div>
                 </TabsContent>
 
