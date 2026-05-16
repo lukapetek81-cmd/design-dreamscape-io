@@ -15,7 +15,7 @@ interface Profile {
   subscription_tier: string;
   subscription_active: boolean;
   subscription_end: string | null;
-  billing_state: 'active' | 'grace' | 'on_hold' | 'canceled' | 'none' | null;
+  billing_state: string | null;
   grace_period_expires_at: string | null;
   created_at: string;
   updated_at: string;
