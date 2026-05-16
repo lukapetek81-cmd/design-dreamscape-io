@@ -301,9 +301,16 @@ const PositionCalculator: React.FC = () => {
                   <div className="rounded-lg border bg-muted/30 p-4 space-y-2 text-sm">
                     <Row label="Point value" value={fmtUsd(fut.spec.pointValue)} />
                     <Row label="Tick size / tick value" value={`${fut.spec.tickSize} / ${fmtUsd(fut.spec.tickValue)}`} />
-                    <Row label="Initial margin / contract" value={fmtUsd(fut.spec.initialMargin)} />
+                    <Row label="Initial margin / contract (overnight)" value={fmtUsd(fut.spec.initialMargin)} />
+                    <Row label="Maintenance margin / contract" value={fmtUsd(fut.spec.maintenanceMargin)} />
+                    <Row label="Day-trade margin / contract" value={fmtUsd(fut.spec.dayTradeMargin)} />
                     <Row label="Notional value" value={fmtUsd(fut.notional)} />
+                    <Row
+                      label="Margin %"
+                      value={fut.notional > 0 ? `${((fut.spec.initialMargin / (fut.spec.pointValue * (parseFloat(futEntry) || 0))) * 100).toFixed(2)}%` : '—'}
+                    />
                     <Row label="Total initial margin" value={fmtUsd(fut.totalMargin)} highlight />
+                    <Row label="Total day-trade margin" value={fmtUsd(fut.n * fut.spec.dayTradeMargin)} />
                     <Row label="Leverage" value={`${fut.leverage.toFixed(2)}x`} />
                     <Row label="Risk per contract (to stop)" value={fmtUsd(fut.riskPerContract)} />
                     <Row label="Total risk" value={fmtUsd(fut.totalRisk)} highlight />
