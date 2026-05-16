@@ -330,6 +330,7 @@ const PositionCalculator: React.FC = () => {
                           <TermRow label="POINT VALUE" value={fmtUsd(fut.spec.pointValue)} />
                           <TermRow label="TICK SIZE" value={String(fut.spec.tickSize)} />
                           <TermRow label="TICK VALUE" value={fmtUsd(fut.spec.tickValue)} />
+                          <TermRow label="CONTRACT SIZE" value={`${fmtNum(fut.spec.contractSize, 0)} ${fut.spec.unit}`} />
                         </Section>
                         <Section title="Margin Requirements (per contract)">
                           <TermRow label="INITIAL  (OVERNIGHT)" value={fmtUsd(fut.spec.initialMargin)} sub={fmtPct(initPct)} />
@@ -337,6 +338,11 @@ const PositionCalculator: React.FC = () => {
                           <TermRow label="DAY TRADE  (INTRADAY)" value={fmtUsd(fut.spec.dayTradeMargin)} sub={fmtPct(dayPct)} accent />
                         </Section>
                         <Section title="Position">
+                          <TermRow
+                            label={`UNDERLYING (${fut.spec.unit.toUpperCase()})`}
+                            value={fmtNum(fut.n * fut.spec.contractSize, 0)}
+                            accent
+                          />
                           <TermRow label="NOTIONAL VALUE" value={fmtUsd(fut.notional)} />
                           <TermRow label="TOTAL INITIAL MARGIN" value={fmtUsd(fut.totalMargin)} highlight />
                           <TermRow label="TOTAL MAINT. MARGIN" value={fmtUsd(fut.n * fut.spec.maintenanceMargin)} />
