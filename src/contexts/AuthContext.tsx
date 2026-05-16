@@ -15,6 +15,8 @@ interface Profile {
   subscription_tier: string;
   subscription_active: boolean;
   subscription_end: string | null;
+  billing_state: 'active' | 'grace' | 'on_hold' | 'canceled' | 'none' | null;
+  grace_period_expires_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -26,6 +28,8 @@ interface AuthContextType {
   loading: boolean;
   isGuest: boolean;
   isPremium: boolean;
+  billingState: Profile['billing_state'];
+  gracePeriodExpiresAt: string | null;
   requiresAuth: () => boolean;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
@@ -409,6 +413,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const isGuest = !user;
   const isPremium = profile?.subscription_active && profile?.subscription_tier !== 'free';
+  const billingState = profile?.billing_state ?? 'none';
+  const gracePeriodExpiresAt = profile?.grace_period_expires_at ?? null;
   
   const requiresAuth = () => {
     if (!user) {
@@ -428,6 +434,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     loading,
     isGuest,
     isPremium,
+    billingState,
+    gracePeriodExpiresAt,
     requiresAuth,
     signUp,
     signIn,
