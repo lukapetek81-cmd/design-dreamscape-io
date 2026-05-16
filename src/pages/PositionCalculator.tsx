@@ -166,7 +166,7 @@ const PositionCalculator: React.FC = () => {
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           {Object.entries(COMMODITIES).map(([k, v]) => (
-                            <SelectItem key={k} value={k}>{v.label} — ${'{'}/{v.unit}{'}'}</SelectItem>
+                            <SelectItem key={k} value={k}>{`${v.label} — $/${v.unit}`}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
