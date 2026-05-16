@@ -343,6 +343,19 @@ const PositionCalculator: React.FC = () => {
                             value={fmtNum(fut.n * fut.spec.contractSize, 0)}
                             accent
                           />
+                          {(() => {
+                            const match = Object.values(COMMODITIES).find(
+                              (c) => c.futuresSymbol === symbol,
+                            );
+                            const totalUnits = fut.n * fut.spec.contractSize;
+                            return match?.equivalents?.map((eq) => (
+                              <TermRow
+                                key={eq.label}
+                                label={`≈ ${eq.label.toUpperCase()}`}
+                                value={fmtNum(totalUnits * eq.factor, 2)}
+                              />
+                            ));
+                          })()}
                           <TermRow label="NOTIONAL VALUE" value={fmtUsd(fut.notional)} />
                           <TermRow label="TOTAL INITIAL MARGIN" value={fmtUsd(fut.totalMargin)} highlight />
                           <TermRow label="TOTAL MAINT. MARGIN" value={fmtUsd(fut.n * fut.spec.maintenanceMargin)} />
