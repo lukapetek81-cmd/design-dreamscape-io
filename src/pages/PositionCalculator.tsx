@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Calculator } from 'lucide-react';
 import SEOHead from '@/components/SEOHead';
+import { useAvailableCommodities } from '@/hooks/useCommodityData';
 
 // Commodity registry: native price unit + conversions to other common units.
 // `unit` is the unit the user enters Entry/Stop in. `equivalents` lets the
@@ -17,25 +18,26 @@ type CommodityDef = {
   unit: string;                 // e.g. "barrel", "bushel", "troy oz", "lb", "MMBtu"
   equivalents?: { label: string; factor: number }[]; // 1 native unit = factor × label
   futuresSymbol?: keyof typeof CONTRACTS; // optional link to futures contract
+  spotCommodity?: string;       // commodity name as exposed by useAvailableCommodities()
 };
 
 const COMMODITIES: Record<string, CommodityDef> = {
-  CRUDE:    { label: 'Crude Oil (WTI/Brent)', unit: 'barrel',   equivalents: [{ label: 'gallons (US)', factor: 42 }, { label: 'liters', factor: 158.987 }], futuresSymbol: 'CL' },
-  NATGAS:   { label: 'Natural Gas',           unit: 'MMBtu',    equivalents: [{ label: 'therms', factor: 10 }],                                            futuresSymbol: 'NG' },
-  GASOLINE: { label: 'Gasoline (RBOB)',       unit: 'gallon',   equivalents: [{ label: 'liters', factor: 3.78541 }, { label: 'barrels', factor: 1/42 }] },
-  HEATOIL:  { label: 'Heating Oil',           unit: 'gallon',   equivalents: [{ label: 'liters', factor: 3.78541 }, { label: 'barrels', factor: 1/42 }] },
-  GOLD:     { label: 'Gold',                  unit: 'troy oz',  equivalents: [{ label: 'grams', factor: 31.1035 }, { label: 'kg', factor: 0.0311035 }],  futuresSymbol: 'GC' },
-  SILVER:   { label: 'Silver',                unit: 'troy oz',  equivalents: [{ label: 'grams', factor: 31.1035 }, { label: 'kg', factor: 0.0311035 }],  futuresSymbol: 'SI' },
-  PLATINUM: { label: 'Platinum',              unit: 'troy oz',  equivalents: [{ label: 'grams', factor: 31.1035 }, { label: 'kg', factor: 0.0311035 }] },
-  COPPER:   { label: 'Copper',                unit: 'lb',       equivalents: [{ label: 'kg', factor: 0.453592 }, { label: 'metric tons', factor: 0.000453592 }], futuresSymbol: 'HG' },
-  CORN:     { label: 'Corn',                  unit: 'bushel',   equivalents: [{ label: 'lb', factor: 56 }, { label: 'metric tons', factor: 56 * 0.000453592 }], futuresSymbol: 'ZC' },
-  WHEAT:    { label: 'Wheat',                 unit: 'bushel',   equivalents: [{ label: 'lb', factor: 60 }, { label: 'metric tons', factor: 60 * 0.000453592 }], futuresSymbol: 'ZW' },
-  SOYBEAN:  { label: 'Soybeans',              unit: 'bushel',   equivalents: [{ label: 'lb', factor: 60 }, { label: 'metric tons', factor: 60 * 0.000453592 }], futuresSymbol: 'ZS' },
-  COFFEE:   { label: 'Coffee',                unit: 'lb',       equivalents: [{ label: 'kg', factor: 0.453592 }, { label: 'bags (60kg)', factor: 0.453592 / 60 }], futuresSymbol: 'KC' },
-  SUGAR:    { label: 'Sugar',                 unit: 'lb',       equivalents: [{ label: 'kg', factor: 0.453592 }, { label: 'metric tons', factor: 0.000453592 }], futuresSymbol: 'SB' },
-  COTTON:   { label: 'Cotton',                unit: 'lb',       equivalents: [{ label: 'kg', factor: 0.453592 }, { label: 'bales (480 lb)', factor: 1 / 480 }], futuresSymbol: 'CT' },
-  CATTLE:   { label: 'Live Cattle',           unit: 'lb',       equivalents: [{ label: 'kg', factor: 0.453592 }, { label: 'cwt', factor: 0.01 }], futuresSymbol: 'LE' },
-  HOGS:     { label: 'Lean Hogs',             unit: 'lb',       equivalents: [{ label: 'kg', factor: 0.453592 }, { label: 'cwt', factor: 0.01 }], futuresSymbol: 'HE' },
+  CRUDE:    { label: 'Crude Oil (WTI/Brent)', unit: 'barrel',   equivalents: [{ label: 'gallons (US)', factor: 42 }, { label: 'liters', factor: 158.987 }], futuresSymbol: 'CL', spotCommodity: 'WTI Crude Oil' },
+  NATGAS:   { label: 'Natural Gas',           unit: 'MMBtu',    equivalents: [{ label: 'therms', factor: 10 }],                                            futuresSymbol: 'NG', spotCommodity: 'Natural Gas' },
+  GASOLINE: { label: 'Gasoline (RBOB)',       unit: 'gallon',   equivalents: [{ label: 'liters', factor: 3.78541 }, { label: 'barrels', factor: 1/42 }], spotCommodity: 'Gasoline RBOB' },
+  HEATOIL:  { label: 'Heating Oil',           unit: 'gallon',   equivalents: [{ label: 'liters', factor: 3.78541 }, { label: 'barrels', factor: 1/42 }], spotCommodity: 'Heating Oil' },
+  GOLD:     { label: 'Gold',                  unit: 'troy oz',  equivalents: [{ label: 'grams', factor: 31.1035 }, { label: 'kg', factor: 0.0311035 }],  futuresSymbol: 'GC', spotCommodity: 'Gold Futures' },
+  SILVER:   { label: 'Silver',                unit: 'troy oz',  equivalents: [{ label: 'grams', factor: 31.1035 }, { label: 'kg', factor: 0.0311035 }],  futuresSymbol: 'SI', spotCommodity: 'Silver Futures' },
+  PLATINUM: { label: 'Platinum',              unit: 'troy oz',  equivalents: [{ label: 'grams', factor: 31.1035 }, { label: 'kg', factor: 0.0311035 }], spotCommodity: 'Platinum' },
+  COPPER:   { label: 'Copper',                unit: 'lb',       equivalents: [{ label: 'kg', factor: 0.453592 }, { label: 'metric tons', factor: 0.000453592 }], futuresSymbol: 'HG', spotCommodity: 'Copper' },
+  CORN:     { label: 'Corn',                  unit: 'bushel',   equivalents: [{ label: 'lb', factor: 56 }, { label: 'metric tons', factor: 56 * 0.000453592 }], futuresSymbol: 'ZC', spotCommodity: 'Corn Futures' },
+  WHEAT:    { label: 'Wheat',                 unit: 'bushel',   equivalents: [{ label: 'lb', factor: 60 }, { label: 'metric tons', factor: 60 * 0.000453592 }], futuresSymbol: 'ZW', spotCommodity: 'Wheat Futures' },
+  SOYBEAN:  { label: 'Soybeans',              unit: 'bushel',   equivalents: [{ label: 'lb', factor: 60 }, { label: 'metric tons', factor: 60 * 0.000453592 }], futuresSymbol: 'ZS', spotCommodity: 'Soybean Futures' },
+  COFFEE:   { label: 'Coffee',                unit: 'lb',       equivalents: [{ label: 'kg', factor: 0.453592 }, { label: 'bags (60kg)', factor: 0.453592 / 60 }], futuresSymbol: 'KC', spotCommodity: 'Coffee Arabica' },
+  SUGAR:    { label: 'Sugar',                 unit: 'lb',       equivalents: [{ label: 'kg', factor: 0.453592 }, { label: 'metric tons', factor: 0.000453592 }], futuresSymbol: 'SB', spotCommodity: 'Sugar #11' },
+  COTTON:   { label: 'Cotton',                unit: 'lb',       equivalents: [{ label: 'kg', factor: 0.453592 }, { label: 'bales (480 lb)', factor: 1 / 480 }], futuresSymbol: 'CT', spotCommodity: 'Cotton' },
+  CATTLE:   { label: 'Live Cattle',           unit: 'lb',       equivalents: [{ label: 'kg', factor: 0.453592 }, { label: 'cwt', factor: 0.01 }], futuresSymbol: 'LE', spotCommodity: 'Live Cattle' },
+  HOGS:     { label: 'Lean Hogs',             unit: 'lb',       equivalents: [{ label: 'kg', factor: 0.453592 }, { label: 'cwt', factor: 0.01 }], futuresSymbol: 'HE', spotCommodity: 'Lean Hogs' },
   GENERIC:  { label: 'Generic / Other',       unit: 'unit' },
 };
 
@@ -67,6 +69,14 @@ const fmtUsd = (n: number) =>
 const PositionCalculator: React.FC = () => {
   const navigate = useNavigate();
 
+  // Live spot prices for autofill of Entry fields.
+  const { data: liveCommodities } = useAvailableCommodities({ lightweight: true });
+  const spotPrices = useMemo(() => {
+    const map: Record<string, number> = {};
+    (liveCommodities ?? []).forEach((c) => { map[c.name] = c.price; });
+    return map;
+  }, [liveCommodities]);
+
   // Selected commodity for unit-aware dollar-risk sizing
   const [commodityKey, setCommodityKey] = useState<keyof typeof COMMODITIES>('CRUDE');
   const commodity = COMMODITIES[commodityKey];
@@ -88,6 +98,25 @@ const PositionCalculator: React.FC = () => {
   React.useEffect(() => {
     if (commodity.futuresSymbol) setSymbol(commodity.futuresSymbol);
   }, [commodityKey, commodity.futuresSymbol]);
+
+  // Autofill Dollar-Risk Entry/Stop when commodity changes (or when spot prices arrive).
+  React.useEffect(() => {
+    if (!commodity.spotCommodity) return;
+    const spot = spotPrices[commodity.spotCommodity];
+    if (!spot || !isFinite(spot) || spot <= 0) return;
+    setEntry(spot.toFixed(spot < 5 ? 4 : 2));
+    setStop((spot * 0.975).toFixed(spot < 5 ? 4 : 2)); // default -2.5% stop
+  }, [commodityKey, commodity.spotCommodity, spotPrices]);
+
+  // Autofill Futures Entry/Stop when contract symbol changes (or when spot prices arrive).
+  React.useEffect(() => {
+    const match = Object.values(COMMODITIES).find((c) => c.futuresSymbol === symbol);
+    if (!match?.spotCommodity) return;
+    const spot = spotPrices[match.spotCommodity];
+    if (!spot || !isFinite(spot) || spot <= 0) return;
+    setFutEntry(spot.toFixed(spot < 5 ? 4 : 2));
+    setFutStop((spot * 0.975).toFixed(spot < 5 ? 4 : 2));
+  }, [symbol, spotPrices]);
 
   const dollar = useMemo(() => {
     const acct = parseFloat(accountSize) || 0;
@@ -241,6 +270,13 @@ const PositionCalculator: React.FC = () => {
                     <div className="space-y-2">
                       <Label htmlFor="fe">Entry Price</Label>
                       <Input id="fe" type="number" inputMode="decimal" value={futEntry} onChange={(e) => setFutEntry(e.target.value)} />
+                      {(() => {
+                        const match = Object.values(COMMODITIES).find((c) => c.futuresSymbol === symbol);
+                        const spot = match?.spotCommodity ? spotPrices[match.spotCommodity] : undefined;
+                        return spot ? (
+                          <p className="text-xs text-muted-foreground">Live spot: {fmtUsd(spot)}</p>
+                        ) : null;
+                      })()}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="fs">Stop-Loss Price</Label>
