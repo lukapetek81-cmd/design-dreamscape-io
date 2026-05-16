@@ -10,12 +10,15 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { User, LogOut, Settings, Crown, Trash2 } from 'lucide-react';
+import { User, LogOut, Settings, Crown, Trash2, CreditCard } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import ManageSubscriptionButton from '@/components/ManageSubscriptionButton';
 
 const UserProfile = () => {
-  const { user, profile, signOut, isGuest } = useAuth();
+  const auth = useAuth();
+  const { user, profile, signOut, isGuest } = auth ?? ({} as any);
+  const isPremium = Boolean(auth?.isPremium);
 
   if (isGuest) {
     return (
@@ -74,6 +77,14 @@ const UserProfile = () => {
             <span className="text-sm">Account Settings</span>
           </Link>
         </DropdownMenuItem>
+        {isPremium && (
+          <>
+            <DropdownMenuSeparator />
+            <div className="px-4 py-3">
+              <ManageSubscriptionButton className="w-full justify-start" />
+            </div>
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem className="cursor-pointer mobile-touch-target px-4 py-3" asChild>
           <Link to="/delete-account">
