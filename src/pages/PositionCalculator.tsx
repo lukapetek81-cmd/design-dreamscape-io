@@ -80,6 +80,12 @@ const fmtUsd = (n: number) =>
     ? n.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 })
     : '—';
 
+const fmtPct = (n: number, digits = 2) =>
+  isFinite(n) ? `${n.toFixed(digits)}%` : '—';
+
+const fmtNum = (n: number, digits = 4) =>
+  isFinite(n) ? n.toLocaleString(undefined, { maximumFractionDigits: digits }) : '—';
+
 const PositionCalculator: React.FC = () => {
   const navigate = useNavigate();
 
@@ -235,32 +241,33 @@ const PositionCalculator: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="rounded-lg border bg-muted/30 p-4 space-y-2 text-sm">
-                    <Row label="Risk amount" value={fmtUsd(dollar.riskAmount)} />
-                    <Row label={`Risk per ${commodity.unit}`} value={fmtUsd(dollar.perUnitRisk)} />
-                    <Row label={`Position size (${commodity.unit})`} value={dollar.units.toLocaleString(undefined, { maximumFractionDigits: 4 })} />
-                    {commodity.equivalents?.map((eq) => (
-                      <Row
-                        key={eq.label}
-                        label={`= in ${eq.label}`}
-                        value={(dollar.units * eq.factor).toLocaleString(undefined, { maximumFractionDigits: 4 })}
-                      />
-                    ))}
-                    <Row label="Position value" value={fmtUsd(dollar.positionValue)} highlight />
-                    {commodity.futuresSymbol && (
-                      <Row
-                        label={`≈ ${CONTRACTS[commodity.futuresSymbol].label} contracts`}
-                        value={(() => {
-                          const spec = CONTRACTS[commodity.futuresSymbol!];
-                          const e = parseFloat(entry) || 0;
-                          const s = parseFloat(stop) || 0;
-                          const ticks = spec.tickSize > 0 ? Math.abs(e - s) / spec.tickSize : 0;
-                          const riskPerContract = ticks * spec.tickValue;
-                          if (riskPerContract <= 0 || dollar.riskAmount <= 0) return '0';
-                          return String(Math.floor(dollar.riskAmount / riskPerContract));
-                        })()}
-                      />
-                    )}
+                  <div className="rounded-md border border-border bg-background/60 font-mono text-xs">
+                    <Section title="Risk">
+                      <TermRow label="RISK AMOUNT" value={fmtUsd(dollar.riskAmount)} sub={`${parseFloat(riskPct) || 0}% of acct`} highlight />
+                      <TermRow label={`RISK / ${commodity.unit.toUpperCase()}`} value={fmtUsd(dollar.perUnitRisk)} />
+                    </Section>
+                    <Section title="Position">
+                      <TermRow label={`SIZE (${commodity.unit.toUpperCase()})`} value={fmtNum(dollar.units)} accent />
+                      {commodity.equivalents?.map((eq) => (
+                        <TermRow key={eq.label} label={`≈ ${eq.label.toUpperCase()}`} value={fmtNum(dollar.units * eq.factor)} />
+                      ))}
+                      <TermRow label="POSITION VALUE" value={fmtUsd(dollar.positionValue)} highlight />
+                      {commodity.futuresSymbol && (
+                        <TermRow
+                          label={`≈ ${CONTRACTS[commodity.futuresSymbol].label.toUpperCase()}`}
+                          value={(() => {
+                            const spec = CONTRACTS[commodity.futuresSymbol!];
+                            const e = parseFloat(entry) || 0;
+                            const s = parseFloat(stop) || 0;
+                            const ticks = spec.tickSize > 0 ? Math.abs(e - s) / spec.tickSize : 0;
+                            const riskPerContract = ticks * spec.tickValue;
+                            if (riskPerContract <= 0 || dollar.riskAmount <= 0) return '0';
+                            return String(Math.floor(dollar.riskAmount / riskPerContract));
+                          })()}
+                          sub="contracts"
+                        />
+                      )}
+                    </Section>
                   </div>
                 </TabsContent>
 
@@ -298,27 +305,50 @@ const PositionCalculator: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="rounded-lg border bg-muted/30 p-4 space-y-2 text-sm">
-                    <Row label="Point value" value={fmtUsd(fut.spec.pointValue)} />
-                    <Row label="Tick size / tick value" value={`${fut.spec.tickSize} / ${fmtUsd(fut.spec.tickValue)}`} />
-                    <Row label="Initial margin / contract (overnight)" value={fmtUsd(fut.spec.initialMargin)} />
-                    <Row label="Maintenance margin / contract" value={fmtUsd(fut.spec.maintenanceMargin)} />
-                    <Row label="Day-trade margin / contract" value={fmtUsd(fut.spec.dayTradeMargin)} />
-                    <Row label="Notional value" value={fmtUsd(fut.notional)} />
-                    <Row
-                      label="Margin %"
-                      value={fut.notional > 0 ? `${((fut.spec.initialMargin / (fut.spec.pointValue * (parseFloat(futEntry) || 0))) * 100).toFixed(2)}%` : '—'}
-                    />
-                    <Row label="Total initial margin" value={fmtUsd(fut.totalMargin)} highlight />
-                    <Row label="Total day-trade margin" value={fmtUsd(fut.n * fut.spec.dayTradeMargin)} />
-                    <Row label="Leverage" value={`${fut.leverage.toFixed(2)}x`} />
-                    <Row label="Risk per contract (to stop)" value={fmtUsd(fut.riskPerContract)} />
-                    <Row label="Total risk" value={fmtUsd(fut.totalRisk)} highlight />
-                    <Row
-                      label="Suggested contracts (from Dollar Risk tab)"
-                      value={String(suggestedContracts)}
-                    />
-                  </div>
+                  {(() => {
+                    const entryPx = parseFloat(futEntry) || 0;
+                    const contractNotional = fut.spec.pointValue * entryPx;
+                    const initPct = contractNotional > 0 ? (fut.spec.initialMargin / contractNotional) * 100 : NaN;
+                    const maintPct = contractNotional > 0 ? (fut.spec.maintenanceMargin / contractNotional) * 100 : NaN;
+                    const dayPct = contractNotional > 0 ? (fut.spec.dayTradeMargin / contractNotional) * 100 : NaN;
+                    const riskPctOfAcct = (() => {
+                      const acct = parseFloat(accountSize) || 0;
+                      return acct > 0 ? (fut.totalRisk / acct) * 100 : NaN;
+                    })();
+                    return (
+                      <div className="rounded-md border border-border bg-background/60 font-mono text-xs">
+                        <TerminalTicker
+                          symbol={symbol}
+                          label={fut.spec.label}
+                          entry={entryPx}
+                          initPct={initPct}
+                          leverage={fut.leverage}
+                        />
+                        <Section title="Contract Specs">
+                          <TermRow label="POINT VALUE" value={fmtUsd(fut.spec.pointValue)} />
+                          <TermRow label="TICK SIZE" value={String(fut.spec.tickSize)} />
+                          <TermRow label="TICK VALUE" value={fmtUsd(fut.spec.tickValue)} />
+                        </Section>
+                        <Section title="Margin Requirements (per contract)">
+                          <TermRow label="INITIAL  (OVERNIGHT)" value={fmtUsd(fut.spec.initialMargin)} sub={fmtPct(initPct)} />
+                          <TermRow label="MAINTENANCE" value={fmtUsd(fut.spec.maintenanceMargin)} sub={fmtPct(maintPct)} />
+                          <TermRow label="DAY TRADE  (INTRADAY)" value={fmtUsd(fut.spec.dayTradeMargin)} sub={fmtPct(dayPct)} accent />
+                        </Section>
+                        <Section title="Position">
+                          <TermRow label="NOTIONAL VALUE" value={fmtUsd(fut.notional)} />
+                          <TermRow label="TOTAL INITIAL MARGIN" value={fmtUsd(fut.totalMargin)} highlight />
+                          <TermRow label="TOTAL MAINT. MARGIN" value={fmtUsd(fut.n * fut.spec.maintenanceMargin)} />
+                          <TermRow label="TOTAL DAY-TRADE MARGIN" value={fmtUsd(fut.n * fut.spec.dayTradeMargin)} />
+                          <TermRow label="LEVERAGE" value={`${fut.leverage.toFixed(2)}x`} accent />
+                        </Section>
+                        <Section title="Risk">
+                          <TermRow label="RISK / CONTRACT (TO STOP)" value={fmtUsd(fut.riskPerContract)} />
+                          <TermRow label="TOTAL RISK" value={fmtUsd(fut.totalRisk)} sub={isFinite(riskPctOfAcct) ? fmtPct(riskPctOfAcct) + ' of acct' : undefined} highlight />
+                          <TermRow label="SUGGESTED CONTRACTS" value={String(suggestedContracts)} sub="from Dollar Risk tab" />
+                        </Section>
+                      </div>
+                    );
+                  })()}
 
                   <p className="text-xs text-muted-foreground">
                     Margin figures reflect typical published values from major brokers — IBKR, NinjaTrader/AMP,
@@ -339,6 +369,64 @@ const Row: React.FC<{ label: string; value: string; highlight?: boolean }> = ({ 
   <div className="flex items-center justify-between gap-3">
     <span className="text-muted-foreground">{label}</span>
     <span className={highlight ? 'font-semibold text-foreground' : 'font-medium'}>{value}</span>
+  </div>
+);
+
+// ─── Bloomberg-Terminal-style result components ───────────────────────────────
+
+const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+  <div className="border-b border-border last:border-b-0">
+    <div className="px-3 py-1.5 bg-muted/40 text-[10px] tracking-[0.18em] uppercase text-muted-foreground font-semibold">
+      {title}
+    </div>
+    <div className="divide-y divide-border/60">{children}</div>
+  </div>
+);
+
+const TermRow: React.FC<{
+  label: string;
+  value: string;
+  sub?: string;
+  highlight?: boolean;
+  accent?: boolean;
+}> = ({ label, value, sub, highlight, accent }) => (
+  <div className="flex items-baseline justify-between gap-3 px-3 py-1.5">
+    <span className="text-[10px] tracking-[0.14em] uppercase text-muted-foreground truncate">{label}</span>
+    <span className="flex items-baseline gap-2 tabular-nums">
+      {sub && <span className="text-[10px] text-muted-foreground/80">{sub}</span>}
+      <span
+        className={
+          highlight
+            ? 'text-sm font-bold text-primary'
+            : accent
+              ? 'text-sm font-semibold text-accent-foreground'
+              : 'text-sm font-medium text-foreground'
+        }
+      >
+        {value}
+      </span>
+    </span>
+  </div>
+);
+
+const TerminalTicker: React.FC<{
+  symbol: string;
+  label: string;
+  entry: number;
+  initPct: number;
+  leverage: number;
+}> = ({ symbol, label, entry, initPct, leverage }) => (
+  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 bg-primary/10 border-b border-primary/30">
+    <span className="text-sm font-bold text-primary tracking-wider">{symbol}</span>
+    <span className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{label}</span>
+    <span className="ml-auto flex items-center gap-3 text-[11px] tabular-nums">
+      <span className="text-muted-foreground">PX</span>
+      <span className="font-semibold text-foreground">{fmtUsd(entry)}</span>
+      <span className="text-muted-foreground">MARG</span>
+      <span className="font-semibold text-foreground">{fmtPct(initPct)}</span>
+      <span className="text-muted-foreground">LEV</span>
+      <span className="font-semibold text-foreground">{leverage.toFixed(2)}x</span>
+    </span>
   </div>
 );
 
