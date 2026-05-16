@@ -420,7 +420,7 @@ const TermRow: React.FC<{
           highlight
             ? 'text-sm font-bold text-primary'
             : accent
-              ? 'text-sm font-semibold text-accent-foreground'
+              ? 'text-sm font-semibold text-foreground'
               : 'text-sm font-medium text-foreground'
         }
       >
