@@ -340,7 +340,7 @@ const PositionCalculator: React.FC = () => {
                         <Section title="Position">
                           <TermRow
                             label={`UNDERLYING (${fut.spec.unit.toUpperCase()})`}
-                            value={fmtNum(fut.n * fut.spec.contractSize, 0)}
+                            value={`${fmtNum(fut.n * fut.spec.contractSize, 0)} ${fut.spec.unit}`}
                             accent
                           />
                           {(() => {
@@ -352,7 +352,7 @@ const PositionCalculator: React.FC = () => {
                               <TermRow
                                 key={eq.label}
                                 label={`≈ ${eq.label.toUpperCase()}`}
-                                value={fmtNum(totalUnits * eq.factor, 2)}
+                                value={`${fmtNum(totalUnits * eq.factor, 2)} ${eq.label}`}
                               />
                             ));
                           })()}
