@@ -23,7 +23,7 @@ Prereqs: Android Studio + JDK 17, project pulled from GitHub, `npm install`, `np
 3. `npm run build && npx cap sync android`
 4. In Android Studio → Build → Generate Signed App Bundle → release → produces `app-release.aab`.
 
-`android/app/build.gradle` already has `versionCode 3 / versionName "1.0.2"` and a `signingConfigs.release` block — no code change needed unless you want to bump the version.
+`android/app/build.gradle` has `versionCode 4 / versionName "1.0.3"` and a `signingConfigs.release` block — bump this further only if another upload collision occurs.
 
 ---
 
