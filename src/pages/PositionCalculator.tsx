@@ -321,8 +321,9 @@ const PositionCalculator: React.FC = () => {
                   </div>
 
                   <p className="text-xs text-muted-foreground">
-                    Margin figures are indicative initial margins and change frequently. Confirm current
-                    requirements with your broker before trading.
+                    Margin figures reflect typical published values from major brokers — IBKR, NinjaTrader/AMP,
+                    Tradovate, TD/Schwab Futures (CME SPAN-based overnight; intraday from day-trading brokers).
+                    Exchanges and brokers adjust these frequently; always confirm with your broker before trading.
                   </p>
                 </TabsContent>
               </Tabs>
