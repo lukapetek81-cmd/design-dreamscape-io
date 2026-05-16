@@ -80,6 +80,12 @@ const fmtUsd = (n: number) =>
     ? n.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 })
     : '—';
 
+const fmtPct = (n: number, digits = 2) =>
+  isFinite(n) ? `${n.toFixed(digits)}%` : '—';
+
+const fmtNum = (n: number, digits = 4) =>
+  isFinite(n) ? n.toLocaleString(undefined, { maximumFractionDigits: digits }) : '—';
+
 const PositionCalculator: React.FC = () => {
   const navigate = useNavigate();
 
