@@ -6,8 +6,13 @@ import {
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
 const SUPABASE_URL = Deno.env.get('VITE_SUPABASE_URL') ?? Deno.env.get('SUPABASE_URL')!;
-const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const WEBHOOK_AUTH = Deno.env.get('REVENUECAT_WEBHOOK_AUTH')!;
+const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const WEBHOOK_AUTH = Deno.env.get('REVENUECAT_WEBHOOK_AUTH') ?? '';
+
+// DB-touching tests require the service role key, which lives only as a
+// server-side secret. When running locally without it, skip them so the
+// handler-level tests still validate behavior.
+const DB_TESTS_ENABLED = Boolean(SERVICE_KEY && WEBHOOK_AUTH);
 
 const WEBHOOK_URL = `${SUPABASE_URL}/functions/v1/revenuecat-webhook`;
 
@@ -117,7 +122,10 @@ Deno.test('ignores non-premium entitlement events', async () => {
   assertEquals(body.ignored, true);
 });
 
-Deno.test('INITIAL_PURCHASE activates premium and sets billing_state=active', async () => {
+Deno.test({
+  name: 'INITIAL_PURCHASE activates premium and sets billing_state=active',
+  ignore: !DB_TESTS_ENABLED,
+  fn: async () => {
   const uid = newTestUserId();
   await seedProfile(uid);
   try {
@@ -132,9 +140,13 @@ Deno.test('INITIAL_PURCHASE activates premium and sets billing_state=active', as
   } finally {
     await deleteProfile(uid);
   }
+  },
 });
 
-Deno.test('CANCELLATION deactivates and sets billing_state=canceled', async () => {
+Deno.test({
+  name: 'CANCELLATION deactivates and sets billing_state=canceled',
+  ignore: !DB_TESTS_ENABLED,
+  fn: async () => {
   const uid = newTestUserId();
   await seedProfile(uid);
   try {
@@ -149,9 +161,13 @@ Deno.test('CANCELLATION deactivates and sets billing_state=canceled', async () =
   } finally {
     await deleteProfile(uid);
   }
+  },
 });
 
-Deno.test('BILLING_ISSUE keeps access and enters grace period', async () => {
+Deno.test({
+  name: 'BILLING_ISSUE keeps access and enters grace period',
+  ignore: !DB_TESTS_ENABLED,
+  fn: async () => {
   const uid = newTestUserId();
   await seedProfile(uid);
   try {
@@ -166,9 +182,13 @@ Deno.test('BILLING_ISSUE keeps access and enters grace period', async () => {
   } finally {
     await deleteProfile(uid);
   }
+  },
 });
 
-Deno.test('SUBSCRIPTION_PAUSED puts subscription on hold', async () => {
+Deno.test({
+  name: 'SUBSCRIPTION_PAUSED puts subscription on hold',
+  ignore: !DB_TESTS_ENABLED,
+  fn: async () => {
   const uid = newTestUserId();
   await seedProfile(uid);
   try {
@@ -182,9 +202,13 @@ Deno.test('SUBSCRIPTION_PAUSED puts subscription on hold', async () => {
   } finally {
     await deleteProfile(uid);
   }
+  },
 });
 
-Deno.test('UNCANCELLATION after grace clears billing state', async () => {
+Deno.test({
+  name: 'UNCANCELLATION after grace clears billing state',
+  ignore: !DB_TESTS_ENABLED,
+  fn: async () => {
   const uid = newTestUserId();
   await seedProfile(uid);
   try {
@@ -199,6 +223,7 @@ Deno.test('UNCANCELLATION after grace clears billing state', async () => {
   } finally {
     await deleteProfile(uid);
   }
+  },
 });
 
 Deno.test('unknown event type is ignored', async () => {
