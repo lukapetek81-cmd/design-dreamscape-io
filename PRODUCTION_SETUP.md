@@ -91,6 +91,21 @@ ALERT_WEBHOOK_URL=your_monitoring_webhook
 8. ⚠️ Supabase linter — 17 WARN-level findings remain (16 SECURITY DEFINER function exposure + 1 leaked-password protection). All non-blocking; review post-launch.
 9. ⚠️ Generate signed AAB locally in Android Studio (see `mem://launch/android-signing`)
 10. ⚠️ Upload to Play Console Internal Testing track first, then promote to Production
+
+## Automated Android version bumping
+
+Every Play Console upload requires a unique `versionCode`. Use the helper script before each release build so this happens automatically:
+
+```bash
+npm run android:release    # bumps patch + versionCode, builds web, runs cap sync
+# or, granular:
+npm run android:bump               # patch + 1 (e.g. 1.0.3 -> 1.0.4) and versionCode + 1
+node scripts/bump-android-version.mjs minor       # 1.0.3 -> 1.1.0
+node scripts/bump-android-version.mjs major       # 1.0.3 -> 2.0.0
+node scripts/bump-android-version.mjs --code-only # only versionCode + 1
+```
+
+The script edits `android/app/build.gradle` in-place. Commit the change, then generate the signed AAB in Android Studio.
 ## Updating the launcher icon
 
 The single source of truth for the app icon is `public/icon.png` (512×512 RGBA).
