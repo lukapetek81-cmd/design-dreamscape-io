@@ -41,24 +41,38 @@ const COMMODITIES: Record<string, CommodityDef> = {
   GENERIC:  { label: 'Generic / Other',       unit: 'unit' },
 };
 
-// Standard futures contract specifications (point value $/point, typical initial margin USD).
-// Margins are indicative — exchanges/brokers update them frequently.
-const CONTRACTS: Record<string, { label: string; pointValue: number; tickSize: number; tickValue: number; initialMargin: number }> = {
-  CL:  { label: 'Crude Oil (CL)',         pointValue: 1000,  tickSize: 0.01,  tickValue: 10,     initialMargin: 6500 },
-  MCL: { label: 'Micro Crude Oil (MCL)',  pointValue: 100,   tickSize: 0.01,  tickValue: 1,      initialMargin: 650  },
-  NG:  { label: 'Natural Gas (NG)',       pointValue: 10000, tickSize: 0.001, tickValue: 10,     initialMargin: 5500 },
-  GC:  { label: 'Gold (GC)',              pointValue: 100,   tickSize: 0.10,  tickValue: 10,     initialMargin: 13500 },
-  MGC: { label: 'Micro Gold (MGC)',       pointValue: 10,    tickSize: 0.10,  tickValue: 1,      initialMargin: 1350  },
-  SI:  { label: 'Silver (SI)',            pointValue: 5000,  tickSize: 0.005, tickValue: 25,     initialMargin: 16000 },
-  HG:  { label: 'Copper (HG)',            pointValue: 25000, tickSize: 0.0005,tickValue: 12.5,   initialMargin: 7000  },
-  ZC:  { label: 'Corn (ZC)',              pointValue: 50,    tickSize: 0.25,  tickValue: 12.5,   initialMargin: 2200  },
-  ZW:  { label: 'Wheat (ZW)',             pointValue: 50,    tickSize: 0.25,  tickValue: 12.5,   initialMargin: 2800  },
-  ZS:  { label: 'Soybeans (ZS)',          pointValue: 50,    tickSize: 0.25,  tickValue: 12.5,   initialMargin: 3500  },
-  KC:  { label: 'Coffee (KC)',            pointValue: 375,   tickSize: 0.05,  tickValue: 18.75,  initialMargin: 11000 },
-  SB:  { label: 'Sugar (SB)',             pointValue: 1120,  tickSize: 0.01,  tickValue: 11.2,   initialMargin: 1500  },
-  CT:  { label: 'Cotton (CT)',            pointValue: 500,   tickSize: 0.01,  tickValue: 5,      initialMargin: 3500  },
-  LE:  { label: 'Live Cattle (LE)',       pointValue: 400,   tickSize: 0.025, tickValue: 10,     initialMargin: 2200  },
-  HE:  { label: 'Lean Hogs (HE)',         pointValue: 400,   tickSize: 0.025, tickValue: 10,     initialMargin: 1800  },
+// Standard futures contract specifications.
+// Margins reflect typical published values from major brokers (Interactive Brokers,
+// NinjaTrader/AMP, Tradovate, TD/Schwab) as of late 2025. Exchanges and brokers
+// adjust these frequently — always confirm with your broker before trading.
+//   - initialMargin / maintenanceMargin: CME SPAN-based overnight margins
+//     used by IBKR, TDA/Schwab Futures, etc.
+//   - dayTradeMargin: typical intraday margin from day-trading brokers
+//     (AMP, NinjaTrader, Tradovate, Optimus). Position must be flat by close.
+const CONTRACTS: Record<string, {
+  label: string;
+  pointValue: number;
+  tickSize: number;
+  tickValue: number;
+  initialMargin: number;
+  maintenanceMargin: number;
+  dayTradeMargin: number;
+}> = {
+  CL:  { label: 'Crude Oil (CL)',         pointValue: 1000,  tickSize: 0.01,  tickValue: 10,    initialMargin: 6820,  maintenanceMargin: 6200,  dayTradeMargin: 500  },
+  MCL: { label: 'Micro Crude Oil (MCL)',  pointValue: 100,   tickSize: 0.01,  tickValue: 1,     initialMargin: 682,   maintenanceMargin: 620,   dayTradeMargin: 50   },
+  NG:  { label: 'Natural Gas (NG)',       pointValue: 10000, tickSize: 0.001, tickValue: 10,    initialMargin: 3300,  maintenanceMargin: 3000,  dayTradeMargin: 500  },
+  GC:  { label: 'Gold (GC)',              pointValue: 100,   tickSize: 0.10,  tickValue: 10,    initialMargin: 16500, maintenanceMargin: 15000, dayTradeMargin: 1000 },
+  MGC: { label: 'Micro Gold (MGC)',       pointValue: 10,    tickSize: 0.10,  tickValue: 1,     initialMargin: 1650,  maintenanceMargin: 1500,  dayTradeMargin: 100  },
+  SI:  { label: 'Silver (SI)',            pointValue: 5000,  tickSize: 0.005, tickValue: 25,    initialMargin: 17050, maintenanceMargin: 15500, dayTradeMargin: 2000 },
+  HG:  { label: 'Copper (HG)',            pointValue: 25000, tickSize: 0.0005,tickValue: 12.5,  initialMargin: 7150,  maintenanceMargin: 6500,  dayTradeMargin: 750  },
+  ZC:  { label: 'Corn (ZC)',              pointValue: 50,    tickSize: 0.25,  tickValue: 12.5,  initialMargin: 1650,  maintenanceMargin: 1500,  dayTradeMargin: 300  },
+  ZW:  { label: 'Wheat (ZW)',             pointValue: 50,    tickSize: 0.25,  tickValue: 12.5,  initialMargin: 2200,  maintenanceMargin: 2000,  dayTradeMargin: 400  },
+  ZS:  { label: 'Soybeans (ZS)',          pointValue: 50,    tickSize: 0.25,  tickValue: 12.5,  initialMargin: 3300,  maintenanceMargin: 3000,  dayTradeMargin: 500  },
+  KC:  { label: 'Coffee (KC)',            pointValue: 375,   tickSize: 0.05,  tickValue: 18.75, initialMargin: 15400, maintenanceMargin: 14000, dayTradeMargin: 1500 },
+  SB:  { label: 'Sugar (SB)',             pointValue: 1120,  tickSize: 0.01,  tickValue: 11.2,  initialMargin: 1540,  maintenanceMargin: 1400,  dayTradeMargin: 400  },
+  CT:  { label: 'Cotton (CT)',            pointValue: 500,   tickSize: 0.01,  tickValue: 5,     initialMargin: 3300,  maintenanceMargin: 3000,  dayTradeMargin: 750  },
+  LE:  { label: 'Live Cattle (LE)',       pointValue: 400,   tickSize: 0.025, tickValue: 10,    initialMargin: 2640,  maintenanceMargin: 2400,  dayTradeMargin: 400  },
+  HE:  { label: 'Lean Hogs (HE)',         pointValue: 400,   tickSize: 0.025, tickValue: 10,    initialMargin: 2200,  maintenanceMargin: 2000,  dayTradeMargin: 400  },
 };
 
 const fmtUsd = (n: number) =>
