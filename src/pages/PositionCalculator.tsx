@@ -241,32 +241,33 @@ const PositionCalculator: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="rounded-lg border bg-muted/30 p-4 space-y-2 text-sm">
-                    <Row label="Risk amount" value={fmtUsd(dollar.riskAmount)} />
-                    <Row label={`Risk per ${commodity.unit}`} value={fmtUsd(dollar.perUnitRisk)} />
-                    <Row label={`Position size (${commodity.unit})`} value={dollar.units.toLocaleString(undefined, { maximumFractionDigits: 4 })} />
-                    {commodity.equivalents?.map((eq) => (
-                      <Row
-                        key={eq.label}
-                        label={`= in ${eq.label}`}
-                        value={(dollar.units * eq.factor).toLocaleString(undefined, { maximumFractionDigits: 4 })}
-                      />
-                    ))}
-                    <Row label="Position value" value={fmtUsd(dollar.positionValue)} highlight />
-                    {commodity.futuresSymbol && (
-                      <Row
-                        label={`≈ ${CONTRACTS[commodity.futuresSymbol].label} contracts`}
-                        value={(() => {
-                          const spec = CONTRACTS[commodity.futuresSymbol!];
-                          const e = parseFloat(entry) || 0;
-                          const s = parseFloat(stop) || 0;
-                          const ticks = spec.tickSize > 0 ? Math.abs(e - s) / spec.tickSize : 0;
-                          const riskPerContract = ticks * spec.tickValue;
-                          if (riskPerContract <= 0 || dollar.riskAmount <= 0) return '0';
-                          return String(Math.floor(dollar.riskAmount / riskPerContract));
-                        })()}
-                      />
-                    )}
+                  <div className="rounded-md border border-border bg-background/60 font-mono text-xs">
+                    <Section title="Risk">
+                      <TermRow label="RISK AMOUNT" value={fmtUsd(dollar.riskAmount)} sub={`${parseFloat(riskPct) || 0}% of acct`} highlight />
+                      <TermRow label={`RISK / ${commodity.unit.toUpperCase()}`} value={fmtUsd(dollar.perUnitRisk)} />
+                    </Section>
+                    <Section title="Position">
+                      <TermRow label={`SIZE (${commodity.unit.toUpperCase()})`} value={fmtNum(dollar.units)} accent />
+                      {commodity.equivalents?.map((eq) => (
+                        <TermRow key={eq.label} label={`≈ ${eq.label.toUpperCase()}`} value={fmtNum(dollar.units * eq.factor)} />
+                      ))}
+                      <TermRow label="POSITION VALUE" value={fmtUsd(dollar.positionValue)} highlight />
+                      {commodity.futuresSymbol && (
+                        <TermRow
+                          label={`≈ ${CONTRACTS[commodity.futuresSymbol].label.toUpperCase()}`}
+                          value={(() => {
+                            const spec = CONTRACTS[commodity.futuresSymbol!];
+                            const e = parseFloat(entry) || 0;
+                            const s = parseFloat(stop) || 0;
+                            const ticks = spec.tickSize > 0 ? Math.abs(e - s) / spec.tickSize : 0;
+                            const riskPerContract = ticks * spec.tickValue;
+                            if (riskPerContract <= 0 || dollar.riskAmount <= 0) return '0';
+                            return String(Math.floor(dollar.riskAmount / riskPerContract));
+                          })()}
+                          sub="contracts"
+                        />
+                      )}
+                    </Section>
                   </div>
                 </TabsContent>
 
