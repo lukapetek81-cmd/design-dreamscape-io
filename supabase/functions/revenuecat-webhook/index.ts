@@ -30,12 +30,11 @@ const ACTIVATING = new Set([
   'NON_RENEWING_PURCHASE',
   'TRANSFER',
 ]);
-const DEACTIVATING = new Set([
-  'CANCELLATION',
-  'EXPIRATION',
-  'SUBSCRIPTION_PAUSED',
-  'BILLING_ISSUE',
-]);
+// Hard deactivations: subscription is fully gone.
+const DEACTIVATING = new Set(['CANCELLATION', 'EXPIRATION']);
+// Soft states: user retains/loses access but billing needs attention.
+const BILLING_ISSUE = 'BILLING_ISSUE';
+const SUBSCRIPTION_PAUSED = 'SUBSCRIPTION_PAUSED';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
@@ -86,6 +85,8 @@ Deno.serve(async (req) => {
       subscription_active: true,
       subscription_tier: 'premium',
       subscription_end: subscriptionEnd,
+      billing_state: 'active',
+      grace_period_expires_at: null,
       updated_at: new Date().toISOString(),
     };
   } else if (DEACTIVATING.has(event.type)) {
@@ -93,6 +94,27 @@ Deno.serve(async (req) => {
       subscription_active: false,
       subscription_tier: 'free',
       subscription_end: subscriptionEnd,
+      billing_state: 'canceled',
+      grace_period_expires_at: null,
+      updated_at: new Date().toISOString(),
+    };
+  } else if (event.type === BILLING_ISSUE) {
+    // Keep access during Google's grace window; surface a banner on the client.
+    update = {
+      subscription_active: true,
+      subscription_tier: 'premium',
+      subscription_end: subscriptionEnd,
+      billing_state: 'grace',
+      grace_period_expires_at: subscriptionEnd,
+      updated_at: new Date().toISOString(),
+    };
+  } else if (event.type === SUBSCRIPTION_PAUSED) {
+    update = {
+      subscription_active: false,
+      subscription_tier: 'free',
+      subscription_end: subscriptionEnd,
+      billing_state: 'on_hold',
+      grace_period_expires_at: null,
       updated_at: new Date().toISOString(),
     };
   }

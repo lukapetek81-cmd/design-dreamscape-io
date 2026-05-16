@@ -10,6 +10,7 @@ import { useCapacitorAuthDeepLink } from '@/hooks/useCapacitorAuthDeepLink';
 import SEOHead from '@/components/SEOHead';
 import Dashboard from '@/pages/Dashboard';
 import Auth from '@/pages/Auth';
+import BillingStatusBanner from '@/components/BillingStatusBanner';
 
 // Lazy-load every non-critical route so initial Dashboard paint stays fast
 // and route transitions only fetch what they need.
@@ -56,6 +57,7 @@ const App = () => {
           <TooltipProvider>
             <RealtimeDataProvider>
               <SEOHead />
+              <BillingStatusBanner />
               <Suspense fallback={<RouteFallback />}>
               <Routes>
                 <Route path="/" element={<Dashboard />} />

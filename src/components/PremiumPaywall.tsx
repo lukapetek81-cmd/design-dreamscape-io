@@ -12,6 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePlatform } from '@/hooks/usePlatform';
+import { monitoringService } from '@/services/monitoringService';
+import ManageSubscriptionButton from '@/components/ManageSubscriptionButton';
 import {
   configureRevenueCat,
   getOfferings,
@@ -45,6 +47,15 @@ const PremiumPaywall: React.FC<PremiumPaywallProps> = ({ open, onOpenChange }) =
   const [offering, setOffering] = React.useState<PurchasesOffering | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [purchasing, setPurchasing] = React.useState<string | null>(null);
+  const isPremium = Boolean(auth?.isPremium);
+
+  React.useEffect(() => {
+    if (!open) return;
+    monitoringService.trackUserEvent('paywall_viewed', {
+      is_native: isNative,
+      is_premium: isPremium,
+    });
+  }, [open, isNative, isPremium]);
 
   React.useEffect(() => {
     if (!open) return;
@@ -121,7 +132,14 @@ const PremiumPaywall: React.FC<PremiumPaywallProps> = ({ open, onOpenChange }) =
           ))}
         </ul>
 
-        {!isNative ? (
+        {isPremium ? (
+          <div className="space-y-3">
+            <div className="rounded-md border border-primary/30 bg-primary/5 p-4 text-sm text-muted-foreground">
+              You're already a Premium subscriber — thanks for supporting Commodity Hub.
+            </div>
+            <ManageSubscriptionButton className="w-full" variant="default" size="default" />
+          </div>
+        ) : !isNative ? (
           <div className="space-y-3">
             <div className="rounded-md border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
               Premium subscriptions are currently only available in the Android app. Web subscriptions are coming based on user feedback.

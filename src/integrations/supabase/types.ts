@@ -281,9 +281,11 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          billing_state: string
           created_at: string
           email: string
           full_name: string | null
+          grace_period_expires_at: string | null
           id: string
           subscription_active: boolean | null
           subscription_end: string | null
@@ -292,9 +294,11 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          billing_state?: string
           created_at?: string
           email: string
           full_name?: string | null
+          grace_period_expires_at?: string | null
           id: string
           subscription_active?: boolean | null
           subscription_end?: string | null
@@ -303,9 +307,11 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          billing_state?: string
           created_at?: string
           email?: string
           full_name?: string | null
+          grace_period_expires_at?: string | null
           id?: string
           subscription_active?: boolean | null
           subscription_end?: string | null
@@ -593,9 +599,11 @@ export type Database = {
         Args: never
         Returns: {
           avatar_url: string | null
+          billing_state: string
           created_at: string
           email: string
           full_name: string | null
+          grace_period_expires_at: string | null
           id: string
           subscription_active: boolean | null
           subscription_end: string | null
