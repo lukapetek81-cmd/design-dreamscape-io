@@ -6,6 +6,7 @@ import {
   type CustomerInfo,
 } from '@revenuecat/purchases-capacitor';
 import { logger } from '@/utils/logger';
+import { monitoringService } from '@/services/monitoringService';
 
 // Public Android SDK key from RevenueCat dashboard. Safe to ship in client.
 // Android key: prefer the dedicated VITE_REVENUECAT_ANDROID_KEY, fall back to
@@ -19,6 +20,14 @@ const REVENUECAT_IOS_KEY = import.meta.env.VITE_REVENUECAT_IOS_KEY as string | u
 export const PREMIUM_ENTITLEMENT = 'premium';
 
 let configured = false;
+
+const trackPurchaseEvent = (event: string, props: Record<string, unknown>) => {
+  try {
+    monitoringService.trackUserEvent(event, props);
+  } catch (err) {
+    logger.warn('Failed to track purchase event', err);
+  }
+};
 
 export const isRevenueCatAvailable = (): boolean => {
   if (!Capacitor.isNativePlatform()) return false;
@@ -75,12 +84,32 @@ export const getOfferings = async (): Promise<PurchasesOffering | null> => {
 export const purchasePackage = async (
   pkg: PurchasesOffering['availablePackages'][number],
 ): Promise<{ success: boolean; customerInfo?: CustomerInfo; error?: string }> => {
+  const pkgProps = {
+    package_id: pkg.identifier,
+    product_id: pkg.product.identifier,
+    price: pkg.product.price,
+    currency: pkg.product.currencyCode,
+    period: pkg.packageType,
+  };
+  trackPurchaseEvent('purchase_started', pkgProps);
   try {
     const { customerInfo } = await Purchases.purchasePackage({ aPackage: pkg });
     const isPremium = Boolean(customerInfo.entitlements.active[PREMIUM_ENTITLEMENT]);
+    trackPurchaseEvent('purchase_succeeded', {
+      ...pkgProps,
+      is_premium: isPremium,
+    });
     return { success: isPremium, customerInfo };
   } catch (err: any) {
-    if (err?.userCancelled) return { success: false, error: 'cancelled' };
+    if (err?.userCancelled) {
+      trackPurchaseEvent('purchase_cancelled', pkgProps);
+      return { success: false, error: 'cancelled' };
+    }
+    trackPurchaseEvent('purchase_failed', {
+      ...pkgProps,
+      error_code: err?.code ?? 'unknown',
+      error_message: err?.message ?? 'Purchase failed',
+    });
     logger.error('RevenueCat purchase failed', err);
     return { success: false, error: err?.message ?? 'Purchase failed' };
   }
@@ -88,10 +117,16 @@ export const purchasePackage = async (
 
 export const restorePurchases = async (): Promise<boolean> => {
   if (!configured) return false;
+  trackPurchaseEvent('restore_attempted', {});
   try {
     const { customerInfo } = await Purchases.restorePurchases();
-    return Boolean(customerInfo.entitlements.active[PREMIUM_ENTITLEMENT]);
+    const restored = Boolean(customerInfo.entitlements.active[PREMIUM_ENTITLEMENT]);
+    trackPurchaseEvent(restored ? 'restore_succeeded' : 'restore_failed', {
+      reason: restored ? 'ok' : 'no_active_entitlement',
+    });
+    return restored;
   } catch (err) {
+    trackPurchaseEvent('restore_failed', { reason: 'exception' });
     logger.error('RevenueCat restore failed', err);
     return false;
   }
@@ -104,5 +139,21 @@ export const hasActivePremium = async (): Promise<boolean> => {
     return Boolean(customerInfo.entitlements.active[PREMIUM_ENTITLEMENT]);
   } catch {
     return false;
+  }
+};
+
+/**
+ * Returns the product identifier of the currently active premium entitlement,
+ * if any. Used to deep-link the user to the right Play Store subscription
+ * management screen.
+ */
+export const getActiveProductId = async (): Promise<string | null> => {
+  if (!configured) return null;
+  try {
+    const { customerInfo } = await Purchases.getCustomerInfo();
+    const ent = customerInfo.entitlements.active[PREMIUM_ENTITLEMENT];
+    return ent?.productIdentifier ?? null;
+  } catch {
+    return null;
   }
 };
