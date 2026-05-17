@@ -180,7 +180,7 @@ const CommodityCard = React.memo<CommodityCardProps>(({
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full min-w-0 max-w-full overflow-hidden">
       <div className="w-full min-w-0 max-w-full overflow-hidden">
-        <Card className="group relative w-full min-w-0 max-w-full overflow-hidden border border-border/50 bg-card shadow-soft rounded-2xl">
+        <Card className="group relative w-full min-w-0 max-w-full overflow-hidden border border-border/50 bg-card shadow-soft rounded-[1.25rem]">
           <CardHeader className="relative p-3 sm:p-4 md:p-6 lg:p-8">
             {/* Header with click handler */}
             <div 
