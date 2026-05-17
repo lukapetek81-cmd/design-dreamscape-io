@@ -104,7 +104,7 @@ const VirtualizedCommodityList: React.FC<VirtualizedCommodityListProps> = ({
               return (
                 <div 
                   key={`${commodity.symbol}-${idx}`}
-                  className={`w-full min-w-0 max-w-full overflow-x-hidden ${isHighlighted ? 'ring-2 ring-primary/40 rounded-[1.5rem]' : ''}`}
+                  className={`w-full min-w-0 max-w-full overflow-x-hidden ${isHighlighted ? 'rounded-[2rem] bg-primary/10 p-1 shadow-[0_0_0_2px_hsl(var(--primary)/0.35),0_0_24px_hsl(var(--primary)/0.18)]' : ''}`}
                   ref={isHighlighted ? (el) => {
                     if (el && !el.dataset.scrolled) {
                       el.dataset.scrolled = '1';
