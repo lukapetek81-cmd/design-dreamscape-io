@@ -184,7 +184,7 @@ const CommodityCard = React.memo<CommodityCardProps>(({
           <CardHeader className="relative p-3 sm:p-4 md:p-6 lg:p-8">
             {/* Header with click handler */}
             <div 
-              className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between cursor-pointer touch-manipulation focus-ring"
+              className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between cursor-pointer touch-manipulation rounded-[1.125rem] focus-ring"
               onClick={handleToggle}
               role="button"
               tabIndex={0}
