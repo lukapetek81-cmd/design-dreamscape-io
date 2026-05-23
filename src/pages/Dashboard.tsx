@@ -173,14 +173,14 @@ const DashboardContent = ({
           <div className="container flex h-16 items-center justify-between px-4">
             {isMobile ? (
               <div className="flex w-full items-center justify-between">
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  onClick={() => setOpenMobile(true)}
-                  className="p-3 min-h-[48px] min-w-[48px]"
-                >
-                  <Menu className="w-6 h-6" />
-                </Button>
+                 <Button
+                   variant="ghost"
+                   size="lg"
+                   onClick={() => setOpenMobile(true)}
+                   className="ml-1 sm:ml-2 p-3 sm:p-4 min-h-[48px] min-w-[48px] sm:min-h-[56px] sm:min-w-[56px]"
+                 >
+                   <Menu className="w-6 h-6 sm:w-7 sm:h-7" />
+                 </Button>
                 
                 <div className="text-center flex-1">
                   <p className="text-xs text-muted-foreground">
