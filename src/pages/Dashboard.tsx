@@ -177,7 +177,7 @@ const DashboardContent = ({
                    variant="ghost"
                    size="lg"
                    onClick={() => setOpenMobile(true)}
-                   className="ml-4 sm:ml-8 md:ml-12 p-4 sm:p-5 min-h-[56px] min-w-[56px] sm:min-h-[64px] sm:min-w-[64px]"
+                   className="ml-4 sm:ml-8 md:ml-12 mt-4 sm:mt-6 md:mt-7 p-4 sm:p-5 min-h-[56px] min-w-[56px] sm:min-h-[64px] sm:min-w-[64px]"
                  >
                    <Menu className="w-8 h-8 sm:w-9 sm:h-9" />
                  </Button>
