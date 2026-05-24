@@ -33,12 +33,8 @@ export const COMMODITY_SYMBOLS: Record<string, CommoditySymbol> = {
   'Copper': { symbol: 'HG=F', category: 'metals', contractSize: '25,000 lbs', venue: 'COMEX' },
   'Platinum': { symbol: 'PL=F', category: 'metals', contractSize: '50 oz', venue: 'NYMEX' },
   'Palladium': { symbol: 'PA=F', category: 'metals', contractSize: '100 oz', venue: 'NYMEX' },
-  'Aluminum': { symbol: 'ALI=F', category: 'metals', contractSize: '25 MT', venue: 'LME' },
-  'Zinc': { symbol: 'ZNC=F', category: 'metals', contractSize: '25 MT', venue: 'LME' },
-  // Metals — Premium
-  'Lead Futures': { symbol: 'PBF=F', category: 'metals', contractSize: '25 MT', venue: 'LME' },
-  'Nickel Futures': { symbol: 'NIF=F', category: 'metals', contractSize: '6 MT', venue: 'LME' },
-  'Tin': { symbol: 'SN=X', category: 'metals', contractSize: '5 MT', venue: 'LME' },
+  // LME metals (Aluminum, Zinc, Lead, Nickel, Tin) removed 2026-05 — no
+  // free/affordable data source covers LME. Revisit if we add CPA Lite or FMP Premium.
 
   // ============ GRAINS — Free ============
   'Corn Futures': { symbol: 'ZC=F', category: 'grains', contractSize: '5,000 bu', venue: 'CBOT' },
@@ -48,15 +44,8 @@ export const COMMODITY_SYMBOLS: Record<string, CommoditySymbol> = {
   'Soybean Meal': { symbol: 'ZM=F', category: 'grains', contractSize: '100 tons', venue: 'CBOT' },
   'Oat Futures': { symbol: 'ZO=F', category: 'grains', contractSize: '5,000 bu', venue: 'CBOT' },
   'Rough Rice': { symbol: 'ZR=F', category: 'grains', contractSize: '2,000 cwt', venue: 'CBOT' },
-  // Grains — Premium
-  'Canola': { symbol: 'RS=F', category: 'grains', contractSize: '20 MT', venue: 'ICE' },
-
-  // ============ SOFTS — Free ============
-  'Coffee Arabica': { symbol: 'KC=F', category: 'softs', contractSize: '37,500 lbs', venue: 'ICE' },
-  'Sugar #11': { symbol: 'SB=F', category: 'softs', contractSize: '112,000 lbs', venue: 'ICE' },
-  'Cotton': { symbol: 'CT=F', category: 'softs', contractSize: '50,000 lbs', venue: 'ICE' },
-  'Cocoa': { symbol: 'CC=F', category: 'softs', contractSize: '10 MT', venue: 'ICE' },
-  'Orange Juice': { symbol: 'OJ=F', category: 'softs', contractSize: '15,000 lbs', venue: 'ICE' },
+  // Canola (ICE) and all ICE softs (Coffee, Sugar #11, Cotton, Cocoa, OJ)
+  // removed 2026-05 — no free/affordable data source covers ICE.
 
   // ============ LIVESTOCK — Free ============
   'Live Cattle': { symbol: 'LE=F', category: 'livestock', contractSize: '40,000 lbs', venue: 'CME' },
@@ -108,22 +97,12 @@ export const MASSIVE_PRODUCT_CODES: Record<string, string> = {
  * FMP `/v3/quote/{SYMBOL}` — ICE/LME-listed items only. Massive can't quote
  * these exchanges, so FMP free tier (250 req/day) keeps them alive. 11 items.
  */
-export const FMP_SYMBOLS: Record<string, string> = {
-  // Softs (ICE)
-  'Coffee Arabica': 'KC=F',
-  'Sugar #11': 'SB=F',
-  'Cotton': 'CT=F',
-  'Cocoa': 'CC=F',
-  'Orange Juice': 'OJ=F',
-  // Grains (ICE)
-  'Canola': 'RS=F',
-  // Metals (LME)
-  'Aluminum': 'ALI=F',
-  'Zinc': 'ZNC=F',
-  'Lead Futures': 'PBF=F',
-  'Nickel Futures': 'NIF=F',
-  'Tin': 'SN=X',
-};
+/**
+ * FMP symbol map — currently empty. All ICE/LME items removed 2026-05 because
+ * FMP Starter no longer covers them and we have no alternative free source.
+ * Kept exported so callers don't break; CommodityService skips FMP when empty.
+ */
+export const FMP_SYMBOLS: Record<string, string> = {};
 
 // FMP_FUTURES_ROOTS removed — forward curve now uses Massive (see massive-client.ts).
 
@@ -140,15 +119,11 @@ export const PREMIUM_COMMODITIES = new Set<string>([
   'Western Canadian Select', 'WTI Midland', 'Mars Blend', 'Louisiana Light Sweet',
   'Natural Gas UK', 'Dutch TTF Gas', 'Japan/Korea LNG',
   'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel', 'Gasoil', 'Naphtha',
-  // Metals — premium (all LME items gated; no free-tier provider covers LME)
-  'Palladium', 'Aluminum', 'Zinc',
-  'Lead Futures', 'Nickel Futures', 'Tin',
+  // Metals — premium
+  'Palladium',
   // Grains — premium
   'Soybean Oil', 'Soybean Meal',
   'Oat Futures', 'Rough Rice',
-  'Canola',
-  // Softs — premium (all ICE softs gated; no free-tier provider covers ICE softs)
-  'Coffee Arabica', 'Sugar #11', 'Cotton', 'Cocoa', 'Orange Juice',
 ]);
 
 export function isPremiumCommodity(name: string): boolean {
@@ -165,17 +140,13 @@ export const CATEGORY_MAPPINGS: Record<string, string[]> = {
     'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel', 'Gasoil', 'Naphtha',
   ],
   metals: [
-    'Gold Futures', 'Silver Futures', 'Copper', 'Platinum', 'Palladium', 'Aluminum', 'Zinc',
-    'Lead Futures', 'Nickel Futures', 'Tin',
+    'Gold Futures', 'Silver Futures', 'Copper', 'Platinum', 'Palladium',
   ],
   grains: [
     'Corn Futures', 'Wheat Futures', 'Soybean Futures', 'Soybean Oil', 'Soybean Meal',
     'Oat Futures', 'Rough Rice',
-    'Canola',
   ],
-  softs: [
-    'Coffee Arabica', 'Sugar #11', 'Cotton', 'Cocoa', 'Orange Juice',
-  ],
+  softs: [],
   livestock: [
     'Live Cattle', 'Lean Hogs',
   ],
