@@ -28,8 +28,15 @@ export const useForwardCurve = (commodity: string | null, enabled = true) => {
     enabled: Boolean(commodity) && enabled,
     staleTime: 6 * 60 * 60 * 1000, // 6h — matches edge cache
     queryFn: async (): Promise<ForwardCurveResponse> => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.access_token) {
+        throw new Error('Authentication required');
+      }
       const { data, error } = await supabase.functions.invoke('fetch-forward-curve', {
         body: { commodity, monthsAhead: 12 },
+        headers: {
+          Authorization: `Bearer ${sessionData.session.access_token}`,
+        },
       });
       if (error) throw error;
       return data as ForwardCurveResponse;
