@@ -1,52 +1,26 @@
-// Forward curve — real-market sourcing:
-//   - All commodities: REAL monthly contract strip from FMP Starter
-//     (e.g. CLG26 = WTI Feb-26, GCG26 = Gold Feb-26, ZCH27 = Corn Mar-27).
-//   - Spot reference: OilPriceAPI for energy (per memory rule), FMP for the rest.
-//   - Cost-of-carry MODEL is the fallback when <60% of FMP contracts return
-//     prices (deep back-months or off-hours).
-// Pro-tier gated. JWT-verified. 5-min response cache.
+// Forward curve — real EOD settlement strip from Massive Futures Basic (free tier).
+// Covers CME/CBOT/COMEX/NYMEX: CL, BZ, NG, GC, SI, HG, ZC, ZS, ZW.
+// Per request: 1 contracts call + N daily-agg calls (N = monthsAhead).
+// Cached 6h in-worker to stay way under Massive's 5 req/min cap.
+// Pro-tier gated. JWT-verified.
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { z } from 'https://esm.sh/zod@3.23.8';
 import { corsHeaders, EdgeLogger } from '../_shared/utils.ts';
-import { fetchFmpFuturesCurve } from '../_shared/fmp-client.ts';
-import { FMP_FUTURES_ROOTS } from '../_shared/commodity-mappings.ts';
+import { fetchMassiveCurve } from '../_shared/massive-client.ts';
 
-const MONTH_CODES = ['F', 'G', 'H', 'J', 'K', 'M', 'N', 'Q', 'U', 'V', 'X', 'Z'];
-
-// Per-commodity model params (annualised %):
-//   spotSym  — FMP symbol returning current spot/front-month
-//   storage  — annual storage + insurance cost (carry positive)
-//   conv     — convenience yield (carry negative; tightness premium)
-//   seasonal — optional 12-month seasonal multipliers (Jan=0…Dec=11), 1.0 = neutral
-const RISK_FREE = 0.045; // ~3M T-bill proxy. Refresh later via FRED DGS3MO.
-interface ModelParams {
-  label: string;
-  root: string;                   // futures root used for synthetic contract symbols (e.g. 'CL')
-  source: 'energy' | 'fmp';
-  energyName?: string;            // OilPriceAPI commodity name (when source==='energy')
-  fmpSpotSym?: string;            // FMP front-month symbol for spot fallback (when source==='fmp')
-  storage: number;
-  conv: number;
-  seasonal?: number[];
-}
-const MODEL: Record<string, ModelParams> = {
-  wti:      { label: 'WTI Crude',   root: 'CL', source: 'energy', energyName: 'WTI Crude Oil',   storage: 0.06, conv: 0.04 },
-  brent:    { label: 'Brent Crude', root: 'BZ', source: 'energy', energyName: 'Brent Crude Oil', storage: 0.06, conv: 0.04 },
-  // Natural gas: strong winter premium (Nov–Feb), summer discount (fallback only).
-  natgas:   { label: 'Natural Gas', root: 'NG', source: 'energy', energyName: 'Natural Gas',     storage: 0.12, conv: 0.02,
-              seasonal: [1.08,1.06,1.00,0.95,0.93,0.94,0.96,0.98,1.00,1.02,1.06,1.10] },
-  gold:     { label: 'Gold',        root: 'GC', source: 'fmp', fmpSpotSym: 'GC=F',   storage: 0.005, conv: 0.0 },
-  silver:   { label: 'Silver',      root: 'SI', source: 'fmp', fmpSpotSym: 'SI=F',   storage: 0.01,  conv: 0.0 },
-  copper:   { label: 'Copper',      root: 'HG', source: 'fmp', fmpSpotSym: 'HG=F',   storage: 0.02,  conv: 0.015 },
-  // Grains: harvest discount, pre-harvest premium (rough US harvest cycles).
-  corn:     { label: 'Corn',        root: 'ZC', source: 'fmp', fmpSpotSym: 'ZC=F',   storage: 0.05, conv: 0.01,
-              seasonal: [1.03,1.04,1.05,1.06,1.07,1.06,1.02,0.97,0.94,0.95,0.97,1.00] },
-  soybeans: { label: 'Soybeans',    root: 'ZS', source: 'fmp', fmpSpotSym: 'ZS=F',   storage: 0.05, conv: 0.01,
-              seasonal: [1.04,1.05,1.06,1.06,1.05,1.03,1.00,0.96,0.94,0.95,0.98,1.01] },
-  wheat:    { label: 'Wheat',       root: 'ZW', source: 'fmp', fmpSpotSym: 'ZW=F',   storage: 0.05, conv: 0.01,
-              seasonal: [1.02,1.03,1.04,1.05,1.04,1.00,0.96,0.95,0.97,0.99,1.00,1.01] },
+// commodity id → { label, Massive product_code }
+const PRODUCTS: Record<string, { label: string; code: string }> = {
+  wti:      { label: 'WTI Crude',   code: 'CL' },
+  brent:    { label: 'Brent Crude', code: 'BZ' },
+  natgas:   { label: 'Natural Gas', code: 'NG' },
+  gold:     { label: 'Gold',        code: 'GC' },
+  silver:   { label: 'Silver',      code: 'SI' },
+  copper:   { label: 'Copper',      code: 'HG' },
+  corn:     { label: 'Corn',        code: 'ZC' },
+  soybeans: { label: 'Soybeans',    code: 'ZS' },
+  wheat:    { label: 'Wheat',       code: 'ZW' },
 };
 
 const BodySchema = z.object({
@@ -54,52 +28,9 @@ const BodySchema = z.object({
   monthsAhead: z.number().int().min(3).max(24).default(12),
 });
 
-function genContracts(root: string, n: number) {
-  const now = new Date();
-  const out: { symbol: string; expiry: string; monthIdx: number; monthOfYear: number }[] = [];
-  for (let i = 1; i <= n; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-    const code = MONTH_CODES[d.getMonth()];
-    const yr = String(d.getFullYear() % 100).padStart(2, '0');
-    out.push({
-      symbol: `${root}${code}${yr}`,
-      expiry: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-      monthIdx: i,
-      monthOfYear: d.getMonth(),
-    });
-  }
-  return out;
-}
-
-async function fetchSpotEnergy(name: string): Promise<number | null> {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL');
-  const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
-  if (!supabaseUrl || !anonKey) return null;
-  const res = await fetch(`${supabaseUrl}/functions/v1/oil-price-api`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${anonKey}` },
-    body: JSON.stringify({ commodityName: name }),
-  });
-  if (!res.ok) return null;
-  const json = await res.json();
-  const price = json?.price ?? json?.data?.price ?? json?.[name]?.price;
-  return typeof price === 'number' && price > 0 ? price : null;
-}
-
-async function fetchSpotFmp(sym: string): Promise<number | null> {
-  const key = Deno.env.get('FMP_API_KEY');
-  if (!key) return null;
-  const url = `https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(sym)}?apikey=${key}`;
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    const arr = await res.json();
-    const price = Array.isArray(arr) ? arr[0]?.price : null;
-    return typeof price === 'number' && price > 0 ? price : null;
-  } catch {
-    return null;
-  }
-}
+// In-worker response cache (per cold-start). TTL 6h.
+const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+const cache = new Map<string, { at: number; payload: unknown }>();
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -125,14 +56,13 @@ serve(async (req) => {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    const userId = userData.user.id;
 
     // Pro-tier gate
     const admin = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
-    const { data: tierData } = await admin.rpc('get_user_tier', { _user_id: userId });
+    const { data: tierData } = await admin.rpc('get_user_tier', { _user_id: userData.user.id });
     if (tierData !== 'pro') {
       return new Response(JSON.stringify({ error: 'pro_required' }), {
         status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -146,32 +76,53 @@ serve(async (req) => {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    const { commodity } = parsed.data;
-    const params = MODEL[commodity];
+    const { commodity, monthsAhead } = parsed.data;
+    const product = PRODUCTS[commodity];
 
-    // Single-point view: just the live front-month spot. FMP Starter doesn't
-    // expose individual delivery-month contracts, so we no longer attempt a strip.
-    const spot = params.source === 'energy'
-      ? await fetchSpotEnergy(params.energyName!)
-      : await fetchSpotFmp(params.fmpSpotSym!);
-    if (spot == null) {
-      return new Response(JSON.stringify({ error: 'spot_unavailable' }), {
+    const cacheKey = `${commodity}:${monthsAhead}`;
+    const hit = cache.get(cacheKey);
+    if (hit && Date.now() - hit.at < CACHE_TTL_MS) {
+      return new Response(JSON.stringify(hit.payload), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=21600', 'X-Cache': 'HIT' },
+      });
+    }
+
+    const { asOf, curve } = await fetchMassiveCurve(product.code, monthsAhead);
+    if (curve.length < 3) {
+      logger.warn(`Massive returned ${curve.length} contracts for ${commodity} (${product.code})`);
+      return new Response(JSON.stringify({ error: 'curve_unavailable' }), {
         status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    logger.info(`Spot for ${commodity} (${params.source}): ${spot}`);
-    return new Response(
-      JSON.stringify({
-        commodity,
-        label: params.label,
-        spot,
-        source: 'market' as const,
-        provider: params.source === 'energy' ? 'OilPriceAPI' : 'FMP Starter',
-        asOf: new Date().toISOString(),
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=300' } },
-    );
+    const m1 = curve[0]?.price ?? null;
+    const m2 = curve[1]?.price ?? null;
+    const structure: 'contango' | 'backwardation' | 'flat' | 'unknown' =
+      m1 == null || m2 == null ? 'unknown'
+        : m2 > m1 * 1.001 ? 'contango'
+        : m2 < m1 * 0.999 ? 'backwardation'
+        : 'flat';
+    const rollYield = m1 && m2 ? ((m2 - m1) / m1) * 100 : null;
+
+    const payload = {
+      commodity,
+      label: product.label,
+      source: 'market' as const,
+      provider: 'Massive Futures Basic',
+      asOf,
+      spot: m1,           // M1 settlement is the closest proxy to spot on EOD data
+      curve,
+      m1,
+      m2,
+      structure,
+      rollYield,
+    };
+    cache.set(cacheKey, { at: Date.now(), payload });
+
+    logger.info(`Curve for ${commodity} (${product.code}) asOf=${asOf}: ${curve.length} pts, m1=${m1}, m2=${m2}, ${structure}`);
+    return new Response(JSON.stringify(payload), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=21600', 'X-Cache': 'MISS' },
+    });
   } catch (err) {
     logger.error('fetch-forward-curve failed', err);
     return new Response(JSON.stringify({ error: 'fetch_failed' }), {
