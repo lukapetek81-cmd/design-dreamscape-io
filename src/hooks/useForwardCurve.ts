@@ -10,11 +10,14 @@ export interface ForwardCurvePoint {
 
 export interface ForwardCurveResponse {
   commodity: string;
+  spot: number;
   curve: ForwardCurvePoint[];
   structure: 'contango' | 'backwardation' | 'flat' | 'unknown';
   rollYield: number | null;
   m1: number | null;
   m2: number | null;
+  source: 'model' | 'market';
+  model?: { type: string; riskFree: number; storage: number; convenience: number; seasonal: boolean };
 }
 
 export const useForwardCurve = (commodity: string | null, enabled = true) => {
