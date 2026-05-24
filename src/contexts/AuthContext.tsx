@@ -415,7 +415,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const isGuest = !user;
-  const tier: Tier = tierFromProfile(profile?.subscription_active, profile?.subscription_tier);
+  const baseTier: Tier = tierFromProfile(profile?.subscription_active, profile?.subscription_tier);
+
+  // Dev/preview override: visit any page with ?preview=pro|premium|off to simulate a tier
+  // locally (persisted in localStorage as `tier_preview`). Set ?preview=off to clear.
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search);
+    const p = params.get('preview');
+    if (p === 'pro' || p === 'premium') localStorage.setItem('tier_preview', p);
+    else if (p === 'off' || p === 'clear') localStorage.removeItem('tier_preview');
+  }
+  const previewTier =
+    typeof window !== 'undefined'
+      ? (localStorage.getItem('tier_preview') as Tier | null)
+      : null;
+  const tier: Tier = previewTier ?? baseTier;
   // isPremium = "any paid tier" (Premium or Pro). isPro = Pro-only features.
   const isPremium = tier !== 'free';
   const isPro = tier === 'pro';
