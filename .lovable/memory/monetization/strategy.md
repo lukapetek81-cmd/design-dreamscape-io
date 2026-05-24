@@ -51,3 +51,5 @@ type: feature
 - Highest-leverage build: price alerts (push notifications). Expected lift: 1% → 3–4% conversion.
 - iOS launch gated on Android hitting $500 MRR or 5K MAU.
 - ASO: target `commodity prices app` (KD 0), `gold price app` (KD 42), `commodity portfolio` (KD 0) in Play Store listing.
+
+**Price alerts (shipped 2026-05-24)**: Free=1 active, Premium=50 active. Tables `price_alerts` + `price_alert_triggers` with limit-enforcing trigger. Edge function `evaluate-price-alerts` runs every 5 min via pg_cron (manual setup — see `docs/PRICE_ALERTS_SETUP.md`). In-app surface via `AlertNotificationBell` in Dashboard header + `/alerts` page. Native push (FCM) is a follow-up — current implementation is polling-based.

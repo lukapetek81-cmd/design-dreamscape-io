@@ -13,6 +13,7 @@ import { useAvailableCommodities, Commodity } from '@/hooks/useCommodityData';
 import { Button } from '@/components/ui/button';
 import { OfflineIndicator } from '@/components/OfflineIndicator';
 import PremiumUpsellCard from '@/components/PremiumUpsellCard';
+import AlertNotificationBell from '@/components/AlertNotificationBell';
 
 const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -193,6 +194,7 @@ const DashboardContent = ({
                   <div className={`w-2 h-2 rounded-full ${
                     loading ? 'bg-blue-500' : error ? 'bg-red-500' : 'bg-green-500'
                   }`} />
+                  <AlertNotificationBell />
                   <UserProfile />
                 </div>
               </div>
@@ -217,6 +219,7 @@ const DashboardContent = ({
                       {loading ? 'Loading' : error ? 'Error' : delayStatus.delayText}
                     </span>
                   </div>
+                  <AlertNotificationBell />
                   <UserProfile />
                 </div>
               </div>
