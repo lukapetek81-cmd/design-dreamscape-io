@@ -50,6 +50,21 @@ function getKey(): string {
 export async function fetchFmpQuotes(symbols: string[]): Promise<FmpQuote[]> {
   const key = getKey();
   if (!key || symbols.length === 0) return [];
+  // TEMP: probe alternate commodity symbol formats so we can fix the map.
+  if (symbols.includes('KC=F')) {
+    for (const probe of ['KCUSX', 'KC', 'KCUSD', 'KCH26', 'COFFEE']) {
+      try {
+        const r = await fetch(`${FMP_BASE}/quote?symbol=${probe}&apikey=${key}`);
+        const t = await r.text();
+        console.warn(`[fmp-probe] ${probe} -> ${r.status} ${t.slice(0, 180)}`);
+      } catch (e) { console.warn(`[fmp-probe] ${probe} -> err ${e}`); }
+    }
+    try {
+      const r = await fetch(`${FMP_BASE}/commodities-list?apikey=${key}`);
+      const t = await r.text();
+      console.warn(`[fmp-probe] commodities-list -> ${r.status} ${t.slice(0, 600)}`);
+    } catch (e) { console.warn(`[fmp-probe] commodities-list err ${e}`); }
+  }
   // Stable endpoint /stable/quote accepts a single ?symbol= value. Fan out
   // to one request per symbol in parallel (Starter plan: ~300 req/min).
   const out = await Promise.all(symbols.map((sym) => fetchOneStableQuote(sym, key)));
