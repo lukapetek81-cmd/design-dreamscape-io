@@ -95,9 +95,13 @@ export async function fetchContractDailyClose(
   ticker: string,
   date: string,               // 'YYYY-MM-DD'
 ): Promise<number | null> {
-  const json = await get(`/futures/v1/aggs/${encodeURIComponent(ticker)}/range/1/day/${date}/${date}`);
+  const json = await get(`/futures/v1/aggs/${encodeURIComponent(ticker)}`, {
+    resolution: '1session',
+    window_start: date,
+    limit: 1,
+  });
   const bar = json?.results?.[0];
-  const close = bar?.c ?? bar?.close;
+  const close = bar?.settlement_price ?? bar?.close;
   return typeof close === 'number' && close > 0 ? close : null;
 }
 
@@ -151,25 +155,30 @@ export async function fetchMassiveDailyBars(
   fromDate: string,
   toDate: string,
 ): Promise<MassiveBar[]> {
-  const json = await get(
-    `/futures/v1/aggs/${encodeURIComponent(ticker)}/range/1/day/${fromDate}/${toDate}`,
-  );
+  const json = await get(`/futures/v1/aggs/${encodeURIComponent(ticker)}`, {
+    resolution: '1session',
+    'window_start.gte': fromDate,
+    'window_start.lte': toDate,
+    'sort': 'window_start.asc',
+    limit: 5000,
+  });
   const arr = json?.results;
   if (!Array.isArray(arr)) return [];
   return arr
     .map((b: any) => {
-      // Massive uses Polygon-style short keys: t (ms), o, h, l, c, v
-      const tMs = typeof b.t === 'number' ? b.t : Date.parse(b.date || b.timestamp || '');
-      const dateStr = Number.isFinite(tMs)
-        ? new Date(tMs).toISOString().slice(0, 10)
-        : String(b.date || '').slice(0, 10);
+      // window_start is a nanosecond Unix timestamp; session_end_date is the
+      // human trading date.
+      const dateStr = String(b.session_end_date || '').slice(0, 10) ||
+        (typeof b.window_start === 'number'
+          ? new Date(b.window_start / 1_000_000).toISOString().slice(0, 10)
+          : '');
       return {
         date: dateStr,
-        open: Number(b.o ?? b.open),
-        high: Number(b.h ?? b.high),
-        low: Number(b.l ?? b.low),
-        close: Number(b.c ?? b.close),
-        volume: typeof (b.v ?? b.volume) === 'number' ? (b.v ?? b.volume) : undefined,
+        open: Number(b.open),
+        high: Number(b.high),
+        low: Number(b.low),
+        close: Number(b.settlement_price ?? b.close),
+        volume: typeof b.volume === 'number' ? b.volume : undefined,
       } as MassiveBar;
     })
     .filter((b) => b.date && Number.isFinite(b.close) && b.close > 0)
