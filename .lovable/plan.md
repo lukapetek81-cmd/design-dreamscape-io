@@ -1,84 +1,86 @@
-## Goal
+# Forward Curve → Massive Futures Basic
 
-Migrate non-energy commodity sourcing from CommodityPriceAPI (CPA) to FMP Starter (`/v3/quote/`), drop ~12 niche commodities that FMP cannot quote, and switch the forward curve to FMP's individual monthly contract symbols for real term-structure data.
+Replace the broken FMP per-contract path with real CME/CBOT/COMEX/NYMEX settlement data from Massive's free tier. Restore the multi-month strip + Bloomberg chart, labelled as "EOD settlement".
 
-Energy stays on OilPriceAPI per project rule (mem://integrations/energy-data-sourcing).
+## Scope
+
+In:
+- 9 commodity roots: CL, BZ, NG (energy), GC, SI, HG (metals), ZC, ZS, ZW (grains)
+- 12-month forward strip, end-of-day settlement prices
+- Server-side cache so we stay far under 5 req/min
+- Restore Bloomberg-style chart + contract table from earlier work
+
+Out:
+- Intraday refresh (requires $29 Starter)
+- Spot-only commodities not on US futures exchanges (stay on FMP/OilPriceAPI)
+- Any change to dashboard, news, or trading pages
+
+## Prerequisites
+
+User actions, in order:
+1. Sign up at https://massive.com/dashboard for the free Futures Basic plan
+2. Copy the API key
+3. Paste it into Lovable when prompted for `MASSIVE_API_KEY`
+
+After the key lands I can deploy and test.
+
+## Implementation
+
+### 1. New shared client — `supabase/functions/_shared/massive-client.ts`
+
+Two thin wrappers over Massive REST v1:
+
+- `listActiveContracts(productCode, asOfDate)` → `GET /futures/v1/contracts?product_code={CL}&active=true&date={YYYY-MM-DD}&limit=24&sort=last_trade_date.asc`
+  Returns array of `{ ticker, last_trade_date, days_to_maturity, expiry_month }`.
+- `fetchContractDailyClose(ticker, date)` → `GET /futures/v1/aggs/{ticker}/range/1/day/{date}/{date}` returning settlement close.
+  Batched per root: 1 contracts call + N aggregate calls = N+1 calls per curve refresh.
+
+Auth via `Authorization: Bearer ${MASSIVE_API_KEY}`. All errors swallowed → null, never throw.
+
+### 2. Rewrite `supabase/functions/fetch-forward-curve/index.ts`
+
+- Drop the single-point logic added last round.
+- Per request: list active contracts for the root → take next 12 by `last_trade_date` → fetch yesterday's close for each.
+- Build the curve, compute m1, m2, structure (contango/backwardation/flat), roll yield.
+- Server-side response cache: `Cache-Control: public, max-age=21600` (6h) plus an in-memory `Map` keyed by commodity to hold the result inside the worker.
+- Returns:
+  ```
+  { commodity, label, source: 'market', provider: 'Massive Futures Basic',
+    asOf: 'YYYY-MM-DD' (settlement date),
+    spot, curve: [{symbol, expiry, monthIdx, price}], m1, m2, structure, rollYield }
+  ```
+- If <3 contracts return prices → `502 curve_unavailable` (no model fallback, per earlier decision).
+
+### 3. Frontend — restore the Bloomberg chart
+
+- `src/hooks/useForwardCurve.ts`: expand response interface back to `curve / m1 / m2 / structure / rollYield`, plus `asOf`.
+- `src/pages/ForwardCurves.tsx`: bring back the ComposedChart + contract table from the earlier iteration (currently a single-point view). Status strip shows `EOD · settlement {asOf}` instead of the live UTC clock. Amber notice text updated to:
+  > "End-of-day settlement curve from CME/NYMEX/COMEX/CBOT via Massive. Refreshes after each US futures settlement (~17:00 CT)."
+
+### 4. Rate-budget math
+
+- 9 roots × (1 contracts + 12 aggregates) = **117 calls per full refresh of every commodity**
+- 6h cache → at most 4 refreshes/day → **~470 calls/day**, easily within "5/min" if a single user triggers them sequentially. Concurrent triggers serialised by the in-memory cache.
+- One user clicking through all 9 commodities cold = 9 sequential refreshes spaced over ~2 min → well inside the budget.
+
+### 5. Cleanup
+
+- Leave `fmp-client.ts → fetchFmpFuturesCurve` in place (still imported by tests/types) but stop calling it from forward-curve. No deletions to avoid touching unrelated files.
+- Add memory note: `mem://integrations/massive-futures` — "Forward curve uses Massive Futures Basic (free, EOD, 5 req/min). Server cache TTL 6h."
+
+## Out of scope / deferred
+
+- Switching to Starter ($29) for 10-min delayed intraday — flagged in code comment for later.
+- Per-user API keys — using one shared `MASSIVE_API_KEY` secret.
+- Historical curve archive / snapshots — only "latest settlement" stored.
+
+## Validation steps after deploy
+
+1. Hit `/functions/v1/fetch-forward-curve` with `{commodity:'gold'}` via curl-edge-functions → expect 12 prices, source=market.
+2. Repeat for `wti`, `corn`. Confirm `structure` matches the visual curve.
+3. Open `/forward-curves` in preview, cycle the 9 commodities, confirm chart + table populate, settlement date shows yesterday.
+4. Check edge-function-logs for any `[fetch-forward-curve] WARN` lines.
 
 ---
 
-## Step 1 — Trim the catalog (drop 12 FMP-unsupported commodities)
-
-Remove from `supabase/functions/_shared/commodity-mappings.ts`:
-
-- **Metals (5):** Iron Ore, Hot-Rolled Coil Steel, Titanium, Lithium, Cobalt
-- **Grains (1):** Sunflower Oil
-- **Softs (3):** UK Sugar No 5, Palm Oil, Industrial Ethanol (industrial)
-- **Industrials (1):** Rubber
-- **Livestock (1):** Milk
-- **Misc (1):** Steel (LME)
-
-Result: 46 → 34 commodities. Also remove these entries from `COMMODITY_PRICE_API_SYMBOLS`, `PREMIUM_COMMODITIES`, and `CATEGORY_MAPPINGS`.
-
-## Step 2 — Add FMP symbol map for the remaining 14 non-energy commodities
-
-New constant in `commodity-mappings.ts`: `FMP_SYMBOLS` mapping our commodity name → FMP front-month continuous symbol (already used in catalog: `GC=F`, `SI=F`, `HG=F`, `PL=F`, `PA=F`, `ALI=F`, `ZNC=F`, `PBF=F`, `NIF=F`, `SN=F`, `ZC=F`, `ZW=F`, `ZS=F`, `ZL=F`, `ZM=F`, `ZO=F`, `ZR=F`, `RS=F`, `KC=F`, `SB=F`, `CT=F`, `CC=F`, `OJ=F`, `LE=F`, `HE=F`, `LBS=F`).
-
-Add `FMP_FUTURES_ROOTS` for the 9 forward-curve commodities (e.g. `gold → GC`, `corn → ZC`, `wheat → ZW`, etc.) — needed for monthly contract symbols like `GCZ26`.
-
-## Step 3 — New shared FMP client
-
-`supabase/functions/_shared/fmp-client.ts`:
-
-- `fetchFmpQuote(symbol)` — single quote
-- `fetchFmpQuotes(symbols[])` — comma-joined batch via `/v3/quote/{a,b,c}` (one call, all symbols)
-- `fetchFmpFuturesCurve(root, monthsAhead)` — generates monthly contract symbols (`GCG26`,`GCH26`,…) and calls one batch endpoint; returns `{symbol, expiry, price}[]`
-- Centralised key read (`FMP_API_KEY`), error handling, 6-hour cache, rate-limit aware retry.
-
-## Step 4 — Rewrite `_shared/commodity-service.ts` to use FMP
-
-Replace the CPA branch in `fetchAllCommodities` with a single batched FMP call (`fetchFmpQuotes(remaining 26 non-energy symbols)`). Energy branch (OilPriceAPI) untouched. Drop `cpaApiKey`, `CENT_QUOTED_SYMBOLS`, CPA-specific normalisation logic. Keep the same `CommodityData` output shape so consumers don't change.
-
-## Step 5 — Rewrite `fetch-forward-curve` for real curves
-
-In `supabase/functions/fetch-forward-curve/index.ts`:
-
-- Energy commodities (wti/brent/natgas): keep OilPriceAPI front-month, **still cost-of-carry modelled** (no Business+). Tag `source: 'model'`.
-- Non-energy (gold/silver/copper/corn/soybeans/wheat): call `fetchFmpFuturesCurve(root, monthsAhead)`. Tag `source: 'market'`.
-- Graceful fallback: if any FMP contract symbol returns null/empty (Starter plan unsupported month), fall back to cost-of-carry for that single commodity and tag `source: 'model'`.
-- Response includes `source`, contango/backwardation detection unchanged.
-
-## Step 6 — Frontend badge "Live ICE / Modelled"
-
-In the Forward Curve component (under `src/`), read the response `source` field and render a small pill: `Live` (teal) when `source === 'market'`, `Modelled` (amber) when `source === 'model'`. Keep the existing amber disclaimer for modelled.
-
-## Step 7 — Clean up CPA references
-
-- Delete `COMMODITY_PRICE_API_SYMBOLS`, `CENT_QUOTED_SYMBOLS`, and the CPA exports.
-- Search-and-remove CPA usage in: `fetch-commodity-data`, `fetch-commodity-prices`, `realtime-commodity-stream`, `audit-premium-freshness`, `enhanced-commodity-news`, `health-check`, `fetch-all-commodities`, `api-docs`, `direct-exchange-feeds`, `src/services/commodityApi.ts`, `src/components/ApiSettings.tsx`, `src/pages/APIComparison.tsx`, `src/utils/preloadCriticalResources.ts`, `src/utils/security.ts`.
-- Keep `COMMODITYPRICE_API_KEY` secret in Supabase but unused (don't delete in code—user can revoke later).
-
-## Step 8 — Update memory
-
-Update `mem://integrations/fmp-data-config` to note: Starter plan, `/v3/quote/` batch for spot + individual contract symbols (e.g. `GCG26`) for full curve. Add new `mem://integrations/cpa-removed` constraint memory listing the 12 dropped commodities and why (FMP doesn't quote them, CPA dropped for cost).
-
-## Step 9 — Cleanup migration (optional, deferred)
-
-No DB schema change needed. Snapshots for dropped commodities can stay (historical record). Add a one-time SQL script later if you want to purge them — not part of this plan.
-
----
-
-## Technical notes
-
-- **FMP batch endpoint:** `GET https://financialmodelingprep.com/api/v3/quote/SYM1,SYM2,SYM3?apikey=…` returns array. Single call covers all spot quotes per refresh cycle (~1 call/6h with current cache).
-- **FMP futures contract symbols:** format `{ROOT}{MONTH_CODE}{YY}` — same MONTH_CODES already in `fetch-forward-curve`. Example: `GCG26` (Gold Feb 2026). Verified available on Starter for energy + metals + grains + softs.
-- **Rate budget:** Dashboard refresh ~1 batch call/6h × 30 days = ~120 calls/mo. Forward curve ~9 commodities × ~4 user-triggered loads/day = ~1,100 calls/mo. Total <2% of Starter's 300K monthly budget. Well clear of the old Basic-tier per-minute limit.
-- **No DB migration needed.** All changes are code-only.
-- **Rollback:** if FMP Starter has unexpected issues, revert to CPA branch by keeping the old code paths in git history (don't physically delete `commodity-service.ts` CPA branch in step 4 until step 7 confirms cutover works).
-
----
-
-## Out of scope
-
-- Removing the CPA secret from Supabase (user-driven).
-- Real energy forward curves (would need OilPriceAPI Business+ — separate decision).
-- UI redesign of Forward Curve chart beyond the source badge.
+**One question before I touch code:** do you also want me to wire **Massive Futures Basic** as the source for the dashboard's commodity *front-month* prices (replacing the FMP `=F` continuous symbols for the 9 covered roots)? Or keep that flow on FMP for now and limit this change to the forward-curve page only?
