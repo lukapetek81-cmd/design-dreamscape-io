@@ -96,9 +96,12 @@ export async function fetchContractDailyClose(
   ticker: string,
   date: string,               // 'YYYY-MM-DD'
 ): Promise<number | null> {
+  // Use a small gte/lte window so the request shape matches the working
+  // historical bars call. Single-date `window_start=` was returning empty.
   const json = await get(`/futures/v1/aggs/${encodeURIComponent(ticker)}`, {
     resolution: '1session',
-    window_start: date,
+    'window_start.gte': date,
+    'window_start.lte': date,
     limit: 1,
   });
   const bar = json?.results?.[0];
@@ -239,8 +242,41 @@ export async function fetchMassiveCurve(
   productCode: string,
   monthsAhead: number,
 ): Promise<{ asOf: string; curve: { symbol: string; expiry: string; monthIdx: number; price: number }[] }> {
-  // Try up to 5 prior business days to find a settlement date with prices
-  // (handles weekends + holidays without hard-coding a calendar).
+  // Fast path (Starter): /snapshot returns the whole strip with settlements
+  // in a single call. Order by last_trade_date so [0] is front-month.
+  const snap = await get('/futures/v1/snapshot', {
+    product_code: productCode,
+    order: 'last_trade_date.asc',
+    limit: monthsAhead + 4,
+  });
+  const rows = Array.isArray(snap?.results) ? snap.results : [];
+  if (rows.length > 0) {
+    let asOf = yesterdayUtcDate();
+    const curve = rows
+      .filter((r: any) => r?.ticker && r?.last_trade_date && (r.type ?? 'single') === 'single')
+      .slice(0, monthsAhead)
+      .map((r: any, i: number) => {
+        const session = r.session ?? {};
+        const price = Number(
+          session.close ?? session.settlement_price ?? session.last ?? r.price,
+        );
+        const rowAsOf = String(r.session_end_date ?? r.last_trade_date ?? '').slice(0, 10);
+        if (rowAsOf && rowAsOf < asOf) asOf = rowAsOf;
+        if (i === 0 && rowAsOf) asOf = rowAsOf;
+        return {
+          symbol: String(r.ticker),
+          expiry: String(r.last_trade_date).slice(0, 7),
+          monthIdx: i + 1,
+          price: Number.isFinite(price) && price > 0 ? +price.toFixed(4) : null,
+        };
+      })
+      .filter((p): p is { symbol: string; expiry: string; monthIdx: number; price: number } =>
+        typeof p.price === 'number' && p.price > 0,
+      );
+    if (curve.length >= 3) return { asOf, curve };
+  }
+
+  // Fallback: walk back up to 5 prior business days via /contracts + /aggs.
   for (let dayOffset = 1; dayOffset <= 5; dayOffset++) {
     const d = new Date(Date.now() - dayOffset * 24 * 60 * 60 * 1000);
     const asOf = d.toISOString().slice(0, 10);
