@@ -251,6 +251,95 @@ export type Database = {
         }
         Relationships: []
       }
+      price_alert_triggers: {
+        Row: {
+          alert_id: string
+          commodity_name: string
+          condition: string
+          dismissed_at: string | null
+          id: string
+          target_price: number
+          triggered_at: string
+          triggered_price: number
+          user_id: string
+        }
+        Insert: {
+          alert_id: string
+          commodity_name: string
+          condition: string
+          dismissed_at?: string | null
+          id?: string
+          target_price: number
+          triggered_at?: string
+          triggered_price: number
+          user_id: string
+        }
+        Update: {
+          alert_id?: string
+          commodity_name?: string
+          condition?: string
+          dismissed_at?: string | null
+          id?: string
+          target_price?: number
+          triggered_at?: string
+          triggered_price?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_alert_triggers_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "price_alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      price_alerts: {
+        Row: {
+          commodity_name: string
+          commodity_symbol: string | null
+          condition: string
+          cooldown_minutes: number
+          created_at: string
+          id: string
+          is_active: boolean
+          last_triggered_at: string | null
+          note: string | null
+          target_price: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          commodity_name: string
+          commodity_symbol?: string | null
+          condition: string
+          cooldown_minutes?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_triggered_at?: string | null
+          note?: string | null
+          target_price: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          commodity_name?: string
+          commodity_symbol?: string | null
+          condition?: string
+          cooldown_minutes?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_triggered_at?: string | null
+          note?: string | null
+          target_price?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       price_comparisons: {
         Row: {
           commodities: Json
