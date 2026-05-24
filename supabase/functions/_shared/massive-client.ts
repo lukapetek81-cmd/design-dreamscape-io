@@ -121,7 +121,9 @@ export async function fetchMassiveFrontMonth(
     const d = new Date(Date.now() - dayOffset * 24 * 60 * 60 * 1000);
     const asOf = d.toISOString().slice(0, 10);
 
-    const contracts = await listActiveContracts(productCode, asOf, 1);
+    // Fetch a wider window because Massive's API can't sort by expiry —
+    // we need to pull several and pick the earliest client-side.
+    const contracts = await listActiveContracts(productCode, asOf, 24);
     const front = contracts[0];
     if (!front) continue;
 
