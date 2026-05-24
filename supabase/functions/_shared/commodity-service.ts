@@ -3,9 +3,14 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import {
   COMMODITY_SYMBOLS,
   FMP_SYMBOLS,
+  MASSIVE_PRODUCT_CODES,
   PREMIUM_COMMODITIES,
 } from './commodity-mappings.ts';
 import { fetchFmpQuotes, fetchFmpHistorical } from './fmp-client.ts';
+import {
+  fetchMassiveFrontMonth,
+  fetchMassiveFrontMonthBars,
+} from './massive-client.ts';
 
 export interface CommodityData {
   symbol: string;
@@ -81,7 +86,12 @@ export class CommodityService {
         this.fetchAllFromOilPriceApi(includePremium),
       ]);
 
-      const merged = [...oilResults, ...fmpResults];
+      // Massive (CME/CBOT/COMEX/NYMEX non-energy) — throttled, depends on its
+      // own per-product cache. Runs after the fast batched calls so the cold
+      // path still returns oil + fmp immediately if Massive is slow.
+      const massiveResults = await this.fetchAllFromMassive(includePremium);
+
+      const merged = [...oilResults, ...fmpResults, ...massiveResults];
       const seen = new Set(merged.map((c) => c.name));
       for (const [name, info] of Object.entries(COMMODITY_SYMBOLS)) {
         if (seen.has(name)) continue;
@@ -99,14 +109,15 @@ export class CommodityService {
         this.logger.warn('Day-over-day change computation failed (non-fatal)', err);
       }
 
-      // Only cache if we got real data from BOTH providers — avoids locking in
-      // synthetic fallback prices for an hour after a transient outage.
-      if (fmpResults.length > 0 && oilResults.length > 0) {
+      // Only cache if we got real data from the two heavyweight providers —
+      // avoids locking in synthetic fallback prices for hours after a
+      // transient outage. Massive is optional; missing it doesn't invalidate.
+      if (oilResults.length > 0 && (massiveResults.length > 0 || fmpResults.length > 0)) {
         setCache(cacheKey, merged);
       } else {
-        this.logger.warn(`Skipping cache (${cacheKey}): fmp=${fmpResults.length}, oil=${oilResults.length}`);
+        this.logger.warn(`Skipping cache (${cacheKey}): oil=${oilResults.length}, massive=${massiveResults.length}, fmp=${fmpResults.length}`);
       }
-      this.logger.info(`Fetched ${merged.length} commodities (fmp=${fmpResults.length}, oil=${oilResults.length}, premium=${includePremium})`);
+      this.logger.info(`Fetched ${merged.length} commodities (oil=${oilResults.length}, massive=${massiveResults.length}, fmp=${fmpResults.length}, premium=${includePremium})`);
       return merged;
     } catch (error) {
       this.logger.error('Failed to fetch commodities', error);
