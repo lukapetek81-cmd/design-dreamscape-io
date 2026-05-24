@@ -1,9 +1,9 @@
-// Forward curve — hybrid sourcing:
-//   - Energy (WTI/Brent/NatGas): cost-of-carry MODEL on OilPriceAPI spot
-//     (OilPriceAPI Business+ needed for real ICE/NYMEX curves; not enabled).
-//   - Metals & grains (Gold/Silver/Copper/Corn/Soybeans/Wheat): REAL market
-//     curve from FMP Starter — individual monthly contract quotes
-//     (e.g. GCG26, ZCH27). Falls back to cost-of-carry if FMP returns nulls.
+// Forward curve — real-market sourcing:
+//   - All commodities: REAL monthly contract strip from FMP Starter
+//     (e.g. CLG26 = WTI Feb-26, GCG26 = Gold Feb-26, ZCH27 = Corn Mar-27).
+//   - Spot reference: OilPriceAPI for energy (per memory rule), FMP for the rest.
+//   - Cost-of-carry MODEL is the fallback when <60% of FMP contracts return
+//     prices (deep back-months or off-hours).
 // Pro-tier gated. JWT-verified. 5-min response cache.
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
@@ -34,7 +34,7 @@ interface ModelParams {
 const MODEL: Record<string, ModelParams> = {
   wti:      { label: 'WTI Crude',   root: 'CL', source: 'energy', energyName: 'WTI Crude Oil',   storage: 0.06, conv: 0.04 },
   brent:    { label: 'Brent Crude', root: 'BZ', source: 'energy', energyName: 'Brent Crude Oil', storage: 0.06, conv: 0.04 },
-  // Natural gas: strong winter premium (Nov–Feb), summer discount.
+  // Natural gas: strong winter premium (Nov–Feb), summer discount (fallback only).
   natgas:   { label: 'Natural Gas', root: 'NG', source: 'energy', energyName: 'Natural Gas',     storage: 0.12, conv: 0.02,
               seasonal: [1.08,1.06,1.00,0.95,0.93,0.94,0.96,0.98,1.00,1.02,1.06,1.10] },
   gold:     { label: 'Gold',        root: 'GC', source: 'fmp', fmpSpotSym: 'GC=F',   storage: 0.005, conv: 0.0 },
@@ -160,11 +160,12 @@ serve(async (req) => {
       });
     }
 
-    // 2a. FMP source: try the real monthly contract strip first.
+    // 2a. Try the real FMP monthly contract strip for EVERY commodity
+    //     (energy roots CL/BZ/NG are on NYMEX/ICE and quoted by FMP Starter too).
     let curve: Array<{ symbol: string; expiry: string; monthIdx: number; price: number }> = [];
     let usedSource: 'market' | 'model' = 'model';
 
-    if (params.source === 'fmp') {
+    {
       const root = FMP_FUTURES_ROOTS[commodity] ?? params.root;
       const realCurve = await fetchFmpFuturesCurve(root, monthsAhead);
       const withPrice = realCurve.filter((c) => typeof c.price === 'number' && c.price > 0);
