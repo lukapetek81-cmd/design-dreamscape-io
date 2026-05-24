@@ -35,6 +35,25 @@ export interface MassiveContract {
   active: boolean;
 }
 
+export interface MassiveFrontMonth {
+  ticker: string;
+  productCode: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  volume?: number;
+  asOf: string;
+}
+
+export interface MassiveBar {
+  date: string;      // 'YYYY-MM-DD'
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume?: number;
+}
+
 /**
  * List active contracts for a futures product code, sorted by expiry ascending.
  * One API call.
