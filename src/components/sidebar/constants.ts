@@ -1,4 +1,4 @@
-import { Zap, Coins, Wheat, Beef, Coffee, Briefcase, BarChart3, Star, Filter, Calendar, Lightbulb, GraduationCap, Users, Activity, Factory, Calculator, Bell } from "lucide-react";
+import { Zap, Coins, Wheat, Beef, Coffee, Briefcase, BarChart3, Star, Filter, Calendar, Lightbulb, GraduationCap, Users, Activity, Factory, Calculator, Bell, TrendingUp, GitCompare } from "lucide-react";
 import { CommodityGroup, MarketTool } from "./types";
 
 export const COMMODITY_GROUPS: CommodityGroup[] = [
@@ -18,6 +18,12 @@ export const MARKET_TOOLS: MarketTool[] = [
   { id: "screener", label: "Screener", icon: Filter, color: "bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800 text-orange-600 dark:text-orange-400", path: "/screener" },
   { id: "calendar", label: "Calendar", icon: Calendar, color: "bg-cyan-50 dark:bg-cyan-950/20 border-cyan-200 dark:border-cyan-800 text-cyan-600 dark:text-cyan-400", path: "/calendar" },
   { id: "position-calculator", label: "Position Size Calculator", icon: Calculator, color: "bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400", path: "/position-calculator" },
+];
+
+export const PRO_TOOLS: MarketTool[] = [
+  { id: "forward-curves", label: "Forward Curves", icon: TrendingUp, color: "bg-indigo-50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400", path: "/forward-curves" },
+  { id: "spreads", label: "Spread Calculator", icon: GitCompare, color: "bg-teal-50 dark:bg-teal-950/20 border-teal-200 dark:border-teal-800 text-teal-600 dark:text-teal-400", path: "/spreads" },
+  { id: "cot", label: "COT Reports", icon: Users, color: "bg-fuchsia-50 dark:bg-fuchsia-950/20 border-fuchsia-200 dark:border-fuchsia-800 text-fuchsia-600 dark:text-fuchsia-400", path: "/cot" },
 ];
 
 export const COMMUNITY_TOOLS: MarketTool[] = [
