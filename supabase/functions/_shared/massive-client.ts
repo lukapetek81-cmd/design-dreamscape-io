@@ -117,6 +117,12 @@ export interface MassiveBar {
   volume?: number;
 }
 
+type SnapshotCurveCandidate = {
+  row: any;
+  expiry: { label: string; sortKey: string } | null;
+  price: number;
+};
+
 /**
  * List active contracts for a futures product code, sorted by expiry ascending.
  * One API call.
@@ -312,13 +318,13 @@ export async function fetchMassiveCurve(
   const rows = Array.isArray(snap?.results) ? snap.results : [];
   if (rows.length > 0) {
     let asOf = yesterdayUtcDate();
-    const curve = rows
+    const curve = (rows as any[])
       .filter((r: any) => r?.ticker && r?.product_code === productCode && (r.type ?? 'single') === 'single')
-      .map((r: any) => ({ row: r, expiry: snapshotExpiry(r, productCode), price: snapshotPrice(r) }))
-      .filter((r) => r.expiry && Number.isFinite(r.price) && r.price > 0)
-      .sort((a, b) => a.expiry!.sortKey.localeCompare(b.expiry!.sortKey))
+      .map((r: any): SnapshotCurveCandidate => ({ row: r, expiry: snapshotExpiry(r, productCode), price: snapshotPrice(r) }))
+      .filter((r: SnapshotCurveCandidate) => r.expiry && Number.isFinite(r.price) && r.price > 0)
+      .sort((a: SnapshotCurveCandidate, b: SnapshotCurveCandidate) => a.expiry!.sortKey.localeCompare(b.expiry!.sortKey))
       .slice(0, monthsAhead)
-      .map((r, i) => {
+      .map((r: SnapshotCurveCandidate, i: number) => {
         const rowAsOf = snapshotAsOf(r.row);
         if (rowAsOf && rowAsOf < asOf) asOf = rowAsOf;
         if (i === 0 && rowAsOf) asOf = rowAsOf;
