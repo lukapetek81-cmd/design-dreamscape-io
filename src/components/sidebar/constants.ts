@@ -1,4 +1,4 @@
-import { Zap, Coins, Wheat, Beef, Coffee, Briefcase, BarChart3, Star, Filter, Calendar, Lightbulb, GraduationCap, Users, Activity, Factory, Calculator } from "lucide-react";
+import { Zap, Coins, Wheat, Beef, Coffee, Briefcase, BarChart3, Star, Filter, Calendar, Lightbulb, GraduationCap, Users, Activity, Factory, Calculator, Bell } from "lucide-react";
 import { CommodityGroup, MarketTool } from "./types";
 
 export const COMMODITY_GROUPS: CommodityGroup[] = [
@@ -12,6 +12,7 @@ export const COMMODITY_GROUPS: CommodityGroup[] = [
 
 export const MARKET_TOOLS: MarketTool[] = [
   { id: "portfolio", label: "Portfolio", icon: Briefcase, color: "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400", path: "/portfolio" },
+  { id: "alerts", label: "Price Alerts", icon: Bell, color: "bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400", path: "/alerts" },
   { id: "correlation", label: "Correlation", icon: BarChart3, color: "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400", path: "/correlation" },
   { id: "watchlists", label: "Watchlists", icon: Star, color: "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400", path: "/watchlists" },
   { id: "screener", label: "Screener", icon: Filter, color: "bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800 text-orange-600 dark:text-orange-400", path: "/screener" },
