@@ -1,6 +1,8 @@
 // Modelled forward curve (cost-of-carry).
-// Spot price pulled from FMP `/v3/quote/{SYMBOL}=F` (works on Basic plan).
-// Curve generated as F(t) = S * exp((r + storage - convenience) * t/12).
+// Spot price sourced provider-by-commodity:
+//   - Energy (WTI, Brent, NatGas) → internal oil-price-api proxy (OilPriceAPI).
+//   - Metals & grains            → CommodityPriceAPI /v2/rates/latest.
+// No FMP dependency. Curve generated as F(t) = S * exp((r + storage - convenience) * t/12).
 // Pro-tier gated. JWT-verified. 5-min response cache.
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
@@ -18,26 +20,30 @@ const MONTH_CODES = ['F', 'G', 'H', 'J', 'K', 'M', 'N', 'Q', 'U', 'V', 'X', 'Z']
 const RISK_FREE = 0.045; // ~3M T-bill proxy. Refresh later via FRED DGS3MO.
 interface ModelParams {
   label: string;
-  spotSym: string;
+  root: string;                   // futures root used for synthetic contract symbols (e.g. 'CL')
+  source: 'energy' | 'cpa';
+  energyName?: string;            // OilPriceAPI commodity name (when source==='energy')
+  cpaSym?: string;                // CommodityPriceAPI symbol (when source==='cpa')
+  cpaCentQuoted?: boolean;        // divide CPA price by 100 when true
   storage: number;
   conv: number;
   seasonal?: number[];
 }
 const MODEL: Record<string, ModelParams> = {
-  wti:      { label: 'WTI Crude',    spotSym: 'CL=F', storage: 0.06, conv: 0.04 },
-  brent:    { label: 'Brent Crude',  spotSym: 'BZ=F', storage: 0.06, conv: 0.04 },
+  wti:      { label: 'WTI Crude',   root: 'CL', source: 'energy', energyName: 'WTI Crude Oil',   storage: 0.06, conv: 0.04 },
+  brent:    { label: 'Brent Crude', root: 'BZ', source: 'energy', energyName: 'Brent Crude Oil', storage: 0.06, conv: 0.04 },
   // Natural gas: strong winter premium (Nov–Feb), summer discount.
-  natgas:   { label: 'Natural Gas',  spotSym: 'NG=F', storage: 0.12, conv: 0.02,
+  natgas:   { label: 'Natural Gas', root: 'NG', source: 'energy', energyName: 'Natural Gas',     storage: 0.12, conv: 0.02,
               seasonal: [1.08,1.06,1.00,0.95,0.93,0.94,0.96,0.98,1.00,1.02,1.06,1.10] },
-  gold:     { label: 'Gold',         spotSym: 'GC=F', storage: 0.005, conv: 0.0 },
-  silver:   { label: 'Silver',       spotSym: 'SI=F', storage: 0.01,  conv: 0.0 },
-  copper:   { label: 'Copper',       spotSym: 'HG=F', storage: 0.02,  conv: 0.015 },
+  gold:     { label: 'Gold',        root: 'GC', source: 'cpa', cpaSym: 'XAU',         storage: 0.005, conv: 0.0 },
+  silver:   { label: 'Silver',      root: 'SI', source: 'cpa', cpaSym: 'XAG',         storage: 0.01,  conv: 0.0 },
+  copper:   { label: 'Copper',      root: 'HG', source: 'cpa', cpaSym: 'HG-SPOT',     storage: 0.02,  conv: 0.015 },
   // Grains: harvest discount, pre-harvest premium (rough US harvest cycles).
-  corn:     { label: 'Corn',         spotSym: 'ZC=F', storage: 0.05, conv: 0.01,
+  corn:     { label: 'Corn',        root: 'ZC', source: 'cpa', cpaSym: 'CORN',         storage: 0.05, conv: 0.01,
               seasonal: [1.03,1.04,1.05,1.06,1.07,1.06,1.02,0.97,0.94,0.95,0.97,1.00] },
-  soybeans: { label: 'Soybeans',     spotSym: 'ZS=F', storage: 0.05, conv: 0.01,
+  soybeans: { label: 'Soybeans',    root: 'ZS', source: 'cpa', cpaSym: 'SOYBEAN-FUT',  storage: 0.05, conv: 0.01,
               seasonal: [1.04,1.05,1.06,1.06,1.05,1.03,1.00,0.96,0.94,0.95,0.98,1.01] },
-  wheat:    { label: 'Wheat',        spotSym: 'ZW=F', storage: 0.05, conv: 0.01,
+  wheat:    { label: 'Wheat',       root: 'ZW', source: 'cpa', cpaSym: 'ZW-SPOT', cpaCentQuoted: true, storage: 0.05, conv: 0.01,
               seasonal: [1.02,1.03,1.04,1.05,1.04,1.00,0.96,0.95,0.97,0.99,1.00,1.01] },
 };
 
@@ -63,10 +69,33 @@ function genContracts(root: string, n: number) {
   return out;
 }
 
-const ROOT_FROM_SPOT: Record<string, string> = {
-  'CL=F': 'CL', 'BZ=F': 'BZ', 'NG=F': 'NG', 'GC=F': 'GC', 'SI=F': 'SI',
-  'HG=F': 'HG', 'ZC=F': 'ZC', 'ZS=F': 'ZS', 'ZW=F': 'ZW',
-};
+async function fetchSpotEnergy(name: string): Promise<number | null> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+  if (!supabaseUrl || !anonKey) return null;
+  const res = await fetch(`${supabaseUrl}/functions/v1/oil-price-api`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${anonKey}` },
+    body: JSON.stringify({ commodityName: name }),
+  });
+  if (!res.ok) return null;
+  const json = await res.json();
+  const price = json?.price ?? json?.data?.price ?? json?.[name]?.price;
+  return typeof price === 'number' && price > 0 ? price : null;
+}
+
+async function fetchSpotCpa(sym: string, centQuoted = false): Promise<number | null> {
+  const key = Deno.env.get('COMMODITYPRICE_API_KEY');
+  if (!key) return null;
+  const url = `https://api.commoditypriceapi.com/v2/rates/latest?symbols=${encodeURIComponent(sym)}`;
+  const res = await fetch(url, { headers: { 'x-api-key': key } });
+  if (!res.ok) return null;
+  const json = await res.json();
+  let raw = json?.rates?.[sym];
+  if (typeof raw !== 'number' || !(raw > 0)) return null;
+  if (centQuoted) raw = raw / 100;
+  return raw;
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -115,17 +144,13 @@ serve(async (req) => {
     }
     const { commodity, monthsAhead } = parsed.data;
     const params = MODEL[commodity];
-    const root = ROOT_FROM_SPOT[params.spotSym];
-    const contracts = genContracts(root, monthsAhead);
+    const contracts = genContracts(params.root, monthsAhead);
 
-    // 1. Fetch spot/front-month price from FMP (works on Basic plan).
-    const fmpKey = Deno.env.get('FMP_API_KEY');
-    if (!fmpKey) throw new Error('FMP_API_KEY missing');
-    const url = `https://financialmodelingprep.com/api/v3/quote/${params.spotSym}?apikey=${fmpKey}`;
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error(`FMP ${resp.status}`);
-    const quotes: Array<{ price: number | null }> = await resp.json();
-    const spot = quotes?.[0]?.price ?? null;
+    // 1. Fetch spot/front-month price from the right provider.
+    //    Energy → OilPriceAPI (via internal proxy). Metals/grains → CommodityPriceAPI.
+    const spot = params.source === 'energy'
+      ? await fetchSpotEnergy(params.energyName!)
+      : await fetchSpotCpa(params.cpaSym!, params.cpaCentQuoted);
     if (spot == null) {
       return new Response(JSON.stringify({ error: 'spot_unavailable' }), {
         status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -155,7 +180,7 @@ serve(async (req) => {
         : 'flat';
     const rollYield = m1 && m2 ? ((m2 - m1) / m1) * 100 : null;
 
-    logger.info(`Modelled curve for ${commodity}: spot=${spot}, m1=${m1}, m2=${m2}`);
+    logger.info(`Modelled curve for ${commodity} (src=${params.source}): spot=${spot}, m1=${m1}, m2=${m2}`);
     return new Response(
       JSON.stringify({
         commodity,
@@ -166,7 +191,7 @@ serve(async (req) => {
         m1,
         m2,
         source: 'model',
-        model: { type: 'cost_of_carry', riskFree: RISK_FREE, storage: params.storage, convenience: params.conv, seasonal: !!params.seasonal },
+        model: { type: 'cost_of_carry', spotSource: params.source === 'energy' ? 'oilpriceapi' : 'commoditypriceapi', riskFree: RISK_FREE, storage: params.storage, convenience: params.conv, seasonal: !!params.seasonal },
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=300' } },
     );
