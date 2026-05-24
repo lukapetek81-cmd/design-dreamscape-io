@@ -50,9 +50,19 @@ export async function fetchFmpQuotes(symbols: string[]): Promise<FmpQuote[]> {
   const url = `${FMP_BASE}/quote/${encodeURIComponent(joined)}?apikey=${key}`;
   try {
     const res = await fetch(url);
-    if (!res.ok) return [];
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      console.warn(`[fmp] quote ${joined} -> ${res.status} ${txt.slice(0, 200)}`);
+      return [];
+    }
     const arr = await res.json();
-    if (!Array.isArray(arr)) return [];
+    if (!Array.isArray(arr)) {
+      console.warn(`[fmp] quote ${joined} -> non-array response: ${JSON.stringify(arr).slice(0, 200)}`);
+      return [];
+    }
+    if (arr.length === 0) {
+      console.warn(`[fmp] quote ${joined} -> empty array`);
+    }
     return arr.map((q: any) => ({
       symbol: String(q.symbol ?? ''),
       price: typeof q.price === 'number' ? q.price : null,
