@@ -195,10 +195,14 @@ export async function fetchMassiveFrontMonth(
   // 1) Fast path: /snapshot (1 call).
   const snap = await get('/futures/v1/snapshot', {
     product_code: productCode,
-    order: 'last_trade_date.asc',
-    limit: 1,
+    sort: 'ticker.asc',
+    limit: 24,
   });
-  const row = Array.isArray(snap?.results) ? snap.results[0] : null;
+  const row = (Array.isArray(snap?.results) ? snap.results : [])
+    .filter((r: any) => r?.ticker && r?.product_code === productCode && (r.type ?? 'single') === 'single')
+    .map((r: any): SnapshotCurveCandidate => ({ row: r, expiry: snapshotExpiry(r, productCode), price: snapshotPrice(r) }))
+    .filter((r: SnapshotCurveCandidate) => r.expiry && Number.isFinite(r.price) && r.price > 0)
+    .sort((a: SnapshotCurveCandidate, b: SnapshotCurveCandidate) => a.expiry!.sortKey.localeCompare(b.expiry!.sortKey))[0]?.row ?? null;
   if (row) {
     const session = row.session ?? {};
     const price = snapshotPrice(row);
@@ -312,7 +316,7 @@ export async function fetchMassiveCurve(
   // in a single call. Order by last_trade_date so [0] is front-month.
   const snap = await get('/futures/v1/snapshot', {
     product_code: productCode,
-    order: 'last_trade_date.asc',
+    sort: 'ticker.asc',
     limit: monthsAhead + 4,
   });
   const rows = Array.isArray(snap?.results) ? snap.results : [];
