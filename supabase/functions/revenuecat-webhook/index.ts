@@ -7,6 +7,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { corsHeaders } from '../_shared/utils.ts'
 
 const PREMIUM_ENTITLEMENT = 'premium';
+const PRO_ENTITLEMENT = 'pro';
 
 interface RCEvent {
   type: string;
@@ -61,13 +62,24 @@ Deno.serve(async (req) => {
   }
 
   const entitlements = event.entitlement_ids ?? [];
-  const isPremiumEvent = entitlements.includes(PREMIUM_ENTITLEMENT) || entitlements.length === 0;
-  if (!isPremiumEvent) {
+  const isPaidEvent =
+    entitlements.includes(PREMIUM_ENTITLEMENT) ||
+    entitlements.includes(PRO_ENTITLEMENT) ||
+    entitlements.length === 0;
+  if (!isPaidEvent) {
     return new Response(JSON.stringify({ ignored: true }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
+
+  // Resolve tier from the highest-priority active entitlement.
+  // `pro` wins over `premium` so users on the Pro product get full features.
+  const resolvedTier = entitlements.includes(PRO_ENTITLEMENT)
+    ? 'pro'
+    : entitlements.includes(PREMIUM_ENTITLEMENT)
+      ? 'premium'
+      : 'premium'; // fallback for legacy events with no entitlement_ids
 
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
@@ -83,7 +95,7 @@ Deno.serve(async (req) => {
   if (ACTIVATING.has(event.type)) {
     update = {
       subscription_active: true,
-      subscription_tier: 'premium',
+      subscription_tier: resolvedTier,
       subscription_end: subscriptionEnd,
       billing_state: 'active',
       grace_period_expires_at: null,
@@ -102,7 +114,7 @@ Deno.serve(async (req) => {
     // Keep access during Google's grace window; surface a banner on the client.
     update = {
       subscription_active: true,
-      subscription_tier: 'premium',
+      subscription_tier: resolvedTier,
       subscription_end: subscriptionEnd,
       billing_state: 'grace',
       grace_period_expires_at: subscriptionEnd,
