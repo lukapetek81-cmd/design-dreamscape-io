@@ -31,9 +31,10 @@ const COMMODITY_OPTIONS = [
 
 interface AddPositionFormProps {
   onSuccess?: () => void;
+  portfolioId?: string;
 }
 
-const AddPositionForm: React.FC<AddPositionFormProps> = ({ onSuccess }) => {
+const AddPositionForm: React.FC<AddPositionFormProps> = ({ onSuccess, portfolioId }) => {
   const [formData, setFormData] = React.useState({
     commodity_name: '',
     quantity: '',
@@ -42,7 +43,7 @@ const AddPositionForm: React.FC<AddPositionFormProps> = ({ onSuccess }) => {
     notes: ''
   });
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const { addPosition } = usePortfolio();
+  const { addPosition } = usePortfolio(portfolioId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +60,8 @@ const AddPositionForm: React.FC<AddPositionFormProps> = ({ onSuccess }) => {
         quantity: parseFloat(formData.quantity),
         entry_price: parseFloat(formData.entry_price),
         entry_date: formData.entry_date,
-        notes: formData.notes || undefined
+        notes: formData.notes || undefined,
+        portfolio_id: portfolioId,
       });
       
       // Reset form
