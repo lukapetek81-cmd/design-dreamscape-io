@@ -1,8 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/utils.ts'
 import { IpRateLimiter } from '../_shared/rateLimit.ts'
-import { FMP_SYMBOLS } from '../_shared/commodity-mappings.ts'
+import { FMP_SYMBOLS, MASSIVE_PRODUCT_CODES } from '../_shared/commodity-mappings.ts'
 import { fetchFmpQuote } from '../_shared/fmp-client.ts'
+import { fetchMassiveFrontMonth } from '../_shared/massive-client.ts'
 
 // Protect OilPriceAPI / CommodityPriceAPI quota.
 const limiter = new IpRateLimiter({ limit: 60, windowMs: 60_000 });
@@ -179,7 +180,29 @@ serve(async (req) => {
       }
     }
 
-    // ── Step 2: FMP for non-energy commodities ──
+    // ── Step 2: Massive for CME/CBOT/COMEX/NYMEX non-energy commodities ──
+    if (!priceData && !ENERGY_NAMES.has(commodityName)) {
+      const massiveCode = MASSIVE_PRODUCT_CODES[commodityName];
+      if (massiveCode) {
+        try {
+          const fm = await fetchMassiveFrontMonth(massiveCode);
+          if (fm) {
+            priceData = {
+              symbol: fm.ticker,
+              price: fm.price,
+              change: fm.change,
+              changePercent: fm.changePercent,
+              lastUpdate: fm.asOf,
+            };
+            dataSource = 'massive';
+          }
+        } catch (err) {
+          console.warn(`Massive snapshot failed for ${commodityName}:`, err);
+        }
+      }
+    }
+
+    // ── Step 3: FMP for ICE/LME items Massive doesn't carry ──
     if (!priceData && !ENERGY_NAMES.has(commodityName)) {
       const fmpSym = PRICE_SYMBOLS[commodityName];
       if (fmpSym) {

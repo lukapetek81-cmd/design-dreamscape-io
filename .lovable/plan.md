@@ -1,86 +1,67 @@
-# Forward Curve → Massive Futures Basic
+# Revised: FMP → Massive swap, FMP retained only for ICE/LME
 
-Replace the broken FMP per-contract path with real CME/CBOT/COMEX/NYMEX settlement data from Massive's free tier. Restore the multi-month strip + Bloomberg chart, labelled as "EOD settlement".
+## Final provider split
 
-## Scope
+| Category | Provider | Items |
+|---|---|---|
+| Energy (20) | OilPriceAPI | unchanged |
+| CME/CBOT/COMEX/NYMEX non-energy (15) | **Massive Futures Basic** | Gold, Silver, Copper, Platinum, Palladium, Corn, Wheat, Soybeans, SoyOil, SoyMeal, Oats, Rough Rice, Live Cattle, Lean Hogs, Lumber |
+| ICE/LME (11) | **FMP free tier** | Coffee, Sugar, Cotton, Cocoa, OJ, Canola, Aluminum, Zinc, Lead, Nickel, Tin |
 
-In:
-- 9 commodity roots: CL, BZ, NG (energy), GC, SI, HG (metals), ZC, ZS, ZW (grains)
-- 12-month forward strip, end-of-day settlement prices
-- Server-side cache so we stay far under 5 req/min
-- Restore Bloomberg-style chart + contract table from earlier work
+FMP load drops from ~26 quotes → 11 quotes per refresh (≈58% reduction). With the existing 6h cache that's well under FMP free's 250 req/day cap.
 
-Out:
-- Intraday refresh (requires $29 Starter)
-- Spot-only commodities not on US futures exchanges (stay on FMP/OilPriceAPI)
-- Any change to dashboard, news, or trading pages
-
-## Prerequisites
-
-User actions, in order:
-1. Sign up at https://massive.com/dashboard for the free Futures Basic plan
-2. Copy the API key
-3. Paste it into Lovable when prompted for `MASSIVE_API_KEY`
-
-After the key lands I can deploy and test.
+Catalog stays at 46 items. No UI/UX loss.
 
 ## Implementation
 
-### 1. New shared client — `supabase/functions/_shared/massive-client.ts`
+### 1. `_shared/commodity-mappings.ts`
+- Keep `COMMODITY_SYMBOLS` as-is (all 46).
+- Split symbol maps:
+  - `MASSIVE_PRODUCT_CODES` — commodity name → Massive product_code, only for CME/CBOT/COMEX/NYMEX non-energy (15 entries).
+  - `FMP_SYMBOLS` — slimmed down to ICE/LME items only (11 entries). Drop everything Massive will cover.
+- Remove `FMP_FUTURES_ROOTS` (forward curve already on Massive).
 
-Two thin wrappers over Massive REST v1:
+### 2. `_shared/massive-client.ts`
+Add to existing file:
+- `fetchMassiveFrontMonth(productCode)` — `GET /futures/v1/snapshot?product_code=X&order=last_trade_date.asc&limit=1`. Returns `{ticker, price, change, changePercent, volume, asOf}`. **1 API call per commodity**, no separate contracts call.
+- `fetchMassiveDailyBars(ticker, from, to)` — `GET /futures/v1/aggs/{ticker}/range/1/day/{from}/{to}` for chart history.
 
-- `listActiveContracts(productCode, asOfDate)` → `GET /futures/v1/contracts?product_code={CL}&active=true&date={YYYY-MM-DD}&limit=24&sort=last_trade_date.asc`
-  Returns array of `{ ticker, last_trade_date, days_to_maturity, expiry_month }`.
-- `fetchContractDailyClose(ticker, date)` → `GET /futures/v1/aggs/{ticker}/range/1/day/{date}/{date}` returning settlement close.
-  Batched per root: 1 contracts call + N aggregate calls = N+1 calls per curve refresh.
+### 3. `_shared/commodity-service.ts`
+- Replace `fetchAllFromFmp` with two methods:
+  - `fetchAllFromMassive(includePremium)` — iterates 15-entry map with **5-req/12s throttle** to respect Basic plan limit; uses `EdgeRuntime.waitUntil` on cold cache so users never block.
+  - `fetchAllFromFmp(includePremium)` — keeps the existing batched `/v3/quote/` call but only with the 11 ICE/LME symbols.
+- Merge order: oil + massive + fmp.
+- Cache key + DB snapshot fallback (existing day-over-day logic) unchanged.
+- Rewrite `fetchFmpTimeseries` → `fetchChartHistory`: routes through Massive aggs for CME-side names, falls back to FMP historical for ICE/LME, then Alpha Vantage, then synthetic.
 
-Auth via `Authorization: Bearer ${MASSIVE_API_KEY}`. All errors swallowed → null, never throw.
+### 4. `fetch-commodity-prices/index.ts` & `fetch-commodity-data/index.ts`
+- Route quote/history through the new service methods. FMP code path kept only for symbols in the slimmed `FMP_SYMBOLS` set.
 
-### 2. Rewrite `supabase/functions/fetch-forward-curve/index.ts`
+### 5. Frontend
+- No changes. Service output shape stays identical.
 
-- Drop the single-point logic added last round.
-- Per request: list active contracts for the root → take next 12 by `last_trade_date` → fetch yesterday's close for each.
-- Build the curve, compute m1, m2, structure (contango/backwardation/flat), roll yield.
-- Server-side response cache: `Cache-Control: public, max-age=21600` (6h) plus an in-memory `Map` keyed by commodity to hold the result inside the worker.
-- Returns:
-  ```
-  { commodity, label, source: 'market', provider: 'Massive Futures Basic',
-    asOf: 'YYYY-MM-DD' (settlement date),
-    spot, curve: [{symbol, expiry, monthIdx, price}], m1, m2, structure, rollYield }
-  ```
-- If <3 contracts return prices → `502 curve_unavailable` (no model fallback, per earlier decision).
+### 6. Cold-cache UX safety
+- First request after a worker boot triggers Massive throttled fetch in the background (`EdgeRuntime.waitUntil`).
+- Foreground response returns: OilPriceAPI live + FMP live (1 batched call) + last snapshot from DB for Massive items.
+- Subsequent requests within 6h hit the populated cache.
 
-### 3. Frontend — restore the Bloomberg chart
+### 7. Memory updates
+- Core data-sourcing line: `Energy: OilPriceAPI. CME/CBOT/COMEX/NYMEX: Massive Futures Basic. ICE/LME: FMP free.`
+- New `mem://integrations/massive-config` documenting product codes, throttle, plan limits.
+- Update `mem://integrations/fmp-data-config`: scope reduced to 11 ICE/LME symbols.
+- `mem://project/commodity-catalog-scope`: still 46.
 
-- `src/hooks/useForwardCurve.ts`: expand response interface back to `curve / m1 / m2 / structure / rollYield`, plus `asOf`.
-- `src/pages/ForwardCurves.tsx`: bring back the ComposedChart + contract table from the earlier iteration (currently a single-point view). Status strip shows `EOD · settlement {asOf}` instead of the live UTC clock. Amber notice text updated to:
-  > "End-of-day settlement curve from CME/NYMEX/COMEX/CBOT via Massive. Refreshes after each US futures settlement (~17:00 CT)."
+## Files touched
+- `supabase/functions/_shared/commodity-mappings.ts`
+- `supabase/functions/_shared/commodity-service.ts`
+- `supabase/functions/_shared/massive-client.ts`
+- `supabase/functions/fetch-commodity-prices/index.ts`
+- `supabase/functions/fetch-commodity-data/index.ts`
+- `.lovable/memory/index.md` + the two memory files above
 
-### 4. Rate-budget math
+## Out of scope
+- Forward curve (already on Massive).
+- `_shared/fmp-client.ts` kept (still used for the 11 ICE/LME items).
+- Legal page / marketing copy.
 
-- 9 roots × (1 contracts + 12 aggregates) = **117 calls per full refresh of every commodity**
-- 6h cache → at most 4 refreshes/day → **~470 calls/day**, easily within "5/min" if a single user triggers them sequentially. Concurrent triggers serialised by the in-memory cache.
-- One user clicking through all 9 commodities cold = 9 sequential refreshes spaced over ~2 min → well inside the budget.
-
-### 5. Cleanup
-
-- Leave `fmp-client.ts → fetchFmpFuturesCurve` in place (still imported by tests/types) but stop calling it from forward-curve. No deletions to avoid touching unrelated files.
-- Add memory note: `mem://integrations/massive-futures` — "Forward curve uses Massive Futures Basic (free, EOD, 5 req/min). Server cache TTL 6h."
-
-## Out of scope / deferred
-
-- Switching to Starter ($29) for 10-min delayed intraday — flagged in code comment for later.
-- Per-user API keys — using one shared `MASSIVE_API_KEY` secret.
-- Historical curve archive / snapshots — only "latest settlement" stored.
-
-## Validation steps after deploy
-
-1. Hit `/functions/v1/fetch-forward-curve` with `{commodity:'gold'}` via curl-edge-functions → expect 12 prices, source=market.
-2. Repeat for `wti`, `corn`. Confirm `structure` matches the visual curve.
-3. Open `/forward-curves` in preview, cycle the 9 commodities, confirm chart + table populate, settlement date shows yesterday.
-4. Check edge-function-logs for any `[fetch-forward-curve] WARN` lines.
-
----
-
-**One question before I touch code:** do you also want me to wire **Massive Futures Basic** as the source for the dashboard's commodity *front-month* prices (replacing the FMP `=F` continuous symbols for the 9 covered roots)? Or keep that flow on FMP for now and limit this change to the forward-curve page only?
+Approve and I'll execute.

@@ -77,29 +77,55 @@ export const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {};
 export const CENT_QUOTED_SYMBOLS = new Set<string>();
 
 /**
- * FMP `/v3/quote/{SYMBOL}` symbols. Front-month continuous futures (`=F`)
- * for spot quotes. Auto-derived from COMMODITY_SYMBOLS.symbol so the catalog
- * stays the single source of truth.
+ * Massive Futures Basic product codes. Massive covers CME/CBOT/COMEX/NYMEX
+ * only — these 15 non-energy items are now sourced from Massive (front-month
+ * snapshot + daily aggs). Energy stays on OilPriceAPI; ICE/LME items below
+ * stay on FMP because Massive doesn't carry those exchanges.
  */
-export const FMP_SYMBOLS: Record<string, string> = Object.fromEntries(
-  Object.entries(COMMODITY_SYMBOLS)
-    .filter(([, info]) => info.category !== 'energy' && info.symbol.endsWith('=F'))
-    .map(([name, info]) => [name, info.symbol]),
-);
+export const MASSIVE_PRODUCT_CODES: Record<string, string> = {
+  // Metals (COMEX/NYMEX)
+  'Gold Futures': 'GC',
+  'Silver Futures': 'SI',
+  'Copper': 'HG',
+  'Platinum': 'PL',
+  'Palladium': 'PA',
+  // Grains (CBOT)
+  'Corn Futures': 'ZC',
+  'Wheat Futures': 'ZW',
+  'Soybean Futures': 'ZS',
+  'Soybean Oil': 'ZL',
+  'Soybean Meal': 'ZM',
+  'Oat Futures': 'ZO',
+  'Rough Rice': 'ZR',
+  // Livestock (CME)
+  'Live Cattle': 'LE',
+  'Lean Hogs': 'HE',
+  // Lumber (CME)
+  'Lumber Futures': 'LBR',
+};
 
 /**
- * Futures root codes for monthly contract symbols (e.g. `GCG26`, `ZCH27`).
- * Used by fetch-forward-curve to query individual monthly contracts on FMP
- * Starter and build a real term-structure curve.
+ * FMP `/v3/quote/{SYMBOL}` — ICE/LME-listed items only. Massive can't quote
+ * these exchanges, so FMP free tier (250 req/day) keeps them alive. 11 items.
  */
-export const FMP_FUTURES_ROOTS: Record<string, string> = {
-  gold: 'GC',
-  silver: 'SI',
-  copper: 'HG',
-  corn: 'ZC',
-  soybeans: 'ZS',
-  wheat: 'ZW',
+export const FMP_SYMBOLS: Record<string, string> = {
+  // Softs (ICE)
+  'Coffee Arabica': 'KC=F',
+  'Sugar #11': 'SB=F',
+  'Cotton': 'CT=F',
+  'Cocoa': 'CC=F',
+  'Orange Juice': 'OJ=F',
+  // Grains (ICE)
+  'Canola': 'RS=F',
+  // Metals (LME)
+  'Aluminum': 'ALI=F',
+  'Zinc': 'ZNC=F',
+  'Lead Futures': 'PBF=F',
+  'Nickel Futures': 'NIF=F',
+  'Tin': 'SN=X',
 };
+
+// FMP_FUTURES_ROOTS removed — forward curve now uses Massive (see massive-client.ts).
 
 /**
  * Premium-only commodities. Free tier sees household names; everything niche/regional/exotic

@@ -2,8 +2,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/utils.ts'
 import { IpRateLimiter } from '../_shared/rateLimit.ts'
-import { FMP_SYMBOLS } from '../_shared/commodity-mappings.ts'
+import { FMP_SYMBOLS, MASSIVE_PRODUCT_CODES } from '../_shared/commodity-mappings.ts'
 import { fetchFmpHistorical } from '../_shared/fmp-client.ts'
+import { fetchMassiveFrontMonthBars } from '../_shared/massive-client.ts'
 
 // Protect Yahoo/CommodityPriceAPI/OilPriceAPI quota from anonymous abuse.
 const limiter = new IpRateLimiter({ limit: 60, windowMs: 60_000 });
@@ -392,8 +393,39 @@ serve(async (req) => {
       }
     }
 
-    // Step 2: FMP /v3/historical-price-full for non-energy commodities.
-    // Migrated from CommodityPriceAPI 2026-05.
+    // Step 2a: Massive daily aggs for CME/CBOT/COMEX/NYMEX commodities.
+    const massiveCode = MASSIVE_PRODUCT_CODES[commodityName];
+    if (!historicalData && massiveCode) {
+      try {
+        const maxDays = isPremium
+          ? (timeframe === '1d' ? 5 : timeframe === '1m' ? 60 : timeframe === '3m' ? 180 : timeframe === '6m' ? 365 : 730)
+          : (timeframe === '1d' ? 5 : timeframe === '1m' ? 30 : timeframe === '3m' ? 90 : timeframe === '6m' ? 180 : 365);
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - maxDays);
+        const startStr = startDate.toISOString().split('T')[0];
+        const endStr = endDate.toISOString().split('T')[0];
+
+        const bars = await fetchMassiveFrontMonthBars(massiveCode, startStr, endStr);
+        if (bars.length > 1) {
+          historicalData = bars.map((b) => ({
+            date: b.date,
+            open: b.open,
+            high: b.high,
+            low: b.low,
+            close: b.close,
+            price: b.close,
+          }));
+          ohlcAvailable = true;
+          dataSourceUsed = 'massive';
+          console.log(`Massive historical: ${bars.length} bars for ${commodityName} (${massiveCode})`);
+        }
+      } catch (err) {
+        console.warn(`Massive historical failed for ${commodityName}:`, err);
+      }
+    }
+
+    // Step 2b: FMP /v3/historical-price-full for ICE/LME items.
     const fmpSym = FMP_SYMBOLS[commodityName];
 
     if (!historicalData && fmpSym) {

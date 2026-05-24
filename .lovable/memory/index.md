@@ -8,7 +8,7 @@ Updated: just now
 - **Monetization:** Three-tier freemium via RevenueCat (Play IAP). Free / Premium $6.99 (10 alerts, 3 portfolios, CSV) / Pro $19.99 (50 alerts, unlimited portfolios, +20 energy markets, priority refresh). See `mem://monetization/tiers`.
 - **Styling:** Dark theme with dark purple and teal branding.
 - **Navigation:** Hub-and-spoke pattern. Every sub-page requires a '← Dashboard' back button.
-- **Data Sourcing:** Energy from OilPriceAPI exclusively. Non-energy from CommodityPriceAPI v2 (Lite plan, 2h cache). FX from Frankfurter.app.
+- **Data Sourcing:** Energy from OilPriceAPI. CME/CBOT/COMEX/NYMEX non-energy from Massive Futures Basic (6h cache, 5 req/min throttle). ICE/LME items (softs, canola, LME metals) from FMP free tier. FX from Frankfurter.app.
 - **Security:** Strict RLS (`id = auth.uid()`). Edge functions enforce JWT auth + Zod validation.
 - **Supabase:** Project ID `kcxhsmlqqyarhlmcapmj`. OAuth used for Google/GitHub.
 
@@ -31,7 +31,8 @@ Updated: just now
 - [Navigation Pattern](mem://ui/navigation-pattern) — Hub-and-spoke with back buttons
 - [Multi-Currency](mem://features/multi-currency) — EUR/CNY/INR, Edge Function, local storage sync
 - [Energy Data](mem://integrations/energy-data-sourcing) — Exclusively OilPriceAPI, specific units
-- [CommodityPriceAPI Config](mem://integrations/commoditypriceapi-config) — CPA v2 Lite plan, FX via Frankfurter
+- [Massive Config](mem://integrations/massive-config) — Massive Futures Basic for CME-side non-energy quotes/history/curves
+- [FMP Config](mem://integrations/fmp-data-config) — FMP free tier scoped to 11 ICE/LME items only
 - [Commodity Catalog](mem://project/commodity-catalog-scope) — Free 17 / Premium ~60 split
 - [Economic Calendar](mem://features/economic-calendar-integration) — FMP integration with dashboard deep linking
 - [Catalog Freshness Audit](mem://features/catalog-freshness-audit) — Admin /admin/catalog-audit page + audit-premium-freshness edge function for empirical scope decisions
