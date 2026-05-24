@@ -7,6 +7,7 @@ import { useDelayedData } from '@/hooks/useDelayedData';
 export interface PortfolioPosition {
   id: string;
   user_id: string;
+  portfolio_id: string;
   commodity_name: string;
   quantity: number;
   entry_price: number;
@@ -24,7 +25,7 @@ export interface PositionWithCurrentPrice extends PortfolioPosition {
   is_positive: boolean;
 }
 
-export const usePortfolio = () => {
+export const usePortfolio = (portfolioId?: string | null) => {
   const [positions, setPositions] = React.useState<PositionWithCurrentPrice[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -47,11 +48,13 @@ export const usePortfolio = () => {
       setLoading(true);
       setError(null);
 
-      const { data, error: fetchError } = await supabase
+      let query = supabase
         .from('portfolio_positions')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
+      if (portfolioId) query = query.eq('portfolio_id', portfolioId);
+      const { data, error: fetchError } = await query;
 
       if (fetchError) throw fetchError;
 
@@ -117,6 +120,7 @@ export const usePortfolio = () => {
     entry_price: number;
     entry_date: string;
     notes?: string;
+    portfolio_id?: string;
   }) => {
     if (!user) throw new Error('User not authenticated');
 
@@ -220,7 +224,7 @@ export const usePortfolio = () => {
 
   React.useEffect(() => {
     fetchPositions();
-  }, [user]);
+  }, [user, portfolioId]);
 
   return {
     positions,

@@ -32,15 +32,14 @@ import {
   useDeleteAlert,
 } from "@/hooks/usePriceAlerts";
 import PremiumPaywall from "@/components/PremiumPaywall";
-
-const FREE_LIMIT = 1;
-const PREMIUM_LIMIT = 50;
+import { limitsFor } from "@/utils/tiers";
 
 const PriceAlertsPage: React.FC = () => {
   const navigate = useNavigate();
   const auth = useAuth();
   const { toast } = useToast();
-  const isPremium = Boolean(auth?.isPremium);
+  const tier = auth?.tier ?? 'free';
+  const isPremium = tier !== 'free';
   const { data: alerts = [], isLoading } = usePriceAlerts();
   const { data: commodities = [] } = useAvailableCommodities();
   const createAlert = useCreatePriceAlert();
@@ -58,7 +57,7 @@ const PriceAlertsPage: React.FC = () => {
   });
 
   const activeCount = alerts.filter((a) => a.is_active).length;
-  const limit = isPremium ? PREMIUM_LIMIT : FREE_LIMIT;
+  const limit = limitsFor(tier).activeAlerts;
   const atLimit = activeCount >= limit;
 
   const handleCreateClick = () => {

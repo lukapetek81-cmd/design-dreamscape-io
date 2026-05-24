@@ -6,6 +6,7 @@ import { validateFormData } from '@/utils/validation';
 import { authRateLimiter } from '@/utils/security';
 import { Capacitor } from '@capacitor/core';
 import { NATIVE_OAUTH_REDIRECT_URL } from '@/utils/nativeOAuth';
+import { tierFromProfile, type Tier } from '@/utils/tiers';
 
 interface Profile {
   id: string;
@@ -28,6 +29,8 @@ interface AuthContextType {
   loading: boolean;
   isGuest: boolean;
   isPremium: boolean;
+  isPro: boolean;
+  tier: Tier;
   billingState: Profile['billing_state'];
   gracePeriodExpiresAt: string | null;
   requiresAuth: () => boolean;
@@ -412,7 +415,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const isGuest = !user;
-  const isPremium = profile?.subscription_active && profile?.subscription_tier !== 'free';
+  const tier: Tier = tierFromProfile(profile?.subscription_active, profile?.subscription_tier);
+  // isPremium = "any paid tier" (Premium or Pro). isPro = Pro-only features.
+  const isPremium = tier !== 'free';
+  const isPro = tier === 'pro';
   const billingState = profile?.billing_state ?? 'none';
   const gracePeriodExpiresAt = profile?.grace_period_expires_at ?? null;
   
@@ -434,6 +440,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     loading,
     isGuest,
     isPremium,
+    isPro,
+    tier,
     billingState,
     gracePeriodExpiresAt,
     requiresAuth,

@@ -5,7 +5,7 @@ Updated: just now
 
 ## Core
 - **Product:** Commodity price-tracking app (Google Play Store launch). NO trading features. Read-only price data + news + analytics.
-- **Monetization:** Freemium via RevenueCat (Google Play IAP). Free tier = 17 household commodities. Premium unlocks ~60 specialty commodities. Pricing TBD in Play Console.
+- **Monetization:** Three-tier freemium via RevenueCat (Play IAP). Free / Premium $6.99 (10 alerts, 3 portfolios, CSV) / Pro $19.99 (50 alerts, unlimited portfolios, +20 energy markets, priority refresh). See `mem://monetization/tiers`.
 - **Styling:** Dark theme with dark purple and teal branding.
 - **Navigation:** Hub-and-spoke pattern. Every sub-page requires a '← Dashboard' back button.
 - **Data Sourcing:** Energy from OilPriceAPI exclusively. Non-energy from CommodityPriceAPI v2 (Lite plan, 2h cache). FX from Frankfurter.app.
@@ -14,6 +14,7 @@ Updated: just now
 
 ## Memories
 - [Monetization Strategy](mem://monetization/strategy) — Freemium with RevenueCat, premium unlocks specialty commodities
+- [Monetization Tiers](mem://monetization/tiers) — Free/Premium/Pro feature matrix, RevenueCat entitlement mapping, DB triggers
 - [Marketing Infrastructure](mem://features/marketing-infrastructure) — Phased growth strategy, landing page, blog
 - [Production Readiness](mem://launch/production-readiness) — Monitoring, Supabase health checks, security config
 - [News System](mem://features/news-system) — Edge function aggregation from Marketaux + News API

@@ -223,6 +223,7 @@ export type Database = {
           entry_price: number
           id: string
           notes: string | null
+          portfolio_id: string | null
           quantity: number
           updated_at: string
           user_id: string
@@ -234,6 +235,7 @@ export type Database = {
           entry_price: number
           id?: string
           notes?: string | null
+          portfolio_id?: string | null
           quantity: number
           updated_at?: string
           user_id: string
@@ -245,7 +247,35 @@ export type Database = {
           entry_price?: number
           id?: string
           notes?: string | null
+          portfolio_id?: string | null
           quantity?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      portfolios: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
           updated_at?: string
           user_id?: string
         }
@@ -706,6 +736,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      get_user_tier: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

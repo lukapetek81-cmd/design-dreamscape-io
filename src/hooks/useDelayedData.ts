@@ -1,8 +1,12 @@
 import { useAuth } from '@/contexts/AuthContext';
 
 /**
- * Freemium model: All data is real-time for everyone.
- * This hook is kept for future premium tier implementation.
+ * Three-tier model: All data is real-time for everyone.
+ *
+ * NOTE: The `isPremium` flag returned here gates the **extended catalog**
+ * (extra energy markets, regional crude blends, priority refresh) and is
+ * therefore wired to the **Pro** tier only. Premium-tier perks (alerts,
+ * multi-portfolio, CSV) are gated separately via `useAuth().tier`.
  */
 export const useDelayedData = () => {
   const auth = useAuth();
@@ -20,8 +24,8 @@ export const useDelayedData = () => {
   
   const { profile, isGuest } = auth;
   
-  // Freemium model: Everyone gets real-time data
-  const isPremium = profile?.subscription_active && profile?.subscription_tier !== 'free';
+  // Extended-catalog gate (Pro tier only).
+  const isPremium = profile?.subscription_active && profile?.subscription_tier === 'pro';
   const shouldDelayData = false; // No delays for anyone in freemium model
   
   // No delay - return timestamp as-is
