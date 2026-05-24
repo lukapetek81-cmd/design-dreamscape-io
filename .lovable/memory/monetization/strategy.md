@@ -44,3 +44,10 @@ type: feature
 **Stripe/RevenueCat**: Price IDs must be updated separately in the billing dashboard — code only references generic checkout.
 
 **Frontend**: `useAuth().isPremium` is the canonical client-side check. Edge functions re-verify via JWT — never trust client claims.
+
+**Growth plan (2026-05-24)**: See `docs/GROWTH_PLAN.md`. Pending decisions:
+- Drop Premium to $6.99/mo / $49/yr; introduce Pro tier at $19.99/mo with API access.
+- Reposition Premium around **price alerts + CSV export + multi-portfolio** — catalog breadth becomes a bonus, not the headline (catalog-only premium caps conversion near 1%).
+- Highest-leverage build: price alerts (push notifications). Expected lift: 1% → 3–4% conversion.
+- iOS launch gated on Android hitting $500 MRR or 5K MAU.
+- ASO: target `commodity prices app` (KD 0), `gold price app` (KD 42), `commodity portfolio` (KD 0) in Play Store listing.
