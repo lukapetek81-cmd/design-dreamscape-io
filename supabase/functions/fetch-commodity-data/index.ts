@@ -4,7 +4,6 @@ import { corsHeaders } from '../_shared/utils.ts'
 import { IpRateLimiter } from '../_shared/rateLimit.ts'
 import { FMP_SYMBOLS } from '../_shared/commodity-mappings.ts'
 import { fetchFmpHistorical } from '../_shared/fmp-client.ts'
-import { convertCpaPriceToDisplay } from '../_shared/commodity-units.ts'
 
 // Protect Yahoo/CommodityPriceAPI/OilPriceAPI quota from anonymous abuse.
 const limiter = new IpRateLimiter({ limit: 60, windowMs: 60_000 });
