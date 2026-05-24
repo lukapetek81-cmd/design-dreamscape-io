@@ -104,6 +104,104 @@ export function yesterdayUtcDate(): string {
   return d.toISOString().slice(0, 10);
 }
 
+/**
+ * Front-month snapshot for a product. One API call:
+ * `/futures/v1/snapshot?product_code=X&order=last_trade_date.asc&limit=1`.
+ * Returns session OHLC, settlement, prev close (for change), volume.
+ */
+export async function fetchMassiveFrontMonth(
+  productCode: string,
+): Promise<MassiveFrontMonth | null> {
+  const json = await get('/futures/v1/snapshot', {
+    product_code: productCode,
+    'order': 'last_trade_date.asc',
+    limit: 1,
+  });
+  const row = json?.results?.[0];
+  if (!row) return null;
+  const ticker = row.ticker || row.symbol;
+  const session = row.session || {};
+  const last = row.last_trade || {};
+  const price = Number(
+    row.settlement?.price ??
+    session.close ??
+    last.price ??
+    session.last ??
+    NaN,
+  );
+  if (!Number.isFinite(price) || price <= 0) return null;
+  const prevClose = Number(
+    row.prev_day_close ??
+    session.previous_close ??
+    row.previous_close ??
+    NaN,
+  );
+  const change = Number.isFinite(prevClose) && prevClose > 0 ? price - prevClose : 0;
+  const changePercent = Number.isFinite(prevClose) && prevClose > 0
+    ? (change / prevClose) * 100
+    : 0;
+  const volume = typeof session.volume === 'number' ? session.volume : undefined;
+  const asOf = String(row.updated || row.settlement?.date || yesterdayUtcDate());
+
+  return {
+    ticker: String(ticker),
+    productCode,
+    price: +price.toFixed(4),
+    change: +change.toFixed(4),
+    changePercent: +changePercent.toFixed(2),
+    volume,
+    asOf,
+  };
+}
+
+/**
+ * Daily OHLC bars for a specific ticker between two dates (inclusive).
+ * Used for chart history. Empty array on failure.
+ */
+export async function fetchMassiveDailyBars(
+  ticker: string,
+  fromDate: string,
+  toDate: string,
+): Promise<MassiveBar[]> {
+  const json = await get(
+    `/futures/v1/aggs/${encodeURIComponent(ticker)}/range/1/day/${fromDate}/${toDate}`,
+  );
+  const arr = json?.results;
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map((b: any) => {
+      // Massive uses Polygon-style short keys: t (ms), o, h, l, c, v
+      const tMs = typeof b.t === 'number' ? b.t : Date.parse(b.date || b.timestamp || '');
+      const dateStr = Number.isFinite(tMs)
+        ? new Date(tMs).toISOString().slice(0, 10)
+        : String(b.date || '').slice(0, 10);
+      return {
+        date: dateStr,
+        open: Number(b.o ?? b.open),
+        high: Number(b.h ?? b.high),
+        low: Number(b.l ?? b.low),
+        close: Number(b.c ?? b.close),
+        volume: typeof (b.v ?? b.volume) === 'number' ? (b.v ?? b.volume) : undefined,
+      } as MassiveBar;
+    })
+    .filter((b) => b.date && Number.isFinite(b.close) && b.close > 0)
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/**
+ * Resolve the current front-month ticker for a product (one API call), then
+ * fetch its daily bars. Convenience wrapper for chart-history flows.
+ */
+export async function fetchMassiveFrontMonthBars(
+  productCode: string,
+  fromDate: string,
+  toDate: string,
+): Promise<MassiveBar[]> {
+  const fm = await fetchMassiveFrontMonth(productCode);
+  if (!fm) return [];
+  return await fetchMassiveDailyBars(fm.ticker, fromDate, toDate);
+}
+
 /** Build a forward curve of up to N contracts for a product. Returns the date used for settlements. */
 export async function fetchMassiveCurve(
   productCode: string,
