@@ -1,8 +1,9 @@
-// Massive Futures Basic client (free tier).
+// Massive Futures Starter client.
 // Docs: https://massive.com/docs/rest/futures
 // Auth: Authorization: Bearer ${MASSIVE_API_KEY}
-// Limits (Futures Basic): 5 req/min, EOD only, 2y history.
-// We stay well under by caching the curve for 6h in the edge worker.
+// Limits (Futures Starter): unlimited calls, 15-min delayed, 5y history,
+// /snapshot endpoint enabled. We still cache 6h in the edge worker because
+// most of our flows are EOD-quality and we want to keep latency flat.
 
 const BASE = 'https://api.massive.com';
 
