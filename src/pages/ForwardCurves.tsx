@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, TrendingDown, Activity, Lock } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Activity, Lock, Info } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -52,6 +52,18 @@ const ForwardCurves: React.FC = () => {
             </p>
           </div>
         </div>
+
+        {isPro && (
+          <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 flex items-start gap-2 text-xs">
+            <Info className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+            <div>
+              <span className="font-medium text-amber-600 dark:text-amber-400">Modelled curve.</span>{' '}
+              Spot price is live; forward contracts are estimated via a cost-of-carry model
+              (risk-free rate + storage − convenience yield, plus seasonal multipliers where applicable).
+              Real exchange futures data can be wired in later — UI stays identical.
+            </div>
+          </div>
+        )}
 
         {!isPro ? (
           <Card className="border-primary/30 bg-primary/5">
