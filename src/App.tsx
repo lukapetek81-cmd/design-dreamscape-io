@@ -35,6 +35,9 @@ const CatalogAudit = lazy(() => import('@/pages/CatalogAudit'));
 const Legal = lazy(() => import('@/pages/Legal'));
 const PositionCalculator = lazy(() => import('@/pages/PositionCalculator'));
 const PriceAlerts = lazy(() => import('@/pages/PriceAlerts'));
+const ForwardCurves = lazy(() => import('@/pages/ForwardCurves'));
+const SpreadCalculator = lazy(() => import('@/pages/SpreadCalculator'));
+const COTReports = lazy(() => import('@/pages/COTReports'));
 
 const RouteFallback = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -96,6 +99,11 @@ const App = () => {
                 <Route path="/position-calculator" element={<PositionCalculator />} />
                 <Route path="/alerts" element={<PriceAlerts />} />
                 <Route path="/price-alerts" element={<PriceAlerts />} />
+                <Route path="/forward-curves" element={<ForwardCurves />} />
+                <Route path="/spreads" element={<SpreadCalculator />} />
+                <Route path="/spread-calculator" element={<SpreadCalculator />} />
+                <Route path="/cot" element={<COTReports />} />
+                <Route path="/cot-reports" element={<COTReports />} />
                 <Route path="/admin/catalog-audit" element={<CatalogAudit />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

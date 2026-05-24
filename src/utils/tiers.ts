@@ -16,6 +16,17 @@ export interface TierLimits {
   extendedCatalog: boolean;
   /** Priority data refresh & EOD-vs-LIVE elevation. */
   priorityRefresh: boolean;
+  /** Watchlists count + items per watchlist. */
+  watchlists: number;
+  watchlistItems: number;
+  /** Forward curves & COT reports require Pro. */
+  forwardCurves: boolean;
+  cotReports: boolean;
+  /** Spread calculator: preset count visible; custom = Pro-only. */
+  spreadPresets: number;
+  customSpreads: boolean;
+  /** Smart alert types available. */
+  alertTypes: ReadonlyArray<'price' | 'pct_move' | 'volatility_band' | 'spread' | 'news_keyword'>;
 }
 
 export const TIER_LIMITS: Record<Tier, TierLimits> = {
@@ -25,6 +36,13 @@ export const TIER_LIMITS: Record<Tier, TierLimits> = {
     csvExport: false,
     extendedCatalog: false,
     priorityRefresh: false,
+    watchlists: 1,
+    watchlistItems: 5,
+    forwardCurves: false,
+    cotReports: false,
+    spreadPresets: 1,
+    customSpreads: false,
+    alertTypes: ['price'],
   },
   premium: {
     activeAlerts: 10,
@@ -32,6 +50,13 @@ export const TIER_LIMITS: Record<Tier, TierLimits> = {
     csvExport: true,
     extendedCatalog: false,
     priorityRefresh: false,
+    watchlists: 5,
+    watchlistItems: 20,
+    forwardCurves: false,
+    cotReports: false,
+    spreadPresets: 5,
+    customSpreads: false,
+    alertTypes: ['price', 'pct_move'],
   },
   pro: {
     activeAlerts: 50,
@@ -39,6 +64,13 @@ export const TIER_LIMITS: Record<Tier, TierLimits> = {
     csvExport: true,
     extendedCatalog: true,
     priorityRefresh: true,
+    watchlists: Number.POSITIVE_INFINITY,
+    watchlistItems: Number.POSITIVE_INFINITY,
+    forwardCurves: true,
+    cotReports: true,
+    spreadPresets: Number.POSITIVE_INFINITY,
+    customSpreads: true,
+    alertTypes: ['price', 'pct_move', 'volatility_band', 'spread', 'news_keyword'],
   },
 };
 
