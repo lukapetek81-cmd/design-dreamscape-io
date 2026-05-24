@@ -81,15 +81,14 @@ export class CommodityService {
         return cached;
       }
 
-      const [fmpResults, oilResults] = await Promise.all([
+      // Massive Starter has unlimited calls, so all three providers run in
+      // parallel. Cold-path latency is now bounded by the slowest single
+      // request (~1-2s) instead of the old 12s-throttled batches.
+      const [fmpResults, oilResults, massiveResults] = await Promise.all([
         this.fetchAllFromFmp(includePremium),
         this.fetchAllFromOilPriceApi(includePremium),
+        this.fetchAllFromMassive(includePremium),
       ]);
-
-      // Massive (CME/CBOT/COMEX/NYMEX non-energy) — throttled, depends on its
-      // own per-product cache. Runs after the fast batched calls so the cold
-      // path still returns oil + fmp immediately if Massive is slow.
-      const massiveResults = await this.fetchAllFromMassive(includePremium);
 
       const merged = [...oilResults, ...fmpResults, ...massiveResults];
       const seen = new Set(merged.map((c) => c.name));
@@ -167,10 +166,9 @@ export class CommodityService {
   }
 
   /**
-   * Throttled fetch of front-month settlements from Massive Futures Basic.
-   * 5 req/min plan cap → run 4 in parallel, then sleep 12s between batches.
-   * Total cold-path latency for ~15 items: ~40s. Subsequent calls hit the
-   * 6h `cache` Map. Missing items fall through to the DB snapshot.
+   * Fetches front-month snapshots from Massive Futures Starter in parallel.
+   * Starter tier removes the 5 req/min cap and exposes /snapshot (1 call per
+   * product). Missing items fall through to the DB snapshot fallback.
    */
   private async fetchAllFromMassive(includePremium = false): Promise<CommodityData[]> {
     const apiKey = Deno.env.get('MASSIVE_API_KEY') || '';
@@ -182,40 +180,30 @@ export class CommodityService {
       .filter(([name]) => includePremium || !PREMIUM_COMMODITIES.has(name));
     if (targets.length === 0) return [];
 
-    const BATCH = 4;
-    const PAUSE_MS = 12_000;
-    const out: CommodityData[] = [];
-    for (let i = 0; i < targets.length; i += BATCH) {
-      const slice = targets.slice(i, i + BATCH);
-      const results = await Promise.all(
-        slice.map(async ([name, code]) => {
-          try {
-            const fm = await fetchMassiveFrontMonth(code);
-            if (!fm) return null;
-            const meta = COMMODITY_SYMBOLS[name];
-            return {
-              name,
-              symbol: meta?.symbol || `${code}=F`,
-              price: fm.price,
-              change: fm.change,
-              changePercent: fm.changePercent,
-              volume: fm.volume,
-              category: meta?.category || 'other',
-              contractSize: meta?.contractSize || 'TBD',
-              venue: meta?.venue || 'CME',
-            } as CommodityData;
-          } catch (err) {
-            this.logger.warn(`Massive snapshot failed for ${name}`, err);
-            return null;
-          }
-        }),
-      );
-      for (const r of results) if (r) out.push(r);
-      if (i + BATCH < targets.length) {
-        await new Promise((res) => setTimeout(res, PAUSE_MS));
-      }
-    }
-    return out;
+    const results = await Promise.all(
+      targets.map(async ([name, code]) => {
+        try {
+          const fm = await fetchMassiveFrontMonth(code);
+          if (!fm) return null;
+          const meta = COMMODITY_SYMBOLS[name];
+          return {
+            name,
+            symbol: meta?.symbol || `${code}=F`,
+            price: fm.price,
+            change: fm.change,
+            changePercent: fm.changePercent,
+            volume: fm.volume,
+            category: meta?.category || 'other',
+            contractSize: meta?.contractSize || 'TBD',
+            venue: meta?.venue || 'CME',
+          } as CommodityData;
+        } catch (err) {
+          this.logger.warn(`Massive snapshot failed for ${name}`, err);
+          return null;
+        }
+      }),
+    );
+    return results.filter((r): r is CommodityData => r !== null);
   }
 
   /** Calls our own oil-price-api edge function for ALL energy commodities. */
