@@ -140,15 +140,15 @@ export const PREMIUM_COMMODITIES = new Set<string>([
   'Western Canadian Select', 'WTI Midland', 'Mars Blend', 'Louisiana Light Sweet',
   'Natural Gas UK', 'Dutch TTF Gas', 'Japan/Korea LNG',
   'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel', 'Gasoil', 'Naphtha',
-  // Metals — premium
+  // Metals — premium (all LME items gated; no free-tier provider covers LME)
   'Palladium', 'Aluminum', 'Zinc',
   'Lead Futures', 'Nickel Futures', 'Tin',
   // Grains — premium
   'Soybean Oil', 'Soybean Meal',
   'Oat Futures', 'Rough Rice',
   'Canola',
-  // Softs — premium
-  'Orange Juice',
+  // Softs — premium (all ICE softs gated; no free-tier provider covers ICE softs)
+  'Coffee Arabica', 'Sugar #11', 'Cotton', 'Cocoa', 'Orange Juice',
 ]);
 
 export function isPremiumCommodity(name: string): boolean {
