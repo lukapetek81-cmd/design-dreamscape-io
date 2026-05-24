@@ -68,12 +68,13 @@ export async function listActiveContracts(
     active: true,
     date: asOfDate,
     limit,
-    sort: 'last_trade_date.asc',
+    sort: 'ticker',
   });
   const arr = json?.results;
   if (!Array.isArray(arr)) return [];
   return arr
-    .filter((c: any) => c?.ticker && c?.last_trade_date)
+    // Skip spread/combo contracts — we only want outright monthly singles.
+    .filter((c: any) => c?.ticker && c?.last_trade_date && (c.type ?? 'single') === 'single')
     .map((c: any) => ({
       ticker: String(c.ticker),
       product_code: String(c.product_code ?? productCode),
@@ -81,7 +82,9 @@ export async function listActiveContracts(
       first_trade_date: c.first_trade_date ? String(c.first_trade_date) : undefined,
       days_to_maturity: typeof c.days_to_maturity === 'number' ? c.days_to_maturity : undefined,
       active: c.active !== false,
-    }));
+    }))
+    // Sort chronologically client-side (Massive's `sort=ticker` is alphabetic).
+    .sort((a, b) => a.last_trade_date.localeCompare(b.last_trade_date));
 }
 
 /**
