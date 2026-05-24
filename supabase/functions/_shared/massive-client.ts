@@ -6,6 +6,20 @@
 // most of our flows are EOD-quality and we want to keep latency flat.
 
 const BASE = 'https://api.massive.com';
+const FUTURES_MONTH_CODES: Record<string, number> = {
+  F: 1,
+  G: 2,
+  H: 3,
+  J: 4,
+  K: 5,
+  M: 6,
+  N: 7,
+  Q: 8,
+  U: 9,
+  V: 10,
+  X: 11,
+  Z: 12,
+};
 
 function key(): string {
   return Deno.env.get('MASSIVE_API_KEY') || '';
@@ -25,6 +39,54 @@ async function get(path: string, params: Record<string, string | number | boolea
   } catch {
     return null;
   }
+}
+
+function dateFromEpoch(value: unknown): string {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return '';
+  // Massive timestamps are usually nanoseconds; some minute fields are ms.
+  const ms = value > 1e15 ? value / 1_000_000 : value;
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
+function decodeTickerExpiry(ticker: string, productCode: string): { label: string; sortKey: string } | null {
+  const suffix = ticker.startsWith(productCode) ? ticker.slice(productCode.length) : ticker;
+  const match = suffix.match(/([FGHJKMNQUVXZ])(\d{1,2})$/);
+  if (!match) return null;
+  const month = FUTURES_MONTH_CODES[match[1]];
+  const yearToken = match[2];
+  const nowYear = new Date().getUTCFullYear();
+  let year = yearToken.length === 2
+    ? 2000 + Number(yearToken)
+    : Math.floor(nowYear / 10) * 10 + Number(yearToken);
+  if (year < nowYear - 1) year += 10;
+  const mm = String(month).padStart(2, '0');
+  return { label: `${year}-${mm}`, sortKey: `${year}-${mm}-01` };
+}
+
+function snapshotExpiry(row: any, productCode: string): { label: string; sortKey: string } | null {
+  const explicit = String(row?.last_trade_date ?? row?.settlement_date ?? '').slice(0, 10);
+  if (explicit) return { label: explicit.slice(0, 7), sortKey: explicit };
+  const detailsDate = dateFromEpoch(row?.details?.settlement_date);
+  if (detailsDate) return { label: detailsDate.slice(0, 7), sortKey: detailsDate };
+  return decodeTickerExpiry(String(row?.ticker ?? ''), productCode);
+}
+
+function snapshotAsOf(row: any): string {
+  return String(row?.session_end_date ?? '').slice(0, 10)
+    || dateFromEpoch(row?.last_trade?.last_updated)
+    || dateFromEpoch(row?.last_minute?.last_updated)
+    || yesterdayUtcDate();
+}
+
+function snapshotPrice(row: any): number {
+  const session = row?.session ?? {};
+  return Number(
+    session.settlement_price
+      ?? session.previous_settlement
+      ?? session.close
+      ?? row?.last_trade?.price
+      ?? row?.price,
+  );
 }
 
 export interface MassiveContract {
@@ -133,9 +195,7 @@ export async function fetchMassiveFrontMonth(
   const row = Array.isArray(snap?.results) ? snap.results[0] : null;
   if (row) {
     const session = row.session ?? {};
-    const price = Number(
-      session.close ?? session.settlement_price ?? session.last ?? row.price,
-    );
+    const price = snapshotPrice(row);
     if (Number.isFinite(price) && price > 0) {
       const change = Number(session.change ?? session.price_change ?? 0);
       const changePercent = Number(
@@ -144,7 +204,7 @@ export async function fetchMassiveFrontMonth(
       const volume = typeof session.volume === 'number' ? session.volume : undefined;
       const ticker = String(row.ticker ?? row.symbol ?? '');
       const asOf = String(
-        row.session_end_date ?? row.last_trade_date ?? yesterdayUtcDate(),
+        snapshotAsOf(row),
       ).slice(0, 10);
       return {
         ticker,
