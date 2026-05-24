@@ -50,37 +50,39 @@ function getKey(): string {
 export async function fetchFmpQuotes(symbols: string[]): Promise<FmpQuote[]> {
   const key = getKey();
   if (!key || symbols.length === 0) return [];
-  const joined = symbols.join(',');
-  // Stable endpoint accepts a single comma-joined list via ?symbol=
-  const url = `${FMP_BASE}/quote?symbol=${encodeURIComponent(joined)}&apikey=${key}`;
+  // Stable endpoint /stable/quote accepts a single ?symbol= value. Fan out
+  // to one request per symbol in parallel (Starter plan: ~300 req/min).
+  const out = await Promise.all(symbols.map((sym) => fetchOneStableQuote(sym, key)));
+  return out.filter((q): q is FmpQuote => q !== null);
+}
+
+async function fetchOneStableQuote(symbol: string, key: string): Promise<FmpQuote | null> {
+  const url = `${FMP_BASE}/quote?symbol=${encodeURIComponent(symbol)}&apikey=${key}`;
   try {
     const res = await fetch(url);
     if (!res.ok) {
       const txt = await res.text().catch(() => '');
-      console.warn(`[fmp] quote ${joined} -> ${res.status} ${txt.slice(0, 200)}`);
-      return [];
+      console.warn(`[fmp] quote ${symbol} -> ${res.status} ${txt.slice(0, 200)}`);
+      return null;
     }
     const arr = await res.json();
-    if (!Array.isArray(arr)) {
-      console.warn(`[fmp] quote ${joined} -> non-array response: ${JSON.stringify(arr).slice(0, 200)}`);
-      return [];
+    if (!Array.isArray(arr) || arr.length === 0) {
+      console.warn(`[fmp] quote ${symbol} -> empty`);
+      return null;
     }
-    if (arr.length === 0) {
-      console.warn(`[fmp] quote ${joined} -> empty array`);
-    }
-    return arr.map((q: any) => ({
-      symbol: String(q.symbol ?? ''),
+    const q = arr[0];
+    return {
+      symbol: String(q.symbol ?? symbol),
       price: typeof q.price === 'number' ? q.price : null,
       change: typeof q.change === 'number' ? q.change : null,
-      // Stable returns `changePercentage`; legacy returned `changesPercentage`.
       changesPercentage: typeof q.changePercentage === 'number'
         ? q.changePercentage
         : (typeof q.changesPercentage === 'number' ? q.changesPercentage : null),
       volume: typeof q.volume === 'number' ? q.volume : null,
       timestamp: typeof q.timestamp === 'number' ? q.timestamp : null,
-    }));
+    };
   } catch {
-    return [];
+    return null;
   }
 }
 
