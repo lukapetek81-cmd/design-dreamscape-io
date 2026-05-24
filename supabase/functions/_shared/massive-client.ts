@@ -96,9 +96,12 @@ export async function fetchContractDailyClose(
   ticker: string,
   date: string,               // 'YYYY-MM-DD'
 ): Promise<number | null> {
+  // Use a small gte/lte window so the request shape matches the working
+  // historical bars call. Single-date `window_start=` was returning empty.
   const json = await get(`/futures/v1/aggs/${encodeURIComponent(ticker)}`, {
     resolution: '1session',
-    window_start: date,
+    'window_start.gte': date,
+    'window_start.lte': date,
     limit: 1,
   });
   const bar = json?.results?.[0];
