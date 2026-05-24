@@ -1,14 +1,17 @@
-// Modelled forward curve (cost-of-carry).
-// Spot price sourced provider-by-commodity:
-//   - Energy (WTI, Brent, NatGas) → internal oil-price-api proxy (OilPriceAPI).
-//   - Metals & grains            → CommodityPriceAPI /v2/rates/latest.
-// No FMP dependency. Curve generated as F(t) = S * exp((r + storage - convenience) * t/12).
+// Forward curve — hybrid sourcing:
+//   - Energy (WTI/Brent/NatGas): cost-of-carry MODEL on OilPriceAPI spot
+//     (OilPriceAPI Business+ needed for real ICE/NYMEX curves; not enabled).
+//   - Metals & grains (Gold/Silver/Copper/Corn/Soybeans/Wheat): REAL market
+//     curve from FMP Starter — individual monthly contract quotes
+//     (e.g. GCG26, ZCH27). Falls back to cost-of-carry if FMP returns nulls.
 // Pro-tier gated. JWT-verified. 5-min response cache.
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { z } from 'https://esm.sh/zod@3.23.8';
 import { corsHeaders, EdgeLogger } from '../_shared/utils.ts';
+import { fetchFmpFuturesCurve } from '../_shared/fmp-client.ts';
+import { FMP_FUTURES_ROOTS } from '../_shared/commodity-mappings.ts';
 
 const MONTH_CODES = ['F', 'G', 'H', 'J', 'K', 'M', 'N', 'Q', 'U', 'V', 'X', 'Z'];
 
@@ -21,10 +24,9 @@ const RISK_FREE = 0.045; // ~3M T-bill proxy. Refresh later via FRED DGS3MO.
 interface ModelParams {
   label: string;
   root: string;                   // futures root used for synthetic contract symbols (e.g. 'CL')
-  source: 'energy' | 'cpa';
+  source: 'energy' | 'fmp';
   energyName?: string;            // OilPriceAPI commodity name (when source==='energy')
-  cpaSym?: string;                // CommodityPriceAPI symbol (when source==='cpa')
-  cpaCentQuoted?: boolean;        // divide CPA price by 100 when true
+  fmpSpotSym?: string;            // FMP front-month symbol for spot fallback (when source==='fmp')
   storage: number;
   conv: number;
   seasonal?: number[];
@@ -35,15 +37,15 @@ const MODEL: Record<string, ModelParams> = {
   // Natural gas: strong winter premium (Nov–Feb), summer discount.
   natgas:   { label: 'Natural Gas', root: 'NG', source: 'energy', energyName: 'Natural Gas',     storage: 0.12, conv: 0.02,
               seasonal: [1.08,1.06,1.00,0.95,0.93,0.94,0.96,0.98,1.00,1.02,1.06,1.10] },
-  gold:     { label: 'Gold',        root: 'GC', source: 'cpa', cpaSym: 'XAU',         storage: 0.005, conv: 0.0 },
-  silver:   { label: 'Silver',      root: 'SI', source: 'cpa', cpaSym: 'XAG',         storage: 0.01,  conv: 0.0 },
-  copper:   { label: 'Copper',      root: 'HG', source: 'cpa', cpaSym: 'HG-SPOT',     storage: 0.02,  conv: 0.015 },
+  gold:     { label: 'Gold',        root: 'GC', source: 'fmp', fmpSpotSym: 'GC=F',   storage: 0.005, conv: 0.0 },
+  silver:   { label: 'Silver',      root: 'SI', source: 'fmp', fmpSpotSym: 'SI=F',   storage: 0.01,  conv: 0.0 },
+  copper:   { label: 'Copper',      root: 'HG', source: 'fmp', fmpSpotSym: 'HG=F',   storage: 0.02,  conv: 0.015 },
   // Grains: harvest discount, pre-harvest premium (rough US harvest cycles).
-  corn:     { label: 'Corn',        root: 'ZC', source: 'cpa', cpaSym: 'CORN',         storage: 0.05, conv: 0.01,
+  corn:     { label: 'Corn',        root: 'ZC', source: 'fmp', fmpSpotSym: 'ZC=F',   storage: 0.05, conv: 0.01,
               seasonal: [1.03,1.04,1.05,1.06,1.07,1.06,1.02,0.97,0.94,0.95,0.97,1.00] },
-  soybeans: { label: 'Soybeans',    root: 'ZS', source: 'cpa', cpaSym: 'SOYBEAN-FUT',  storage: 0.05, conv: 0.01,
+  soybeans: { label: 'Soybeans',    root: 'ZS', source: 'fmp', fmpSpotSym: 'ZS=F',   storage: 0.05, conv: 0.01,
               seasonal: [1.04,1.05,1.06,1.06,1.05,1.03,1.00,0.96,0.94,0.95,0.98,1.01] },
-  wheat:    { label: 'Wheat',       root: 'ZW', source: 'cpa', cpaSym: 'ZW-SPOT', cpaCentQuoted: true, storage: 0.05, conv: 0.01,
+  wheat:    { label: 'Wheat',       root: 'ZW', source: 'fmp', fmpSpotSym: 'ZW=F',   storage: 0.05, conv: 0.01,
               seasonal: [1.02,1.03,1.04,1.05,1.04,1.00,0.96,0.95,0.97,0.99,1.00,1.01] },
 };
 
@@ -84,17 +86,19 @@ async function fetchSpotEnergy(name: string): Promise<number | null> {
   return typeof price === 'number' && price > 0 ? price : null;
 }
 
-async function fetchSpotCpa(sym: string, centQuoted = false): Promise<number | null> {
-  const key = Deno.env.get('COMMODITYPRICE_API_KEY');
+async function fetchSpotFmp(sym: string): Promise<number | null> {
+  const key = Deno.env.get('FMP_API_KEY');
   if (!key) return null;
-  const url = `https://api.commoditypriceapi.com/v2/rates/latest?symbols=${encodeURIComponent(sym)}`;
-  const res = await fetch(url, { headers: { 'x-api-key': key } });
-  if (!res.ok) return null;
-  const json = await res.json();
-  let raw = json?.rates?.[sym];
-  if (typeof raw !== 'number' || !(raw > 0)) return null;
-  if (centQuoted) raw = raw / 100;
-  return raw;
+  const url = `https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(sym)}?apikey=${key}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const arr = await res.json();
+    const price = Array.isArray(arr) ? arr[0]?.price : null;
+    return typeof price === 'number' && price > 0 ? price : null;
+  } catch {
+    return null;
+  }
 }
 
 serve(async (req) => {
@@ -146,30 +150,70 @@ serve(async (req) => {
     const params = MODEL[commodity];
     const contracts = genContracts(params.root, monthsAhead);
 
-    // 1. Fetch spot/front-month price from the right provider.
-    //    Energy → OilPriceAPI (via internal proxy). Metals/grains → CommodityPriceAPI.
+    // 1. Fetch spot for the source-tag and modelled fallback.
     const spot = params.source === 'energy'
       ? await fetchSpotEnergy(params.energyName!)
-      : await fetchSpotCpa(params.cpaSym!, params.cpaCentQuoted);
+      : await fetchSpotFmp(params.fmpSpotSym!);
     if (spot == null) {
       return new Response(JSON.stringify({ error: 'spot_unavailable' }), {
         status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // 2. Build modelled curve via cost-of-carry + optional seasonal multipliers.
-    const carry = RISK_FREE + params.storage - params.conv;
-    const curve = contracts.map((c) => {
-      const t = c.monthIdx / 12;
-      const base = spot * Math.exp(carry * t);
-      const season = params.seasonal ? params.seasonal[c.monthOfYear] : 1;
-      return {
-        symbol: c.symbol,
-        expiry: c.expiry,
-        monthIdx: c.monthIdx,
-        price: +(base * season).toFixed(4),
-      };
-    });
+    // 2a. FMP source: try the real monthly contract strip first.
+    let curve: Array<{ symbol: string; expiry: string; monthIdx: number; price: number }> = [];
+    let usedSource: 'market' | 'model' = 'model';
+
+    if (params.source === 'fmp') {
+      const root = FMP_FUTURES_ROOTS[commodity] ?? params.root;
+      const realCurve = await fetchFmpFuturesCurve(root, monthsAhead);
+      const withPrice = realCurve.filter((c) => typeof c.price === 'number' && c.price > 0);
+      // Require ≥60% of contracts to have real prices to call it "market"; otherwise fall back.
+      if (withPrice.length >= Math.ceil(monthsAhead * 0.6)) {
+        // Interpolate any missing months linearly between neighbours.
+        const filled = realCurve.map((c, idx) => {
+          if (typeof c.price === 'number' && c.price > 0) return { ...c, price: c.price };
+          // find nearest left + right with prices
+          let left: number | null = null, right: number | null = null;
+          for (let i = idx - 1; i >= 0; i--) {
+            if (typeof realCurve[i].price === 'number' && (realCurve[i].price as number) > 0) {
+              left = realCurve[i].price as number; break;
+            }
+          }
+          for (let i = idx + 1; i < realCurve.length; i++) {
+            if (typeof realCurve[i].price === 'number' && (realCurve[i].price as number) > 0) {
+              right = realCurve[i].price as number; break;
+            }
+          }
+          const fill = left != null && right != null ? (left + right) / 2 : (left ?? right ?? spot);
+          return { ...c, price: +fill.toFixed(4) };
+        });
+        curve = filled.map((c) => ({
+          symbol: c.symbol,
+          expiry: c.expiry,
+          monthIdx: c.monthIdx,
+          price: +(c.price as number).toFixed(4),
+        }));
+        usedSource = 'market';
+      }
+    }
+
+    // 2b. Modelled curve fallback (energy always; FMP on insufficient data).
+    if (curve.length === 0) {
+      const carry = RISK_FREE + params.storage - params.conv;
+      curve = contracts.map((c) => {
+        const t = c.monthIdx / 12;
+        const base = spot * Math.exp(carry * t);
+        const season = params.seasonal ? params.seasonal[c.monthOfYear] : 1;
+        return {
+          symbol: c.symbol,
+          expiry: c.expiry,
+          monthIdx: c.monthIdx,
+          price: +(base * season).toFixed(4),
+        };
+      });
+      usedSource = 'model';
+    }
 
     const m1 = curve[0]?.price ?? null;
     const m2 = curve[1]?.price ?? null;
@@ -180,7 +224,7 @@ serve(async (req) => {
         : 'flat';
     const rollYield = m1 && m2 ? ((m2 - m1) / m1) * 100 : null;
 
-    logger.info(`Modelled curve for ${commodity} (src=${params.source}): spot=${spot}, m1=${m1}, m2=${m2}`);
+    logger.info(`Curve for ${commodity} (source=${usedSource}, provider=${params.source}): spot=${spot}, m1=${m1}, m2=${m2}`);
     return new Response(
       JSON.stringify({
         commodity,
@@ -190,8 +234,10 @@ serve(async (req) => {
         rollYield,
         m1,
         m2,
-        source: 'model',
-        model: { type: 'cost_of_carry', spotSource: params.source === 'energy' ? 'oilpriceapi' : 'commoditypriceapi', riskFree: RISK_FREE, storage: params.storage, convenience: params.conv, seasonal: !!params.seasonal },
+        source: usedSource,
+        model: usedSource === 'model'
+          ? { type: 'cost_of_carry', spotSource: params.source === 'energy' ? 'oilpriceapi' : 'fmp', riskFree: RISK_FREE, storage: params.storage, convenience: params.conv, seasonal: !!params.seasonal }
+          : { type: 'market', spotSource: 'fmp', provider: 'FMP Starter (/v3/quote)' },
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=300' } },
     );

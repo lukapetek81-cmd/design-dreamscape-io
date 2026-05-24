@@ -46,6 +46,12 @@ const ForwardCurves: React.FC = () => {
               <Activity className="w-6 h-6 text-primary" />
               Forward Curves
               <Badge variant="default" className="ml-1 bg-gradient-to-r from-violet-600 to-indigo-600">Pro</Badge>
+              {data?.source === 'market' && (
+                <Badge variant="outline" className="ml-1 border-emerald-500/40 text-emerald-600 dark:text-emerald-400">Live</Badge>
+              )}
+              {data?.source === 'model' && (
+                <Badge variant="outline" className="ml-1 border-amber-500/40 text-amber-600 dark:text-amber-400">Modelled</Badge>
+              )}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               Futures strip across 12 monthly contracts. Detect contango/backwardation and roll yield.
@@ -53,14 +59,25 @@ const ForwardCurves: React.FC = () => {
           </div>
         </div>
 
-        {isPro && (
+        {isPro && data?.source === 'market' && (
+          <div className="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 flex items-start gap-2 text-xs">
+            <Info className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
+            <div>
+              <span className="font-medium text-emerald-600 dark:text-emerald-400">Live market curve.</span>{' '}
+              Each contract month is a real quote from FMP Starter
+              (CME/NYMEX/COMEX/CBOT/ICE). Any gaps in thinly-traded back months
+              are linearly interpolated between neighbouring contracts.
+            </div>
+          </div>
+        )}
+        {isPro && data?.source === 'model' && (
           <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 flex items-start gap-2 text-xs">
             <Info className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
             <div>
               <span className="font-medium text-amber-600 dark:text-amber-400">Modelled curve.</span>{' '}
               Spot price is live; forward contracts are estimated via a cost-of-carry model
               (risk-free rate + storage − convenience yield, plus seasonal multipliers where applicable).
-              Real exchange futures data can be wired in later — UI stays identical.
+              Energy benchmarks stay modelled until OilPriceAPI Business+ is enabled.
             </div>
           </div>
         )}

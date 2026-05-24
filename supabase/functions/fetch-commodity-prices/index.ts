@@ -1,8 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/utils.ts'
 import { IpRateLimiter } from '../_shared/rateLimit.ts'
-import { COMMODITY_PRICE_API_SYMBOLS } from '../_shared/commodity-mappings.ts'
-import { convertCpaPriceToDisplay } from '../_shared/commodity-units.ts'
+import { FMP_SYMBOLS } from '../_shared/commodity-mappings.ts'
+import { fetchFmpQuote } from '../_shared/fmp-client.ts'
 
 // Protect OilPriceAPI / CommodityPriceAPI quota.
 const limiter = new IpRateLimiter({ limit: 60, windowMs: 60_000 });
@@ -28,13 +28,8 @@ function setCachedPrice(key: string, data: any, source: string): void {
   priceCache.set(key, { data, source, timestamp: Date.now() });
 }
 
-// Use the canonical shared map so single-price lookups stay in sync with
-// /fetch-all-commodities. Previously a stale local map mis-priced Sugar #11
-// (LS→UK Sugar No 5), bogus-mapped all cattle/hogs to "BEEF", and used
-// "Milk Class III"/"Live Cattle Futures" name variants that no longer exist
-// in the catalog — every Softs/Livestock detail view fell through to the
-// synthetic $100 fallback.
-const CPAPI_SYMBOLS: Record<string, string> = COMMODITY_PRICE_API_SYMBOLS;
+// Single source of truth: FMP `=F` symbols derived from the catalog.
+const PRICE_SYMBOLS: Record<string, string> = FMP_SYMBOLS;
 
 // ALL energy commodities use OilPriceAPI exclusively
 const OIL_API_CODES: Record<string, string> = {
@@ -184,41 +179,24 @@ serve(async (req) => {
       }
     }
 
-    // ── Step 2: CommodityPriceAPI for non-energy commodities ──
+    // ── Step 2: FMP for non-energy commodities ──
     if (!priceData && !ENERGY_NAMES.has(commodityName)) {
-      const cpApiKey = Deno.env.get('COMMODITYPRICE_API_KEY');
-      const cpSymbol = CPAPI_SYMBOLS[commodityName];
-
-      if (cpApiKey && cpSymbol) {
+      const fmpSym = PRICE_SYMBOLS[commodityName];
+      if (fmpSym) {
         try {
-          console.log(`CommodityPriceAPI: ${commodityName} (${cpSymbol})`);
-          const resp = await fetch(
-            `https://api.commoditypriceapi.com/v2/rates/latest?symbols=${cpSymbol}&quote=USD&apiKey=${cpApiKey}`
-          );
-          if (resp.ok) {
-            const result = await resp.json();
-            if (result.success && result.rates && result.rates[cpSymbol] !== undefined) {
-              const rawValue = typeof result.rates[cpSymbol] === 'number'
-                ? result.rates[cpSymbol]
-                : parseFloat(result.rates[cpSymbol]);
-              const rawUnit = result.metadata?.[cpSymbol]?.unit;
-              const { price, unit } = convertCpaPriceToDisplay(rawValue, rawUnit, cpSymbol);
-              console.log(`[CPA] ${commodityName} ${cpSymbol} raw=${rawValue} ${rawUnit||'?'} → ${price.toFixed(4)} ${unit}`);
-              if (price > 0) {
-                priceData = {
-                  symbol: cpSymbol, price: Math.round(price * 10000) / 10000,
-                  change: 0, changePercent: 0,
-                  lastUpdate: new Date().toISOString()
-                };
-                dataSource = 'commoditypriceapi';
-              }
-            }
-          } else {
-            const errText = await resp.text();
-            console.warn(`CommodityPriceAPI error: ${resp.status} - ${errText.substring(0, 150)}`);
+          const q = await fetchFmpQuote(fmpSym);
+          if (q && typeof q.price === 'number' && q.price > 0) {
+            priceData = {
+              symbol: fmpSym,
+              price: Math.round(q.price * 10000) / 10000,
+              change: typeof q.change === 'number' ? q.change : 0,
+              changePercent: typeof q.changesPercentage === 'number' ? q.changesPercentage : 0,
+              lastUpdate: new Date().toISOString(),
+            };
+            dataSource = 'fmp';
           }
         } catch (err) {
-          console.warn(`CommodityPriceAPI failed for ${commodityName}:`, err);
+          console.warn(`FMP quote failed for ${commodityName}:`, err);
         }
       }
     }
@@ -228,7 +206,7 @@ serve(async (req) => {
       console.log(`Fallback for ${commodityName}`)
       const basePrice = getBasePriceForCommodity(commodityName)
       priceData = {
-        symbol: CPAPI_SYMBOLS[commodityName] || commodityName,
+        symbol: PRICE_SYMBOLS[commodityName] || commodityName,
         price: basePrice,
         change: (Math.random() - 0.5) * basePrice * 0.02,
         changePercent: (Math.random() - 0.5) * 4,

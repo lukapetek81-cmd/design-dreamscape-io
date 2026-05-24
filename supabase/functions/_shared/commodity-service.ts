@@ -2,11 +2,10 @@ import { EdgeLogger, EdgePerformanceMonitor } from './utils.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import {
   COMMODITY_SYMBOLS,
-  COMMODITY_PRICE_API_SYMBOLS,
-  CENT_QUOTED_SYMBOLS,
+  FMP_SYMBOLS,
   PREMIUM_COMMODITIES,
-  getCommodityByApiSymbol,
 } from './commodity-mappings.ts';
+import { fetchFmpQuotes, fetchFmpHistorical } from './fmp-client.ts';
 
 export interface CommodityData {
   symbol: string;
@@ -51,7 +50,7 @@ function setCache<T>(key: string, data: T, ttl = CACHE_TTL_MS): void {
 export class CommodityService {
   private logger: EdgeLogger;
   private performanceMonitor: EdgePerformanceMonitor;
-  private cpaApiKey: string;
+  private fmpApiKey: string;
   private oilApiKey: string;
   private alphaVantageApiKey: string;
   private supabaseUrl: string;
@@ -60,7 +59,7 @@ export class CommodityService {
   constructor(functionName: string) {
     this.logger = new EdgeLogger({ functionName });
     this.performanceMonitor = new EdgePerformanceMonitor();
-    this.cpaApiKey = Deno.env.get('COMMODITYPRICE_API_KEY') || '';
+    this.fmpApiKey = Deno.env.get('FMP_API_KEY') || '';
     this.oilApiKey = Deno.env.get('OIL_PRICE_API_KEY') || '';
     this.alphaVantageApiKey = Deno.env.get('ALPHA_VANTAGE_API_KEY') || '';
     this.supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
@@ -77,12 +76,12 @@ export class CommodityService {
         return cached;
       }
 
-      const [cpaResults, oilResults] = await Promise.all([
-        this.fetchAllFromCPA(includePremium),
+      const [fmpResults, oilResults] = await Promise.all([
+        this.fetchAllFromFmp(includePremium),
         this.fetchAllFromOilPriceApi(includePremium),
       ]);
 
-      const merged = [...oilResults, ...cpaResults];
+      const merged = [...oilResults, ...fmpResults];
       const seen = new Set(merged.map((c) => c.name));
       for (const [name, info] of Object.entries(COMMODITY_SYMBOLS)) {
         if (seen.has(name)) continue;
@@ -102,12 +101,12 @@ export class CommodityService {
 
       // Only cache if we got real data from BOTH providers — avoids locking in
       // synthetic fallback prices for an hour after a transient outage.
-      if (cpaResults.length > 0 && oilResults.length > 0) {
+      if (fmpResults.length > 0 && oilResults.length > 0) {
         setCache(cacheKey, merged);
       } else {
-        this.logger.warn(`Skipping cache (${cacheKey}): cpa=${cpaResults.length}, oil=${oilResults.length}`);
+        this.logger.warn(`Skipping cache (${cacheKey}): fmp=${fmpResults.length}, oil=${oilResults.length}`);
       }
-      this.logger.info(`Fetched ${merged.length} commodities (cpa=${cpaResults.length}, oil=${oilResults.length}, premium=${includePremium})`);
+      this.logger.info(`Fetched ${merged.length} commodities (fmp=${fmpResults.length}, oil=${oilResults.length}, premium=${includePremium})`);
       return merged;
     } catch (error) {
       this.logger.error('Failed to fetch commodities', error);
@@ -117,58 +116,40 @@ export class CommodityService {
     }
   }
 
-  /** Batch-fetches non-energy commodities from CommodityPriceAPI v2. */
-  private async fetchAllFromCPA(includePremium = false): Promise<CommodityData[]> {
-    if (!this.cpaApiKey) {
-      this.logger.warn('No COMMODITYPRICE_API_KEY configured');
+  /**
+   * Batch-fetches all non-energy commodities from FMP Starter `/v3/quote/`.
+   * One HTTP call: symbols are comma-joined into a single quote URL.
+   * Replaces CommodityPriceAPI as of 2026-05.
+   */
+  private async fetchAllFromFmp(includePremium = false): Promise<CommodityData[]> {
+    if (!this.fmpApiKey) {
+      this.logger.warn('No FMP_API_KEY configured');
       return [];
     }
+    const targets = Object.entries(FMP_SYMBOLS)
+      .filter(([name]) => includePremium || !PREMIUM_COMMODITIES.has(name));
+    if (targets.length === 0) return [];
+
+    const symbols = targets.map(([, sym]) => sym);
+    const quotes = await fetchFmpQuotes(symbols);
+    const bySymbol = new Map(quotes.map((q) => [q.symbol, q]));
 
     const out: CommodityData[] = [];
-    // Free users: only fetch CPA symbols for non-premium commodities (~24 syms).
-    // Premium users: fetch full catalog (~72 syms).
-    const cpaSymbols = Object.entries(COMMODITY_PRICE_API_SYMBOLS)
-      .filter(([name]) => includePremium || !PREMIUM_COMMODITIES.has(name))
-      .map(([, sym]) => sym);
-    const batchSize = 5;
-
-    for (let i = 0; i < cpaSymbols.length; i += batchSize) {
-      const batch = cpaSymbols.slice(i, i + batchSize);
-      try {
-        const url = `https://api.commoditypriceapi.com/v2/rates/latest?symbols=${encodeURIComponent(batch.join(','))}`;
-        const res = await fetch(url, { headers: { 'x-api-key': this.cpaApiKey } });
-        if (!res.ok) {
-          this.logger.warn(`CPA batch failed ${res.status}: ${(await res.text()).slice(0, 150)}`);
-          continue;
-        }
-        const data = await res.json();
-        if (!data?.success || !data.rates) continue;
-
-        for (const cpaSymbol of batch) {
-          let rawPrice = data.rates[cpaSymbol];
-          if (typeof rawPrice !== 'number') continue;
-          if (CENT_QUOTED_SYMBOLS.has(cpaSymbol)) rawPrice = rawPrice / 100;
-          const name = getCommodityByApiSymbol(cpaSymbol);
-          if (!name) continue;
-          const meta = COMMODITY_SYMBOLS[name];
-          out.push({
-            name,
-            symbol: meta?.symbol || cpaSymbol,
-            price: rawPrice,
-            change: 0,
-            changePercent: 0,
-            category: meta?.category || 'other',
-            contractSize: meta?.contractSize || 'TBD',
-            venue: meta?.venue || 'Various',
-          });
-        }
-      } catch (err) {
-        this.logger.warn(`CPA batch ${i}-${i + batch.length} threw`, err);
-      }
-      // CPA paid tier: 300 req/min = 5 req/sec. 250ms delay = ~4 req/sec, safe margin.
-      if (i + batchSize < cpaSymbols.length) {
-        await new Promise((resolve) => setTimeout(resolve, 250));
-      }
+    for (const [name, sym] of targets) {
+      const q = bySymbol.get(sym);
+      if (!q || typeof q.price !== 'number' || !(q.price > 0)) continue;
+      const meta = COMMODITY_SYMBOLS[name];
+      out.push({
+        name,
+        symbol: meta?.symbol || sym,
+        price: q.price,
+        change: typeof q.change === 'number' ? q.change : 0,
+        changePercent: typeof q.changesPercentage === 'number' ? q.changesPercentage : 0,
+        volume: typeof q.volume === 'number' ? q.volume : undefined,
+        category: meta?.category || 'other',
+        contractSize: meta?.contractSize || 'TBD',
+        venue: meta?.venue || 'Various',
+      });
     }
     return out;
   }
@@ -308,9 +289,9 @@ export class CommodityService {
       const cached = getCache<ChartDataPoint[]>(cacheKey);
       if (cached) return cached;
 
-      const cpaSymbol = COMMODITY_PRICE_API_SYMBOLS[commodityName];
-      if (cpaSymbol && this.cpaApiKey) {
-        const data = await this.fetchCpaTimeseries(cpaSymbol, timeframe, chartType);
+      const fmpSym = FMP_SYMBOLS[commodityName];
+      if (fmpSym && this.fmpApiKey) {
+        const data = await this.fetchFmpTimeseries(fmpSym, timeframe, chartType);
         if (data.length > 0) {
           setCache(cacheKey, data);
           return data;
@@ -335,8 +316,8 @@ export class CommodityService {
     }
   }
 
-  private async fetchCpaTimeseries(
-    cpaSymbol: string,
+  private async fetchFmpTimeseries(
+    fmpSym: string,
     timeframe: string,
     chartType: string
   ): Promise<ChartDataPoint[]> {
@@ -349,35 +330,17 @@ export class CommodityService {
     const startStr = startDate.toISOString().split('T')[0];
     const endStr = endDate.toISOString().split('T')[0];
 
-    const url = `https://api.commoditypriceapi.com/v2/rates/time-series?symbols=${encodeURIComponent(cpaSymbol)}&startDate=${startStr}&endDate=${endStr}`;
-    const res = await fetch(url, { headers: { 'x-api-key': this.cpaApiKey } });
-    if (!res.ok) {
-      this.logger.warn(`CPA timeseries failed ${res.status}`);
-      return [];
-    }
-    const data = await res.json();
-    if (!data?.success || !data.rates) return [];
-
-    const isCent = CENT_QUOTED_SYMBOLS.has(cpaSymbol);
-    const points: ChartDataPoint[] = [];
-    for (const dateStr of Object.keys(data.rates).sort()) {
-      const day = data.rates[dateStr]?.[cpaSymbol];
-      if (!day) continue;
-      const norm = (n: unknown): number => {
-        const v = typeof n === 'number' ? n : parseFloat(String(n));
-        return Number.isFinite(v) ? (isCent ? v / 100 : v) : 0;
-      };
-      const close = norm(day.close ?? day);
-      const point: ChartDataPoint = { date: dateStr, price: close };
+    const bars = await fetchFmpHistorical(fmpSym, startStr, endStr);
+    return bars.map((b) => {
+      const point: ChartDataPoint = { date: b.date, price: b.close };
       if (chartType === 'candlestick') {
-        point.open = norm(day.open ?? close);
-        point.high = norm(day.high ?? close);
-        point.low = norm(day.low ?? close);
-        point.close = close;
+        point.open = b.open;
+        point.high = b.high;
+        point.low = b.low;
+        point.close = b.close;
       }
-      points.push(point);
-    }
-    return points;
+      return point;
+    });
   }
 
   private async fetchAlphaVantageChart(commodityName: string): Promise<ChartDataPoint[]> {
