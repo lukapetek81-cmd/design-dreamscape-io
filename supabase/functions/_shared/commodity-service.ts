@@ -130,7 +130,8 @@ export class CommodityService {
   /**
    * Batch-fetches all non-energy commodities from FMP Starter `/v3/quote/`.
    * One HTTP call: symbols are comma-joined into a single quote URL.
-   * Replaces CommodityPriceAPI as of 2026-05.
+   * Now scoped to ICE/LME-listed items only (11 symbols) — everything
+   * Massive can quote has moved off FMP.
    */
   private async fetchAllFromFmp(includePremium = false): Promise<CommodityData[]> {
     if (!this.fmpApiKey) {
@@ -161,6 +162,58 @@ export class CommodityService {
         contractSize: meta?.contractSize || 'TBD',
         venue: meta?.venue || 'Various',
       });
+    }
+    return out;
+  }
+
+  /**
+   * Throttled fetch of front-month settlements from Massive Futures Basic.
+   * 5 req/min plan cap → run 4 in parallel, then sleep 12s between batches.
+   * Total cold-path latency for ~15 items: ~40s. Subsequent calls hit the
+   * 6h `cache` Map. Missing items fall through to the DB snapshot.
+   */
+  private async fetchAllFromMassive(includePremium = false): Promise<CommodityData[]> {
+    const apiKey = Deno.env.get('MASSIVE_API_KEY') || '';
+    if (!apiKey) {
+      this.logger.warn('No MASSIVE_API_KEY configured');
+      return [];
+    }
+    const targets = Object.entries(MASSIVE_PRODUCT_CODES)
+      .filter(([name]) => includePremium || !PREMIUM_COMMODITIES.has(name));
+    if (targets.length === 0) return [];
+
+    const BATCH = 4;
+    const PAUSE_MS = 12_000;
+    const out: CommodityData[] = [];
+    for (let i = 0; i < targets.length; i += BATCH) {
+      const slice = targets.slice(i, i + BATCH);
+      const results = await Promise.all(
+        slice.map(async ([name, code]) => {
+          try {
+            const fm = await fetchMassiveFrontMonth(code);
+            if (!fm) return null;
+            const meta = COMMODITY_SYMBOLS[name];
+            return {
+              name,
+              symbol: meta?.symbol || `${code}=F`,
+              price: fm.price,
+              change: fm.change,
+              changePercent: fm.changePercent,
+              volume: fm.volume,
+              category: meta?.category || 'other',
+              contractSize: meta?.contractSize || 'TBD',
+              venue: meta?.venue || 'CME',
+            } as CommodityData;
+          } catch (err) {
+            this.logger.warn(`Massive snapshot failed for ${name}`, err);
+            return null;
+          }
+        }),
+      );
+      for (const r of results) if (r) out.push(r);
+      if (i + BATCH < targets.length) {
+        await new Promise((res) => setTimeout(res, PAUSE_MS));
+      }
     }
     return out;
   }
@@ -301,6 +354,17 @@ export class CommodityService {
       if (cached) return cached;
 
       const fmpSym = FMP_SYMBOLS[commodityName];
+      const massiveCode = MASSIVE_PRODUCT_CODES[commodityName];
+
+      // Prefer Massive for CME-side names.
+      if (massiveCode) {
+        const data = await this.fetchMassiveTimeseries(massiveCode, timeframe, chartType);
+        if (data.length > 0) {
+          setCache(cacheKey, data);
+          return data;
+        }
+      }
+
       if (fmpSym && this.fmpApiKey) {
         const data = await this.fetchFmpTimeseries(fmpSym, timeframe, chartType);
         if (data.length > 0) {
@@ -342,6 +406,33 @@ export class CommodityService {
     const endStr = endDate.toISOString().split('T')[0];
 
     const bars = await fetchFmpHistorical(fmpSym, startStr, endStr);
+    return bars.map((b) => {
+      const point: ChartDataPoint = { date: b.date, price: b.close };
+      if (chartType === 'candlestick') {
+        point.open = b.open;
+        point.high = b.high;
+        point.low = b.low;
+        point.close = b.close;
+      }
+      return point;
+    });
+  }
+
+  private async fetchMassiveTimeseries(
+    productCode: string,
+    timeframe: string,
+    chartType: string,
+  ): Promise<ChartDataPoint[]> {
+    const daysMap: Record<string, number> = {
+      '1d': 2, '1w': 7, '1m': 30, '3m': 90, '6m': 180, '1y': 365,
+    };
+    const days = daysMap[timeframe] || 30;
+    const endDate = new Date();
+    const startDate = new Date(endDate.getTime() - days * 86400000);
+    const startStr = startDate.toISOString().split('T')[0];
+    const endStr = endDate.toISOString().split('T')[0];
+
+    const bars = await fetchMassiveFrontMonthBars(productCode, startStr, endStr);
     return bars.map((b) => {
       const point: ChartDataPoint = { date: b.date, price: b.close };
       if (chartType === 'candlestick') {
