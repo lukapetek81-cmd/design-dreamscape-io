@@ -313,21 +313,20 @@ export async function fetchMassiveCurve(
   if (rows.length > 0) {
     let asOf = yesterdayUtcDate();
     const curve = rows
-      .filter((r: any) => r?.ticker && r?.last_trade_date && (r.type ?? 'single') === 'single')
+      .filter((r: any) => r?.ticker && r?.product_code === productCode && (r.type ?? 'single') === 'single')
+      .map((r: any) => ({ row: r, expiry: snapshotExpiry(r, productCode), price: snapshotPrice(r) }))
+      .filter((r) => r.expiry && Number.isFinite(r.price) && r.price > 0)
+      .sort((a, b) => a.expiry!.sortKey.localeCompare(b.expiry!.sortKey))
       .slice(0, monthsAhead)
-      .map((r: any, i: number) => {
-        const session = r.session ?? {};
-        const price = Number(
-          session.close ?? session.settlement_price ?? session.last ?? r.price,
-        );
-        const rowAsOf = String(r.session_end_date ?? r.last_trade_date ?? '').slice(0, 10);
+      .map((r, i) => {
+        const rowAsOf = snapshotAsOf(r.row);
         if (rowAsOf && rowAsOf < asOf) asOf = rowAsOf;
         if (i === 0 && rowAsOf) asOf = rowAsOf;
         return {
-          symbol: String(r.ticker),
-          expiry: String(r.last_trade_date).slice(0, 7),
+          symbol: String(r.row.ticker),
+          expiry: r.expiry!.label,
           monthIdx: i + 1,
-          price: Number.isFinite(price) && price > 0 ? +price.toFixed(4) : null,
+          price: +r.price.toFixed(4),
         };
       })
       .filter((p): p is { symbol: string; expiry: string; monthIdx: number; price: number } =>
