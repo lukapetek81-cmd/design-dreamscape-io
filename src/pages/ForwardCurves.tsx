@@ -76,9 +76,6 @@ const ForwardCurves: React.FC = () => {
               {data?.source === 'market' && (
                 <Badge variant="outline" className="ml-1 border-emerald-500/40 text-emerald-600 dark:text-emerald-400">Live</Badge>
               )}
-              {data?.source === 'model' && (
-                <Badge variant="outline" className="ml-1 border-amber-500/40 text-amber-600 dark:text-amber-400">Modelled</Badge>
-              )}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               Futures strip across 12 monthly contracts. Detect contango/backwardation and roll yield.
@@ -92,19 +89,17 @@ const ForwardCurves: React.FC = () => {
             <div>
               <span className="font-medium text-emerald-600 dark:text-emerald-400">Live market curve.</span>{' '}
               Each contract month is a real quote from FMP Starter
-              (CME/NYMEX/COMEX/CBOT/ICE). Any gaps in thinly-traded back months
-              are linearly interpolated between neighbouring contracts.
+              (CME/NYMEX/COMEX/CBOT/ICE). Contracts without an active quote are omitted.
             </div>
           </div>
         )}
-        {isPro && data?.source === 'model' && (
-          <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 flex items-start gap-2 text-xs">
-            <Info className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+        {isPro && error && (
+          <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 flex items-start gap-2 text-xs">
+            <Info className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
             <div>
-              <span className="font-medium text-amber-600 dark:text-amber-400">Modelled curve.</span>{' '}
-              Spot price is live; forward contracts are estimated via a cost-of-carry model
-              (risk-free rate + storage − convenience yield, plus seasonal multipliers where applicable).
-              Energy benchmarks stay modelled until OilPriceAPI Business+ is enabled.
+              <span className="font-medium text-destructive">No live curve available.</span>{' '}
+              FMP returned too few active monthly contracts for this commodity right now.
+              Try again after market open.
             </div>
           </div>
         )}
