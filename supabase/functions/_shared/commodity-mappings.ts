@@ -1,7 +1,9 @@
 import { CommoditySymbol } from './types.ts';
 
-// Catalog: ~85 commodities. Energy = OilPriceAPI exclusively. Non-energy = CommodityPriceAPI v2.
-// Free tier = household-name commodities. Premium = niche / regional / exotic / spot-or-futures variant.
+// Catalog: 35 commodities. Energy = OilPriceAPI exclusively. Non-energy = FMP Starter (/v3/quote/).
+// Niche commodities that FMP doesn't quote (Iron Ore, HRC Steel, Lithium, Cobalt, Steel, Titanium,
+// Sunflower Oil, UK Sugar No 5, Palm Oil, Industrial Ethanol, Rubber, Milk) were dropped 2026-05.
+// Free tier = household names. Premium = niche / regional / exotic variants.
 export const COMMODITY_SYMBOLS: Record<string, CommoditySymbol> = {
   // ============ ENERGY (OilPriceAPI, unchanged) ============
   'WTI Crude Oil': { symbol: 'CL=F', category: 'energy', contractSize: '1,000 bbl', venue: 'NYMEX' },
@@ -25,7 +27,7 @@ export const COMMODITY_SYMBOLS: Record<string, CommoditySymbol> = {
   'Gasoil': { symbol: 'GO=F', category: 'energy', contractSize: '1 MT', venue: 'ICE' },
   'Naphtha': { symbol: 'NAP=F', category: 'energy', contractSize: '1 MT', venue: 'ICE' },
 
-  // ============ METALS — Free (CommodityPriceAPI) ============
+  // ============ METALS — Free (FMP) ============
   'Gold Futures': { symbol: 'GC=F', category: 'metals', contractSize: '100 oz', venue: 'COMEX' },
   'Silver Futures': { symbol: 'SI=F', category: 'metals', contractSize: '5,000 oz', venue: 'COMEX' },
   'Copper': { symbol: 'HG=F', category: 'metals', contractSize: '25,000 lbs', venue: 'COMEX' },
@@ -33,15 +35,10 @@ export const COMMODITY_SYMBOLS: Record<string, CommoditySymbol> = {
   'Palladium': { symbol: 'PA=F', category: 'metals', contractSize: '100 oz', venue: 'NYMEX' },
   'Aluminum': { symbol: 'ALI=F', category: 'metals', contractSize: '25 MT', venue: 'LME' },
   'Zinc': { symbol: 'ZNC=F', category: 'metals', contractSize: '25 MT', venue: 'LME' },
-  'Iron Ore': { symbol: 'TIO=F', category: 'metals', contractSize: '100 MT', venue: 'SGX' },
   // Metals — Premium
   'Lead Futures': { symbol: 'PBF=F', category: 'metals', contractSize: '25 MT', venue: 'LME' },
   'Nickel Futures': { symbol: 'NIF=F', category: 'metals', contractSize: '6 MT', venue: 'LME' },
   'Tin': { symbol: 'SN=X', category: 'metals', contractSize: '5 MT', venue: 'LME' },
-  'Steel': { symbol: 'STL=F', category: 'metals', contractSize: '20 MT', venue: 'LME' },
-  'Hot-Rolled Coil Steel': { symbol: 'HRC=F', category: 'metals', contractSize: '20 short tons', venue: 'NYMEX' },
-  'Titanium': { symbol: 'TI=X', category: 'metals', contractSize: '1 MT', venue: 'OTC' },
-  'Lithium': { symbol: 'LIT=X', category: 'metals', contractSize: '1 MT', venue: 'OTC' },
 
   // ============ GRAINS — Free ============
   'Corn Futures': { symbol: 'ZC=F', category: 'grains', contractSize: '5,000 bu', venue: 'CBOT' },
@@ -53,7 +50,6 @@ export const COMMODITY_SYMBOLS: Record<string, CommoditySymbol> = {
   'Rough Rice': { symbol: 'ZR=F', category: 'grains', contractSize: '2,000 cwt', venue: 'CBOT' },
   // Grains — Premium
   'Canola': { symbol: 'RS=F', category: 'grains', contractSize: '20 MT', venue: 'ICE' },
-  'Sunflower Oil': { symbol: 'SUN=X', category: 'grains', contractSize: '1 MT', venue: 'OTC' },
 
   // ============ SOFTS — Free ============
   'Coffee Arabica': { symbol: 'KC=F', category: 'softs', contractSize: '37,500 lbs', venue: 'ICE' },
@@ -61,89 +57,49 @@ export const COMMODITY_SYMBOLS: Record<string, CommoditySymbol> = {
   'Cotton': { symbol: 'CT=F', category: 'softs', contractSize: '50,000 lbs', venue: 'ICE' },
   'Cocoa': { symbol: 'CC=F', category: 'softs', contractSize: '10 MT', venue: 'ICE' },
   'Orange Juice': { symbol: 'OJ=F', category: 'softs', contractSize: '15,000 lbs', venue: 'ICE' },
-  // Softs — Premium
-  'UK Sugar No 5': { symbol: 'LS=F', category: 'softs', contractSize: '50 MT', venue: 'ICE' },
-  'Palm Oil': { symbol: 'PO=F', category: 'softs', contractSize: '25 MT', venue: 'BMD' },
 
   // ============ LIVESTOCK — Free ============
   'Live Cattle': { symbol: 'LE=F', category: 'livestock', contractSize: '40,000 lbs', venue: 'CME' },
   'Lean Hogs': { symbol: 'HE=F', category: 'livestock', contractSize: '40,000 lbs', venue: 'CME' },
-  'Milk': { symbol: 'DC=F', category: 'livestock', contractSize: '200,000 lbs', venue: 'CME' },
-
-  // ============ INDUSTRIALS — All Premium except none (new group) ============
-  'Industrial Ethanol': { symbol: 'ETHN=F', category: 'industrials', contractSize: '29,000 gal', venue: 'CBOT' },
-  'Rubber': { symbol: 'RUB=F', category: 'industrials', contractSize: '5,000 kg', venue: 'TOCOM' },
-  'Cobalt': { symbol: 'COB=X', category: 'industrials', contractSize: '1 MT', venue: 'LME' },
 
   // ============ INDUSTRIALS — Lumber (free) ============
   'Lumber Futures': { symbol: 'LBS=F', category: 'industrials', contractSize: '110,000 bd ft', venue: 'CME' },
 };
 
 /**
- * CommodityPriceAPI v2 symbols. Reference: https://www.commoditypriceapi.com/symbols
- * Maps OUR commodity name → CPA's actual ticker.
+ * @deprecated CommodityPriceAPI removed 2026-05 in favour of FMP Starter.
+ * Empty object retained so older imports don't break — callers naturally
+ * skip CPA branches when symbol lookup returns undefined.
  */
-export const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {
-  // Metals
-  'Gold Futures': 'XAU',
-  'Silver Futures': 'XAG',
-  'Platinum': 'PL',
-  'Palladium': 'PA',
-  'Copper': 'HG-SPOT',
-  'Aluminum': 'AL-SPOT',
-  'Zinc': 'ZINC',
-  'Iron Ore': 'TIOC',
-  'Lead Futures': 'LEAD-FUT',
-  'Nickel Futures': 'NICKEL-FUT',
-  'Tin': 'TIN',
-  'Steel': 'STEEL',
-  'Hot-Rolled Coil Steel': 'HRC-STEEL',
-  'Titanium': 'TITAN',
-  'Lithium': 'LC',
-  // Grains
-  'Corn Futures': 'CORN',
-  'Wheat Futures': 'ZW-SPOT',
-  'Soybean Futures': 'SOYBEAN-FUT',
-  'Soybean Oil': 'ZL',
-  'Soybean Meal': 'ZM',
-  'Oat Futures': 'OAT-SPOT',
-  'Rough Rice': 'RR-FUT',
-  'Canola': 'CANOLA',
-  'Sunflower Oil': 'SUNF',
-  // Softs
-  'Coffee Arabica': 'CA',
-  'Sugar #11': 'LS11',
-  'Cotton': 'CT',
-  'Cocoa': 'CC',
-  'Orange Juice': 'OJ',
-  'UK Sugar No 5': 'LS',
-  'Palm Oil': 'PO',
-  // Livestock
-  'Live Cattle': 'LC1',
-  'Lean Hogs': 'LHOGS',
-  'Milk': 'MILK',
-  // Industrials
-  'Industrial Ethanol': 'ETHANOL',
-  'Rubber': 'RUBBER',
-  'Cobalt': 'COB',
-  // Other
-  'Lumber Futures': 'LB-FUT',
-};
+export const COMMODITY_PRICE_API_SYMBOLS: Record<string, string> = {};
 
-/** CPA returns these symbols quoted in US Cents — caller should divide by 100.
- * Audited 2026-05-11 against /rates/latest:
- *   - CORN/SOYBEAN-FUT/SOYBEAN-SPOT/ZL/RUBBER are already returned in USD by CPA
- *     (not cents). Removing them fixes Corn $0.05, Soybeans $0.12, Soy Oil $0.01,
- *     Rubber $0.02 → real $/bu, $/lb, $/kg.
- *   - ZW-SPOT/ZW-FUT (Wheat) and OAT-SPOT/OAT-FUT come back as cents/bu (~615, ~355);
- *     dividing by 100 yields the correct ~$6/bu and ~$3.50/bu.
- *   - LS11 (Sugar #11) stays — correctly produces $0.15/lb.
+/** @deprecated CPA removed. */
+export const CENT_QUOTED_SYMBOLS = new Set<string>();
+
+/**
+ * FMP `/v3/quote/{SYMBOL}` symbols. Front-month continuous futures (`=F`)
+ * for spot quotes. Auto-derived from COMMODITY_SYMBOLS.symbol so the catalog
+ * stays the single source of truth.
  */
-export const CENT_QUOTED_SYMBOLS = new Set([
-  'LS11',
-  'ZW-SPOT',
-  'OAT-SPOT',
-]);
+export const FMP_SYMBOLS: Record<string, string> = Object.fromEntries(
+  Object.entries(COMMODITY_SYMBOLS)
+    .filter(([, info]) => info.category !== 'energy' && info.symbol.endsWith('=F'))
+    .map(([name, info]) => [name, info.symbol]),
+);
+
+/**
+ * Futures root codes for monthly contract symbols (e.g. `GCG26`, `ZCH27`).
+ * Used by fetch-forward-curve to query individual monthly contracts on FMP
+ * Starter and build a real term-structure curve.
+ */
+export const FMP_FUTURES_ROOTS: Record<string, string> = {
+  gold: 'GC',
+  silver: 'SI',
+  copper: 'HG',
+  corn: 'ZC',
+  soybeans: 'ZS',
+  wheat: 'ZW',
+};
 
 /**
  * Premium-only commodities. Free tier sees household names; everything niche/regional/exotic
@@ -151,9 +107,7 @@ export const CENT_QUOTED_SYMBOLS = new Set([
  */
 // Free tier: 17 household-name commodities — top 2-4 from each group.
 // Everything else is premium-gated. See mem://monetization/strategy.
-// Free (17): WTI, Brent, Natural Gas, Gold Futures, Silver Futures, Copper, Platinum,
-// Corn Futures, Wheat Futures, Soybean Futures, Coffee Arabica, Sugar #11, Cotton,
-// Cocoa, Live Cattle, Lean Hogs, Lumber Futures.
+// Free: household-name commodities. Premium = niche/regional/exotic variants.
 export const PREMIUM_COMMODITIES = new Set<string>([
   // Energy — premium
   'Crude Oil Dubai', 'DME Oman Crude', 'Murban Crude', 'OPEC Basket',
@@ -161,19 +115,14 @@ export const PREMIUM_COMMODITIES = new Set<string>([
   'Natural Gas UK', 'Dutch TTF Gas', 'Japan/Korea LNG',
   'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel', 'Gasoil', 'Naphtha',
   // Metals — premium
-  'Palladium', 'Aluminum', 'Zinc', 'Iron Ore',
-  'Lead Futures', 'Nickel Futures', 'Tin', 'Steel', 'Hot-Rolled Coil Steel',
-  'Titanium', 'Lithium',
+  'Palladium', 'Aluminum', 'Zinc',
+  'Lead Futures', 'Nickel Futures', 'Tin',
   // Grains — premium
   'Soybean Oil', 'Soybean Meal',
   'Oat Futures', 'Rough Rice',
-  'Canola', 'Sunflower Oil',
+  'Canola',
   // Softs — premium
-  'Orange Juice', 'UK Sugar No 5', 'Palm Oil',
-  // Livestock — premium
-  'Milk',
-  // Industrials — premium
-  'Industrial Ethanol', 'Rubber', 'Cobalt',
+  'Orange Juice',
 ]);
 
 export function isPremiumCommodity(name: string): boolean {
@@ -190,24 +139,22 @@ export const CATEGORY_MAPPINGS: Record<string, string[]> = {
     'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel', 'Gasoil', 'Naphtha',
   ],
   metals: [
-    'Gold Futures', 'Silver Futures', 'Copper', 'Platinum', 'Palladium', 'Aluminum', 'Zinc', 'Iron Ore',
-    'Lead Futures', 'Nickel Futures', 'Tin', 'Steel', 'Hot-Rolled Coil Steel',
-    'Titanium', 'Lithium',
+    'Gold Futures', 'Silver Futures', 'Copper', 'Platinum', 'Palladium', 'Aluminum', 'Zinc',
+    'Lead Futures', 'Nickel Futures', 'Tin',
   ],
   grains: [
     'Corn Futures', 'Wheat Futures', 'Soybean Futures', 'Soybean Oil', 'Soybean Meal',
     'Oat Futures', 'Rough Rice',
-    'Canola', 'Sunflower Oil',
+    'Canola',
   ],
   softs: [
     'Coffee Arabica', 'Sugar #11', 'Cotton', 'Cocoa', 'Orange Juice',
-    'UK Sugar No 5', 'Palm Oil',
   ],
   livestock: [
-    'Live Cattle', 'Lean Hogs', 'Milk',
+    'Live Cattle', 'Lean Hogs',
   ],
   industrials: [
-    'Industrial Ethanol', 'Rubber', 'Cobalt', 'Lumber Futures',
+    'Lumber Futures',
   ],
 };
 
