@@ -12,7 +12,7 @@ type: integration
 **Product code map**: `MASSIVE_PRODUCT_CODES` in `supabase/functions/_shared/commodity-mappings.ts`.
 
 **Endpoints**:
-- `/futures/v1/snapshot?product_code=X&order=last_trade_date.asc&limit=1` — front-month settlement + change (Starter only). Primary path.
+- `/futures/v1/snapshot?product_code=X&sort=ticker.asc&limit=N` — contract strip snapshot (Starter only). Primary path; derive expiry from `details.settlement_date` or ticker month code because snapshot rows do not always include `last_trade_date`.
 - `/futures/v1/aggs/{ticker}` — daily OHLC bars (`resolution=1session`, `window_start.gte/.lte`).
 - `/futures/v1/contracts?product_code=X&active=true&date=Y` — forward curve discovery + snapshot fallback walkback.
 
