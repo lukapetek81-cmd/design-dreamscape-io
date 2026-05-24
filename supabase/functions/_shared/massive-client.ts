@@ -1,8 +1,9 @@
-// Massive Futures Basic client (free tier).
+// Massive Futures Starter client.
 // Docs: https://massive.com/docs/rest/futures
 // Auth: Authorization: Bearer ${MASSIVE_API_KEY}
-// Limits (Futures Basic): 5 req/min, EOD only, 2y history.
-// We stay well under by caching the curve for 6h in the edge worker.
+// Limits (Futures Starter): unlimited calls, 15-min delayed, 5y history,
+// /snapshot endpoint enabled. We still cache 6h in the edge worker because
+// most of our flows are EOD-quality and we want to keep latency flat.
 
 const BASE = 'https://api.massive.com';
 
@@ -112,15 +113,49 @@ export function yesterdayUtcDate(): string {
 }
 
 /**
- * Front-month settlement for a product. The /snapshot endpoint isn't on
- * Futures Basic, so we resolve the front contract via /contracts then pull
- * the most recent daily close via /aggs (5-day walkback for weekends/holidays).
- * Cost: 2 API calls per cold fetch. Change/changePercent left at 0 —
- * commodity-service.ts back-fills day-over-day delta from the snapshot table.
+ * Front-month snapshot for a product. Starter tier exposes /snapshot which
+ * returns ticker + last session close + change + volume in a single call.
+ * Falls back to the /contracts + /aggs 5-day walkback if snapshot is empty
+ * (e.g. brand-new product, or a transient upstream gap).
  */
 export async function fetchMassiveFrontMonth(
   productCode: string,
 ): Promise<MassiveFrontMonth | null> {
+  // 1) Fast path: /snapshot (1 call).
+  const snap = await get('/futures/v1/snapshot', {
+    product_code: productCode,
+    order: 'last_trade_date.asc',
+    limit: 1,
+  });
+  const row = Array.isArray(snap?.results) ? snap.results[0] : null;
+  if (row) {
+    const session = row.session ?? {};
+    const price = Number(
+      session.close ?? session.settlement_price ?? session.last ?? row.price,
+    );
+    if (Number.isFinite(price) && price > 0) {
+      const change = Number(session.change ?? session.price_change ?? 0);
+      const changePercent = Number(
+        session.change_percent ?? session.changePercent ?? session.price_change_percent ?? 0,
+      );
+      const volume = typeof session.volume === 'number' ? session.volume : undefined;
+      const ticker = String(row.ticker ?? row.symbol ?? '');
+      const asOf = String(
+        row.session_end_date ?? row.last_trade_date ?? yesterdayUtcDate(),
+      ).slice(0, 10);
+      return {
+        ticker,
+        productCode,
+        price: +price.toFixed(4),
+        change: Number.isFinite(change) ? +change.toFixed(4) : 0,
+        changePercent: Number.isFinite(changePercent) ? +changePercent.toFixed(4) : 0,
+        volume,
+        asOf,
+      };
+    }
+  }
+
+  // 2) Fallback: walk back up to 5 days via /contracts + /aggs.
   for (let dayOffset = 1; dayOffset <= 5; dayOffset++) {
     const d = new Date(Date.now() - dayOffset * 24 * 60 * 60 * 1000);
     const asOf = d.toISOString().slice(0, 10);
