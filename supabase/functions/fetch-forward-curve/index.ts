@@ -144,17 +144,13 @@ serve(async (req) => {
     }
     const { commodity, monthsAhead } = parsed.data;
     const params = MODEL[commodity];
-    const root = ROOT_FROM_SPOT[params.spotSym];
-    const contracts = genContracts(root, monthsAhead);
+    const contracts = genContracts(params.root, monthsAhead);
 
-    // 1. Fetch spot/front-month price from FMP (works on Basic plan).
-    const fmpKey = Deno.env.get('FMP_API_KEY');
-    if (!fmpKey) throw new Error('FMP_API_KEY missing');
-    const url = `https://financialmodelingprep.com/api/v3/quote/${params.spotSym}?apikey=${fmpKey}`;
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error(`FMP ${resp.status}`);
-    const quotes: Array<{ price: number | null }> = await resp.json();
-    const spot = quotes?.[0]?.price ?? null;
+    // 1. Fetch spot/front-month price from the right provider.
+    //    Energy → OilPriceAPI (via internal proxy). Metals/grains → CommodityPriceAPI.
+    const spot = params.source === 'energy'
+      ? await fetchSpotEnergy(params.energyName!)
+      : await fetchSpotCpa(params.cpaSym!, params.cpaCentQuoted);
     if (spot == null) {
       return new Response(JSON.stringify({ error: 'spot_unavailable' }), {
         status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -184,7 +180,7 @@ serve(async (req) => {
         : 'flat';
     const rollYield = m1 && m2 ? ((m2 - m1) / m1) * 100 : null;
 
-    logger.info(`Modelled curve for ${commodity}: spot=${spot}, m1=${m1}, m2=${m2}`);
+    logger.info(`Modelled curve for ${commodity} (src=${params.source}): spot=${spot}, m1=${m1}, m2=${m2}`);
     return new Response(
       JSON.stringify({
         commodity,
@@ -195,7 +191,7 @@ serve(async (req) => {
         m1,
         m2,
         source: 'model',
-        model: { type: 'cost_of_carry', riskFree: RISK_FREE, storage: params.storage, convenience: params.conv, seasonal: !!params.seasonal },
+        model: { type: 'cost_of_carry', spotSource: params.source === 'energy' ? 'oilpriceapi' : 'commoditypriceapi', riskFree: RISK_FREE, storage: params.storage, convenience: params.conv, seasonal: !!params.seasonal },
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=300' } },
     );
