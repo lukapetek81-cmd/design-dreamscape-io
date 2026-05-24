@@ -148,3 +148,48 @@ shorter side so it never clips on tall or wide devices.
 After regenerating, do **Build → Clean Project → Rebuild** in Android Studio
 and reinstall — the splash drawable is cached aggressively just like the
 launcher icon.
+
+## RevenueCat + Play Console launch checklist
+
+Code-side IAP is verified (webhook tests pass, endpoint reachable, DB columns
+present, secret set). The following are the **manual** steps that must be ticked
+off before submitting to Play Store. Check each box as you go.
+
+### A. RevenueCat dashboard
+- [ ] **Entitlement** named exactly `premium` exists (Project → Entitlements).
+- [ ] **Offering** is marked **Current** and has ≥1 package attached to the `premium` entitlement.
+- [ ] **Products** in RevenueCat map to the Play Console subscription product IDs (same SKU strings).
+- [ ] **Webhook** configured: URL `https://kcxhsmlqqyarhlmcapmj.supabase.co/functions/v1/revenuecat-webhook`, Authorization header set to `Bearer <REVENUECAT_WEBHOOK_AUTH>` (same value as the Supabase secret).
+- [ ] **Play Service Account JSON** uploaded under Project → Apps → Google Play → Service Credentials.
+- [ ] Android **public SDK key** in dashboard matches `VITE_REVENUECAT_API_KEY` (or `VITE_REVENUECAT_ANDROID_KEY`) in the `.env` used for the AAB build.
+
+### B. Google Play Console
+- [ ] **Subscription product** created (Monetize → Subscriptions) with the same product ID used in RevenueCat. Base plan + price set, status **Active**.
+- [ ] **License testers** added (Setup → License testing) — your tester Google accounts, response set to `LICENSED`.
+- [ ] **Internal testing track** created, signed AAB uploaded, testers opted in via the opt-in URL.
+- [ ] App **signing key** managed by Play App Signing (already configured if you've uploaded before).
+- [ ] **Data safety** form answers reflect subscription data collected by RevenueCat (purchase history, app interactions).
+
+### C. On-device test (real Android device, license-tester account)
+- [ ] Install via internal-testing opt-in link; sign in to Play with the **license tester** account.
+- [ ] Open paywall → buy the subscription (Play shows *"This is a test purchase, you will not be charged"*).
+- [ ] Premium content unlocks immediately; `hasActivePremium()` returns true.
+- [ ] **Manage Subscription** button appears and deep-links to the Play subscription page.
+
+### D. Webhook → DB verification
+After the test purchase, in Supabase confirm the `profiles` row for that user:
+- [ ] `subscription_active = true`
+- [ ] `subscription_tier = 'premium'`
+- [ ] `subscription_end` populated (ISO timestamp)
+- [ ] `billing_state = 'active'`
+- [ ] `grace_period_expires_at` is null
+- [ ] `revenuecat-webhook` edge function logs show `RC INITIAL_PURCHASE for <user_id> → matched 1 row(s)`.
+
+### E. Lifecycle states
+- [ ] **Cancel** the subscription from Play Store → `CANCELLATION` webhook fires → row flips to `subscription_active=false`, `billing_state='canceled'`.
+- [ ] **Restore purchases** on a fresh install of the same account re-unlocks premium.
+- [ ] (Optional) Force a billing issue via Play test instruments → `billing_state='grace'`, `BillingStatusBanner` renders.
+
+### F. Sign-off
+- [ ] Bump version (`npm run android:bump`), regenerate AAB, re-upload to Internal track, smoke-test once more.
+- [ ] Record results in `mem://launch/production-readiness` and promote AAB from Internal → Production.
