@@ -160,61 +160,25 @@ serve(async (req) => {
       });
     }
 
-    // 2a. Try the real FMP monthly contract strip for EVERY commodity
-    //     (energy roots CL/BZ/NG are on NYMEX/ICE and quoted by FMP Starter too).
-    let curve: Array<{ symbol: string; expiry: string; monthIdx: number; price: number }> = [];
-    let usedSource: 'market' | 'model' = 'model';
-
-    {
-      const root = FMP_FUTURES_ROOTS[commodity] ?? params.root;
-      const realCurve = await fetchFmpFuturesCurve(root, monthsAhead);
-      const withPrice = realCurve.filter((c) => typeof c.price === 'number' && c.price > 0);
-      // Require ≥60% of contracts to have real prices to call it "market"; otherwise fall back.
-      if (withPrice.length >= Math.ceil(monthsAhead * 0.6)) {
-        // Interpolate any missing months linearly between neighbours.
-        const filled = realCurve.map((c, idx) => {
-          if (typeof c.price === 'number' && c.price > 0) return { ...c, price: c.price };
-          // find nearest left + right with prices
-          let left: number | null = null, right: number | null = null;
-          for (let i = idx - 1; i >= 0; i--) {
-            if (typeof realCurve[i].price === 'number' && (realCurve[i].price as number) > 0) {
-              left = realCurve[i].price as number; break;
-            }
-          }
-          for (let i = idx + 1; i < realCurve.length; i++) {
-            if (typeof realCurve[i].price === 'number' && (realCurve[i].price as number) > 0) {
-              right = realCurve[i].price as number; break;
-            }
-          }
-          const fill = left != null && right != null ? (left + right) / 2 : (left ?? right ?? spot);
-          return { ...c, price: +fill.toFixed(4) };
-        });
-        curve = filled.map((c) => ({
-          symbol: c.symbol,
-          expiry: c.expiry,
-          monthIdx: c.monthIdx,
-          price: +(c.price as number).toFixed(4),
-        }));
-        usedSource = 'market';
-      }
-    }
-
-    // 2b. Modelled curve fallback (energy always; FMP on insufficient data).
-    if (curve.length === 0) {
-      const carry = RISK_FREE + params.storage - params.conv;
-      curve = contracts.map((c) => {
-        const t = c.monthIdx / 12;
-        const base = spot * Math.exp(carry * t);
-        const season = params.seasonal ? params.seasonal[c.monthOfYear] : 1;
-        return {
-          symbol: c.symbol,
-          expiry: c.expiry,
-          monthIdx: c.monthIdx,
-          price: +(base * season).toFixed(4),
-        };
+    // 2. Real FMP monthly contract strip — market data only, no modelled fallback.
+    //    Drops contracts without a live quote; requires at least 3 real months.
+    const root = FMP_FUTURES_ROOTS[commodity] ?? params.root;
+    const realCurve = await fetchFmpFuturesCurve(root, monthsAhead);
+    const curve = realCurve
+      .filter((c) => typeof c.price === 'number' && (c.price as number) > 0)
+      .map((c) => ({
+        symbol: c.symbol,
+        expiry: c.expiry,
+        monthIdx: c.monthIdx,
+        price: +(c.price as number).toFixed(4),
+      }));
+    if (curve.length < 3) {
+      logger.warn(`Insufficient live contracts for ${commodity}: ${curve.length}`);
+      return new Response(JSON.stringify({ error: 'curve_unavailable' }), {
+        status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
-      usedSource = 'model';
     }
+    const usedSource: 'market' = 'market';
 
     const m1 = curve[0]?.price ?? null;
     const m2 = curve[1]?.price ?? null;
@@ -236,9 +200,7 @@ serve(async (req) => {
         m1,
         m2,
         source: usedSource,
-        model: usedSource === 'model'
-          ? { type: 'cost_of_carry', spotSource: params.source === 'energy' ? 'oilpriceapi' : 'fmp', riskFree: RISK_FREE, storage: params.storage, convenience: params.conv, seasonal: !!params.seasonal }
-          : { type: 'market', spotSource: 'fmp', provider: 'FMP Starter (/v3/quote)' },
+        model: { type: 'market', spotSource: 'fmp', provider: 'FMP Starter (/v3/quote)' },
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=300' } },
     );
