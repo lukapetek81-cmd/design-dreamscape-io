@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Bell, Plus, Trash2, Sparkles, Lock } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,7 +78,6 @@ const PriceAlertsPage: React.FC = () => {
     keywords: "",
   });
 
-  const allowedTypes = limitsFor(tier).alertTypes;
   const canUseType = (t: AlertType) => tierAtLeast(tier, ALERT_TYPE_META[t].minTier);
 
   const activeCount = alerts.filter((a) => a.is_active).length;
