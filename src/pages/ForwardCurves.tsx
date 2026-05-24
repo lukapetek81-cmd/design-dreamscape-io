@@ -56,6 +56,10 @@ const ForwardCurves: React.FC = () => {
     : data?.structure === 'contango' ? '#f59e0b'
     : '#fbbf24';
 
+  const errorMessage = error instanceof Error && error.message === 'Authentication required'
+    ? 'Your session expired. Please sign in again to load Pro forward curves.'
+    : 'No settlement curve available right now. The latest session may not be settled yet.';
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6 max-w-5xl">
@@ -126,7 +130,7 @@ const ForwardCurves: React.FC = () => {
             {error && (
               <Card className="border-destructive/30 bg-destructive/5">
                 <CardContent className="pt-6 text-sm text-destructive">
-                  No settlement curve available right now. The latest session may not be settled yet.
+                  {errorMessage}
                 </CardContent>
               </Card>
             )}

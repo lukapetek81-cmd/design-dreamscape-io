@@ -6,6 +6,20 @@
 // most of our flows are EOD-quality and we want to keep latency flat.
 
 const BASE = 'https://api.massive.com';
+const FUTURES_MONTH_CODES: Record<string, number> = {
+  F: 1,
+  G: 2,
+  H: 3,
+  J: 4,
+  K: 5,
+  M: 6,
+  N: 7,
+  Q: 8,
+  U: 9,
+  V: 10,
+  X: 11,
+  Z: 12,
+};
 
 function key(): string {
   return Deno.env.get('MASSIVE_API_KEY') || '';
@@ -25,6 +39,54 @@ async function get(path: string, params: Record<string, string | number | boolea
   } catch {
     return null;
   }
+}
+
+function dateFromEpoch(value: unknown): string {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return '';
+  // Massive timestamps are usually nanoseconds; some minute fields are ms.
+  const ms = value > 1e15 ? value / 1_000_000 : value;
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
+function decodeTickerExpiry(ticker: string, productCode: string): { label: string; sortKey: string } | null {
+  const suffix = ticker.startsWith(productCode) ? ticker.slice(productCode.length) : ticker;
+  const match = suffix.match(/([FGHJKMNQUVXZ])(\d{1,2})$/);
+  if (!match) return null;
+  const month = FUTURES_MONTH_CODES[match[1]];
+  const yearToken = match[2];
+  const nowYear = new Date().getUTCFullYear();
+  let year = yearToken.length === 2
+    ? 2000 + Number(yearToken)
+    : Math.floor(nowYear / 10) * 10 + Number(yearToken);
+  if (year < nowYear - 1) year += 10;
+  const mm = String(month).padStart(2, '0');
+  return { label: `${year}-${mm}`, sortKey: `${year}-${mm}-01` };
+}
+
+function snapshotExpiry(row: any, productCode: string): { label: string; sortKey: string } | null {
+  const explicit = String(row?.last_trade_date ?? row?.settlement_date ?? '').slice(0, 10);
+  if (explicit) return { label: explicit.slice(0, 7), sortKey: explicit };
+  const detailsDate = dateFromEpoch(row?.details?.settlement_date);
+  if (detailsDate) return { label: detailsDate.slice(0, 7), sortKey: detailsDate };
+  return decodeTickerExpiry(String(row?.ticker ?? ''), productCode);
+}
+
+function snapshotAsOf(row: any): string {
+  return String(row?.session_end_date ?? '').slice(0, 10)
+    || dateFromEpoch(row?.last_trade?.last_updated)
+    || dateFromEpoch(row?.last_minute?.last_updated)
+    || yesterdayUtcDate();
+}
+
+function snapshotPrice(row: any): number {
+  const session = row?.session ?? {};
+  return Number(
+    session.settlement_price
+      ?? session.previous_settlement
+      ?? session.close
+      ?? row?.last_trade?.price
+      ?? row?.price,
+  );
 }
 
 export interface MassiveContract {
@@ -54,6 +116,12 @@ export interface MassiveBar {
   close: number;
   volume?: number;
 }
+
+type SnapshotCurveCandidate = {
+  row: any;
+  expiry: { label: string; sortKey: string } | null;
+  price: number;
+};
 
 /**
  * List active contracts for a futures product code, sorted by expiry ascending.
@@ -127,15 +195,17 @@ export async function fetchMassiveFrontMonth(
   // 1) Fast path: /snapshot (1 call).
   const snap = await get('/futures/v1/snapshot', {
     product_code: productCode,
-    order: 'last_trade_date.asc',
-    limit: 1,
+    sort: 'ticker.asc',
+    limit: 24,
   });
-  const row = Array.isArray(snap?.results) ? snap.results[0] : null;
+  const row = (Array.isArray(snap?.results) ? snap.results : [])
+    .filter((r: any) => r?.ticker && r?.product_code === productCode && (r.type ?? 'single') === 'single')
+    .map((r: any): SnapshotCurveCandidate => ({ row: r, expiry: snapshotExpiry(r, productCode), price: snapshotPrice(r) }))
+    .filter((r: SnapshotCurveCandidate) => r.expiry && Number.isFinite(r.price) && r.price > 0)
+    .sort((a: SnapshotCurveCandidate, b: SnapshotCurveCandidate) => a.expiry!.sortKey.localeCompare(b.expiry!.sortKey))[0]?.row ?? null;
   if (row) {
     const session = row.session ?? {};
-    const price = Number(
-      session.close ?? session.settlement_price ?? session.last ?? row.price,
-    );
+    const price = snapshotPrice(row);
     if (Number.isFinite(price) && price > 0) {
       const change = Number(session.change ?? session.price_change ?? 0);
       const changePercent = Number(
@@ -144,7 +214,7 @@ export async function fetchMassiveFrontMonth(
       const volume = typeof session.volume === 'number' ? session.volume : undefined;
       const ticker = String(row.ticker ?? row.symbol ?? '');
       const asOf = String(
-        row.session_end_date ?? row.last_trade_date ?? yesterdayUtcDate(),
+        snapshotAsOf(row),
       ).slice(0, 10);
       return {
         ticker,
@@ -246,28 +316,27 @@ export async function fetchMassiveCurve(
   // in a single call. Order by last_trade_date so [0] is front-month.
   const snap = await get('/futures/v1/snapshot', {
     product_code: productCode,
-    order: 'last_trade_date.asc',
+    sort: 'ticker.asc',
     limit: monthsAhead + 4,
   });
   const rows = Array.isArray(snap?.results) ? snap.results : [];
   if (rows.length > 0) {
     let asOf = yesterdayUtcDate();
-    const curve = rows
-      .filter((r: any) => r?.ticker && r?.last_trade_date && (r.type ?? 'single') === 'single')
+    const curve = (rows as any[])
+      .filter((r: any) => r?.ticker && r?.product_code === productCode && (r.type ?? 'single') === 'single')
+      .map((r: any): SnapshotCurveCandidate => ({ row: r, expiry: snapshotExpiry(r, productCode), price: snapshotPrice(r) }))
+      .filter((r: SnapshotCurveCandidate) => r.expiry && Number.isFinite(r.price) && r.price > 0)
+      .sort((a: SnapshotCurveCandidate, b: SnapshotCurveCandidate) => a.expiry!.sortKey.localeCompare(b.expiry!.sortKey))
       .slice(0, monthsAhead)
-      .map((r: any, i: number) => {
-        const session = r.session ?? {};
-        const price = Number(
-          session.close ?? session.settlement_price ?? session.last ?? r.price,
-        );
-        const rowAsOf = String(r.session_end_date ?? r.last_trade_date ?? '').slice(0, 10);
+      .map((r: SnapshotCurveCandidate, i: number) => {
+        const rowAsOf = snapshotAsOf(r.row);
         if (rowAsOf && rowAsOf < asOf) asOf = rowAsOf;
         if (i === 0 && rowAsOf) asOf = rowAsOf;
         return {
-          symbol: String(r.ticker),
-          expiry: String(r.last_trade_date).slice(0, 7),
+          symbol: String(r.row.ticker),
+          expiry: r.expiry!.label,
           monthIdx: i + 1,
-          price: Number.isFinite(price) && price > 0 ? +price.toFixed(4) : null,
+          price: +r.price.toFixed(4),
         };
       })
       .filter((p): p is { symbol: string; expiry: string; monthIdx: number; price: number } =>
