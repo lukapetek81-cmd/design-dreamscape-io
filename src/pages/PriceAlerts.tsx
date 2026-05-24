@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Bell, Plus, Trash2, Sparkles } from "lucide-react";
+import { ArrowLeft, Bell, Plus, Trash2, Sparkles, Lock } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,17 @@ import {
   useDeleteAlert,
 } from "@/hooks/usePriceAlerts";
 import PremiumPaywall from "@/components/PremiumPaywall";
-import { limitsFor } from "@/utils/tiers";
+import { limitsFor, tierAtLeast, type Tier } from "@/utils/tiers";
+
+type AlertType = "price" | "pct_move" | "volatility_band" | "spread" | "news_keyword";
+
+const ALERT_TYPE_META: Record<AlertType, { label: string; desc: string; minTier: Tier }> = {
+  price: { label: "Price threshold", desc: "Fires when price crosses an absolute level.", minTier: "free" },
+  pct_move: { label: "% move", desc: "Fires when % change over a window exceeds a threshold.", minTier: "premium" },
+  volatility_band: { label: "Volatility band", desc: "Fires when price exits an N-sigma rolling band.", minTier: "pro" },
+  spread: { label: "Spread level", desc: "Fires when a spread (e.g. Brent–WTI) crosses a target.", minTier: "pro" },
+  news_keyword: { label: "News keyword", desc: "Fires when a keyword hits the news feed.", minTier: "pro" },
+};
 
 const PriceAlertsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -48,13 +58,27 @@ const PriceAlertsPage: React.FC = () => {
 
   const [open, setOpen] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
+  const [alertType, setAlertType] = useState<AlertType>("price");
   const [form, setForm] = useState({
     commodity_name: "",
     condition: "above" as "above" | "below",
     target_price: "",
     cooldown_minutes: 60,
     note: "",
+    // pct_move
+    pct_window: "24h" as "1h" | "24h" | "7d",
+    pct_threshold: "5",
+    // volatility_band
+    vol_window_days: "20",
+    vol_std_devs: "2",
+    // spread
+    spread_name: "brent_wti",
+    spread_target: "",
+    // news_keyword
+    keywords: "",
   });
+
+  const canUseType = (t: AlertType) => tierAtLeast(tier, ALERT_TYPE_META[t].minTier);
 
   const activeCount = alerts.filter((a) => a.is_active).length;
   const limit = limitsFor(tier).activeAlerts;
@@ -75,39 +99,125 @@ const PriceAlertsPage: React.FC = () => {
     setOpen(true);
   };
 
+  const resetForm = () =>
+    setForm({
+      commodity_name: "",
+      condition: "above",
+      target_price: "",
+      cooldown_minutes: 60,
+      note: "",
+      pct_window: "24h",
+      pct_threshold: "5",
+      vol_window_days: "20",
+      vol_std_devs: "2",
+      spread_name: "brent_wti",
+      spread_target: "",
+      keywords: "",
+    });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const price = parseFloat(form.target_price);
-    if (!form.commodity_name || !Number.isFinite(price) || price <= 0) {
-      toast({
-        title: "Invalid alert",
-        description: "Pick a commodity and enter a positive target price.",
-        variant: "destructive",
-      });
+    if (!canUseType(alertType)) {
+      setPaywallOpen(true);
       return;
     }
+    if (alertType !== "news_keyword" && !form.commodity_name) {
+      toast({ title: "Pick a commodity", variant: "destructive" });
+      return;
+    }
+
+    let payload: Parameters<typeof createAlert.mutateAsync>[0];
     const symbol =
       commodities.find((c: any) => c.name === form.commodity_name)?.symbol ?? null;
+    const base = {
+      commodity_name: form.commodity_name || "(news)",
+      commodity_symbol: symbol,
+      cooldown_minutes: form.cooldown_minutes,
+      note: form.note || null,
+    };
+
+    if (alertType === "price") {
+      const price = parseFloat(form.target_price);
+      if (!Number.isFinite(price) || price <= 0) {
+        toast({ title: "Enter a positive target price", variant: "destructive" });
+        return;
+      }
+      payload = { ...base, alert_type: "price", condition: form.condition, target_price: price };
+    } else if (alertType === "pct_move") {
+      const thr = parseFloat(form.pct_threshold);
+      if (!Number.isFinite(thr) || thr <= 0) {
+        toast({ title: "Enter a positive % threshold", variant: "destructive" });
+        return;
+      }
+      payload = {
+        ...base,
+        alert_type: "pct_move",
+        config: { window: form.pct_window, threshold_pct: thr },
+      };
+    } else if (alertType === "volatility_band") {
+      const days = parseInt(form.vol_window_days, 10);
+      const sd = parseFloat(form.vol_std_devs);
+      if (!days || days < 5 || !Number.isFinite(sd) || sd <= 0) {
+        toast({ title: "Window ≥ 5 days and σ > 0", variant: "destructive" });
+        return;
+      }
+      payload = {
+        ...base,
+        alert_type: "volatility_band",
+        config: { window_days: days, std_devs: sd },
+      };
+    } else if (alertType === "spread") {
+      const tgt = parseFloat(form.spread_target);
+      if (!Number.isFinite(tgt)) {
+        toast({ title: "Enter a spread target", variant: "destructive" });
+        return;
+      }
+      payload = {
+        ...base,
+        alert_type: "spread",
+        config: { spread_name: form.spread_name, condition: form.condition, target: tgt },
+      };
+    } else {
+      const kws = form.keywords.split(",").map((k) => k.trim()).filter(Boolean);
+      if (kws.length === 0) {
+        toast({ title: "Add at least one keyword", variant: "destructive" });
+        return;
+      }
+      payload = {
+        ...base,
+        alert_type: "news_keyword",
+        config: { keywords: kws },
+      };
+    }
+
     try {
-      await createAlert.mutateAsync({
-        commodity_name: form.commodity_name,
-        commodity_symbol: symbol,
-        condition: form.condition,
-        target_price: price,
-        cooldown_minutes: form.cooldown_minutes,
-        note: form.note || null,
-      });
-      toast({ title: "Alert created", description: "We'll notify you when the price crosses the threshold." });
+      await createAlert.mutateAsync(payload);
+      toast({ title: "Alert created", description: "We'll notify you when conditions are met." });
       setOpen(false);
-      setForm({ commodity_name: "", condition: "above", target_price: "", cooldown_minutes: 60, note: "" });
+      resetForm();
+      setAlertType("price");
     } catch (err: any) {
       const msg = String(err?.message ?? "Failed to create alert");
-      if (msg.includes("limit reached")) {
+      if (msg.includes("limit reached") || msg.includes("require")) {
         setPaywallOpen(true);
       } else {
         toast({ title: "Failed to create alert", description: msg, variant: "destructive" });
       }
     }
+  };
+
+  const renderSummary = (a: any) => {
+    if (a.alert_type === "price" || !a.alert_type)
+      return `${a.condition} $${a.target_price}`;
+    if (a.alert_type === "pct_move")
+      return `${a.config?.threshold_pct}% in ${a.config?.window}`;
+    if (a.alert_type === "volatility_band")
+      return `±${a.config?.std_devs}σ band (${a.config?.window_days}d)`;
+    if (a.alert_type === "spread")
+      return `${a.config?.spread_name} ${a.config?.condition} ${a.config?.target}`;
+    if (a.alert_type === "news_keyword")
+      return `news: ${(a.config?.keywords ?? []).join(", ")}`;
+    return "";
   };
 
   return (
@@ -122,10 +232,10 @@ const PriceAlertsPage: React.FC = () => {
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Bell className="w-6 h-6 text-primary" />
-              Price Alerts
+              Smart Alerts
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Get notified when commodities cross your target price.
+              Price thresholds, % moves, volatility bands, spreads, and news keywords.
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               {activeCount}/{limit} active alerts {isPremium ? "(Premium)" : "(Free tier)"}
@@ -142,9 +252,9 @@ const PriceAlertsPage: React.FC = () => {
             <CardContent className="pt-6 flex items-start gap-3">
               <Sparkles className="w-5 h-5 text-primary mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm font-medium">Free tier: 1 active alert</p>
+                <p className="text-sm font-medium">Free tier: 1 price alert</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Upgrade to Premium for up to 50 alerts across every commodity.
+                  Upgrade for % move alerts (Premium) and volatility / spread / news alerts (Pro).
                 </p>
               </div>
               <Button size="sm" variant="outline" onClick={() => setPaywallOpen(true)}>
@@ -161,7 +271,7 @@ const PriceAlertsPage: React.FC = () => {
             <CardHeader>
               <CardTitle className="text-base">No alerts yet</CardTitle>
               <CardDescription>
-                Set your first alert to get notified when a commodity hits a target price.
+                Set your first alert to get notified on price, % move, volatility, spread, or news events.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -173,8 +283,11 @@ const PriceAlertsPage: React.FC = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium">{a.commodity_name}</span>
-                      <Badge variant={a.condition === "above" ? "default" : "secondary"}>
-                        {a.condition} ${a.target_price}
+                      <Badge variant="outline" className="text-[10px] uppercase">
+                        {ALERT_TYPE_META[(a.alert_type ?? "price") as AlertType]?.label ?? a.alert_type}
+                      </Badge>
+                      <Badge variant={a.condition === "below" ? "secondary" : "default"}>
+                        {renderSummary(a)}
                       </Badge>
                       {!a.is_active && <Badge variant="outline">Paused</Badge>}
                     </div>
@@ -220,64 +333,201 @@ const PriceAlertsPage: React.FC = () => {
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>New price alert</DialogTitle>
+            <DialogTitle>New smart alert</DialogTitle>
             <DialogDescription>
-              We'll check prices every 5 minutes and notify you when the threshold is crossed.
+              We'll check every 5 minutes and notify you when your conditions are met.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label>Commodity</Label>
-              <Select
-                value={form.commodity_name}
-                onValueChange={(v) => setForm((f) => ({ ...f, commodity_name: v }))}
-              >
+              <Label>Alert type</Label>
+              <Select value={alertType} onValueChange={(v) => setAlertType(v as AlertType)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose a commodity" />
+                  <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="max-h-72">
-                  {commodities.map((c: any) => (
-                    <SelectItem key={c.name} value={c.name}>
-                      {c.name}
-                      {typeof c.price === "number" ? ` (now $${c.price.toFixed(2)})` : ""}
-                    </SelectItem>
-                  ))}
+                <SelectContent>
+                  {(Object.keys(ALERT_TYPE_META) as AlertType[]).map((t) => {
+                    const locked = !canUseType(t);
+                    return (
+                      <SelectItem key={t} value={t}>
+                        <span className="flex items-center gap-2">
+                          {locked && <Lock className="w-3 h-3" />}
+                          {ALERT_TYPE_META[t].label}
+                          {locked && (
+                            <span className="text-[10px] text-muted-foreground uppercase">
+                              {ALERT_TYPE_META[t].minTier}
+                            </span>
+                          )}
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">{ALERT_TYPE_META[alertType].desc}</p>
+              {!canUseType(alertType) && (
+                <p className="text-xs text-amber-500 flex items-center gap-1">
+                  <Lock className="w-3 h-3" /> Requires {ALERT_TYPE_META[alertType].minTier} tier.
+                </p>
+              )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            {alertType !== "news_keyword" && (
               <div className="space-y-2">
-                <Label>Condition</Label>
+                <Label>Commodity</Label>
                 <Select
-                  value={form.condition}
-                  onValueChange={(v) =>
-                    setForm((f) => ({ ...f, condition: v as "above" | "below" }))
-                  }
+                  value={form.commodity_name}
+                  onValueChange={(v) => setForm((f) => ({ ...f, commodity_name: v }))}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Choose a commodity" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="above">Goes above</SelectItem>
-                    <SelectItem value="below">Goes below</SelectItem>
+                  <SelectContent className="max-h-72">
+                    {commodities.map((c: any) => (
+                      <SelectItem key={c.name} value={c.name}>
+                        {c.name}
+                        {typeof c.price === "number" ? ` (now $${c.price.toFixed(2)})` : ""}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Target price (USD)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  value={form.target_price}
-                  onChange={(e) => setForm((f) => ({ ...f, target_price: e.target.value }))}
-                  required
-                />
+            )}
+
+            {alertType === "price" && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Condition</Label>
+                  <Select
+                    value={form.condition}
+                    onValueChange={(v) =>
+                      setForm((f) => ({ ...f, condition: v as "above" | "below" }))
+                    }
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="above">Goes above</SelectItem>
+                      <SelectItem value="below">Goes below</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Target price (USD)</Label>
+                  <Input
+                    type="number" step="0.01" min="0.01"
+                    value={form.target_price}
+                    onChange={(e) => setForm((f) => ({ ...f, target_price: e.target.value }))}
+                  />
+                </div>
               </div>
-            </div>
+            )}
+
+            {alertType === "pct_move" && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Window</Label>
+                  <Select
+                    value={form.pct_window}
+                    onValueChange={(v) => setForm((f) => ({ ...f, pct_window: v as any }))}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1h">1 hour</SelectItem>
+                      <SelectItem value="24h">24 hours</SelectItem>
+                      <SelectItem value="7d">7 days</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Threshold (% absolute)</Label>
+                  <Input
+                    type="number" step="0.1" min="0.1"
+                    value={form.pct_threshold}
+                    onChange={(e) => setForm((f) => ({ ...f, pct_threshold: e.target.value }))}
+                  />
+                </div>
+              </div>
+            )}
+
+            {alertType === "volatility_band" && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Window (days)</Label>
+                  <Input
+                    type="number" min="5" max="120"
+                    value={form.vol_window_days}
+                    onChange={(e) => setForm((f) => ({ ...f, vol_window_days: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Std deviations (σ)</Label>
+                  <Input
+                    type="number" step="0.1" min="0.5" max="5"
+                    value={form.vol_std_devs}
+                    onChange={(e) => setForm((f) => ({ ...f, vol_std_devs: e.target.value }))}
+                  />
+                </div>
+              </div>
+            )}
+
+            {alertType === "spread" && (
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label>Spread</Label>
+                  <Select
+                    value={form.spread_name}
+                    onValueChange={(v) => setForm((f) => ({ ...f, spread_name: v }))}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="brent_wti">Brent − WTI</SelectItem>
+                      <SelectItem value="gold_silver">Gold / Silver ratio</SelectItem>
+                      <SelectItem value="crack_321">3-2-1 Crack spread</SelectItem>
+                      <SelectItem value="ng_henry_ttf">Henry Hub − TTF</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Condition</Label>
+                    <Select
+                      value={form.condition}
+                      onValueChange={(v) => setForm((f) => ({ ...f, condition: v as any }))}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="above">Above</SelectItem>
+                        <SelectItem value="below">Below</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Target value</Label>
+                    <Input
+                      type="number" step="0.01"
+                      value={form.spread_target}
+                      onChange={(e) => setForm((f) => ({ ...f, spread_target: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {alertType === "news_keyword" && (
+              <div className="space-y-2">
+                <Label>Keywords (comma-separated)</Label>
+                <Input
+                  value={form.keywords}
+                  onChange={(e) => setForm((f) => ({ ...f, keywords: e.target.value }))}
+                  placeholder="OPEC, sanctions, hurricane"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Any match in incoming news will fire the alert.
+                </p>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Re-fire cooldown (minutes)</Label>
@@ -309,9 +559,15 @@ const PriceAlertsPage: React.FC = () => {
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={createAlert.isPending}>
-                {createAlert.isPending ? "Creating…" : "Create alert"}
-              </Button>
+              {canUseType(alertType) ? (
+                <Button type="submit" disabled={createAlert.isPending}>
+                  {createAlert.isPending ? "Creating…" : "Create alert"}
+                </Button>
+              ) : (
+                <Button type="button" onClick={() => { setOpen(false); setPaywallOpen(true); }}>
+                  Upgrade to {ALERT_TYPE_META[alertType].minTier}
+                </Button>
+              )}
             </DialogFooter>
           </form>
         </DialogContent>

@@ -7,8 +7,10 @@ export interface PriceAlert {
   user_id: string;
   commodity_name: string;
   commodity_symbol: string | null;
-  condition: "above" | "below";
-  target_price: number;
+  condition: "above" | "below" | null;
+  target_price: number | null;
+  alert_type: "price" | "pct_move" | "volatility_band" | "spread" | "news_keyword";
+  config: Record<string, any> | null;
   is_active: boolean;
   cooldown_minutes: number;
   note: string | null;
@@ -77,8 +79,10 @@ export const useCreatePriceAlert = () => {
     mutationFn: async (input: {
       commodity_name: string;
       commodity_symbol?: string | null;
-      condition: "above" | "below";
-      target_price: number;
+      alert_type: "price" | "pct_move" | "volatility_band" | "spread" | "news_keyword";
+      condition?: "above" | "below" | null;
+      target_price?: number | null;
+      config?: Record<string, any> | null;
       cooldown_minutes?: number;
       note?: string | null;
     }) => {
@@ -89,8 +93,10 @@ export const useCreatePriceAlert = () => {
           user_id: userId,
           commodity_name: input.commodity_name,
           commodity_symbol: input.commodity_symbol ?? null,
-          condition: input.condition,
-          target_price: input.target_price,
+          alert_type: input.alert_type,
+          condition: input.condition ?? null,
+          target_price: input.target_price ?? null,
+          config: input.config ?? null,
           cooldown_minutes: input.cooldown_minutes ?? 60,
           note: input.note ?? null,
         })
