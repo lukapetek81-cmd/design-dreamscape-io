@@ -146,11 +146,11 @@ serve(async (req) => {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    const { commodity, monthsAhead } = parsed.data;
+    const { commodity } = parsed.data;
     const params = MODEL[commodity];
-    const contracts = genContracts(params.root, monthsAhead);
 
-    // 1. Fetch spot for the source-tag and modelled fallback.
+    // Single-point view: just the live front-month spot. FMP Starter doesn't
+    // expose individual delivery-month contracts, so we no longer attempt a strip.
     const spot = params.source === 'energy'
       ? await fetchSpotEnergy(params.energyName!)
       : await fetchSpotFmp(params.fmpSpotSym!);
@@ -160,47 +160,15 @@ serve(async (req) => {
       });
     }
 
-    // 2. Real FMP monthly contract strip — market data only, no modelled fallback.
-    //    Drops contracts without a live quote; requires at least 3 real months.
-    const root = FMP_FUTURES_ROOTS[commodity] ?? params.root;
-    const realCurve = await fetchFmpFuturesCurve(root, monthsAhead);
-    const curve = realCurve
-      .filter((c) => typeof c.price === 'number' && (c.price as number) > 0)
-      .map((c) => ({
-        symbol: c.symbol,
-        expiry: c.expiry,
-        monthIdx: c.monthIdx,
-        price: +(c.price as number).toFixed(4),
-      }));
-    if (curve.length < 3) {
-      logger.warn(`Insufficient live contracts for ${commodity}: ${curve.length}`);
-      return new Response(JSON.stringify({ error: 'curve_unavailable' }), {
-        status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    const usedSource: 'market' = 'market';
-
-    const m1 = curve[0]?.price ?? null;
-    const m2 = curve[1]?.price ?? null;
-    const structure: 'contango' | 'backwardation' | 'flat' | 'unknown' =
-      m1 == null || m2 == null ? 'unknown'
-        : m2 > m1 * 1.001 ? 'contango'
-        : m2 < m1 * 0.999 ? 'backwardation'
-        : 'flat';
-    const rollYield = m1 && m2 ? ((m2 - m1) / m1) * 100 : null;
-
-    logger.info(`Curve for ${commodity} (source=${usedSource}, provider=${params.source}): spot=${spot}, m1=${m1}, m2=${m2}`);
+    logger.info(`Spot for ${commodity} (${params.source}): ${spot}`);
     return new Response(
       JSON.stringify({
         commodity,
+        label: params.label,
         spot,
-        curve,
-        structure,
-        rollYield,
-        m1,
-        m2,
-        source: usedSource,
-        model: { type: 'market', spotSource: 'fmp', provider: 'FMP Starter (/v3/quote)' },
+        source: 'market' as const,
+        provider: params.source === 'energy' ? 'OilPriceAPI' : 'FMP Starter',
+        asOf: new Date().toISOString(),
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=300' } },
     );

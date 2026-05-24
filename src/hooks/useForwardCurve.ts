@@ -1,23 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export interface ForwardCurvePoint {
-  symbol: string;
-  expiry: string;
-  monthIdx: number;
-  price: number | null;
-}
-
 export interface ForwardCurveResponse {
   commodity: string;
+  label: string;
   spot: number;
-  curve: ForwardCurvePoint[];
-  structure: 'contango' | 'backwardation' | 'flat' | 'unknown';
-  rollYield: number | null;
-  m1: number | null;
-  m2: number | null;
-  source: 'model' | 'market';
-  model?: { type: string; riskFree: number; storage: number; convenience: number; seasonal: boolean };
+  source: 'market';
+  provider: string;
+  asOf: string;
 }
 
 export const useForwardCurve = (commodity: string | null, enabled = true) => {
@@ -27,7 +17,7 @@ export const useForwardCurve = (commodity: string | null, enabled = true) => {
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<ForwardCurveResponse> => {
       const { data, error } = await supabase.functions.invoke('fetch-forward-curve', {
-        body: { commodity, monthsAhead: 12 },
+        body: { commodity },
       });
       if (error) throw error;
       return data as ForwardCurveResponse;
