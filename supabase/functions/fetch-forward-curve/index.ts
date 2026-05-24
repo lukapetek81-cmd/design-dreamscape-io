@@ -108,7 +108,7 @@ serve(async (req) => {
       commodity,
       label: product.label,
       source: 'market' as const,
-      provider: 'Massive Futures Basic',
+      provider: 'Massive Futures Starter',
       asOf,
       spot: m1,           // M1 settlement is the closest proxy to spot on EOD data
       curve,
