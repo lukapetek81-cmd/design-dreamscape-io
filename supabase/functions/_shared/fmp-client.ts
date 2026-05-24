@@ -10,7 +10,11 @@
 // Starter plan caps: ~300 req/min, ~10K/day, ~300K/month. Our usage with the
 // 6h shared cache is <2% of the monthly budget.
 
-const FMP_BASE = 'https://financialmodelingprep.com/api/v3';
+// FMP "stable" API (new accounts post-2025-08-31 don't have /api/v3).
+// /stable/quote?symbol=SYM[,SYM,…] returns the same shape as the old
+// /api/v3/quote/SYM endpoint.
+const FMP_BASE = 'https://financialmodelingprep.com/stable';
+const FMP_LEGACY_BASE = 'https://financialmodelingprep.com/api/v3';
 const MONTH_CODES = ['F','G','H','J','K','M','N','Q','U','V','X','Z'];
 
 export interface FmpQuote {
@@ -47,7 +51,8 @@ export async function fetchFmpQuotes(symbols: string[]): Promise<FmpQuote[]> {
   const key = getKey();
   if (!key || symbols.length === 0) return [];
   const joined = symbols.join(',');
-  const url = `${FMP_BASE}/quote/${encodeURIComponent(joined)}?apikey=${key}`;
+  // Stable endpoint accepts a single comma-joined list via ?symbol=
+  const url = `${FMP_BASE}/quote?symbol=${encodeURIComponent(joined)}&apikey=${key}`;
   try {
     const res = await fetch(url);
     if (!res.ok) {
@@ -67,7 +72,10 @@ export async function fetchFmpQuotes(symbols: string[]): Promise<FmpQuote[]> {
       symbol: String(q.symbol ?? ''),
       price: typeof q.price === 'number' ? q.price : null,
       change: typeof q.change === 'number' ? q.change : null,
-      changesPercentage: typeof q.changesPercentage === 'number' ? q.changesPercentage : null,
+      // Stable returns `changePercentage`; legacy returned `changesPercentage`.
+      changesPercentage: typeof q.changePercentage === 'number'
+        ? q.changePercentage
+        : (typeof q.changesPercentage === 'number' ? q.changesPercentage : null),
       volume: typeof q.volume === 'number' ? q.volume : null,
       timestamp: typeof q.timestamp === 'number' ? q.timestamp : null,
     }));
@@ -90,12 +98,18 @@ export async function fetchFmpHistorical(
 ): Promise<FmpHistoricalBar[]> {
   const key = getKey();
   if (!key) return [];
-  const url = `${FMP_BASE}/historical-price-full/${encodeURIComponent(symbol)}?from=${fromDate}&to=${toDate}&apikey=${key}`;
+  // Stable equivalent of /api/v3/historical-price-full/{SYM}.
+  const url = `${FMP_BASE}/historical-price-eod/full?symbol=${encodeURIComponent(symbol)}&from=${fromDate}&to=${toDate}&apikey=${key}`;
   try {
     const res = await fetch(url);
-    if (!res.ok) return [];
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      console.warn(`[fmp] historical ${symbol} -> ${res.status} ${txt.slice(0, 200)}`);
+      return [];
+    }
     const json = await res.json();
-    const hist = json?.historical;
+    // Stable returns either a bare array or { historical: [...] }
+    const hist = Array.isArray(json) ? json : json?.historical;
     if (!Array.isArray(hist)) return [];
     return hist
       .map((b: any) => ({
