@@ -107,6 +107,45 @@ export type Database = {
         }
         Relationships: []
       }
+      cot_reports: {
+        Row: {
+          commercials_long: number
+          commercials_short: number
+          commodity: string
+          created_at: string
+          id: string
+          managed_money_long: number
+          managed_money_short: number
+          net_position: number
+          open_interest: number
+          report_date: string
+        }
+        Insert: {
+          commercials_long?: number
+          commercials_short?: number
+          commodity: string
+          created_at?: string
+          id?: string
+          managed_money_long?: number
+          managed_money_short?: number
+          net_position?: number
+          open_interest?: number
+          report_date: string
+        }
+        Update: {
+          commercials_long?: number
+          commercials_short?: number
+          commodity?: string
+          created_at?: string
+          id?: string
+          managed_money_long?: number
+          managed_money_short?: number
+          net_position?: number
+          open_interest?: number
+          report_date?: string
+        }
+        Relationships: []
+      }
       expert_insights: {
         Row: {
           bullish_bearish: string | null
@@ -327,44 +366,50 @@ export type Database = {
       }
       price_alerts: {
         Row: {
+          alert_type: string
           commodity_name: string
           commodity_symbol: string | null
-          condition: string
+          condition: string | null
+          config: Json | null
           cooldown_minutes: number
           created_at: string
           id: string
           is_active: boolean
           last_triggered_at: string | null
           note: string | null
-          target_price: number
+          target_price: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          alert_type?: string
           commodity_name: string
           commodity_symbol?: string | null
-          condition: string
+          condition?: string | null
+          config?: Json | null
           cooldown_minutes?: number
           created_at?: string
           id?: string
           is_active?: boolean
           last_triggered_at?: string | null
           note?: string | null
-          target_price: number
+          target_price?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          alert_type?: string
           commodity_name?: string
           commodity_symbol?: string | null
-          condition?: string
+          condition?: string | null
+          config?: Json | null
           cooldown_minutes?: number
           created_at?: string
           id?: string
           is_active?: boolean
           last_triggered_at?: string | null
           note?: string | null
-          target_price?: number
+          target_price?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -704,6 +749,104 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_spreads: {
+        Row: {
+          created_at: string
+          formula: Json
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          formula: Json
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          formula?: Json
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      watchlist_items: {
+        Row: {
+          added_at: string
+          commodity_name: string
+          commodity_symbol: string | null
+          id: string
+          position: number
+          user_id: string
+          watchlist_id: string
+        }
+        Insert: {
+          added_at?: string
+          commodity_name: string
+          commodity_symbol?: string | null
+          id?: string
+          position?: number
+          user_id: string
+          watchlist_id: string
+        }
+        Update: {
+          added_at?: string
+          commodity_name?: string
+          commodity_symbol?: string | null
+          id?: string
+          position?: number
+          user_id?: string
+          watchlist_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "watchlist_items_watchlist_id_fkey"
+            columns: ["watchlist_id"]
+            isOneToOne: false
+            referencedRelation: "watchlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      watchlists: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
