@@ -63,12 +63,24 @@ function decodeTickerExpiry(ticker: string, productCode: string): { label: strin
   return { label: `${year}-${mm}`, sortKey: `${year}-${mm}-01` };
 }
 
+function snapshotTicker(row: any): string {
+  return String(row?.ticker ?? row?.details?.ticker ?? row?.symbol ?? '');
+}
+
+function snapshotProductCode(row: any): string {
+  return String(row?.product_code ?? row?.details?.product_code ?? '');
+}
+
+function isOutrightTicker(ticker: string, productCode: string): boolean {
+  return new RegExp(`^${productCode}[FGHJKMNQUVXZ]\\d{1,2}$`).test(ticker);
+}
+
 function snapshotExpiry(row: any, productCode: string): { label: string; sortKey: string } | null {
-  const explicit = String(row?.last_trade_date ?? row?.settlement_date ?? '').slice(0, 10);
+  const explicit = String(row?.last_trade_date ?? row?.settlement_date ?? row?.details?.settlement_date ?? '').slice(0, 10);
   if (explicit) return { label: explicit.slice(0, 7), sortKey: explicit };
   const detailsDate = dateFromEpoch(row?.details?.settlement_date);
   if (detailsDate) return { label: detailsDate.slice(0, 7), sortKey: detailsDate };
-  return decodeTickerExpiry(String(row?.ticker ?? ''), productCode);
+  return decodeTickerExpiry(snapshotTicker(row), productCode);
 }
 
 function snapshotAsOf(row: any): string {
@@ -80,13 +92,11 @@ function snapshotAsOf(row: any): string {
 
 function snapshotPrice(row: any): number {
   const session = row?.session ?? {};
-  return Number(
-    session.settlement_price
-      ?? session.previous_settlement
-      ?? session.close
-      ?? row?.last_trade?.price
-      ?? row?.price,
-  );
+  for (const value of [session.settlement_price, session.close, session.previous_settlement, row?.last_trade?.price, row?.last_minute?.close, row?.price]) {
+    const n = Number(value);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return NaN;
 }
 
 export interface MassiveContract {
@@ -134,6 +144,7 @@ export async function listActiveContracts(
 ): Promise<MassiveContract[]> {
   const json = await get('/futures/v1/contracts', {
     product_code: productCode,
+    type: 'single',
     active: true,
     date: asOfDate,
     limit,
@@ -143,7 +154,7 @@ export async function listActiveContracts(
   if (!Array.isArray(arr)) return [];
   return arr
     // Skip spread/combo contracts — we only want outright monthly singles.
-    .filter((c: any) => c?.ticker && c?.last_trade_date && (c.type ?? 'single') === 'single')
+    .filter((c: any) => c?.ticker && c?.last_trade_date && (c.type ?? 'single') === 'single' && isOutrightTicker(String(c.ticker), productCode))
     .map((c: any) => ({
       ticker: String(c.ticker),
       product_code: String(c.product_code ?? productCode),
