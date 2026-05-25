@@ -140,7 +140,7 @@ type SnapshotCurveCandidate = {
 export async function listActiveContracts(
   productCode: string,
   asOfDate: string,           // 'YYYY-MM-DD'
-  limit = 24,
+  limit = 250,
 ): Promise<MassiveContract[]> {
   const json = await get('/futures/v1/contracts', {
     product_code: productCode,
@@ -175,17 +175,21 @@ export async function fetchContractDailyClose(
   ticker: string,
   date: string,               // 'YYYY-MM-DD'
 ): Promise<number | null> {
-  // Use a small gte/lte window so the request shape matches the working
-  // historical bars call. Single-date `window_start=` was returning empty.
+  const start = new Date(`${date}T00:00:00Z`);
+  start.setUTCDate(start.getUTCDate() - 7);
   const json = await get(`/futures/v1/aggs/${encodeURIComponent(ticker)}`, {
     resolution: '1session',
-    'window_start.gte': date,
+    'window_start.gte': start.toISOString().slice(0, 10),
     'window_start.lte': date,
-    limit: 1,
+    sort: 'window_start.desc',
+    limit: 10,
   });
-  const bar = json?.results?.[0];
-  const close = bar?.settlement_price ?? bar?.close;
-  return typeof close === 'number' && close > 0 ? close : null;
+  const rows = Array.isArray(json?.results) ? json.results : [];
+  for (const bar of rows) {
+    const close = Number(bar?.settlement_price) > 0 ? Number(bar.settlement_price) : Number(bar?.close);
+    if (Number.isFinite(close) && close > 0) return close;
+  }
+  return null;
 }
 
 /** Most recent business-day-ish date (yesterday in UTC); we'll let Massive return null if it's a holiday. */
