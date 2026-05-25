@@ -210,7 +210,10 @@ export async function fetchMassiveFrontMonth(
     limit: 24,
   });
   const row = (Array.isArray(snap?.results) ? snap.results : [])
-    .filter((r: any) => r?.ticker && r?.product_code === productCode && (r.type ?? 'single') === 'single')
+    .filter((r: any) => {
+      const ticker = snapshotTicker(r);
+      return ticker && snapshotProductCode(r) === productCode && isOutrightTicker(ticker, productCode);
+    })
     .map((r: any): SnapshotCurveCandidate => ({ row: r, expiry: snapshotExpiry(r, productCode), price: snapshotPrice(r) }))
     .filter((r: SnapshotCurveCandidate) => r.expiry && Number.isFinite(r.price) && r.price > 0)
     .sort((a: SnapshotCurveCandidate, b: SnapshotCurveCandidate) => a.expiry!.sortKey.localeCompare(b.expiry!.sortKey))[0]?.row ?? null;
@@ -223,7 +226,7 @@ export async function fetchMassiveFrontMonth(
         session.change_percent ?? session.changePercent ?? session.price_change_percent ?? 0,
       );
       const volume = typeof session.volume === 'number' ? session.volume : undefined;
-      const ticker = String(row.ticker ?? row.symbol ?? '');
+      const ticker = snapshotTicker(row);
       const asOf = String(
         snapshotAsOf(row),
       ).slice(0, 10);
