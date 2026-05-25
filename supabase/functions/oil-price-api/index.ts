@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/utils.ts'
 import { IpRateLimiter } from '../_shared/rateLimit.ts'
+import { PREMIUM_COMMODITIES } from '../_shared/commodity-mappings.ts'
 
 const OIL_API_BASE = 'https://api.oilpriceapi.com/v1';
 
@@ -69,15 +70,14 @@ const OIL_BLEND_CODES: Record<string, string> = {
   'VLSFO Fujairah': 'VLSFO_AEFUJ_USD',
 };
 
-// Premium-only energy commodities. See mem://monetization/strategy.
-// Trimmed (was 23) to keep per-subscriber OilPriceAPI burn sustainable.
+// Premium-only energy commodities. Single source of truth = PREMIUM_COMMODITIES
+// in commodity-mappings.ts. We intersect with the OilPriceAPI catalog plus add
+// marine-fuel SKUs that only this function knows about (not in the main catalog).
+const MARINE_PREMIUM = ['VLSFO Global', 'HFO 380 Global', 'MGO 0.5%S Global',
+  'HFO 380 Rotterdam', 'VLSFO Singapore', 'MGO Houston', 'VLSFO Fujairah'];
 const PREMIUM_ENERGY = new Set<string>([
-  // Crude (4)
-  'Western Canadian Select', 'WTI Midland', 'Mars Blend', 'Louisiana Light Sweet',
-  // Refined (6)
-  'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel', 'Gasoil', 'Naphtha',
-  // Marine fuels (3)
-  'VLSFO Global', 'HFO 380 Rotterdam', 'MGO 0.5%S Global',
+  ...Object.keys(OIL_BLEND_CODES).filter((n) => PREMIUM_COMMODITIES.has(n)),
+  ...MARINE_PREMIUM,
 ]);
 
 serve(async (req) => {
