@@ -253,7 +253,7 @@ export async function fetchMassiveFrontMonth(
 
     // Fetch a wider window because Massive's API can't sort by expiry —
     // we need to pull several and pick the earliest client-side.
-    const contracts = await listActiveContracts(productCode, asOf, 24);
+    const contracts = await listActiveContracts(productCode, asOf, 250);
     const front = contracts[0];
     if (!front) continue;
 
@@ -371,7 +371,7 @@ export async function fetchMassiveCurve(
     const d = new Date(Date.now() - dayOffset * 24 * 60 * 60 * 1000);
     const asOf = d.toISOString().slice(0, 10);
 
-    const contracts = await listActiveContracts(productCode, asOf, monthsAhead + 4);
+    const contracts = await listActiveContracts(productCode, asOf, 250);
     if (contracts.length === 0) continue;
 
     const slice = contracts.slice(0, monthsAhead);
