@@ -337,7 +337,10 @@ export async function fetchMassiveCurve(
   if (rows.length > 0) {
     let asOf = yesterdayUtcDate();
     const curve = (rows as any[])
-      .filter((r: any) => r?.ticker && r?.product_code === productCode && (r.type ?? 'single') === 'single')
+      .filter((r: any) => {
+        const ticker = snapshotTicker(r);
+        return ticker && snapshotProductCode(r) === productCode && isOutrightTicker(ticker, productCode);
+      })
       .map((r: any): SnapshotCurveCandidate => ({ row: r, expiry: snapshotExpiry(r, productCode), price: snapshotPrice(r) }))
       .filter((r: SnapshotCurveCandidate) => r.expiry && Number.isFinite(r.price) && r.price > 0)
       .sort((a: SnapshotCurveCandidate, b: SnapshotCurveCandidate) => a.expiry!.sortKey.localeCompare(b.expiry!.sortKey))
@@ -347,7 +350,7 @@ export async function fetchMassiveCurve(
         if (rowAsOf && rowAsOf < asOf) asOf = rowAsOf;
         if (i === 0 && rowAsOf) asOf = rowAsOf;
         return {
-          symbol: String(r.row.ticker),
+          symbol: snapshotTicker(r.row),
           expiry: r.expiry!.label,
           monthIdx: i + 1,
           price: +r.price.toFixed(4),
