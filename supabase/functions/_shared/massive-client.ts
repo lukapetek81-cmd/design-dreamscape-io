@@ -63,12 +63,24 @@ function decodeTickerExpiry(ticker: string, productCode: string): { label: strin
   return { label: `${year}-${mm}`, sortKey: `${year}-${mm}-01` };
 }
 
+function snapshotTicker(row: any): string {
+  return String(row?.ticker ?? row?.details?.ticker ?? row?.symbol ?? '');
+}
+
+function snapshotProductCode(row: any): string {
+  return String(row?.product_code ?? row?.details?.product_code ?? '');
+}
+
+function isOutrightTicker(ticker: string, productCode: string): boolean {
+  return new RegExp(`^${productCode}[FGHJKMNQUVXZ]\\d{1,2}$`).test(ticker);
+}
+
 function snapshotExpiry(row: any, productCode: string): { label: string; sortKey: string } | null {
-  const explicit = String(row?.last_trade_date ?? row?.settlement_date ?? '').slice(0, 10);
+  const explicit = String(row?.last_trade_date ?? row?.settlement_date ?? row?.details?.settlement_date ?? '').slice(0, 10);
   if (explicit) return { label: explicit.slice(0, 7), sortKey: explicit };
   const detailsDate = dateFromEpoch(row?.details?.settlement_date);
   if (detailsDate) return { label: detailsDate.slice(0, 7), sortKey: detailsDate };
-  return decodeTickerExpiry(String(row?.ticker ?? ''), productCode);
+  return decodeTickerExpiry(snapshotTicker(row), productCode);
 }
 
 function snapshotAsOf(row: any): string {
@@ -80,13 +92,11 @@ function snapshotAsOf(row: any): string {
 
 function snapshotPrice(row: any): number {
   const session = row?.session ?? {};
-  return Number(
-    session.settlement_price
-      ?? session.previous_settlement
-      ?? session.close
-      ?? row?.last_trade?.price
-      ?? row?.price,
-  );
+  for (const value of [session.settlement_price, session.close, session.previous_settlement, row?.last_trade?.price, row?.last_minute?.close, row?.price]) {
+    const n = Number(value);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return NaN;
 }
 
 export interface MassiveContract {
@@ -130,10 +140,11 @@ type SnapshotCurveCandidate = {
 export async function listActiveContracts(
   productCode: string,
   asOfDate: string,           // 'YYYY-MM-DD'
-  limit = 24,
+  limit = 250,
 ): Promise<MassiveContract[]> {
   const json = await get('/futures/v1/contracts', {
     product_code: productCode,
+    type: 'single',
     active: true,
     date: asOfDate,
     limit,
@@ -143,7 +154,7 @@ export async function listActiveContracts(
   if (!Array.isArray(arr)) return [];
   return arr
     // Skip spread/combo contracts — we only want outright monthly singles.
-    .filter((c: any) => c?.ticker && c?.last_trade_date && (c.type ?? 'single') === 'single')
+    .filter((c: any) => c?.ticker && c?.last_trade_date && (c.type ?? 'single') === 'single' && isOutrightTicker(String(c.ticker), productCode))
     .map((c: any) => ({
       ticker: String(c.ticker),
       product_code: String(c.product_code ?? productCode),
@@ -164,17 +175,21 @@ export async function fetchContractDailyClose(
   ticker: string,
   date: string,               // 'YYYY-MM-DD'
 ): Promise<number | null> {
-  // Use a small gte/lte window so the request shape matches the working
-  // historical bars call. Single-date `window_start=` was returning empty.
+  const start = new Date(`${date}T00:00:00Z`);
+  start.setUTCDate(start.getUTCDate() - 7);
   const json = await get(`/futures/v1/aggs/${encodeURIComponent(ticker)}`, {
     resolution: '1session',
-    'window_start.gte': date,
+    'window_start.gte': start.toISOString().slice(0, 10),
     'window_start.lte': date,
-    limit: 1,
+    sort: 'window_start.desc',
+    limit: 10,
   });
-  const bar = json?.results?.[0];
-  const close = bar?.settlement_price ?? bar?.close;
-  return typeof close === 'number' && close > 0 ? close : null;
+  const rows = Array.isArray(json?.results) ? json.results : [];
+  for (const bar of rows) {
+    const close = Number(bar?.settlement_price) > 0 ? Number(bar.settlement_price) : Number(bar?.close);
+    if (Number.isFinite(close) && close > 0) return close;
+  }
+  return null;
 }
 
 /** Most recent business-day-ish date (yesterday in UTC); we'll let Massive return null if it's a holiday. */
@@ -199,7 +214,10 @@ export async function fetchMassiveFrontMonth(
     limit: 24,
   });
   const row = (Array.isArray(snap?.results) ? snap.results : [])
-    .filter((r: any) => r?.ticker && r?.product_code === productCode && (r.type ?? 'single') === 'single')
+    .filter((r: any) => {
+      const ticker = snapshotTicker(r);
+      return ticker && snapshotProductCode(r) === productCode && isOutrightTicker(ticker, productCode);
+    })
     .map((r: any): SnapshotCurveCandidate => ({ row: r, expiry: snapshotExpiry(r, productCode), price: snapshotPrice(r) }))
     .filter((r: SnapshotCurveCandidate) => r.expiry && Number.isFinite(r.price) && r.price > 0)
     .sort((a: SnapshotCurveCandidate, b: SnapshotCurveCandidate) => a.expiry!.sortKey.localeCompare(b.expiry!.sortKey))[0]?.row ?? null;
@@ -212,7 +230,7 @@ export async function fetchMassiveFrontMonth(
         session.change_percent ?? session.changePercent ?? session.price_change_percent ?? 0,
       );
       const volume = typeof session.volume === 'number' ? session.volume : undefined;
-      const ticker = String(row.ticker ?? row.symbol ?? '');
+      const ticker = snapshotTicker(row);
       const asOf = String(
         snapshotAsOf(row),
       ).slice(0, 10);
@@ -235,7 +253,7 @@ export async function fetchMassiveFrontMonth(
 
     // Fetch a wider window because Massive's API can't sort by expiry —
     // we need to pull several and pick the earliest client-side.
-    const contracts = await listActiveContracts(productCode, asOf, 24);
+    const contracts = await listActiveContracts(productCode, asOf, 250);
     const front = contracts[0];
     if (!front) continue;
 
@@ -323,7 +341,10 @@ export async function fetchMassiveCurve(
   if (rows.length > 0) {
     let asOf = yesterdayUtcDate();
     const curve = (rows as any[])
-      .filter((r: any) => r?.ticker && r?.product_code === productCode && (r.type ?? 'single') === 'single')
+      .filter((r: any) => {
+        const ticker = snapshotTicker(r);
+        return ticker && snapshotProductCode(r) === productCode && isOutrightTicker(ticker, productCode);
+      })
       .map((r: any): SnapshotCurveCandidate => ({ row: r, expiry: snapshotExpiry(r, productCode), price: snapshotPrice(r) }))
       .filter((r: SnapshotCurveCandidate) => r.expiry && Number.isFinite(r.price) && r.price > 0)
       .sort((a: SnapshotCurveCandidate, b: SnapshotCurveCandidate) => a.expiry!.sortKey.localeCompare(b.expiry!.sortKey))
@@ -333,7 +354,7 @@ export async function fetchMassiveCurve(
         if (rowAsOf && rowAsOf < asOf) asOf = rowAsOf;
         if (i === 0 && rowAsOf) asOf = rowAsOf;
         return {
-          symbol: String(r.row.ticker),
+          symbol: snapshotTicker(r.row),
           expiry: r.expiry!.label,
           monthIdx: i + 1,
           price: +r.price.toFixed(4),
@@ -350,7 +371,7 @@ export async function fetchMassiveCurve(
     const d = new Date(Date.now() - dayOffset * 24 * 60 * 60 * 1000);
     const asOf = d.toISOString().slice(0, 10);
 
-    const contracts = await listActiveContracts(productCode, asOf, monthsAhead + 4);
+    const contracts = await listActiveContracts(productCode, asOf, 250);
     if (contracts.length === 0) continue;
 
     const slice = contracts.slice(0, monthsAhead);
