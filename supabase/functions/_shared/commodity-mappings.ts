@@ -64,7 +64,6 @@ export const COMMODITY_SYMBOLS: Record<string, CommoditySymbol> = {
   // ============ INDUSTRIALS ============
   'Lumber Futures': { symbol: 'LBS=F', category: 'industrials', contractSize: '110,000 bd ft', venue: 'CME' },
   'HRC Steel': { symbol: 'HRC=F', category: 'industrials', contractSize: '20 ST', venue: 'NYMEX' },
-  'Uranium': { symbol: 'UX=F', category: 'industrials', contractSize: '250 lbs', venue: 'NYMEX' },
 };
 
 /**
@@ -113,7 +112,6 @@ export const MASSIVE_PRODUCT_CODES: Record<string, string> = {
   // Industrials (CME/NYMEX)
   'Lumber Futures': 'LBR',
   'HRC Steel': 'HRC',
-  'Uranium': 'UX',
 };
 
 /**
@@ -151,7 +149,7 @@ export const PREMIUM_COMMODITIES = new Set<string>([
   'Class III Milk', 'Class IV Milk', 'Cash-Settled Cheese',
   'Cash-Settled Butter', 'Nonfat Dry Milk',
   // Industrials — premium
-  'HRC Steel', 'Uranium',
+  'HRC Steel',
 ]);
 
 export function isPremiumCommodity(name: string): boolean {
@@ -183,7 +181,7 @@ export const CATEGORY_MAPPINGS: Record<string, string[]> = {
     'Cash-Settled Butter', 'Nonfat Dry Milk',
   ],
   industrials: [
-    'Lumber Futures', 'HRC Steel', 'Uranium',
+    'Lumber Futures', 'HRC Steel',
   ],
 };
 
