@@ -38,6 +38,9 @@ const PriceAlerts = lazy(() => import('@/pages/PriceAlerts'));
 const ForwardCurves = lazy(() => import('@/pages/ForwardCurves'));
 const SpreadCalculator = lazy(() => import('@/pages/SpreadCalculator'));
 const COTReports = lazy(() => import('@/pages/COTReports'));
+const RollScanner = lazy(() => import('@/pages/RollScanner'));
+const VolatilityCone = lazy(() => import('@/pages/VolatilityCone'));
+const TermStructure = lazy(() => import('@/pages/TermStructure'));
 
 const RouteFallback = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -104,6 +107,9 @@ const App = () => {
                 <Route path="/spread-calculator" element={<SpreadCalculator />} />
                 <Route path="/cot" element={<COTReports />} />
                 <Route path="/cot-reports" element={<COTReports />} />
+                <Route path="/roll-scanner" element={<RollScanner />} />
+                <Route path="/volatility-cone" element={<VolatilityCone />} />
+                <Route path="/term-structure" element={<TermStructure />} />
                 <Route path="/admin/catalog-audit" element={<CatalogAudit />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
