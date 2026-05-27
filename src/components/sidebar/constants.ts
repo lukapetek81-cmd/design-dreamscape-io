@@ -1,4 +1,4 @@
-import { Zap, Coins, Wheat, Beef, Briefcase, BarChart3, Star, Filter, Calendar, Lightbulb, GraduationCap, Users, Activity, Factory, Calculator, Bell, TrendingUp, GitCompare } from "lucide-react";
+import { Zap, Coins, Wheat, Beef, Briefcase, BarChart3, Star, Filter, Calendar, Lightbulb, GraduationCap, Users, Activity, Factory, Calculator, Bell, TrendingUp, GitCompare, ArrowUpDown, Gauge, Layers } from "lucide-react";
 import { CommodityGroup, MarketTool } from "./types";
 
 export const COMMODITY_GROUPS: CommodityGroup[] = [
@@ -23,6 +23,9 @@ export const PRO_TOOLS: MarketTool[] = [
   { id: "forward-curves", label: "Forward Curves", icon: TrendingUp, color: "bg-indigo-50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400", path: "/forward-curves" },
   { id: "spreads", label: "Spread Calculator", icon: GitCompare, color: "bg-teal-50 dark:bg-teal-950/20 border-teal-200 dark:border-teal-800 text-teal-600 dark:text-teal-400", path: "/spreads" },
   { id: "cot", label: "COT Reports", icon: Users, color: "bg-fuchsia-50 dark:bg-fuchsia-950/20 border-fuchsia-200 dark:border-fuchsia-800 text-fuchsia-600 dark:text-fuchsia-400", path: "/cot" },
+  { id: "roll-scanner", label: "Roll Yield Scanner", icon: ArrowUpDown, color: "bg-violet-50 dark:bg-violet-950/20 border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400", path: "/roll-scanner" },
+  { id: "vol-cone", label: "Volatility Cone", icon: Gauge, color: "bg-pink-50 dark:bg-pink-950/20 border-pink-200 dark:border-pink-800 text-pink-600 dark:text-pink-400", path: "/volatility-cone" },
+  { id: "term-structure", label: "Term Structure Shift", icon: Layers, color: "bg-sky-50 dark:bg-sky-950/20 border-sky-200 dark:border-sky-800 text-sky-600 dark:text-sky-400", path: "/term-structure" },
 ];
 
 export const COMMUNITY_TOOLS: MarketTool[] = [
