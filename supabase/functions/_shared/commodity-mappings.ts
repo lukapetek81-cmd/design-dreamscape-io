@@ -33,9 +33,8 @@ export const COMMODITY_SYMBOLS: Record<string, CommoditySymbol> = {
   'Copper': { symbol: 'HG=F', category: 'metals', contractSize: '25,000 lbs', venue: 'COMEX' },
   'Platinum': { symbol: 'PL=F', category: 'metals', contractSize: '50 oz', venue: 'NYMEX' },
   'Palladium': { symbol: 'PA=F', category: 'metals', contractSize: '100 oz', venue: 'NYMEX' },
-  // LME metals (Zinc, Lead, Nickel, Tin) removed 2026-05 — no free/affordable
-  // data source covers LME. CME-listed Aluminum (ALI) is sourced via Massive.
-  'Aluminum': { symbol: 'ALI=F', category: 'metals', contractSize: '25 MT', venue: 'CME' },
+  // LME metals (Aluminum, Zinc, Lead, Nickel, Tin) removed 2026-05 — no
+  // free/affordable data source covers LME. Revisit if we add CPA Lite or FMP Premium.
 
   // ============ GRAINS — Free ============
   'Corn Futures': { symbol: 'ZC=F', category: 'grains', contractSize: '5,000 bu', venue: 'CBOT' },
@@ -45,25 +44,15 @@ export const COMMODITY_SYMBOLS: Record<string, CommoditySymbol> = {
   'Soybean Meal': { symbol: 'ZM=F', category: 'grains', contractSize: '100 tons', venue: 'CBOT' },
   'Oat Futures': { symbol: 'ZO=F', category: 'grains', contractSize: '5,000 bu', venue: 'CBOT' },
   'Rough Rice': { symbol: 'ZR=F', category: 'grains', contractSize: '2,000 cwt', venue: 'CBOT' },
-  'KC HRW Wheat': { symbol: 'KE=F', category: 'grains', contractSize: '5,000 bu', venue: 'CBOT' },
   // Canola (ICE) and all ICE softs (Coffee, Sugar #11, Cotton, Cocoa, OJ)
   // removed 2026-05 — no free/affordable data source covers ICE.
 
   // ============ LIVESTOCK — Free ============
   'Live Cattle': { symbol: 'LE=F', category: 'livestock', contractSize: '40,000 lbs', venue: 'CME' },
   'Lean Hogs': { symbol: 'HE=F', category: 'livestock', contractSize: '40,000 lbs', venue: 'CME' },
-  'Feeder Cattle': { symbol: 'GF=F', category: 'livestock', contractSize: '50,000 lbs', venue: 'CME' },
 
-  // ============ DAIRY (Massive / CME) — Premium ============
-  'Class III Milk': { symbol: 'DC=F', category: 'dairy', contractSize: '200,000 lbs', venue: 'CME' },
-  'Class IV Milk': { symbol: 'DY=F', category: 'dairy', contractSize: '200,000 lbs', venue: 'CME' },
-  'Cash-Settled Cheese': { symbol: 'CSC=F', category: 'dairy', contractSize: '20,000 lbs', venue: 'CME' },
-  'Cash-Settled Butter': { symbol: 'CB=F', category: 'dairy', contractSize: '20,000 lbs', venue: 'CME' },
-  'Nonfat Dry Milk': { symbol: 'GNF=F', category: 'dairy', contractSize: '44,000 lbs', venue: 'CME' },
-
-  // ============ INDUSTRIALS ============
+  // ============ INDUSTRIALS — Lumber (free) ============
   'Lumber Futures': { symbol: 'LBS=F', category: 'industrials', contractSize: '110,000 bd ft', venue: 'CME' },
-  'HRC Steel': { symbol: 'HRC=F', category: 'industrials', contractSize: '20 ST', venue: 'NYMEX' },
 };
 
 /**
@@ -89,7 +78,6 @@ export const MASSIVE_PRODUCT_CODES: Record<string, string> = {
   'Copper': 'HG',
   'Platinum': 'PL',
   'Palladium': 'PA',
-  'Aluminum': 'ALI',
   // Grains (CBOT)
   'Corn Futures': 'ZC',
   'Wheat Futures': 'ZW',
@@ -98,20 +86,11 @@ export const MASSIVE_PRODUCT_CODES: Record<string, string> = {
   'Soybean Meal': 'ZM',
   'Oat Futures': 'ZO',
   'Rough Rice': 'ZR',
-  'KC HRW Wheat': 'KE',
   // Livestock (CME)
   'Live Cattle': 'LE',
   'Lean Hogs': 'HE',
-  'Feeder Cattle': 'GF',
-  // Dairy (CME)
-  'Class III Milk': 'DC',
-  'Class IV Milk': 'DY',
-  'Cash-Settled Cheese': 'CSC',
-  'Cash-Settled Butter': 'CB',
-  'Nonfat Dry Milk': 'GNF',
-  // Industrials (CME/NYMEX)
+  // Lumber (CME)
   'Lumber Futures': 'LBR',
-  'HRC Steel': 'HRC',
 };
 
 /**
@@ -141,15 +120,10 @@ export const PREMIUM_COMMODITIES = new Set<string>([
   'Natural Gas UK', 'Dutch TTF Gas', 'Japan/Korea LNG',
   'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel', 'Gasoil', 'Naphtha',
   // Metals — premium
-  'Palladium', 'Aluminum',
+  'Palladium',
   // Grains — premium
   'Soybean Oil', 'Soybean Meal',
-  'Oat Futures', 'Rough Rice', 'KC HRW Wheat',
-  // Dairy — premium (all)
-  'Class III Milk', 'Class IV Milk', 'Cash-Settled Cheese',
-  'Cash-Settled Butter', 'Nonfat Dry Milk',
-  // Industrials — premium
-  'HRC Steel',
+  'Oat Futures', 'Rough Rice',
 ]);
 
 export function isPremiumCommodity(name: string): boolean {
@@ -166,22 +140,18 @@ export const CATEGORY_MAPPINGS: Record<string, string[]> = {
     'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel', 'Gasoil', 'Naphtha',
   ],
   metals: [
-    'Gold Futures', 'Silver Futures', 'Copper', 'Platinum', 'Palladium', 'Aluminum',
+    'Gold Futures', 'Silver Futures', 'Copper', 'Platinum', 'Palladium',
   ],
   grains: [
     'Corn Futures', 'Wheat Futures', 'Soybean Futures', 'Soybean Oil', 'Soybean Meal',
-    'Oat Futures', 'Rough Rice', 'KC HRW Wheat',
+    'Oat Futures', 'Rough Rice',
   ],
   softs: [],
   livestock: [
-    'Live Cattle', 'Lean Hogs', 'Feeder Cattle',
-  ],
-  dairy: [
-    'Class III Milk', 'Class IV Milk', 'Cash-Settled Cheese',
-    'Cash-Settled Butter', 'Nonfat Dry Milk',
+    'Live Cattle', 'Lean Hogs',
   ],
   industrials: [
-    'Lumber Futures', 'HRC Steel',
+    'Lumber Futures',
   ],
 };
 
