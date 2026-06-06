@@ -193,24 +193,6 @@ serve(async (req) => {
     });
   } catch (err) {
     logger.error('vol-cone failed', err);
-    // Last-ditch: try snapshot before erroring out.
-    try {
-      const parsedBody = BodySchema.safeParse(await req.clone().json().catch(() => ({})));
-      if (parsedBody.success) {
-        const { data: snap } = await admin
-          .from('analytics_snapshots')
-          .select('payload, as_of')
-          .eq('kind', 'vol_cone')
-          .eq('key', parsedBody.data.commodity)
-          .maybeSingle();
-        if (snap?.payload) {
-          const stalePayload = { ...(snap.payload as Record<string, unknown>), stale: true, asOf: snap.as_of };
-          return new Response(JSON.stringify(stalePayload), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Cache': 'STALE' },
-          });
-        }
-      }
-    } catch (_) { /* ignore */ }
     return new Response(JSON.stringify({ error: 'fetch_failed' }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
