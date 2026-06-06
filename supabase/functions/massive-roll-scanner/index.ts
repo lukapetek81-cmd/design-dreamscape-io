@@ -67,8 +67,11 @@ serve(async (req) => {
       });
     }
 
-    const results = await Promise.all(
-      PRODUCTS.map(async (p) => {
+    let results: any[] = [];
+    let liveFailed = false;
+    try {
+      results = await Promise.all(
+        PRODUCTS.map(async (p) => {
         try {
           const { asOf, curve } = await fetchMassiveCurve(p.code, 12);
           if (curve.length < 2) return { ...p, error: 'no_data' as const };
@@ -93,15 +96,48 @@ serve(async (req) => {
           logger.warn(`scan ${p.code} failed: ${(e as Error).message}`);
           return { ...p, error: 'fetch_failed' as const };
         }
-      }),
-    );
+        }),
+      );
+    } catch (e) {
+      logger.warn(`roll-scanner live fetch threw: ${(e as Error).message}`);
+      liveFailed = true;
+    }
+
+    const successCount = results.filter((r: any) => !r.error).length;
+    if (liveFailed || successCount < 3) {
+      const { data: snap } = await admin
+        .from('analytics_snapshots')
+        .select('payload, as_of')
+        .eq('kind', 'roll_scanner')
+        .eq('key', 'all')
+        .maybeSingle();
+      if (snap?.payload) {
+        const stalePayload = { ...(snap.payload as Record<string, unknown>), stale: true, asOf: snap.as_of };
+        return new Response(JSON.stringify(stalePayload), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Cache': 'STALE' },
+        });
+      }
+      return new Response(JSON.stringify({ error: 'fetch_failed' }), {
+        status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const payload = {
       generatedAt: new Date().toISOString(),
       provider: 'Massive Futures Starter',
       results,
+      stale: false,
     };
     cache = { at: Date.now(), payload };
+    // Persist last-good snapshot (best-effort)
+    admin.from('analytics_snapshots').upsert({
+      kind: 'roll_scanner',
+      key: 'all',
+      payload,
+      as_of: new Date().toISOString(),
+    }).then(({ error }) => {
+      if (error) logger.warn(`snapshot upsert failed: ${error.message}`);
+    });
     return new Response(JSON.stringify(payload), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Cache': 'MISS' },
     });
