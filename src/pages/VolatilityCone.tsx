@@ -89,6 +89,11 @@ const VolatilityCone: React.FC = () => {
             )}
             {data && (
               <>
+                {data.stale && (
+                  <div className="mb-3 px-3 py-2 text-xs rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                    Showing last settled session ({data.asOf ? new Date(data.asOf).toLocaleString() : '—'}). Live data unavailable right now.
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   <Card>
                     <CardHeader className="pb-2"><CardDescription>Current 20-day Vol</CardDescription></CardHeader>

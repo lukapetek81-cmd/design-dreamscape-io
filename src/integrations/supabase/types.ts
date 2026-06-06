@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_snapshots: {
+        Row: {
+          as_of: string
+          key: string
+          kind: string
+          payload: Json
+        }
+        Insert: {
+          as_of?: string
+          key: string
+          kind: string
+          payload: Json
+        }
+        Update: {
+          as_of?: string
+          key?: string
+          kind?: string
+          payload?: Json
+        }
+        Relationships: []
+      }
       api_rate_limits: {
         Row: {
           api_endpoint: string

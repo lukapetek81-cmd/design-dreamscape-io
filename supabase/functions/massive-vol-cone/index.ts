@@ -106,15 +106,38 @@ serve(async (req) => {
       });
     }
 
+    const serveStale = async () => {
+      const { data: snap } = await admin
+        .from('analytics_snapshots')
+        .select('payload, as_of')
+        .eq('kind', 'vol_cone')
+        .eq('key', commodity)
+        .maybeSingle();
+      if (snap?.payload) {
+        const stalePayload = { ...(snap.payload as Record<string, unknown>), stale: true, asOf: snap.as_of };
+        return new Response(JSON.stringify(stalePayload), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Cache': 'STALE' },
+        });
+      }
+      return null;
+    };
+
     const today = new Date();
     const from = new Date(today.getTime() - 5 * 365 * 24 * 60 * 60 * 1000);
-    const bars = await fetchMassiveFrontMonthBars(
-      product.code,
-      from.toISOString().slice(0, 10),
-      today.toISOString().slice(0, 10),
-    );
+    let bars: { date: string; close: number }[] = [];
+    try {
+      bars = await fetchMassiveFrontMonthBars(
+        product.code,
+        from.toISOString().slice(0, 10),
+        today.toISOString().slice(0, 10),
+      );
+    } catch (e) {
+      logger.warn(`vol-cone fetch threw for ${product.code}: ${(e as Error).message}`);
+    }
     if (bars.length < 130) {
-      logger.warn(`vol-cone ${product.code} only ${bars.length} bars`);
+      logger.warn(`vol-cone ${product.code} only ${bars.length} bars — trying snapshot`);
+      const staleResp = await serveStale();
+      if (staleResp) return staleResp;
       return new Response(JSON.stringify({ error: 'insufficient_history' }), {
         status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -153,8 +176,17 @@ serve(async (req) => {
       cone,
       currentVol: +currentVol.toFixed(2),
       percentile1y,
+      stale: false,
     };
     cache.set(commodity, { at: Date.now(), payload });
+    admin.from('analytics_snapshots').upsert({
+      kind: 'vol_cone',
+      key: commodity,
+      payload,
+      as_of: new Date().toISOString(),
+    }).then(({ error }) => {
+      if (error) logger.warn(`snapshot upsert failed: ${error.message}`);
+    });
 
     return new Response(JSON.stringify(payload), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Cache': 'MISS' },

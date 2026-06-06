@@ -97,6 +97,11 @@ const RollScanner: React.FC = () => {
             )}
             {data && (
               <Card className="overflow-hidden">
+                {data.stale && (
+                  <div className="px-3 py-2 text-xs bg-amber-500/10 text-amber-400 border-b border-amber-500/30">
+                    Showing last settled session ({data.asOf ? new Date(data.asOf).toLocaleString() : '—'}). Live data unavailable right now.
+                  </div>
+                )}
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
