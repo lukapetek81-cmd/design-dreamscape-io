@@ -41,6 +41,8 @@ export interface RollScannerResponse {
   generatedAt: string;
   provider: string;
   results: RollScannerRow[];
+  stale?: boolean;
+  asOf?: string;
 }
 
 export const useRollScanner = (enabled = true) =>
@@ -70,6 +72,7 @@ export interface VolConeResponse {
   cone: VolConeBucket[];
   currentVol: number;
   percentile1y: number;
+  stale?: boolean;
 }
 
 export const useVolCone = (commodity: string | null) =>
