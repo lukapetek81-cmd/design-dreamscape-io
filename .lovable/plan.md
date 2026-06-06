@@ -1,67 +1,62 @@
-# Revised: FMP → Massive swap, FMP retained only for ICE/LME
+# Persist Roll Scanner & Vol Cone Snapshots
 
-## Final provider split
+## Problem
+Today both tools rely on a 6h in-memory cache per worker. When the worker is cold, the upstream Massive call errors, or the latest session hasn't settled, users get an error screen instead of the last known good data.
 
-| Category | Provider | Items |
-|---|---|---|
-| Energy (20) | OilPriceAPI | unchanged |
-| CME/CBOT/COMEX/NYMEX non-energy (15) | **Massive Futures Basic** | Gold, Silver, Copper, Platinum, Palladium, Corn, Wheat, Soybeans, SoyOil, SoyMeal, Oats, Rough Rice, Live Cattle, Lean Hogs, Lumber |
-| ICE/LME (11) | **FMP free tier** | Coffee, Sugar, Cotton, Cocoa, OJ, Canola, Aluminum, Zinc, Lead, Nickel, Tin |
+## Solution
+Add a small `analytics_snapshots` table that stores the most recent successful payload per (tool, key). Edge functions write on success and read on failure, so the UI always renders data with a clear "as of" label.
 
-FMP load drops from ~26 quotes → 11 quotes per refresh (≈58% reduction). With the existing 6h cache that's well under FMP free's 250 req/day cap.
+## Database
 
-Catalog stays at 46 items. No UI/UX loss.
+New migration creating one table reused by both tools (and any future analytics tool):
 
-## Implementation
+```sql
+CREATE TABLE public.analytics_snapshots (
+  kind text NOT NULL,         -- 'roll_scanner' | 'vol_cone'
+  key  text NOT NULL,         -- 'all' for roll scanner, commodity id for vol cone
+  payload jsonb NOT NULL,
+  as_of timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (kind, key)
+);
 
-### 1. `_shared/commodity-mappings.ts`
-- Keep `COMMODITY_SYMBOLS` as-is (all 46).
-- Split symbol maps:
-  - `MASSIVE_PRODUCT_CODES` — commodity name → Massive product_code, only for CME/CBOT/COMEX/NYMEX non-energy (15 entries).
-  - `FMP_SYMBOLS` — slimmed down to ICE/LME items only (11 entries). Drop everything Massive will cover.
-- Remove `FMP_FUTURES_ROOTS` (forward curve already on Massive).
+GRANT SELECT ON public.analytics_snapshots TO authenticated;
+GRANT ALL    ON public.analytics_snapshots TO service_role;
 
-### 2. `_shared/massive-client.ts`
-Add to existing file:
-- `fetchMassiveFrontMonth(productCode)` — `GET /futures/v1/snapshot?product_code=X&order=last_trade_date.asc&limit=1`. Returns `{ticker, price, change, changePercent, volume, asOf}`. **1 API call per commodity**, no separate contracts call.
-- `fetchMassiveDailyBars(ticker, from, to)` — `GET /futures/v1/aggs/{ticker}/range/1/day/{from}/{to}` for chart history.
+ALTER TABLE public.analytics_snapshots ENABLE ROW LEVEL SECURITY;
 
-### 3. `_shared/commodity-service.ts`
-- Replace `fetchAllFromFmp` with two methods:
-  - `fetchAllFromMassive(includePremium)` — iterates 15-entry map with **5-req/12s throttle** to respect Basic plan limit; uses `EdgeRuntime.waitUntil` on cold cache so users never block.
-  - `fetchAllFromFmp(includePremium)` — keeps the existing batched `/v3/quote/` call but only with the 11 ICE/LME symbols.
-- Merge order: oil + massive + fmp.
-- Cache key + DB snapshot fallback (existing day-over-day logic) unchanged.
-- Rewrite `fetchFmpTimeseries` → `fetchChartHistory`: routes through Massive aggs for CME-side names, falls back to FMP historical for ICE/LME, then Alpha Vantage, then synthetic.
+-- Any Pro-gated tool already enforces tier in the edge function; table read is
+-- gated by authenticated role only (payloads are non-sensitive market analytics).
+CREATE POLICY "auth read snapshots" ON public.analytics_snapshots
+  FOR SELECT TO authenticated USING (true);
+```
 
-### 4. `fetch-commodity-prices/index.ts` & `fetch-commodity-data/index.ts`
-- Route quote/history through the new service methods. FMP code path kept only for symbols in the slimmed `FMP_SYMBOLS` set.
+Writes go through `SUPABASE_SERVICE_ROLE_KEY` from edge functions, so no insert/update policy is needed.
 
-### 5. Frontend
-- No changes. Service output shape stays identical.
+## Edge function changes
 
-### 6. Cold-cache UX safety
-- First request after a worker boot triggers Massive throttled fetch in the background (`EdgeRuntime.waitUntil`).
-- Foreground response returns: OilPriceAPI live + FMP live (1 batched call) + last snapshot from DB for Massive items.
-- Subsequent requests within 6h hit the populated cache.
+### `supabase/functions/massive-roll-scanner/index.ts`
+1. After computing `payload`, upsert into `analytics_snapshots` with `kind='roll_scanner'`, `key='all'`.
+2. Wrap the live-fetch block in try/catch. On any failure (or if `results` ends up with <3 successful products), fall back to:
+   ```ts
+   const { data } = await admin
+     .from('analytics_snapshots')
+     .select('payload, as_of')
+     .eq('kind','roll_scanner').eq('key','all').maybeSingle();
+   ```
+   Return that payload with `stale: true` and `asOf: data.as_of`. Only return 500 if both live fetch AND snapshot lookup fail.
+3. Keep the 6h in-memory cache as the fast path.
 
-### 7. Memory updates
-- Core data-sourcing line: `Energy: OilPriceAPI. CME/CBOT/COMEX/NYMEX: Massive Futures Basic. ICE/LME: FMP free.`
-- New `mem://integrations/massive-config` documenting product codes, throttle, plan limits.
-- Update `mem://integrations/fmp-data-config`: scope reduced to 11 ICE/LME symbols.
-- `mem://project/commodity-catalog-scope`: still 46.
+### `supabase/functions/massive-vol-cone/index.ts`
+1. After computing `payload`, upsert into `analytics_snapshots` with `kind='vol_cone'`, `key=commodity`.
+2. On `insufficient_history` or `fetchMassiveFrontMonthBars` error, read the snapshot for that commodity and return it with `stale: true`. Only error if no snapshot exists.
 
-## Files touched
-- `supabase/functions/_shared/commodity-mappings.ts`
-- `supabase/functions/_shared/commodity-service.ts`
-- `supabase/functions/_shared/massive-client.ts`
-- `supabase/functions/fetch-commodity-prices/index.ts`
-- `supabase/functions/fetch-commodity-data/index.ts`
-- `.lovable/memory/index.md` + the two memory files above
+## Frontend changes
+
+### `src/pages/RollScanner.tsx` and `src/pages/VolatilityCone.tsx`
+- Read `payload.stale` and `payload.asOf` from the response.
+- When `stale === true`, show a small amber banner above the table/chart: "Showing last settled session ({asOf}). Live data unavailable right now."
+- No behavioural change when data is fresh.
 
 ## Out of scope
-- Forward curve (already on Massive).
-- `_shared/fmp-client.ts` kept (still used for the 11 ICE/LME items).
-- Legal page / marketing copy.
-
-Approve and I'll execute.
+- No scheduled background refresh job — snapshots only update when a Pro user opens the tool. That's enough to keep data within 6h of the most recent visit for any active product.
+- No per-user history; we only store the most recent payload per key.
