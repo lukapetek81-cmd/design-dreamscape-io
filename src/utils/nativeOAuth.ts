@@ -1,6 +1,17 @@
 export const NATIVE_AUTH_CALLBACK_URL = 'commodityhub://auth-callback';
 export const NATIVE_OAUTH_REDIRECT_URL = NATIVE_AUTH_CALLBACK_URL;
 
+/**
+ * Hosted web URL Supabase should redirect to after Google OAuth on native.
+ * The page at this URL detects `native=1` and bridges the `?code=...` payload
+ * back into the installed app via an Android intent (see
+ * `redirectNativeOAuthCallbackFromWeb`). This is far more reliable than asking
+ * Chrome Custom Tabs to follow a `commodityhub://` redirect directly, which
+ * many Android/Chrome versions silently drop.
+ */
+export const NATIVE_OAUTH_WEB_BRIDGE_URL =
+  'https://commodity-hub.lovable.app/?native=1';
+
 const ANDROID_PACKAGE_NAME = 'com.commodityhub.app';
 
 const OAUTH_SEARCH_KEYS = ['code', 'error', 'error_description', 'error_code'];
