@@ -92,8 +92,8 @@ export const sanitizeForDatabase = (input: string): string => {
 export const fileUploadSchema = z.object({
   name: z.string().max(255, 'Filename too long'),
   size: z.number().max(10 * 1024 * 1024, 'File too large (max 10MB)'),
-  type: z.enum(['image/jpeg', 'image/png', 'image/webp'], {
-    errorMap: () => ({ message: 'Invalid file type. Only JPEG, PNG, WebP allowed' })
+  type: z.enum(['image/jpeg', 'image/png', 'image/webp'] as const, {
+    message: 'Invalid file type. Only JPEG, PNG, WebP allowed',
   })
 });
 
