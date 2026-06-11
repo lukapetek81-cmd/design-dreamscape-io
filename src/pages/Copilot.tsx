@@ -236,12 +236,7 @@ function ChatWindow({ threadId, onRefreshThreads }: { threadId: string; onRefres
       </Conversation>
 
       <div className="border-t p-3">
-        <PromptInput
-          onSubmit={(e) => {
-            e.preventDefault();
-            submit(input);
-          }}
-        >
+        <PromptInput onSubmit={() => submit(input)}>
           <PromptInputTextarea
             ref={textareaRef}
             value={input}

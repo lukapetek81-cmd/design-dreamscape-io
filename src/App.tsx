@@ -41,6 +41,7 @@ const COTReports = lazy(() => import('@/pages/COTReports'));
 const RollScanner = lazy(() => import('@/pages/RollScanner'));
 const VolatilityCone = lazy(() => import('@/pages/VolatilityCone'));
 const TermStructure = lazy(() => import('@/pages/TermStructure'));
+const Copilot = lazy(() => import('@/pages/Copilot'));
 
 const RouteFallback = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -110,6 +111,8 @@ const App = () => {
                 <Route path="/roll-scanner" element={<RollScanner />} />
                 <Route path="/volatility-cone" element={<VolatilityCone />} />
                 <Route path="/term-structure" element={<TermStructure />} />
+                <Route path="/copilot" element={<Copilot />} />
+                <Route path="/copilot/:threadId" element={<Copilot />} />
                 <Route path="/admin/catalog-audit" element={<CatalogAudit />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
