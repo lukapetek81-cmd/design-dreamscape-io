@@ -187,7 +187,7 @@ Deno.serve(async (req) => {
     const result = streamText({
       model,
       system: SYSTEM_PROMPT,
-      messages: convertToModelMessages(messages as UIMessage[]),
+      messages: await convertToModelMessages(messages as UIMessage[]),
       tools,
       stopWhen: stepCountIs(50),
     });
