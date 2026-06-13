@@ -7,6 +7,7 @@ import { AlertCircle, TrendingUp, TrendingDown, RefreshCw, Building2, Zap } from
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { formatPrice } from '@/lib/commodityUtils';
 
 interface ExchangeFeed {
   commodity: string;
