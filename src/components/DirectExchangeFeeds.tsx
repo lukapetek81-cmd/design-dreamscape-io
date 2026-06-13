@@ -71,9 +71,9 @@ export const DirectExchangeFeeds: React.FC = () => {
     }
   };
 
-  const formatPrice = (price: number | null): string => {
+  const formatFeedPrice = (price: number | null, commodity: string): string => {
     if (price === null) return 'N/A';
-    return `$${price.toFixed(2)}`;
+    return formatPrice(price, commodity);
   };
 
   const formatChange = (change: number | null, percent: number | null): JSX.Element => {
@@ -225,7 +225,7 @@ export const DirectExchangeFeeds: React.FC = () => {
                           </Badge>
                         ) : (
                           <div>
-                            <div className="font-medium">{formatPrice(feed.price)}</div>
+                            <div className="font-medium">{formatFeedPrice(feed.price, feed.commodity)}</div>
                             {feed.lastUpdate && (
                               <div className="text-xs text-muted-foreground">
                                 {new Date(feed.lastUpdate).toLocaleTimeString()}
