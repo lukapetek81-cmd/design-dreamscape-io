@@ -34,13 +34,64 @@ export const isCentPriced = (commodityName: string): boolean => {
 };
 
 /**
- * Format price with appropriate currency symbol and decimal places
+ * Per-commodity display unit suffix (e.g. "/lb", "/oz", "/bbl").
+ * Returns empty string when no unit is known.
  */
-export const formatPrice = (price: number, commodityName: string, decimals: number = 2): string => {
-  if (isCentPriced(commodityName)) {
-    return `${price.toFixed(decimals)}¢`;
+export const getPriceUnit = (commodityName: string): string => {
+  if (!commodityName) return '';
+  const n = commodityName.toLowerCase();
+
+  // Precious & platinum-group metals → troy ounce
+  if (/(gold|silver|platinum|palladium|rhodium)/.test(n)) return '/oz';
+
+  // Energy
+  if (/(wti|brent|crude)/.test(n)) return '/bbl';
+  if (/natural gas/.test(n)) return '/MMBtu';
+  if (/(gasoline|rbob|heating oil|gasoil|diesel)/.test(n)) return '/gal';
+
+  // Grains & oilseeds → bushel
+  if (/(corn|wheat|soybean futures|soybeans|oat|rough rice|rice futures)/.test(n)) {
+    // Soybean Oil & Meal handled below
+    if (!/soybean oil|soybean meal/.test(n)) return '/bu';
   }
-  return `$${price.toFixed(decimals)}`;
+  if (/soybean oil/.test(n)) return '/lb';
+  if (/soybean meal/.test(n)) return '/ton';
+
+  // Softs
+  if (/cocoa/.test(n)) return '/mt';
+  if (/(coffee|sugar|cotton|orange juice)/.test(n)) return '/lb';
+
+  // Industrial metals
+  if (/copper/.test(n)) return '/lb';
+
+  // Livestock
+  if (/(cattle|hogs|lean hog|feeder)/.test(n)) return '/lb';
+
+  // Lumber
+  if (/lumber/.test(n)) return '/bd ft';
+
+  // Dairy / eggs
+  if (/eggs/.test(n)) return '/doz';
+  if (/milk/.test(n)) return '/cwt';
+  if (/(cheese|butter)/.test(n)) return '/lb';
+
+  return '';
+};
+
+/**
+ * Format price with appropriate currency symbol, decimals, and unit suffix.
+ * Pass `withUnit=false` for dense numeric layouts (chart axes, CSV exports).
+ */
+export const formatPrice = (
+  price: number,
+  commodityName: string,
+  decimals: number = 2,
+  withUnit: boolean = true,
+): string => {
+  const base = isCentPriced(commodityName)
+    ? `${price.toFixed(decimals)}¢`
+    : `$${price.toFixed(decimals)}`;
+  return withUnit ? `${base}${getPriceUnit(commodityName)}` : base;
 };
 
 /**
