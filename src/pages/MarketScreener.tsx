@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAvailableCommodities } from '@/hooks/useCommodityData';
 import { useAuth } from '@/contexts/AuthContext';
 import { MobilePageHeader } from '@/components/mobile/MobilePageHeader';
+import { formatPrice } from '@/lib/commodityUtils';
 
 interface ScreenerFilters {
   category: string;
@@ -428,7 +429,7 @@ const MarketScreener = () => {
                             </div>
                           </td>
                            <td className="p-3 text-right font-bold">
-                             {commodity.price > 0 ? `$${commodity.price.toFixed(2)}` : '/'}
+                             {commodity.price > 0 ? formatPrice(commodity.price, commodity.name) : '/'}
                            </td>
                            <td className="p-3 text-right">
                              {commodity.changePercent !== 0 ? (
@@ -451,10 +452,10 @@ const MarketScreener = () => {
                              {commodity.volumeDisplay || '/'}
                            </td>
                            <td className="p-3 text-right">
-                             {commodity.weekHigh ? `$${commodity.weekHigh.toFixed(2)}` : '/'}
+                             {commodity.weekHigh ? formatPrice(commodity.weekHigh, commodity.name) : '/'}
                            </td>
                            <td className="p-3 text-right">
-                             {commodity.weekLow ? `$${commodity.weekLow.toFixed(2)}` : '/'}
+                             {commodity.weekLow ? formatPrice(commodity.weekLow, commodity.name) : '/'}
                            </td>
                            <td className="p-3 text-right">
                              {commodity.volatility ? `${commodity.volatility}%` : '/'}

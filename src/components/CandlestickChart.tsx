@@ -194,7 +194,7 @@ const CandlestickChart = ({ data, formatXAxisTick, formatTooltipLabel, commodity
                     textAnchor="end"
                     className="text-2xs fill-muted-foreground"
                   >
-                    {formatPrice(price, commodityName)}
+                    {formatPrice(price, commodityName, 2, false)}
                   </text>
                 </g>
               );
