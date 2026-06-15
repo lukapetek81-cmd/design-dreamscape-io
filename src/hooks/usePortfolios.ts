@@ -81,3 +81,72 @@ export const useDeletePortfolio = () => {
     },
   });
 };
+
+export const useRenamePortfolio = () => {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { error } = await supabase
+        .from('portfolios')
+        .update({ name })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['portfolios'] });
+      toast({ title: 'Portfolio renamed' });
+    },
+    onError: (err: Error) =>
+      toast({ title: 'Rename failed', description: err.message, variant: 'destructive' }),
+  });
+};
+
+export const useSetDefaultPortfolio = () => {
+  const qc = useQueryClient();
+  const auth = useAuth();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (!auth?.user) throw new Error('Not authenticated');
+      // Clear existing default(s) for this user, then set the new one.
+      const { error: clearErr } = await supabase
+        .from('portfolios')
+        .update({ is_default: false })
+        .eq('user_id', auth.user.id)
+        .eq('is_default', true);
+      if (clearErr) throw clearErr;
+      const { error } = await supabase
+        .from('portfolios')
+        .update({ is_default: true })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['portfolios'] });
+      toast({ title: 'Default portfolio updated' });
+    },
+    onError: (err: Error) =>
+      toast({ title: 'Could not set default', description: err.message, variant: 'destructive' }),
+  });
+};
+
+export const useMovePosition = () => {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async ({ positionId, toPortfolioId }: { positionId: string; toPortfolioId: string }) => {
+      const { error } = await supabase
+        .from('portfolio_positions')
+        .update({ portfolio_id: toPortfolioId })
+        .eq('id', positionId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['portfolio-positions'] });
+      toast({ title: 'Position moved' });
+    },
+    onError: (err: Error) =>
+      toast({ title: 'Move failed', description: err.message, variant: 'destructive' }),
+  });
+};
