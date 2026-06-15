@@ -5,12 +5,15 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
-import { Filter, Search, TrendingUp, TrendingDown, BarChart3, RefreshCw, ArrowUp, ArrowDown } from 'lucide-react';
+import { Filter, Search, TrendingUp, TrendingDown, BarChart3, RefreshCw, ArrowUp, ArrowDown, Download, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAvailableCommodities } from '@/hooks/useCommodityData';
 import { useAuth } from '@/contexts/AuthContext';
 import { MobilePageHeader } from '@/components/mobile/MobilePageHeader';
 import { formatPrice } from '@/lib/commodityUtils';
+import { limitsFor } from '@/utils/tiers';
+import { downloadCsv } from '@/utils/csvExport';
+import PremiumPaywall from '@/components/PremiumPaywall';
 
 interface ScreenerFilters {
   category: string;
@@ -27,6 +30,10 @@ const MarketScreener = () => {
   // Lightweight mode = no polling, no refetch on mount; reuses Dashboard's cache.
   const { data: commodities, isLoading, error } = useAvailableCommodities({ lightweight: true });
   const { profile } = useAuth();
+  const auth = useAuth();
+  const tier = auth?.tier ?? 'free';
+  const limits = limitsFor(tier);
+  const [paywallOpen, setPaywallOpen] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<ScreenerFilters>({
@@ -197,6 +204,18 @@ const MarketScreener = () => {
 
   const categories = ['all', ...Array.from(new Set((commodities || []).map(c => c.category)))];
 
+  const handleExportCsv = () => {
+    if (!limits.csvExport) { setPaywallOpen(true); return; }
+    downloadCsv(
+      'market-screener.csv',
+      ['Name', 'Symbol', 'Category', 'Price', 'Change %', 'Volume', '52W High', '52W Low', 'Volatility %'],
+      filteredCommodities.map((c) => [
+        c.name, c.symbol, c.category, c.price, c.changePercent.toFixed(2),
+        c.volumeDisplay ?? c.volume ?? '', c.weekHigh ?? '', c.weekLow ?? '', c.volatility ?? '',
+      ]),
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile-optimized header */}
@@ -204,8 +223,20 @@ const MarketScreener = () => {
         title="Market Screener"
         subtitle="Filter and analyze commodities by performance, volume, and other key metrics"
       >
-        <div className="text-xs text-muted-foreground hidden sm:block">
-          Last updated: {new Date().toLocaleTimeString()}
+        <div className="flex items-center gap-3">
+          <div className="text-xs text-muted-foreground hidden sm:block">
+            Last updated: {new Date().toLocaleTimeString()}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCsv}
+            disabled={filteredCommodities.length === 0}
+            title={limits.csvExport ? 'Export CSV' : 'Upgrade to export CSV'}
+          >
+            {limits.csvExport ? <Download className="w-4 h-4 mr-2" /> : <Lock className="w-4 h-4 mr-2" />}
+            <span className="hidden sm:inline">Export CSV</span>
+          </Button>
         </div>
       </MobilePageHeader>
       
@@ -486,6 +517,7 @@ const MarketScreener = () => {
       </div>
 
         </div>
+        <PremiumPaywall open={paywallOpen} onOpenChange={setPaywallOpen} />
     </div>
   );
 };
