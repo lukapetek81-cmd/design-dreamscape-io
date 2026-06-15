@@ -1,61 +1,95 @@
-## Goal
-Display every commodity price with its **correct unit suffix** so users immediately see what the number means (e.g. `$6.63/lb` for Copper, `$1,749.40/oz` for Platinum, `$84.88/bbl` for WTI, `454.75¢/bu` for Corn). Copper stays in **$/lb** (current quoting).
+## Premium v2 Sprint
 
-## What changes
+Audit shows ~60% of this work is already done. Plan focuses on the missing glue.
 
-### 1. New unit map in `src/lib/commodityUtils.ts`
-Add a `getPriceUnit(commodityName: string): string` returning the suffix string:
+### Current state
+- ✅ `evaluate-price-alerts` edge function exists (cron-ready, auth-gated)
+- ✅ `usePortfolios` / `useCreatePortfolio` / multi-portfolio UI exists in `Portfolio.tsx`
+- ✅ `downloadCsv` util + portfolio CSV export wired and tier-gated
+- ❌ No push notification delivery (no FCM, no device-token storage, no Capacitor plugin)
+- ❌ `evaluate-price-alerts` not scheduled by pg_cron
+- ❌ CSV export not exposed on Watchlists or Alert history
+- ⚠️ Multi-portfolio UI missing rename + move-position-between-portfolios
 
-| Group | Examples | Suffix |
-|---|---|---|
-| Precious / Platinum-group metals | Gold, Silver, Platinum, Palladium | `/oz` (troy oz) |
-| Industrial metals | Copper | `/lb` |
-| Crude oils | WTI, Brent | `/bbl` |
-| Natural Gas | Natural Gas | `/MMBtu` |
-| Refined products | Gasoline RBOB, Heating Oil | `/gal` |
-| Grains | Corn, Wheat, Soybean, Oat, Rough Rice | `/bu` |
-| Soy products | Soybean Oil | `/lb`, Soybean Meal | `/ton` |
-| Softs (cent-priced) | Coffee, Sugar, Cotton, Orange Juice | `/lb` |
-| Cocoa | Cocoa | `/mt` |
-| Livestock | Live/Feeder Cattle, Lean Hogs | `/lb` |
-| Lumber | Lumber Futures | `/bd ft` |
-| Dairy/Eggs | Eggs | `/doz`, Cheese/Butter | `/lb`, Milk | `/cwt` |
-| Unknown | fallback | `` (empty) |
+---
 
-### 2. Update `formatPrice(price, commodityName, decimals?)`
-Append `getPriceUnit(commodityName)` to the returned string. Existing cent vs. dollar logic is preserved — Copper continues to render as `$6.63`, just becomes `$6.63/lb`; Corn becomes `454.75¢/bu`.
+### 1. Push alerts (biggest piece)
 
-Add an optional `withUnit = true` flag so callers that need a bare number (chart axis labels, CSV exports) can opt out.
+**Native side**
+- Add `@capacitor/push-notifications` dependency
+- New hook `src/hooks/usePushNotifications.ts` — on app boot (logged-in users only): request permission, register, upsert token to `device_tokens` table; listen for `pushNotificationReceived` → in-app toast; `pushNotificationActionPerformed` → navigate to `/price-alerts`
+- Wire into `App.tsx` after auth ready
+- Web fallback: use browser `Notification` API + in-app `AlertNotificationBell` (already exists) — no FCM on web
 
-### 3. Audit call sites
-Files using `formatPrice` already (keep suffix on — that's the point):
-- `src/components/CommodityCard.tsx`
-- `src/components/CandlestickChart.tsx` (header + OHLC tooltip)
-- `src/components/DirectExchangeFeeds.tsx`
+**Database** (migration)
+- New table `public.device_tokens` (id, user_id, token unique, platform `ios|android|web`, created_at, last_seen_at). Standard RLS: user can CRUD own; service_role full. GRANTs included.
+- Schedule pg_cron via insert tool (not migration — contains anon key):
+  - `evaluate-price-alerts` every 5 min, Mon–Fri 13:00–21:00 UTC (commodities-hours window) using `ALERT_EVALUATOR_SECRET`
 
-Opt out (`withUnit: false`) where the unit would clutter dense numeric layouts:
-- Chart **Y-axis tick labels** in `CandlestickChart.tsx` and any line chart formatter — show numbers only, since the chart title already names the commodity.
+**Edge function**
+- Add new `send-push` edge function: takes `{ user_id, title, body, data }`, looks up tokens, calls FCM HTTP v1 API (needs `FCM_SERVICE_ACCOUNT_JSON` secret — will prompt user)
+- Modify `evaluate-price-alerts`: after inserting trigger row, invoke `send-push` with alert details
 
-Places that format prices manually (bypassing `formatPrice`) need the same treatment — quick sweep:
-- `src/components/CommoditySidebar.tsx`
-- `src/components/VirtualizedCommodityList.tsx`
-- `src/pages/MarketScreener.tsx`
-- `src/pages/Portfolio.tsx`, `src/components/PositionCard.tsx`
-- `src/pages/ForwardCurves.tsx`, `TermStructure.tsx`, `RollScanner.tsx`, `VolatilityCone.tsx`, `SpreadCalculator.tsx`, `PositionCalculator.tsx`
-- `src/components/charts/ChartHeader.tsx`
+**Settings UI**
+- Toggle "Push notifications" in `Settings.tsx` (gated by Premium); revoke removes token row
 
-For these, replace manual `` `$${price.toFixed(2)}` `` patterns with `formatPrice(price, name)`.
+---
 
-### 4. No backend changes
-All edge-function unit conversion in `supabase/functions/_shared/commodity-units.ts` is already correct (Copper → `usd_per_lb`, Platinum → `usd_per_troy_oz`). This is purely a presentation-layer change.
+### 2. CSV export expansion
 
-### 5. QA
-- Dashboard cards: confirm Gold `/oz`, Copper `/lb`, WTI `/bbl`, Natural Gas `/MMBtu`, Corn `¢/bu`.
-- Chart header shows `$1,749.40/oz`; chart Y-axis ticks stay bare numbers.
-- Market Screener table rows render suffix without breaking column width.
-- Copilot responses that quote prices via the same helper inherit the suffix automatically.
+- Add export button to `Watchlists` page → uses existing `downloadCsv`, same Premium gate
+- Add export button to `PriceAlerts` page → exports active alerts + 90-day trigger history
+- Add server-side `audit_logs.log_csv_export()` call for Play Store data-export compliance
+- Reuse existing `PremiumPaywall` modal pattern from Portfolio
 
-## Out of scope
-- Changing Copper to cents/lb (user chose to keep $/lb).
-- Localized unit conversion (no kg/mt toggle for industrial metals).
-- Backend unit-conversion edits.
+---
+
+### 3. Multi-portfolio polish
+
+- Add **Rename portfolio** dialog in `Portfolio.tsx` header (next to delete)
+- Add **Move position** action in `PositionCard` — dropdown listing other portfolios; updates `portfolio_id` (RLS already validates ownership via `ensure_default_portfolio` trigger)
+- Add aggregate "All portfolios" virtual view option in selector for Premium+ — shows combined P&L across all portfolios (read-only, no add/edit)
+- Hook: extend `usePortfolios` with `useRenamePortfolio` + `useMovePosition` mutations
+
+---
+
+### Technical details
+
+**Files to add**
+- `src/hooks/usePushNotifications.ts`
+- `src/components/RenamePortfolioDialog.tsx`
+- `src/components/MovePositionMenu.tsx`
+- `supabase/functions/send-push/index.ts`
+- `supabase/migrations/<ts>_device_tokens.sql`
+
+**Files to edit**
+- `src/App.tsx` (mount push hook)
+- `src/pages/Portfolio.tsx` (rename + all-portfolios view)
+- `src/components/PositionCard.tsx` (move menu)
+- `src/pages/Watchlists.tsx` (CSV button)
+- `src/pages/PriceAlerts.tsx` (CSV button)
+- `src/pages/Settings.tsx` (push toggle)
+- `supabase/functions/evaluate-price-alerts/index.ts` (invoke send-push)
+- `package.json` (+ `@capacitor/push-notifications`)
+
+**Secrets to add** (will prompt before coding edge function)
+- `FCM_SERVICE_ACCOUNT_JSON` — Firebase service account JSON for FCM HTTP v1
+- `ALERT_EVALUATOR_SECRET` — random string for cron auth
+
+**Out of scope**
+- iOS APNs setup (Android-only push for v2; iOS deferred)
+- Smart-alert types (volatility/spread/news) — already exist, no new work
+- Stripe web checkout — RevenueCat IAP remains the only paid path
+- Price drop from $19.99 (separate decision)
+
+---
+
+### Suggested commit order
+1. Migration + cron schedule (DB ready)
+2. `send-push` edge function + secret prompt
+3. `evaluate-price-alerts` integration
+4. Capacitor plugin + `usePushNotifications` + Settings toggle
+5. Multi-portfolio rename/move/all-view
+6. CSV export buttons on Watchlists + PriceAlerts
+
+Ready to switch to build mode and start with step 1?
