@@ -10,6 +10,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders, EdgeLogger } from "../_shared/utils.ts";
 import { CommodityService } from "../_shared/commodity-service.ts";
+import { sendFcmToTokens } from "../_shared/fcm.ts";
 
 interface AlertRow {
   id: string;
@@ -75,6 +76,7 @@ serve(async (req) => {
 
     const now = Date.now();
     let fired = 0;
+    let pushed = 0;
 
     for (const alert of alerts) {
       // Cooldown check
@@ -111,11 +113,42 @@ serve(async (req) => {
         .update({ last_triggered_at: triggeredAt })
         .eq("id", alert.id);
       fired++;
+
+      // Push notification to all this user's device tokens.
+      try {
+        const { data: tokens } = await supabase
+          .from("device_tokens")
+          .select("token")
+          .eq("user_id", alert.user_id);
+        const tokenList = (tokens ?? []).map((t: { token: string }) => t.token);
+        if (tokenList.length > 0) {
+          const direction = alert.condition === "above" ? "rose above" : "fell below";
+          const result = await sendFcmToTokens(tokenList, {
+            title: `${alert.commodity_name} alert`,
+            body: `Price ${direction} $${alert.target_price} (now $${price.toFixed(2)})`,
+            data: {
+              alert_id: alert.id,
+              commodity: alert.commodity_name,
+              price: String(price),
+              target: String(alert.target_price),
+            },
+          });
+          pushed += result.sent;
+          if (result.invalidTokens.length > 0) {
+            await supabase
+              .from("device_tokens")
+              .delete()
+              .in("token", result.invalidTokens);
+          }
+        }
+      } catch (pushErr) {
+        logger.error("Push send failed", pushErr, { alert_id: alert.id });
+      }
     }
 
-    logger.info(`Evaluated ${alerts.length} alerts, fired ${fired}`);
+    logger.info(`Evaluated ${alerts.length} alerts, fired ${fired}, pushed ${pushed}`);
     return new Response(
-      JSON.stringify({ ok: true, checked: alerts.length, fired }),
+      JSON.stringify({ ok: true, checked: alerts.length, fired, pushed }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
