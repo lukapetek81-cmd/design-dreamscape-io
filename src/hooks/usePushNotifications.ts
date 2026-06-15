@@ -59,7 +59,14 @@ export const usePushNotifications = () => {
           () => errorHandle.remove(),
         ];
 
-        await PushNotifications.register();
+        // Wrap register() in its own try/catch so a missing/invalid
+        // google-services.json (Firebase init failure) only logs a warning
+        // instead of bubbling and breaking the auth bridge.
+        try {
+          await PushNotifications.register();
+        } catch (regErr) {
+          console.warn('PushNotifications.register() failed', regErr);
+        }
       } catch (err) {
         console.warn('Push notifications unavailable', err);
       }
