@@ -1,34 +1,62 @@
-## Problem
+## Goal
 
-On Android (installed Capacitor build), pressing the on-screen keyboard's Backspace inside the email/password fields on `/auth` does not delete characters.
+Stop the Android startup crash by completing the Firebase configuration that `@capacitor/push-notifications` requires, and harden the JS side so a missing/broken Firebase config never crashes the app again.
 
-## Root cause
+## Root cause (recap)
 
-The Auth page uses **fully controlled React inputs** (`value={formData.email}` + `onChange` that calls `setFormData`). On Android WebView, Gboard sends each keystroke as an IME composition event (keyCode 229). When React re-renders the input on every keystroke, it interrupts the in-flight composition. Backspace is delivered as part of that composition stream, so the WebView ends up replacing the composed text with the same string instead of deleting a character. The on-screen Backspace therefore appears to do nothing. The desktop browser and the Lovable preview don't reproduce this because they don't go through Gboard composition.
+`@capacitor/push-notifications` merges a `FirebaseMessagingService` and `FirebaseInitProvider` into `AndroidManifest.xml`. The `FirebaseInitProvider` runs before any JS, calls `FirebaseApp.initializeApp()`, and reads `google-services.json`. The file is missing, so the process crashes immediately on launch. Your `app/build.gradle` already conditionally applies `com.google.gms.google-services`, so adding the file is the only missing piece at the Gradle level — but auto-init in the manifest is what's actually killing the app.
 
-The Eye/EyeOff toggle and the `type="password"` field are not the cause — the same bug reproduces in the email field too.
+## You provide (one-time, outside the codebase)
 
-## Fix
+1. Create a Firebase project at https://console.firebase.google.com (free Spark plan is fine).
+2. Add an Android app with package name **`app.lovable.c8fabd7a96c74aff8d7b001690ec23c7`** (must match `capacitor.config.ts` exactly — case-sensitive).
+3. Download the generated **`google-services.json`** and place it at **`android/app/google-services.json`** in your local clone after `git pull`. Do not commit secrets you care about — this file contains only public client IDs and is the standard FCM workflow, but treat per your policy.
+4. In Firebase Console → Project Settings → Cloud Messaging, note the **Server key / FCM HTTP v1 service account JSON**. We already have the `FCM_SERVICE_ACCOUNT_JSON` Supabase secret configured, so the server side is ready — just confirm it belongs to the same Firebase project you just created. If it doesn't, re-upload the new project's service account JSON to that secret.
 
-Convert the inputs on `src/pages/Auth.tsx` to **uncontrolled** with `ref` + `defaultValue`. The DOM owns the text, Gboard composition completes without React re-rendering between keystrokes, and Backspace deletes normally. Form values are read from refs inside the submit handlers (already where we use them).
+## I will change in the codebase
 
-### Changes in `src/pages/Auth.tsx`
+### `android/app/build.gradle`
+Add the Firebase BoM + messaging dependency so the runtime classpath actually contains the Firebase classes the plugin's manifest entries reference. Without these, even with `google-services.json` present, the app can crash on init:
 
-1. Replace the `formData` state object with `useRef` for each field:
-   - `emailRef`, `passwordRef`, `fullNameRef`, `confirmPasswordRef`.
-2. Remove `value=` and `onChange={handleInputChange}` on every `<Input>`; add `ref={emailRef}` etc. Keep `name`, `type`, `placeholder`, `required`, `autoComplete`, `autoCapitalize="off"`, `autoCorrect="off"`, `spellCheck={false}`, `inputMode`.
-3. Rewrite `handleSignIn`, `handleSignUp`, `handleResetPassword` to read values from refs (`emailRef.current?.value ?? ''`, trimmed for email).
-4. The "Passwords do not match" inline hint and the disabled-state on the submit buttons currently depend on `formData`. Replace with a single lightweight `useState<{ passwordMismatch: boolean; canSubmitSignIn: boolean; canSubmitSignUp: boolean }>` updated via `onInput` handlers that read from refs (NOT `onChange`, and they do not call `setState` on every character — only flip booleans when they actually change). This keeps validation UX without forcing a re-render that re-syncs `value` back to the DOM.
-5. The forgot-password modal reuses the email ref; no behavior change.
-6. The Eye/EyeOff show-password toggle keeps working: switching `type` between `password` and `text` does not reset an uncontrolled input's value (React preserves the DOM node).
-7. The Google sign-in button is unchanged.
+```gradle
+dependencies {
+    // ...existing
+    implementation platform('com.google.firebase:firebase-bom:33.5.1')
+    implementation 'com.google.firebase:firebase-messaging'
+}
+```
 
-### Out of scope
+### `android/app/src/main/AndroidManifest.xml`
+Add **`firebase_messaging_auto_init_enabled` = false** and **`firebase_analytics_collection_enabled` = false** meta-data inside `<application>`. This prevents the FirebaseInitProvider from hard-crashing if `google-services.json` is ever missing again, and defers FCM init until our JS code explicitly calls `PushNotifications.register()` after the user is signed in.
 
-- No changes to `AuthContext`, routing, Capacitor config, or other pages.
-- No CSS changes — `.mobile-input` styling is preserved.
-- ResetPassword page (`/reset-password`) is a separate flow and not reported broken; leave it alone unless the user asks.
+```xml
+<meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false" />
+<meta-data android:name="firebase_analytics_collection_enabled" android:value="false" />
+```
 
-## Verification
+(`@capacitor/push-notifications` enables messaging automatically when `register()` is called — these flags only stop the *manifest-driven* auto-init that runs before JS.)
 
-After deploy: `git pull && npm install && npx cap sync android && npx cap run android`, open the Sign In tab, type an email, press Backspace — characters delete one at a time. Repeat in the password field and the Sign Up tab.
+### `src/hooks/usePushNotifications.ts`
+Already defensive (try/catch around dynamic import + register). Add one safety net: wrap `register()` itself in its own try/catch so a Firebase init failure on the user's device logs a warning instead of bubbling. No functional change in the happy path.
+
+### `.gitignore`
+Add `android/app/google-services.json` so each developer/CI environment supplies its own file via a build step (Lovable preview doesn't need it). Update `mem://launch/android-signing` with the new "drop google-services.json into android/app/ before `npx cap sync android`" step.
+
+## Verification flow (you run locally)
+
+```
+git pull
+npm install --legacy-peer-deps         # @capacitor/push-notifications@^8 vs @capacitor/core@^7 peer warning
+# drop google-services.json into android/app/
+npm run build
+npx cap sync android
+npx cap run android
+```
+
+Expected: app launches normally; after sign-in, Android shows the notifications permission prompt; if granted, an FCM token registers via the `register-device-token` edge function. If anything still crashes, capture `adb logcat | grep -E "FirebaseApp|AndroidRuntime"` and paste the first 30 lines — the line that contains "Default FirebaseApp is not initialized" or "google-app-id" tells us exactly what's missing.
+
+## Out of scope
+
+- Notification icon/colors customization, channel setup, deep-link payload handling — separate task once basic delivery works.
+- iOS APNs setup — not requested.
+- Re-pinning `@capacitor/push-notifications` down to v7 (we keep v8 and accept the peer warning with `--legacy-peer-deps`, since v8 contains the Android 14 foreground-service fixes you want).
