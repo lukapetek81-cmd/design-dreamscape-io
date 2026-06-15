@@ -2,9 +2,18 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { MoreVertical, TrendingUp, TrendingDown, Calendar, Hash, Edit, Trash2 } from 'lucide-react';
+import { MoreVertical, TrendingUp, TrendingDown, Calendar, Hash, Edit, Trash2, FolderInput } from 'lucide-react';
 import { PositionWithCurrentPrice } from '@/hooks/usePortfolio';
 import { useCurrency } from '@/hooks/useCurrency';
 
@@ -12,9 +21,11 @@ interface PositionCardProps {
   position: PositionWithCurrentPrice;
   onEdit?: (position: PositionWithCurrentPrice) => void;
   onDelete?: (id: string) => void;
+  portfolios?: Array<{ id: string; name: string }>;
+  onMove?: (positionId: string, toPortfolioId: string) => void;
 }
 
-const PositionCard: React.FC<PositionCardProps> = ({ position, onEdit, onDelete }) => {
+const PositionCard: React.FC<PositionCardProps> = ({ position, onEdit, onDelete, portfolios = [], onMove }) => {
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
   const { formatConvertedPrice } = useCurrency();
 
@@ -66,6 +77,24 @@ const PositionCard: React.FC<PositionCardProps> = ({ position, onEdit, onDelete 
                   <Edit className="w-4 h-4 mr-2" />
                   Edit Position
                 </DropdownMenuItem>
+                {onMove && portfolios.filter((p) => p.id !== position.portfolio_id).length > 0 && (
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      <FolderInput className="w-4 h-4 mr-2" />
+                      Move to…
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent>
+                      {portfolios
+                        .filter((p) => p.id !== position.portfolio_id)
+                        .map((p) => (
+                          <DropdownMenuItem key={p.id} onClick={() => onMove(position.id, p.id)}>
+                            {p.name}
+                          </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                )}
+                <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   onClick={() => setShowDeleteDialog(true)}
                   className="text-red-600 dark:text-red-400"
