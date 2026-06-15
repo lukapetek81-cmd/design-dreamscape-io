@@ -7,6 +7,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { RealtimeDataProvider } from '@/contexts/RealtimeDataContext';
 import { createOptimizedQueryClient } from '@/lib/queryClient';
 import { useCapacitorAuthDeepLink } from '@/hooks/useCapacitorAuthDeepLink';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import SEOHead from '@/components/SEOHead';
 import Dashboard from '@/pages/Dashboard';
 import Auth from '@/pages/Auth';
@@ -51,6 +52,7 @@ const RouteFallback = () => (
 
 const NativeAuthBridge = () => {
   useCapacitorAuthDeepLink();
+  usePushNotifications();
   return null;
 };
 
