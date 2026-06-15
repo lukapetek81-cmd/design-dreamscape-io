@@ -1,34 +1,71 @@
-## Premium v2 sprint — Phase 2 (non-push)
+## Problem
 
-The push-alerts plumbing (device_tokens table, secrets) is waiting on you to grab `FCM_SERVICE_ACCOUNT_JSON` + `ALERT_EVALUATOR_SECRET`. While you do that, ship the other two paywalled features.
+`massive-vol-cone` blocks every request on a 5-year Massive Futures fetch + rolling-vol math. When Massive is slow or thin on history, requests hang or return `insufficient_history`. Some products (copper, silver, lumber) have no snapshot yet, so the fallback can't save them.
 
-### 1. Multi-portfolio polish
-`Portfolio.tsx` + `usePortfolios.ts` already cover create / select / delete. Adding the missing UX:
+Recent failures in the console: `copper`, `silver`, `lumber` all returning non-2xx.
 
-- **Rename portfolio** — inline edit (pencil icon next to selector) → `useRenamePortfolio` mutation (`UPDATE portfolios SET name`).
-- **Set as default** — "Make default" button on non-default portfolios → mutation that flips `is_default` (clear old default in same call).
-- **Move position between portfolios** — add "Move to…" item on `PositionCard` action menu → updates `portfolio_id`. Reuses existing `ensure_default_portfolio` validation trigger.
-- **Empty-portfolio guard** — confirm dialog before deleting a portfolio with positions ("Delete N positions too?").
-- **Tier badge** — show "Premium: 3 / Pro: ∞" next to the lock icon when at limit so users know what upgrade unlocks.
+## Goal
 
-No schema changes needed.
+Make Vol Cones feel instant for every supported product, even when Massive is slow or returns thin history. Background-refresh the data on a schedule so users never wait on the upstream API.
 
-### 2. CSV export expansion
-`downloadCsv` already exists and is wired into Portfolio. Extending the same gated helper to:
+## Plan
 
-- **Watchlists** (`Watchlists.tsx`) — export current watchlist's items with latest price, day change %, day range.
-- **Price Alerts** (`PriceAlerts.tsx`) — export all alerts: commodity, type, condition, target, status, last triggered.
-- **COT Reports** (`COTReports.tsx`) — export the visible table (commodity, date, long/short/net positions, week-over-week change).
-- **Market Screener** (`MarketScreener.tsx`) — export current filtered result set.
+### 1. Snapshot-first edge function (`massive-vol-cone`)
 
-Each button uses the same pattern as Portfolio: `Download` icon when `limits.csvExport`, `Lock` icon otherwise → opens `PremiumPaywall`. No backend changes; data already lives in the page's React state.
+Rewrite the request path so it never blocks on Massive when a snapshot exists:
 
-### Out of scope this phase
-- Push delivery (FCM send + cron evaluator) — resumes once both secrets are in.
-- Position editing dialog (the "coming soon" placeholder stays for now).
+```text
+request → auth + tier check
+       → read analytics_snapshots row for this commodity
+            ├─ fresh (< 6h)  → return payload, stale=false
+            ├─ stale (>= 6h) → return stale payload immediately,
+            │                  fire-and-forget recompute in background
+            └─ missing       → try live fetch once (current behavior),
+                               then persist snapshot
+```
 
-### Technical notes
-- New hook `useUpdatePortfolio({ id, name?, is_default? })` in `usePortfolios.ts`; when `is_default: true`, run two updates in a transaction-ish sequence (clear others, then set this one) — RLS already restricts to `user_id = auth.uid()`.
-- Move-position uses existing `usePortfolio` mutation surface; add `useMovePosition(positionId, toPortfolioId)`.
-- All CSV buttons accept `disabled` when the data array is empty, same as Portfolio.
-- Premium gating stays purely client-side (data is the user's own) — consistent with current `csvExport.ts` comment.
+Concretely:
+- Move the existing `fetchMassiveFrontMonthBars` + cone math into a `computeAndStore(commodity)` helper.
+- Default path: read snapshot, return it. If older than `CACHE_TTL_MS`, kick off `EdgeRuntime.waitUntil(computeAndStore(commodity))` so the response ships in <200 ms.
+- Only do a blocking compute when no snapshot row exists at all.
+
+### 2. Relaxed history threshold
+
+The current `bars.length < 130` cutoff fails the whole request for thinly-traded products (lumber). Change to:
+- Require ≥ 30 bars to return anything.
+- For each window in `[10, 20, 60, 120]`, only emit cone stats if `bars.length >= window + 21`; otherwise emit that row with `current: null` and `note: 'insufficient_history'`.
+- Headline `currentVol` / `percentile1y` falls back from 20-day → 10-day → null with a `headlineWindow` field so the UI knows what it's showing.
+
+### 3. Scheduled warmer
+
+New edge function `warm-vol-cones` (verify_jwt=false, gated by `X-Cron-Secret: ALERT_EVALUATOR_SECRET` — reusing the same secret to avoid adding another).
+
+- Iterates the 11 products sequentially with `await` (one at a time so we never hammer Massive).
+- Per-product try/catch; logs failures, continues.
+- Updates `analytics_snapshots` rows.
+- Scheduled via `pg_cron` every 4 hours (`0 */4 * * *`) using the same `net.http_post` pattern as the price-alert evaluator. SQL provided in chat for you to paste in the SQL editor (it embeds the cron secret).
+
+### 4. Manual seed for the three failing products
+
+After deploy, call `warm-vol-cones` once via curl so copper / silver / lumber get an initial snapshot. If Massive still returns nothing for a product, the snapshot row carries `error: 'no_history'` so the UI can show a clean "Data unavailable" instead of a spinner.
+
+### 5. Frontend polish (`src/pages/VolatilityCone.tsx`)
+
+Light touches only:
+- When `stale === true`, show a small badge "Refreshing… (last updated {asOf})" next to the title.
+- When a cone row has `note: 'insufficient_history'`, render an em-dash with a tooltip ("Not enough settled bars for this window yet — try a shorter window") instead of an empty cell.
+- No paywall/business-logic changes.
+
+## Out of scope
+
+- No new tables, no schema changes (reusing `analytics_snapshots`).
+- No changes to the Massive client itself.
+- No client-side polling — staleness is communicated via the badge, and the background recompute populates the next request.
+
+## Files
+
+- `supabase/functions/massive-vol-cone/index.ts` — refactor to snapshot-first + relaxed threshold.
+- `supabase/functions/warm-vol-cones/index.ts` — new.
+- `supabase/config.toml` — register `warm-vol-cones` with `verify_jwt = false`.
+- `src/pages/VolatilityCone.tsx` — stale badge + insufficient-window cell.
+- Cron SQL — provided in chat for you to run once.

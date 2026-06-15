@@ -61,6 +61,7 @@ export interface VolConeBucket {
   median: number | null;
   p75: number | null;
   max: number | null;
+  note?: 'insufficient_history';
 }
 
 export interface VolConeResponse {
@@ -70,8 +71,9 @@ export interface VolConeResponse {
   asOf: string;
   bars: number;
   cone: VolConeBucket[];
-  currentVol: number;
-  percentile1y: number;
+  currentVol: number | null;
+  percentile1y: number | null;
+  headlineWindow?: 10 | 20 | null;
   stale?: boolean;
 }
 
