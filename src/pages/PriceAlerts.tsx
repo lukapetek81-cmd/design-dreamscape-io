@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Bell, Plus, Trash2, Sparkles, Lock } from "lucide-react";
+import { ArrowLeft, Bell, Plus, Trash2, Sparkles, Lock, Download } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,7 @@ import {
 } from "@/hooks/usePriceAlerts";
 import PremiumPaywall from "@/components/PremiumPaywall";
 import { limitsFor, tierAtLeast, type Tier } from "@/utils/tiers";
+import { downloadCsv } from "@/utils/csvExport";
 
 type AlertType = "price" | "pct_move" | "volatility_band" | "spread" | "news_keyword";
 
@@ -220,6 +221,26 @@ const PriceAlertsPage: React.FC = () => {
     return "";
   };
 
+  const limits = limitsFor(tier);
+
+  const handleExportCsv = () => {
+    if (!limits.csvExport) { setPaywallOpen(true); return; }
+    downloadCsv(
+      'price-alerts.csv',
+      ['Commodity', 'Type', 'Summary', 'Active', 'Cooldown (min)', 'Note', 'Last Triggered', 'Created'],
+      alerts.map((a: any) => [
+        a.commodity_name,
+        a.alert_type ?? 'price',
+        renderSummary(a),
+        a.is_active ? 'yes' : 'no',
+        a.cooldown_minutes ?? '',
+        a.note ?? '',
+        a.last_triggered_at ?? '',
+        a.created_at ?? '',
+      ]),
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6 max-w-3xl">
@@ -241,10 +262,21 @@ const PriceAlertsPage: React.FC = () => {
               {activeCount}/{limit} active alerts {isPremium ? "(Premium)" : "(Free tier)"}
             </p>
           </div>
-          <Button onClick={handleCreateClick}>
-            <Plus className="w-4 h-4 mr-2" />
-            New alert
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={handleExportCsv}
+              disabled={alerts.length === 0}
+              title={limits.csvExport ? 'Export CSV' : 'Upgrade to export CSV'}
+            >
+              {limits.csvExport ? <Download className="w-4 h-4 mr-2" /> : <Lock className="w-4 h-4 mr-2" />}
+              CSV
+            </Button>
+            <Button onClick={handleCreateClick}>
+              <Plus className="w-4 h-4 mr-2" />
+              New alert
+            </Button>
+          </div>
         </div>
 
         {!isPremium && (
