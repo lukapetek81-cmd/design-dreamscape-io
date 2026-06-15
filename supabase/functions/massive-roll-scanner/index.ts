@@ -8,6 +8,8 @@ import { corsHeaders, EdgeLogger } from '../_shared/utils.ts';
 import { fetchMassiveCurve } from '../_shared/massive-client.ts';
 
 const PRODUCTS: { id: string; label: string; code: string; category: string }[] = [
+  { id: 'wti',      label: 'WTI Crude',    code: 'CL',  category: 'energy' },
+  { id: 'brent',    label: 'Brent Crude',  code: 'BZ',  category: 'energy' },
   { id: 'gold',     label: 'Gold',         code: 'GC',  category: 'metals' },
   { id: 'silver',   label: 'Silver',       code: 'SI',  category: 'metals' },
   { id: 'copper',   label: 'Copper',       code: 'HG',  category: 'metals' },
