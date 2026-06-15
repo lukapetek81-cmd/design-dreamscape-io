@@ -223,7 +223,16 @@ const Auth = () => {
                 <div className="text-right">
                   <button
                     type="button"
-                    onClick={() => setShowForgotPassword(true)}
+                    onClick={() => {
+                      const prefill =
+                        signinEmailRef.current?.value ||
+                        signupEmailRef.current?.value ||
+                        '';
+                      setValidity((v) =>
+                        v.canReset === !!prefill ? v : { ...v, canReset: !!prefill }
+                      );
+                      setShowForgotPassword(true);
+                    }}
                     className="text-sm text-primary hover:underline"
                   >
                     Forgot password?
