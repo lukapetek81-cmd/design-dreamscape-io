@@ -11,6 +11,8 @@ import { corsHeaders, EdgeLogger } from '../_shared/utils.ts';
 import { fetchMassiveFrontMonthBars } from '../_shared/massive-client.ts';
 
 const PRODUCTS: Record<string, { label: string; code: string }> = {
+  wti:      { label: 'WTI Crude',    code: 'CL' },
+  brent:    { label: 'Brent Crude',  code: 'BZ' },
   gold:     { label: 'Gold',         code: 'GC' },
   silver:   { label: 'Silver',       code: 'SI' },
   copper:   { label: 'Copper',       code: 'HG' },
