@@ -9,11 +9,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import {
   Loader, TrendingUp, TrendingDown, DollarSign, Briefcase, Plus,
-  Download, Lock, FolderPlus, Trash2,
+  Download, Lock, FolderPlus, Trash2, Pencil, Star,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePortfolio, PositionWithCurrentPrice } from '@/hooks/usePortfolio';
-import { usePortfolios, useCreatePortfolio, useDeletePortfolio } from '@/hooks/usePortfolios';
+import {
+  usePortfolios,
+  useCreatePortfolio,
+  useDeletePortfolio,
+  useRenamePortfolio,
+  useSetDefaultPortfolio,
+  useMovePosition,
+} from '@/hooks/usePortfolios';
 import AddPositionForm from '@/components/AddPositionForm';
 import PositionCard from '@/components/PositionCard';
 import { MobilePageHeader } from '@/components/mobile/MobilePageHeader';
@@ -31,6 +38,9 @@ const Portfolio = () => {
   const { data: portfolios = [] } = usePortfolios();
   const createPortfolio = useCreatePortfolio();
   const deletePortfolio = useDeletePortfolio();
+  const renamePortfolio = useRenamePortfolio();
+  const setDefaultPortfolio = useSetDefaultPortfolio();
+  const movePosition = useMovePosition();
 
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<string | undefined>(undefined);
   useEffect(() => {
@@ -45,6 +55,9 @@ const Portfolio = () => {
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [newPortfolioOpen, setNewPortfolioOpen] = useState(false);
   const [newPortfolioName, setNewPortfolioName] = useState('');
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState('');
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const { formatConvertedPrice, selectedCurrency } = useCurrency();
 
   const portfolioLimit = limits.portfolios;
@@ -71,8 +84,45 @@ const Portfolio = () => {
 
   const handleDeletePortfolio = async () => {
     if (!selectedPortfolio || selectedPortfolio.is_default) return;
+    if (positions.length > 0) {
+      setConfirmDeleteOpen(true);
+      return;
+    }
     await deletePortfolio.mutateAsync(selectedPortfolio.id);
     setSelectedPortfolioId(portfolios.find((p) => p.is_default)?.id);
+  };
+
+  const confirmDeletePortfolio = async () => {
+    if (!selectedPortfolio) return;
+    await deletePortfolio.mutateAsync(selectedPortfolio.id);
+    setConfirmDeleteOpen(false);
+    setSelectedPortfolioId(portfolios.find((p) => p.is_default)?.id);
+  };
+
+  const handleRenamePortfolio = async () => {
+    if (!selectedPortfolio) return;
+    const name = renameValue.trim();
+    if (!name || name === selectedPortfolio.name) {
+      setRenameOpen(false);
+      return;
+    }
+    await renamePortfolio.mutateAsync({ id: selectedPortfolio.id, name });
+    setRenameOpen(false);
+  };
+
+  const openRename = () => {
+    if (!selectedPortfolio) return;
+    setRenameValue(selectedPortfolio.name);
+    setRenameOpen(true);
+  };
+
+  const handleSetDefault = async () => {
+    if (!selectedPortfolio || selectedPortfolio.is_default) return;
+    await setDefaultPortfolio.mutateAsync(selectedPortfolio.id);
+  };
+
+  const handleMovePosition = async (positionId: string, toPortfolioId: string) => {
+    await movePosition.mutateAsync({ positionId, toPortfolioId });
   };
 
   const handleExportCsv = () => {
@@ -166,6 +216,24 @@ const Portfolio = () => {
             {atPortfolioLimit ? <Lock className="w-4 h-4" /> : <FolderPlus className="w-4 h-4" />}
             New
           </Button>
+          {selectedPortfolio && (
+            <Button variant="ghost" size="sm" onClick={openRename} className="gap-1">
+              <Pencil className="w-4 h-4" />
+              Rename
+            </Button>
+          )}
+          {selectedPortfolio && !selectedPortfolio.is_default && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSetDefault}
+              className="gap-1"
+              disabled={setDefaultPortfolio.isPending}
+            >
+              <Star className="w-4 h-4" />
+              Make default
+            </Button>
+          )}
           {selectedPortfolio && !selectedPortfolio.is_default && (
             <Button
               variant="ghost"
@@ -176,6 +244,11 @@ const Portfolio = () => {
               <Trash2 className="w-4 h-4" />
               Delete
             </Button>
+          )}
+          {atPortfolioLimit && (
+            <Badge variant="outline" className="text-[10px] uppercase">
+              {tier === 'free' ? 'Free: 1 · Premium: 3 · Pro: ∞' : tier === 'premium' ? 'Premium: 3 · Pro: ∞' : ''}
+            </Badge>
           )}
         </CardContent>
       </Card>
@@ -303,6 +376,8 @@ const Portfolio = () => {
                 position={position}
                 onEdit={setEditingPosition}
                 onDelete={deletePosition}
+                portfolios={portfolios}
+                onMove={handleMovePosition}
               />
             ))}
           </div>
@@ -360,6 +435,50 @@ const Portfolio = () => {
       </Dialog>
 
       <PremiumPaywall open={paywallOpen} onOpenChange={setPaywallOpen} />
+
+      <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rename portfolio</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Label htmlFor="rname">New name</Label>
+            <Input
+              id="rname"
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              maxLength={64}
+            />
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="ghost" onClick={() => setRenameOpen(false)}>Cancel</Button>
+              <Button
+                onClick={handleRenamePortfolio}
+                disabled={!renameValue.trim() || renamePortfolio.isPending}
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete portfolio with positions?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            "{selectedPortfolio?.name}" has {positions.length} position{positions.length === 1 ? '' : 's'}.
+            Deleting the portfolio will permanently remove these positions too.
+          </p>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="ghost" onClick={() => setConfirmDeleteOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={confirmDeletePortfolio} disabled={deletePortfolio.isPending}>
+              Delete everything
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
         </div>
       </div>
     
