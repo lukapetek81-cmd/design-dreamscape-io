@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Users, Lock, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Users, Lock, AlertTriangle, Download } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,11 +11,15 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useCOTCommodities, useCOTHistory } from '@/hooks/useCOT';
 import PremiumPaywall from '@/components/PremiumPaywall';
+import { downloadCsv } from '@/utils/csvExport';
+import { limitsFor } from '@/utils/tiers';
 
 const COTReports: React.FC = () => {
   const navigate = useNavigate();
   const auth = useAuth();
   const isPro = auth?.isPro ?? false;
+  const tier = auth?.tier ?? 'free';
+  const limits = limitsFor(tier);
   const { data: commodities = [] } = useCOTCommodities();
   const [commodity, setCommodity] = useState<string>('');
   const [paywallOpen, setPaywallOpen] = useState(false);
@@ -44,6 +48,15 @@ const COTReports: React.FC = () => {
     ? (nets.filter((n) => n <= latest.net_position).length / nets.length) * 100
     : null;
   const extreme = percentile != null && (percentile >= 90 || percentile <= 10);
+
+  const handleExportCsv = () => {
+    if (!limits.csvExport) { setPaywallOpen(true); return; }
+    downloadCsv(
+      `cot-${commodity || 'report'}.csv`,
+      ['Report Date', 'Managed Money Long', 'Managed Money Short', 'Net Position'],
+      history.map((h) => [h.report_date, h.managed_money_long, h.managed_money_short, h.net_position]),
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -93,6 +106,18 @@ const COTReports: React.FC = () => {
                   {commodities.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="mb-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportCsv}
+                disabled={history.length === 0}
+                title={limits.csvExport ? 'Export CSV' : 'Upgrade to export CSV'}
+              >
+                {limits.csvExport ? <Download className="w-4 h-4 mr-2" /> : <Lock className="w-4 h-4 mr-2" />}
+                Export CSV
+              </Button>
             </div>
 
             {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
