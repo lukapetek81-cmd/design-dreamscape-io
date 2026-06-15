@@ -113,6 +113,8 @@ export const useTermStructure = (commodity: string | null) =>
   });
 
 export const MASSIVE_ANALYTICS_PRODUCTS = [
+  { id: 'wti',     label: 'WTI Crude' },
+  { id: 'brent',   label: 'Brent Crude' },
   { id: 'gold',     label: 'Gold' },
   { id: 'silver',   label: 'Silver' },
   { id: 'copper',   label: 'Copper' },
