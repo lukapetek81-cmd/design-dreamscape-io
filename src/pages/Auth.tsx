@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,50 +14,79 @@ import AuthHealthPanel from '@/components/auth/AuthHealthPanel';
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    fullName: '',
-    confirmPassword: ''
-  });
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+
+  // Uncontrolled inputs (refs) — required on Android WebView so that Gboard's
+  // IME composition (keyCode 229) is not interrupted by React re-renders,
+  // which is what causes Backspace to appear dead in the installed app.
+  const signinEmailRef = useRef<HTMLInputElement>(null);
+  const signinPasswordRef = useRef<HTMLInputElement>(null);
+  const signupNameRef = useRef<HTMLInputElement>(null);
+  const signupEmailRef = useRef<HTMLInputElement>(null);
+  const signupPasswordRef = useRef<HTMLInputElement>(null);
+  const signupConfirmRef = useRef<HTMLInputElement>(null);
+  const resetEmailRef = useRef<HTMLInputElement>(null);
+
+  // Lightweight derived validity — only flipped when booleans actually change,
+  // so inputs are NOT re-rendered on every keystroke.
+  const [validity, setValidity] = useState({
+    canSignIn: false,
+    canSignUp: false,
+    canReset: false,
+    passwordMismatch: false,
+  });
+
+  const recomputeSignIn = useCallback(() => {
+    const can = !!signinEmailRef.current?.value && !!signinPasswordRef.current?.value;
+    setValidity((v) => (v.canSignIn === can ? v : { ...v, canSignIn: can }));
+  }, []);
+
+  const recomputeSignUp = useCallback(() => {
+    const email = signupEmailRef.current?.value ?? '';
+    const name = signupNameRef.current?.value ?? '';
+    const pw = signupPasswordRef.current?.value ?? '';
+    const cpw = signupConfirmRef.current?.value ?? '';
+    const mismatch = !!pw && !!cpw && pw !== cpw;
+    const can = !!email && !!name && !!pw && !!cpw && !mismatch;
+    setValidity((v) =>
+      v.canSignUp === can && v.passwordMismatch === mismatch
+        ? v
+        : { ...v, canSignUp: can, passwordMismatch: mismatch }
+    );
+  }, []);
+
+  const recomputeReset = useCallback(() => {
+    const can = !!resetEmailRef.current?.value;
+    setValidity((v) => (v.canReset === can ? v : { ...v, canReset: can }));
+  }, []);
 
   const { user, signIn, signUp, signInWithGoogle, resetPassword, loading: authLoading } = useAuth();
 
   // Only redirect if user is authenticated and specifically came to auth page
   // Allow users to browse the app without authentication
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  }, []);
-
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.email || !formData.password) return;
+    const email = signinEmailRef.current?.value.trim() ?? '';
+    const password = signinPasswordRef.current?.value ?? '';
+    if (!email || !password) return;
 
     setIsLoading(true);
-    const { error } = await signIn(formData.email, formData.password);
+    await signIn(email, password);
     setIsLoading(false);
-
-    if (!error) {
-      // Navigation will happen automatically via the Navigate component above
-    }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.email || !formData.password || !formData.fullName) return;
-
-    if (formData.password !== formData.confirmPassword) {
-      return;
-    }
+    const email = signupEmailRef.current?.value.trim() ?? '';
+    const password = signupPasswordRef.current?.value ?? '';
+    const fullName = signupNameRef.current?.value.trim() ?? '';
+    const confirm = signupConfirmRef.current?.value ?? '';
+    if (!email || !password || !fullName) return;
+    if (password !== confirm) return;
 
     setIsLoading(true);
-    const { error } = await signUp(formData.email, formData.password, formData.fullName);
+    await signUp(email, password, fullName);
     setIsLoading(false);
   };
 
@@ -73,10 +102,11 @@ const Auth = () => {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.email) return;
+    const email = resetEmailRef.current?.value.trim() ?? '';
+    if (!email) return;
 
     setIsLoading(true);
-    const { error } = await resetPassword(formData.email);
+    const { error } = await resetPassword(email);
     setIsLoading(false);
 
     if (!error) {
@@ -145,8 +175,8 @@ const Auth = () => {
                     name="email"
                     type="email"
                     placeholder="your@email.com"
-                    value={formData.email}
-                    onChange={handleInputChange}
+                    ref={signinEmailRef}
+                    onInput={recomputeSignIn}
                     required
                     autoComplete="email"
                     autoCapitalize="off"
@@ -165,8 +195,8 @@ const Auth = () => {
                       name="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Your password"
-                      value={formData.password}
-                      onChange={handleInputChange}
+                      ref={signinPasswordRef}
+                      onInput={recomputeSignIn}
                       required
                       autoComplete="current-password"
                       autoCapitalize="off"
@@ -193,7 +223,16 @@ const Auth = () => {
                 <div className="text-right">
                   <button
                     type="button"
-                    onClick={() => setShowForgotPassword(true)}
+                    onClick={() => {
+                      const prefill =
+                        signinEmailRef.current?.value ||
+                        signupEmailRef.current?.value ||
+                        '';
+                      setValidity((v) =>
+                        v.canReset === !!prefill ? v : { ...v, canReset: !!prefill }
+                      );
+                      setShowForgotPassword(true);
+                    }}
                     className="text-sm text-primary hover:underline"
                   >
                     Forgot password?
@@ -203,7 +242,7 @@ const Auth = () => {
                 <Button
                   type="submit" 
                   className="w-full mobile-button-large"
-                  disabled={isLoading || !formData.email || !formData.password}
+                  disabled={isLoading || !validity.canSignIn}
                 >
                   {isLoading ? (
                     <>
@@ -263,8 +302,8 @@ const Auth = () => {
                     name="fullName"
                     type="text"
                     placeholder="John Doe"
-                    value={formData.fullName}
-                    onChange={handleInputChange}
+                    ref={signupNameRef}
+                    onInput={recomputeSignUp}
                     required
                     autoComplete="name"
                     className="mobile-input"
@@ -278,8 +317,8 @@ const Auth = () => {
                     name="email"
                     type="email"
                     placeholder="your@email.com"
-                    value={formData.email}
-                    onChange={handleInputChange}
+                    ref={signupEmailRef}
+                    onInput={recomputeSignUp}
                     required
                     autoComplete="email"
                     autoCapitalize="off"
@@ -298,8 +337,8 @@ const Auth = () => {
                       name="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Choose a strong password"
-                      value={formData.password}
-                      onChange={handleInputChange}
+                      ref={signupPasswordRef}
+                      onInput={recomputeSignUp}
                       required
                       minLength={6}
                       autoComplete="new-password"
@@ -331,8 +370,8 @@ const Auth = () => {
                     name="confirmPassword"
                     type="password"
                     placeholder="Confirm your password"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
+                    ref={signupConfirmRef}
+                    onInput={recomputeSignUp}
                     required
                     autoComplete="new-password"
                     autoCapitalize="off"
@@ -340,7 +379,7 @@ const Auth = () => {
                     spellCheck={false}
                     className="mobile-input"
                   />
-                  {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                  {validity.passwordMismatch && (
                     <p className="text-sm text-red-500">Passwords do not match</p>
                   )}
                 </div>
@@ -348,14 +387,7 @@ const Auth = () => {
                 <Button 
                   type="submit" 
                   className="w-full"
-                  disabled={
-                    isLoading || 
-                    !formData.email || 
-                    !formData.password || 
-                    !formData.fullName ||
-                    !formData.confirmPassword ||
-                    formData.password !== formData.confirmPassword
-                  }
+                  disabled={isLoading || !validity.canSignUp}
                 >
                   {isLoading ? (
                     <>
@@ -419,8 +451,13 @@ const Auth = () => {
                         name="email"
                         type="email"
                         placeholder="your@email.com"
-                        value={formData.email}
-                        onChange={handleInputChange}
+                        ref={resetEmailRef}
+                        defaultValue={
+                          signinEmailRef.current?.value ||
+                          signupEmailRef.current?.value ||
+                          ''
+                        }
+                        onInput={recomputeReset}
                         required
                         autoComplete="email"
                         autoCapitalize="off"
@@ -435,7 +472,7 @@ const Auth = () => {
                       <Button 
                         type="submit" 
                         className="flex-1"
-                        disabled={isLoading || !formData.email}
+                        disabled={isLoading || !validity.canReset}
                       >
                         {isLoading ? (
                           <>

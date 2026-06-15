@@ -1,60 +1,34 @@
-## Scope
+## Problem
 
-The premium tools with a selectable-commodity dropdown are:
+On Android (installed Capacitor build), pressing the on-screen keyboard's Backspace inside the email/password fields on `/auth` does not delete characters.
 
-- **Forward Curves** — already has WTI + Brent. No change.
-- **Volatility Cone** (Pro) — driven by `MASSIVE_ANALYTICS_PRODUCTS`.
-- **Term Structure** (Pro) — driven by `MASSIVE_ANALYTICS_PRODUCTS`.
-- **Roll Scanner** (Pro) — scans its own `PRODUCTS` list server-side.
+## Root cause
 
-WTI and Brent need to appear in the three Massive-backed tools. Adding two rows to the shared dropdown + four backend product maps covers it.
+The Auth page uses **fully controlled React inputs** (`value={formData.email}` + `onChange` that calls `setFormData`). On Android WebView, Gboard sends each keystroke as an IME composition event (keyCode 229). When React re-renders the input on every keystroke, it interrupts the in-flight composition. Backspace is delivered as part of that composition stream, so the WebView ends up replacing the composed text with the same string instead of deleting a character. The on-screen Backspace therefore appears to do nothing. The desktop browser and the Lovable preview don't reproduce this because they don't go through Gboard composition.
 
-## Note on data sourcing
+The Eye/EyeOff toggle and the `type="password"` field are not the cause — the same bug reproduces in the email field too.
 
-The project rule "Energy from OilPriceAPI exclusively" applies to **live spot prices** shown on the dashboard. The premium analytics tools (vol cone, term structure, roll scanner) use Massive Futures **historical settlement bars** for futures contracts — a different data product. Adding `CL` (WTI) and `BZ` (Brent) here uses Massive's futures history; the live energy feeds on the dashboard stay on OilPriceAPI. No conflict.
+## Fix
 
-## Changes
+Convert the inputs on `src/pages/Auth.tsx` to **uncontrolled** with `ref` + `defaultValue`. The DOM owns the text, Gboard composition completes without React re-rendering between keystrokes, and Backspace deletes normally. Form values are read from refs inside the submit handlers (already where we use them).
 
-### 1. Frontend dropdown — `src/hooks/useMassiveAnalytics.ts`
+### Changes in `src/pages/Auth.tsx`
 
-Add two entries at the top of `MASSIVE_ANALYTICS_PRODUCTS`:
+1. Replace the `formData` state object with `useRef` for each field:
+   - `emailRef`, `passwordRef`, `fullNameRef`, `confirmPasswordRef`.
+2. Remove `value=` and `onChange={handleInputChange}` on every `<Input>`; add `ref={emailRef}` etc. Keep `name`, `type`, `placeholder`, `required`, `autoComplete`, `autoCapitalize="off"`, `autoCorrect="off"`, `spellCheck={false}`, `inputMode`.
+3. Rewrite `handleSignIn`, `handleSignUp`, `handleResetPassword` to read values from refs (`emailRef.current?.value ?? ''`, trimmed for email).
+4. The "Passwords do not match" inline hint and the disabled-state on the submit buttons currently depend on `formData`. Replace with a single lightweight `useState<{ passwordMismatch: boolean; canSubmitSignIn: boolean; canSubmitSignUp: boolean }>` updated via `onInput` handlers that read from refs (NOT `onChange`, and they do not call `setState` on every character — only flip booleans when they actually change). This keeps validation UX without forcing a re-render that re-syncs `value` back to the DOM.
+5. The forgot-password modal reuses the email ref; no behavior change.
+6. The Eye/EyeOff show-password toggle keeps working: switching `type` between `password` and `text` does not reset an uncontrolled input's value (React preserves the DOM node).
+7. The Google sign-in button is unchanged.
 
-```ts
-{ id: 'wti',   label: 'WTI Crude' },
-{ id: 'brent', label: 'Brent Crude' },
-```
+### Out of scope
 
-Both Vol Cone and Term Structure pages render from this list, so no changes there.
+- No changes to `AuthContext`, routing, Capacitor config, or other pages.
+- No CSS changes — `.mobile-input` styling is preserved.
+- ResetPassword page (`/reset-password`) is a separate flow and not reported broken; leave it alone unless the user asks.
 
-### 2. Edge function product maps
+## Verification
 
-Add the same two rows to:
-
-- `supabase/functions/massive-vol-cone/index.ts` → `PRODUCTS`
-- `supabase/functions/massive-term-structure/index.ts` → `PRODUCTS`
-- `supabase/functions/warm-vol-cones/index.ts` → `PRODUCTS`
-- `supabase/functions/massive-roll-scanner/index.ts` → `PRODUCTS` (with `category: 'energy'`)
-
-Using Massive codes: `wti → CL`, `brent → BZ` (same as fetch-forward-curve).
-
-All four functions derive their Zod enum from `Object.keys(PRODUCTS)`, so validation updates automatically. Roll Scanner's cache key (`'all'`) covers the new products on the next refresh.
-
-### 3. Seed the snapshots
-
-After deploy, kick `warm-vol-cones` once so WTI/Brent Vol Cone returns instantly instead of blocking on the first user request. Roll Scanner uses an in-memory cache that auto-refreshes on the next miss — no seed needed. Term Structure fetches on demand and is fast enough not to need warming.
-
-SQL snippet (same shape as the existing cron call, embeds `ALERT_EVALUATOR_SECRET`) will be provided in chat for you to paste once.
-
-## Files
-
-- `src/hooks/useMassiveAnalytics.ts`
-- `supabase/functions/massive-vol-cone/index.ts`
-- `supabase/functions/massive-term-structure/index.ts`
-- `supabase/functions/warm-vol-cones/index.ts`
-- `supabase/functions/massive-roll-scanner/index.ts`
-
-## Out of scope
-
-- Live energy spot feeds (stay on OilPriceAPI per project rule).
-- Position Calculator / Price Alerts (already cover crude via `CRUDE` and `brent_wti` spread).
-- Sentiment / Correlation pages (they already include Crude Oil in their own lists).
+After deploy: `git pull && npm install && npx cap sync android && npx cap run android`, open the Sign In tab, type an email, press Backspace — characters delete one at a time. Repeat in the password field and the Sign Up tab.
