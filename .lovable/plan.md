@@ -1,71 +1,60 @@
-## Problem
+## Scope
 
-`massive-vol-cone` blocks every request on a 5-year Massive Futures fetch + rolling-vol math. When Massive is slow or thin on history, requests hang or return `insufficient_history`. Some products (copper, silver, lumber) have no snapshot yet, so the fallback can't save them.
+The premium tools with a selectable-commodity dropdown are:
 
-Recent failures in the console: `copper`, `silver`, `lumber` all returning non-2xx.
+- **Forward Curves** — already has WTI + Brent. No change.
+- **Volatility Cone** (Pro) — driven by `MASSIVE_ANALYTICS_PRODUCTS`.
+- **Term Structure** (Pro) — driven by `MASSIVE_ANALYTICS_PRODUCTS`.
+- **Roll Scanner** (Pro) — scans its own `PRODUCTS` list server-side.
 
-## Goal
+WTI and Brent need to appear in the three Massive-backed tools. Adding two rows to the shared dropdown + four backend product maps covers it.
 
-Make Vol Cones feel instant for every supported product, even when Massive is slow or returns thin history. Background-refresh the data on a schedule so users never wait on the upstream API.
+## Note on data sourcing
 
-## Plan
+The project rule "Energy from OilPriceAPI exclusively" applies to **live spot prices** shown on the dashboard. The premium analytics tools (vol cone, term structure, roll scanner) use Massive Futures **historical settlement bars** for futures contracts — a different data product. Adding `CL` (WTI) and `BZ` (Brent) here uses Massive's futures history; the live energy feeds on the dashboard stay on OilPriceAPI. No conflict.
 
-### 1. Snapshot-first edge function (`massive-vol-cone`)
+## Changes
 
-Rewrite the request path so it never blocks on Massive when a snapshot exists:
+### 1. Frontend dropdown — `src/hooks/useMassiveAnalytics.ts`
 
-```text
-request → auth + tier check
-       → read analytics_snapshots row for this commodity
-            ├─ fresh (< 6h)  → return payload, stale=false
-            ├─ stale (>= 6h) → return stale payload immediately,
-            │                  fire-and-forget recompute in background
-            └─ missing       → try live fetch once (current behavior),
-                               then persist snapshot
+Add two entries at the top of `MASSIVE_ANALYTICS_PRODUCTS`:
+
+```ts
+{ id: 'wti',   label: 'WTI Crude' },
+{ id: 'brent', label: 'Brent Crude' },
 ```
 
-Concretely:
-- Move the existing `fetchMassiveFrontMonthBars` + cone math into a `computeAndStore(commodity)` helper.
-- Default path: read snapshot, return it. If older than `CACHE_TTL_MS`, kick off `EdgeRuntime.waitUntil(computeAndStore(commodity))` so the response ships in <200 ms.
-- Only do a blocking compute when no snapshot row exists at all.
+Both Vol Cone and Term Structure pages render from this list, so no changes there.
 
-### 2. Relaxed history threshold
+### 2. Edge function product maps
 
-The current `bars.length < 130` cutoff fails the whole request for thinly-traded products (lumber). Change to:
-- Require ≥ 30 bars to return anything.
-- For each window in `[10, 20, 60, 120]`, only emit cone stats if `bars.length >= window + 21`; otherwise emit that row with `current: null` and `note: 'insufficient_history'`.
-- Headline `currentVol` / `percentile1y` falls back from 20-day → 10-day → null with a `headlineWindow` field so the UI knows what it's showing.
+Add the same two rows to:
 
-### 3. Scheduled warmer
+- `supabase/functions/massive-vol-cone/index.ts` → `PRODUCTS`
+- `supabase/functions/massive-term-structure/index.ts` → `PRODUCTS`
+- `supabase/functions/warm-vol-cones/index.ts` → `PRODUCTS`
+- `supabase/functions/massive-roll-scanner/index.ts` → `PRODUCTS` (with `category: 'energy'`)
 
-New edge function `warm-vol-cones` (verify_jwt=false, gated by `X-Cron-Secret: ALERT_EVALUATOR_SECRET` — reusing the same secret to avoid adding another).
+Using Massive codes: `wti → CL`, `brent → BZ` (same as fetch-forward-curve).
 
-- Iterates the 11 products sequentially with `await` (one at a time so we never hammer Massive).
-- Per-product try/catch; logs failures, continues.
-- Updates `analytics_snapshots` rows.
-- Scheduled via `pg_cron` every 4 hours (`0 */4 * * *`) using the same `net.http_post` pattern as the price-alert evaluator. SQL provided in chat for you to paste in the SQL editor (it embeds the cron secret).
+All four functions derive their Zod enum from `Object.keys(PRODUCTS)`, so validation updates automatically. Roll Scanner's cache key (`'all'`) covers the new products on the next refresh.
 
-### 4. Manual seed for the three failing products
+### 3. Seed the snapshots
 
-After deploy, call `warm-vol-cones` once via curl so copper / silver / lumber get an initial snapshot. If Massive still returns nothing for a product, the snapshot row carries `error: 'no_history'` so the UI can show a clean "Data unavailable" instead of a spinner.
+After deploy, kick `warm-vol-cones` once so WTI/Brent Vol Cone returns instantly instead of blocking on the first user request. Roll Scanner uses an in-memory cache that auto-refreshes on the next miss — no seed needed. Term Structure fetches on demand and is fast enough not to need warming.
 
-### 5. Frontend polish (`src/pages/VolatilityCone.tsx`)
-
-Light touches only:
-- When `stale === true`, show a small badge "Refreshing… (last updated {asOf})" next to the title.
-- When a cone row has `note: 'insufficient_history'`, render an em-dash with a tooltip ("Not enough settled bars for this window yet — try a shorter window") instead of an empty cell.
-- No paywall/business-logic changes.
-
-## Out of scope
-
-- No new tables, no schema changes (reusing `analytics_snapshots`).
-- No changes to the Massive client itself.
-- No client-side polling — staleness is communicated via the badge, and the background recompute populates the next request.
+SQL snippet (same shape as the existing cron call, embeds `ALERT_EVALUATOR_SECRET`) will be provided in chat for you to paste once.
 
 ## Files
 
-- `supabase/functions/massive-vol-cone/index.ts` — refactor to snapshot-first + relaxed threshold.
-- `supabase/functions/warm-vol-cones/index.ts` — new.
-- `supabase/config.toml` — register `warm-vol-cones` with `verify_jwt = false`.
-- `src/pages/VolatilityCone.tsx` — stale badge + insufficient-window cell.
-- Cron SQL — provided in chat for you to run once.
+- `src/hooks/useMassiveAnalytics.ts`
+- `supabase/functions/massive-vol-cone/index.ts`
+- `supabase/functions/massive-term-structure/index.ts`
+- `supabase/functions/warm-vol-cones/index.ts`
+- `supabase/functions/massive-roll-scanner/index.ts`
+
+## Out of scope
+
+- Live energy spot feeds (stay on OilPriceAPI per project rule).
+- Position Calculator / Price Alerts (already cover crude via `CRUDE` and `brent_wti` spread).
+- Sentiment / Correlation pages (they already include Crude Oil in their own lists).
