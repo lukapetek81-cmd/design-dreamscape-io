@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Star, Trash2, Lock } from 'lucide-react';
+import { ArrowLeft, Plus, Star, Trash2, Lock, Download } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ import {
 } from '@/hooks/useWatchlists';
 import { limitsFor } from '@/utils/tiers';
 import PremiumPaywall from '@/components/PremiumPaywall';
+import { downloadCsv } from '@/utils/csvExport';
 
 const Watchlists: React.FC = () => {
   const navigate = useNavigate();
@@ -76,6 +77,24 @@ const Watchlists: React.FC = () => {
   };
 
   const selected = watchlists.find((w) => w.id === selectedId);
+
+  const handleExportCsv = () => {
+    if (!limits.csvExport) { setPaywallOpen(true); return; }
+    if (!selected) return;
+    downloadCsv(
+      `${selected.name}-watchlist.csv`,
+      ['Commodity', 'Symbol', 'Price', 'Change %'],
+      items.map((it) => {
+        const live = priceByName.get(it.commodity_name);
+        return [
+          it.commodity_name,
+          it.commodity_symbol ?? '',
+          live?.price ?? '',
+          live ? live.changePct.toFixed(2) : '',
+        ];
+      }),
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -146,9 +165,21 @@ const Watchlists: React.FC = () => {
                       <CardTitle className="text-base">{selected.name}</CardTitle>
                       <CardDescription>{items.length}/{Number.isFinite(limits.watchlistItems) ? limits.watchlistItems : '∞'} commodities</CardDescription>
                     </div>
-                    <Button size="sm" variant="outline" onClick={() => atItemLimit ? setPaywallOpen(true) : setAddOpen(true)}>
-                      {atItemLimit ? <><Lock className="w-3.5 h-3.5 mr-1.5" />Upgrade</> : <><Plus className="w-4 h-4 mr-1.5" />Add</>}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleExportCsv}
+                        disabled={items.length === 0}
+                        title={limits.csvExport ? 'Export CSV' : 'Upgrade to export CSV'}
+                      >
+                        {limits.csvExport ? <Download className="w-3.5 h-3.5 mr-1.5" /> : <Lock className="w-3.5 h-3.5 mr-1.5" />}
+                        CSV
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => atItemLimit ? setPaywallOpen(true) : setAddOpen(true)}>
+                        {atItemLimit ? <><Lock className="w-3.5 h-3.5 mr-1.5" />Upgrade</> : <><Plus className="w-4 h-4 mr-1.5" />Add</>}
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     {items.length === 0 ? (
