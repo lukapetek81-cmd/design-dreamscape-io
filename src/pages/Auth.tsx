@@ -173,7 +173,7 @@ const Auth = () => {
                   <Input
                     id="signin-email"
                     name="email"
-                    type="email"
+                    type="text"
                     placeholder="your@email.com"
                     ref={signinEmailRef}
                     onInput={recomputeSignIn}
@@ -315,7 +315,7 @@ const Auth = () => {
                   <Input
                     id="signup-email"
                     name="email"
-                    type="email"
+                    type="text"
                     placeholder="your@email.com"
                     ref={signupEmailRef}
                     onInput={recomputeSignUp}
@@ -449,7 +449,7 @@ const Auth = () => {
                       <Input
                         id="reset-email"
                         name="email"
-                        type="email"
+                        type="text"
                         placeholder="your@email.com"
                         ref={resetEmailRef}
                         defaultValue={
