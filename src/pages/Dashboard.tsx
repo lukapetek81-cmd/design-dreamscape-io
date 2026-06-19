@@ -171,7 +171,7 @@ const DashboardContent = ({
       <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
         {/* Simplified Header */}
         <header className="sticky top-0 z-40 w-full border-b bg-background">
-          <div className="container flex h-[72px] sm:h-16 items-center justify-between px-4 pt-3 sm:pt-0">
+          <div className="container flex h-20 sm:h-16 items-center justify-between px-4 pt-4 sm:pt-0">
             {isMobile ? (
               <div className="flex w-full items-center justify-between">
                  <Button
