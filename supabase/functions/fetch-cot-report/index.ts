@@ -11,7 +11,12 @@ import { corsHeaders, EdgeLogger } from '../_shared/utils.ts';
 // Map CFTC contract names → our display names
 const COMMODITY_MAP: Record<string, string> = {
   'WTI FINANCIAL CRUDE OIL - NEW YORK MERCANTILE EXCHANGE': 'WTI Crude Oil',
+  'BRENT LAST DAY - NEW YORK MERCANTILE EXCHANGE': 'Brent Crude Oil',
   'NAT GAS NYME - NEW YORK MERCANTILE EXCHANGE': 'Natural Gas',
+  'GASOLINE RBOB - NEW YORK MERCANTILE EXCHANGE': 'RBOB Gasoline',
+  'NY HARBOR ULSD - NEW YORK MERCANTILE EXCHANGE': 'ULSD Diesel',
+  'ETHANOL - NEW YORK MERCANTILE EXCHANGE': 'Ethanol',
+  'PROPANE - NEW YORK MERCANTILE EXCHANGE': 'Propane',
   'GOLD - COMMODITY EXCHANGE INC.': 'Gold',
   'SILVER - COMMODITY EXCHANGE INC.': 'Silver',
   'COPPER- #1 - COMMODITY EXCHANGE INC.': 'Copper',
@@ -57,7 +62,7 @@ serve(async (req) => {
       '$select': 'market_and_exchange_names,report_date_as_yyyy_mm_dd,m_money_positions_long_all,m_money_positions_short_all,prod_merc_positions_long,prod_merc_positions_short,open_interest_all',
       '$where': `market_and_exchange_names in (${names})`,
       '$order': 'report_date_as_yyyy_mm_dd DESC',
-      '$limit': '1500',
+      '$limit': '5000',
     });
     const url = `https://publicreporting.cftc.gov/resource/72hh-3qpy.json?${params.toString()}`;
     const resp = await fetch(url);
