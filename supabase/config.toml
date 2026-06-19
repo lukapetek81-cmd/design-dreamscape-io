@@ -83,3 +83,6 @@ verify_jwt = false
 
 [functions.warm-vol-cones]
 verify_jwt = false
+
+[functions.warm-energy-prices]
+verify_jwt = false
