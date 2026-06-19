@@ -129,6 +129,7 @@ const COTReports: React.FC = () => {
                   <CardContent>
                     <div className={`text-2xl font-bold ${latest.net_position >= 0 ? 'text-emerald-500' : 'text-orange-500'}`}>
                       {latest.net_position.toLocaleString()}
+                      <span className="text-sm font-normal text-muted-foreground ml-1">contracts</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
                       As of {latest.report_date}
@@ -139,7 +140,7 @@ const COTReports: React.FC = () => {
                   <CardHeader className="pb-2"><CardDescription>52-week percentile</CardDescription></CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">{percentile?.toFixed(0)}%</div>
-                    <p className="text-xs text-muted-foreground mt-1">Range: {min.toLocaleString()} → {max.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Range: {min.toLocaleString()} → {max.toLocaleString()} contracts</p>
                   </CardContent>
                 </Card>
                 <Card className={extreme ? 'border-orange-500/50 bg-orange-500/5' : ''}>
