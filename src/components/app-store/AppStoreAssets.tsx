@@ -147,7 +147,7 @@ Download Commodity Hub today and follow the world's commodity markets in real ti
 
 // Play Store metadata
 export const PLAY_STORE_METADATA = {
-  title: "Commodity Hub - Trading Analytics",
+  title: "Commodity Hub",
   developer: "Commodity Hub Team",
   website: "https://commodity-hub.lovableproject.com",
   email: "support@commodityhub.com",
