@@ -196,13 +196,6 @@ const Auth = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      const prefill =
-                        signinEmailRef.current?.value ||
-                        signupEmailRef.current?.value ||
-                        '';
-                      setValidity((v) =>
-                        v.canReset === !!prefill ? v : { ...v, canReset: !!prefill }
-                      );
                       setShowForgotPassword(true);
                     }}
                     className="text-sm text-primary hover:underline"
