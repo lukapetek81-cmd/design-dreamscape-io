@@ -18,9 +18,20 @@ export const useCOTCommodities = () => {
     queryKey: ['cot-commodities'],
     staleTime: 60 * 60 * 1000,
     queryFn: async () => {
+      // Fetch only the latest report week to avoid the default 1000-row
+      // PostgREST cap (16 commodities x ~218 weeks of history > 1000 rows).
+      const { data: latestRow, error: latestErr } = await supabase
+        .from('cot_reports')
+        .select('report_date')
+        .order('report_date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (latestErr) throw latestErr;
+      if (!latestRow) return [];
       const { data, error } = await supabase
         .from('cot_reports')
         .select('commodity')
+        .eq('report_date', latestRow.report_date)
         .order('commodity');
       if (error) throw error;
       const set = new Set<string>();
