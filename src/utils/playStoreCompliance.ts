@@ -149,7 +149,7 @@ export const validatePlayStoreCompliance = (): {
 // Generate Play Store listing metadata
 export const generatePlayStoreMetadata = () => {
   return {
-    title: "Commodity Hub",
+    title: "Commodity Hub - Live Prices & Insights",
     shortDescription: "One-time purchase. Live commodity prices, charts & insights — no ads, no subs.",
     // Pricing model: paid app, one-time purchase, no in-app purchases, no ads, no subscriptions.
     pricing: {
