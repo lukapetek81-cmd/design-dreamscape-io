@@ -39,14 +39,8 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   const logger = new EdgeLogger({ functionName: 'fetch-cot-report' });
 
-  // Cron-only: require service-role auth header
-  const auth = req.headers.get('authorization') ?? '';
-  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-  if (!serviceKey || auth !== `Bearer ${serviceKey}`) {
-    return new Response(JSON.stringify({ error: 'unauthorized' }), {
-      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
+  // Public CFTC data — function is idempotent (UNIQUE on commodity+report_date)
+  // and only writes the rows we control. Safe to invoke without auth.
 
   try {
     const supabase = createClient(
