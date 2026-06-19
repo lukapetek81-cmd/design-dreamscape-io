@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,38 +27,10 @@ const Auth = () => {
   const signupConfirmRef = useRef<HTMLInputElement>(null);
   const resetEmailRef = useRef<HTMLInputElement>(null);
 
-  // Lightweight derived validity — only flipped when booleans actually change,
-  // so inputs are NOT re-rendered on every keystroke.
-  const [validity, setValidity] = useState({
-    canSignIn: false,
-    canSignUp: false,
-    canReset: false,
-    passwordMismatch: false,
-  });
-
-  const recomputeSignIn = useCallback(() => {
-    const can = !!signinEmailRef.current?.value && !!signinPasswordRef.current?.value;
-    setValidity((v) => (v.canSignIn === can ? v : { ...v, canSignIn: can }));
-  }, []);
-
-  const recomputeSignUp = useCallback(() => {
-    const email = signupEmailRef.current?.value ?? '';
-    const name = signupNameRef.current?.value ?? '';
-    const pw = signupPasswordRef.current?.value ?? '';
-    const cpw = signupConfirmRef.current?.value ?? '';
-    const mismatch = !!pw && !!cpw && pw !== cpw;
-    const can = !!email && !!name && !!pw && !!cpw && !mismatch;
-    setValidity((v) =>
-      v.canSignUp === can && v.passwordMismatch === mismatch
-        ? v
-        : { ...v, canSignUp: can, passwordMismatch: mismatch }
-    );
-  }, []);
-
-  const recomputeReset = useCallback(() => {
-    const can = !!resetEmailRef.current?.value;
-    setValidity((v) => (v.canReset === can ? v : { ...v, canReset: can }));
-  }, []);
+  // NOTE: We intentionally do NOT track per-keystroke validity state.
+  // On Android WebView, any React re-render during composition causes
+  // visible typing lag. Validation happens in the submit handlers, and
+  // the native `required` attribute provides the cheap baseline UX.
 
   const { user, signIn, signUp, signInWithGoogle, resetPassword, loading: authLoading } = useAuth();
 
@@ -176,7 +148,7 @@ const Auth = () => {
                     type="text"
                     placeholder="your@email.com"
                     ref={signinEmailRef}
-                    onInput={recomputeSignIn}
+
                     required
                     autoComplete="email"
                     autoCapitalize="off"
@@ -196,7 +168,7 @@ const Auth = () => {
                       type={showPassword ? "text" : "password"}
                       placeholder="Your password"
                       ref={signinPasswordRef}
-                      onInput={recomputeSignIn}
+
                       required
                       autoComplete="current-password"
                       autoCapitalize="off"
@@ -224,13 +196,6 @@ const Auth = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      const prefill =
-                        signinEmailRef.current?.value ||
-                        signupEmailRef.current?.value ||
-                        '';
-                      setValidity((v) =>
-                        v.canReset === !!prefill ? v : { ...v, canReset: !!prefill }
-                      );
                       setShowForgotPassword(true);
                     }}
                     className="text-sm text-primary hover:underline"
@@ -242,7 +207,7 @@ const Auth = () => {
                 <Button
                   type="submit" 
                   className="w-full mobile-button-large"
-                  disabled={isLoading || !validity.canSignIn}
+                  disabled={isLoading}
                 >
                   {isLoading ? (
                     <>
@@ -303,7 +268,7 @@ const Auth = () => {
                     type="text"
                     placeholder="John Doe"
                     ref={signupNameRef}
-                    onInput={recomputeSignUp}
+
                     required
                     autoComplete="name"
                     className="mobile-input"
@@ -318,7 +283,7 @@ const Auth = () => {
                     type="text"
                     placeholder="your@email.com"
                     ref={signupEmailRef}
-                    onInput={recomputeSignUp}
+
                     required
                     autoComplete="email"
                     autoCapitalize="off"
@@ -338,7 +303,7 @@ const Auth = () => {
                       type={showPassword ? "text" : "password"}
                       placeholder="Choose a strong password"
                       ref={signupPasswordRef}
-                      onInput={recomputeSignUp}
+
                       required
                       minLength={6}
                       autoComplete="new-password"
@@ -371,7 +336,7 @@ const Auth = () => {
                     type="password"
                     placeholder="Confirm your password"
                     ref={signupConfirmRef}
-                    onInput={recomputeSignUp}
+
                     required
                     autoComplete="new-password"
                     autoCapitalize="off"
@@ -379,15 +344,12 @@ const Auth = () => {
                     spellCheck={false}
                     className="mobile-input"
                   />
-                  {validity.passwordMismatch && (
-                    <p className="text-sm text-red-500">Passwords do not match</p>
-                  )}
                 </div>
 
                 <Button 
                   type="submit" 
                   className="w-full"
-                  disabled={isLoading || !validity.canSignUp}
+                  disabled={isLoading}
                 >
                   {isLoading ? (
                     <>
@@ -457,7 +419,7 @@ const Auth = () => {
                           signupEmailRef.current?.value ||
                           ''
                         }
-                        onInput={recomputeReset}
+
                         required
                         autoComplete="email"
                         autoCapitalize="off"
@@ -472,7 +434,7 @@ const Auth = () => {
                       <Button 
                         type="submit" 
                         className="flex-1"
-                        disabled={isLoading || !validity.canReset}
+                        disabled={isLoading}
                       >
                         {isLoading ? (
                           <>
