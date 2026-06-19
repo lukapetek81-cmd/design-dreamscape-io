@@ -98,7 +98,8 @@ export class CommodityService {
         this.fetchAllFromMassive(includePremium),
       ]);
 
-      const merged = [...oilResults, ...fmpResults, ...massiveResults];
+      const snapshotResults = await this.fetchEnergySnapshotBackfill(includePremium, oilResults);
+      const merged = [...oilResults, ...snapshotResults, ...fmpResults, ...massiveResults];
       const seen = new Set(merged.map((c) => c.name));
       for (const [name, info] of Object.entries(COMMODITY_SYMBOLS)) {
         if (seen.has(name)) continue;
@@ -266,6 +267,71 @@ export class CommodityService {
       this.logger.warn('OilPriceAPI proxy threw', err);
       return [];
     }
+  }
+
+  /**
+   * Premium energy prices are warmed into commodity_price_snapshots by
+   * warm-energy-prices. The user-facing oil-price-api endpoint correctly gates
+   * premium symbols by JWT, but this shared service calls it with the anon key,
+   * so premium energy would otherwise fall through to synthetic placeholders.
+   */
+  private async fetchEnergySnapshotBackfill(
+    includePremium: boolean,
+    existing: CommodityData[],
+  ): Promise<CommodityData[]> {
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    if (!this.supabaseUrl || !serviceKey) return [];
+
+    const existingNames = new Set(existing.map((c) => c.name));
+    const targets = Object.entries(COMMODITY_SYMBOLS)
+      .filter(([name, info]) =>
+        info.category === 'energy' &&
+        !existingNames.has(name) &&
+        (includePremium || !PREMIUM_COMMODITIES.has(name))
+      )
+      .map(([name]) => name);
+    if (targets.length === 0) return [];
+
+    const sb = createClient(this.supabaseUrl, serviceKey, {
+      auth: { persistSession: false },
+    });
+    const { data, error } = await sb
+      .from('commodity_price_snapshots')
+      .select('commodity_name, price, snapshot_date, created_at')
+      .in('commodity_name', targets)
+      .order('snapshot_date', { ascending: false })
+      .order('created_at', { ascending: false });
+
+    if (error || !data) {
+      if (error) this.logger.warn('Energy snapshot backfill failed', error.message);
+      return [];
+    }
+
+    const latestByName = new Map<string, { price: number; snapshot_date: string }>();
+    for (const row of data as Array<{ commodity_name: string; price: number; snapshot_date: string }>) {
+      if (!latestByName.has(row.commodity_name)) {
+        latestByName.set(row.commodity_name, {
+          price: Number(row.price),
+          snapshot_date: row.snapshot_date,
+        });
+      }
+    }
+
+    return targets.flatMap((name) => {
+      const snap = latestByName.get(name);
+      const meta = COMMODITY_SYMBOLS[name];
+      if (!snap || !meta || !Number.isFinite(snap.price) || snap.price <= 0) return [];
+      return [{
+        name,
+        symbol: meta.symbol,
+        price: snap.price,
+        change: 0,
+        changePercent: 0,
+        category: meta.category,
+        contractSize: meta.contractSize,
+        venue: meta.venue,
+      } as CommodityData];
+    });
   }
 
   async fetchCurrentPrice(commodityName: string): Promise<CommodityData | null> {

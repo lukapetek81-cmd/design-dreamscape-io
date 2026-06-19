@@ -117,6 +117,9 @@ const CommodityCard = React.memo<CommodityCardProps>(({
     if (lower.includes('vlsfo') || lower.includes('hfo') || lower.includes('mgo')) {
       return '$/MT';
     }
+    if (lower.includes('gasoil') || lower.includes('naphtha')) {
+      return '$/tonne';
+    }
     // Refined products sold per gallon
     if (lower.includes('jet fuel') || lower.includes('ulsd') || lower.includes('diesel') || 
         lower.includes('heating oil') || lower.includes('gasoline') || lower.includes('rbob')) {
