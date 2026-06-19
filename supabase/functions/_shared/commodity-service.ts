@@ -551,6 +551,9 @@ export class CommodityService {
       category,
       contractSize,
       venue,
+      // Mark so callers (esp. applyDayOverDayChange) never write this
+      // invented price into commodity_price_snapshots.
+      isSynthetic: true,
     };
   }
 
