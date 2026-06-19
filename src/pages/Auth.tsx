@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,38 +27,10 @@ const Auth = () => {
   const signupConfirmRef = useRef<HTMLInputElement>(null);
   const resetEmailRef = useRef<HTMLInputElement>(null);
 
-  // Lightweight derived validity — only flipped when booleans actually change,
-  // so inputs are NOT re-rendered on every keystroke.
-  const [validity, setValidity] = useState({
-    canSignIn: false,
-    canSignUp: false,
-    canReset: false,
-    passwordMismatch: false,
-  });
-
-  const recomputeSignIn = useCallback(() => {
-    const can = !!signinEmailRef.current?.value && !!signinPasswordRef.current?.value;
-    setValidity((v) => (v.canSignIn === can ? v : { ...v, canSignIn: can }));
-  }, []);
-
-  const recomputeSignUp = useCallback(() => {
-    const email = signupEmailRef.current?.value ?? '';
-    const name = signupNameRef.current?.value ?? '';
-    const pw = signupPasswordRef.current?.value ?? '';
-    const cpw = signupConfirmRef.current?.value ?? '';
-    const mismatch = !!pw && !!cpw && pw !== cpw;
-    const can = !!email && !!name && !!pw && !!cpw && !mismatch;
-    setValidity((v) =>
-      v.canSignUp === can && v.passwordMismatch === mismatch
-        ? v
-        : { ...v, canSignUp: can, passwordMismatch: mismatch }
-    );
-  }, []);
-
-  const recomputeReset = useCallback(() => {
-    const can = !!resetEmailRef.current?.value;
-    setValidity((v) => (v.canReset === can ? v : { ...v, canReset: can }));
-  }, []);
+  // NOTE: We intentionally do NOT track per-keystroke validity state.
+  // On Android WebView, any React re-render during composition causes
+  // visible typing lag. Validation happens in the submit handlers, and
+  // the native `required` attribute provides the cheap baseline UX.
 
   const { user, signIn, signUp, signInWithGoogle, resetPassword, loading: authLoading } = useAuth();
 
