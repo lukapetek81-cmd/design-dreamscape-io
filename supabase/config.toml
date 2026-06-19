@@ -86,3 +86,6 @@ verify_jwt = false
 
 [functions.warm-energy-prices]
 verify_jwt = false
+
+[functions.fetch-cot-report]
+verify_jwt = false

@@ -28,10 +28,12 @@ interface CftcRow {
   report_date_as_yyyy_mm_dd: string;
   m_money_positions_long_all: string;
   m_money_positions_short_all: string;
-  comm_positions_long_all: string;
-  comm_positions_short_all: string;
+  prod_merc_positions_long: string;
+  prod_merc_positions_short: string;
   open_interest_all: string;
 }
+
+const parsePosition = (value?: string) => Number.parseInt(value || '0', 10) || 0;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -52,25 +54,34 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
-    // Pull last 60 weeks of data, filtered to our commodity list
-    const names = Object.keys(COMMODITY_MAP).map((n) => `"${n}"`).join(',');
-    const query = encodeURIComponent(
-      `SELECT market_and_exchange_names, report_date_as_yyyy_mm_dd, m_money_positions_long_all, m_money_positions_short_all, comm_positions_long_all, comm_positions_short_all, open_interest_all WHERE market_and_exchange_names IN (${names}) ORDER BY report_date_as_yyyy_mm_dd DESC LIMIT 1500`,
-    );
-    const url = `https://publicreporting.cftc.gov/resource/72hh-3qpy.json?$query=${query}`;
+    // Pull last 60 weeks of data, filtered to our commodity list.
+    // CFTC's Disaggregated dataset calls commercial positions "Producer/Merchant".
+    const names = Object.keys(COMMODITY_MAP)
+      .map((name) => `'${name.replace(/'/g, "''")}'`)
+      .join(',');
+    const params = new URLSearchParams({
+      '$select': 'market_and_exchange_names,report_date_as_yyyy_mm_dd,m_money_positions_long_all,m_money_positions_short_all,prod_merc_positions_long,prod_merc_positions_short,open_interest_all',
+      '$where': `market_and_exchange_names in (${names})`,
+      '$order': 'report_date_as_yyyy_mm_dd DESC',
+      '$limit': '1500',
+    });
+    const url = `https://publicreporting.cftc.gov/resource/72hh-3qpy.json?${params.toString()}`;
     const resp = await fetch(url);
-    if (!resp.ok) throw new Error(`CFTC ${resp.status}`);
+    if (!resp.ok) {
+      const detail = await resp.text();
+      throw new Error(`CFTC ${resp.status}: ${detail.slice(0, 300)}`);
+    }
     const rows: CftcRow[] = await resp.json();
 
     let inserted = 0;
     for (const row of rows) {
       const commodity = COMMODITY_MAP[row.market_and_exchange_names];
       if (!commodity) continue;
-      const mmLong = parseInt(row.m_money_positions_long_all || '0', 10);
-      const mmShort = parseInt(row.m_money_positions_short_all || '0', 10);
-      const commLong = parseInt(row.comm_positions_long_all || '0', 10);
-      const commShort = parseInt(row.comm_positions_short_all || '0', 10);
-      const oi = parseInt(row.open_interest_all || '0', 10);
+      const mmLong = parsePosition(row.m_money_positions_long_all);
+      const mmShort = parsePosition(row.m_money_positions_short_all);
+      const commLong = parsePosition(row.prod_merc_positions_long);
+      const commShort = parsePosition(row.prod_merc_positions_short);
+      const oi = parsePosition(row.open_interest_all);
       const { error } = await supabase.from('cot_reports').upsert({
         commodity,
         report_date: row.report_date_as_yyyy_mm_dd.slice(0, 10),
