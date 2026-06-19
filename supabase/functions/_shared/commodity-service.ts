@@ -227,6 +227,8 @@ export class CommodityService {
         )
         .map(([name]) => name);
 
+      const ctl = new AbortController();
+      const t = setTimeout(() => ctl.abort(), 10000);
       const res = await fetch(`${this.supabaseUrl}/functions/v1/oil-price-api`, {
         method: 'POST',
         headers: {
@@ -234,7 +236,8 @@ export class CommodityService {
           Authorization: `Bearer ${this.supabaseAnonKey}`,
         },
         body: JSON.stringify({ commodities: energyNames, includePremium }),
-      });
+        signal: ctl.signal,
+      }).finally(() => clearTimeout(t));
       if (!res.ok) {
         this.logger.warn(`oil-price-api proxy failed ${res.status}`);
         return [];
