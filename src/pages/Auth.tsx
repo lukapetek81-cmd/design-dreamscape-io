@@ -148,7 +148,7 @@ const Auth = () => {
                     type="text"
                     placeholder="your@email.com"
                     ref={signinEmailRef}
-                    onInput={recomputeSignIn}
+
                     required
                     autoComplete="email"
                     autoCapitalize="off"
@@ -168,7 +168,7 @@ const Auth = () => {
                       type={showPassword ? "text" : "password"}
                       placeholder="Your password"
                       ref={signinPasswordRef}
-                      onInput={recomputeSignIn}
+
                       required
                       autoComplete="current-password"
                       autoCapitalize="off"
@@ -214,7 +214,7 @@ const Auth = () => {
                 <Button
                   type="submit" 
                   className="w-full mobile-button-large"
-                  disabled={isLoading || !validity.canSignIn}
+                  disabled={isLoading}
                 >
                   {isLoading ? (
                     <>
@@ -275,7 +275,7 @@ const Auth = () => {
                     type="text"
                     placeholder="John Doe"
                     ref={signupNameRef}
-                    onInput={recomputeSignUp}
+
                     required
                     autoComplete="name"
                     className="mobile-input"
@@ -290,7 +290,7 @@ const Auth = () => {
                     type="text"
                     placeholder="your@email.com"
                     ref={signupEmailRef}
-                    onInput={recomputeSignUp}
+
                     required
                     autoComplete="email"
                     autoCapitalize="off"
@@ -310,7 +310,7 @@ const Auth = () => {
                       type={showPassword ? "text" : "password"}
                       placeholder="Choose a strong password"
                       ref={signupPasswordRef}
-                      onInput={recomputeSignUp}
+
                       required
                       minLength={6}
                       autoComplete="new-password"
@@ -343,7 +343,7 @@ const Auth = () => {
                     type="password"
                     placeholder="Confirm your password"
                     ref={signupConfirmRef}
-                    onInput={recomputeSignUp}
+
                     required
                     autoComplete="new-password"
                     autoCapitalize="off"
@@ -359,7 +359,7 @@ const Auth = () => {
                 <Button 
                   type="submit" 
                   className="w-full"
-                  disabled={isLoading || !validity.canSignUp}
+                  disabled={isLoading}
                 >
                   {isLoading ? (
                     <>
@@ -429,7 +429,7 @@ const Auth = () => {
                           signupEmailRef.current?.value ||
                           ''
                         }
-                        onInput={recomputeReset}
+
                         required
                         autoComplete="email"
                         autoCapitalize="off"
@@ -444,7 +444,7 @@ const Auth = () => {
                       <Button 
                         type="submit" 
                         className="flex-1"
-                        disabled={isLoading || !validity.canReset}
+                        disabled={isLoading}
                       >
                         {isLoading ? (
                           <>
