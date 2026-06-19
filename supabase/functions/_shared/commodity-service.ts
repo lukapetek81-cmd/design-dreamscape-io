@@ -302,8 +302,10 @@ export class CommodityService {
       .from('commodity_price_snapshots')
       .select('commodity_name, price, snapshot_date, created_at')
       .in('commodity_name', targets)
+      .gte('snapshot_date', new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10))
       .order('snapshot_date', { ascending: false })
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(200);
 
     if (error || !data) {
       if (error) this.logger.warn('Energy snapshot backfill failed', error.message);
