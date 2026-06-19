@@ -59,7 +59,11 @@ export async function fetchFmpQuotes(symbols: string[]): Promise<FmpQuote[]> {
 async function fetchOneStableQuote(symbol: string, key: string): Promise<FmpQuote | null> {
   const url = `${FMP_BASE}/quote?symbol=${encodeURIComponent(symbol)}&apikey=${key}`;
   try {
-    const res = await fetch(url);
+    // Hard 6s per-symbol timeout — a single stuck FMP request used to drag
+    // the whole all-commodities batch to 30s+ via Promise.all.
+    const ctl = new AbortController();
+    const t = setTimeout(() => ctl.abort(), 6000);
+    const res = await fetch(url, { signal: ctl.signal }).finally(() => clearTimeout(t));
     if (!res.ok) {
       const txt = await res.text().catch(() => '');
       console.warn(`[fmp] quote ${symbol} -> ${res.status} ${txt.slice(0, 200)}`);

@@ -227,6 +227,8 @@ export class CommodityService {
         )
         .map(([name]) => name);
 
+      const ctl = new AbortController();
+      const t = setTimeout(() => ctl.abort(), 10000);
       const res = await fetch(`${this.supabaseUrl}/functions/v1/oil-price-api`, {
         method: 'POST',
         headers: {
@@ -234,7 +236,8 @@ export class CommodityService {
           Authorization: `Bearer ${this.supabaseAnonKey}`,
         },
         body: JSON.stringify({ commodities: energyNames, includePremium }),
-      });
+        signal: ctl.signal,
+      }).finally(() => clearTimeout(t));
       if (!res.ok) {
         this.logger.warn(`oil-price-api proxy failed ${res.status}`);
         return [];
@@ -299,8 +302,10 @@ export class CommodityService {
       .from('commodity_price_snapshots')
       .select('commodity_name, price, snapshot_date, created_at')
       .in('commodity_name', targets)
+      .gte('snapshot_date', new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10))
       .order('snapshot_date', { ascending: false })
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(200);
 
     if (error || !data) {
       if (error) this.logger.warn('Energy snapshot backfill failed', error.message);

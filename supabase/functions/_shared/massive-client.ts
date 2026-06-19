@@ -33,7 +33,12 @@ async function get(path: string, params: Record<string, string | number | boolea
   ).toString();
   const url = `${BASE}${path}${qs ? `?${qs}` : ''}`;
   try {
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${k}` } });
+    const ctl = new AbortController();
+    const t = setTimeout(() => ctl.abort(), 8000);
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${k}` },
+      signal: ctl.signal,
+    }).finally(() => clearTimeout(t));
     if (!res.ok) return null;
     return await res.json();
   } catch {
