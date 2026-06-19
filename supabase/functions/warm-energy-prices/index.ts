@@ -65,12 +65,14 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  // Auth: must present the project's service-role key. pg_cron passes this
-  // in the Authorization header; nothing else can produce it.
+  // Auth: must present a known project key (anon or service role). The anon
+  // key is already public, but combined with the DB-backed cooldown below
+  // this is enough to keep OilPriceAPI quota safe from spam.
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
   const auth = req.headers.get("Authorization") ?? "";
   const token = auth.replace(/^Bearer\s+/i, "").trim();
-  if (!serviceKey || token !== serviceKey) {
+  if (!token || (token !== serviceKey && token !== anonKey)) {
     return new Response(
       JSON.stringify({ error: "Unauthorized" }),
       { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -79,11 +81,36 @@ serve(async (req) => {
 
   const apiKey = Deno.env.get("OIL_PRICE_API_KEY");
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-  if (!apiKey || !supabaseUrl) {
+  if (!apiKey || !supabaseUrl || !serviceKey) {
     return new Response(
-      JSON.stringify({ error: "Missing OIL_PRICE_API_KEY or SUPABASE_URL" }),
+      JSON.stringify({ error: "Missing OIL_PRICE_API_KEY / SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
+  }
+
+  const sb = createClient(supabaseUrl, serviceKey, {
+    auth: { persistSession: false },
+  });
+
+  // Cooldown guard: if the canonical refined-product row was upserted in the
+  // last 25 minutes, skip. Protects OilPriceAPI quota even if the endpoint
+  // is hit repeatedly by anyone holding the (public) anon key.
+  try {
+    const since = new Date(Date.now() - 25 * 60 * 1000).toISOString();
+    const { data: recent } = await sb
+      .from("commodity_price_snapshots")
+      .select("commodity_name, created_at")
+      .eq("commodity_name", "Gasoline RBOB")
+      .gte("created_at", since)
+      .limit(1);
+    if (recent && recent.length > 0) {
+      return new Response(
+        JSON.stringify({ ok: true, skipped: true, reason: "cooldown" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+  } catch (err) {
+    console.warn("Cooldown check failed (continuing)", err);
   }
 
   const names = Object.keys(OIL_BLEND_CODES);
@@ -114,9 +141,6 @@ serve(async (req) => {
     );
   }
 
-  const sb = createClient(supabaseUrl, serviceKey, {
-    auth: { persistSession: false },
-  });
   const today = new Date().toISOString().slice(0, 10);
   const payload = fetched.map((c) => ({
     commodity_name: c.name,
