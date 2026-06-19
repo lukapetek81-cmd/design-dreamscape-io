@@ -142,10 +142,13 @@ serve(async (req) => {
   }
 
   const today = new Date().toISOString().slice(0, 10);
+  const nowIso = new Date().toISOString();
   const payload = fetched.map((c) => ({
     commodity_name: c.name,
     price: c.price,
     snapshot_date: today,
+    // Bump created_at so the 25-minute cooldown guard above works.
+    created_at: nowIso,
   }));
 
   const { error } = await sb
