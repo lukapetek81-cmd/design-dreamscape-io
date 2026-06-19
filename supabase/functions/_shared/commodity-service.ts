@@ -22,6 +22,14 @@ export interface CommodityData {
   category: string;
   contractSize: string;
   venue: string;
+  /**
+   * True when the row came from `buildMissingCommodityFallback` (a synthetic
+   * ~base-price guess used purely for UI continuity when no provider returned
+   * a quote). Synthetic rows must never be persisted to
+   * `commodity_price_snapshots` — doing so poisons the canonical price store
+   * and clobbers fresh values written by the warmer.
+   */
+  isSynthetic?: boolean;
 }
 
 export interface ChartDataPoint {
