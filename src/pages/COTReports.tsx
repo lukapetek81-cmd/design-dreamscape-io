@@ -163,14 +163,18 @@ const COTReports: React.FC = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base">52-week positioning</CardTitle>
+                  <CardDescription>Values shown in number of contracts</CardDescription>
                 </CardHeader>
                 <CardContent className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={chartData}>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                       <XAxis dataKey="date" className="text-xs" />
-                      <YAxis className="text-xs" />
-                      <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
+                      <YAxis className="text-xs" tickFormatter={(v: number) => v.toLocaleString()} label={{ value: 'Contracts', angle: -90, position: 'insideLeft', style: { fill: 'hsl(var(--muted-foreground))', fontSize: 11 } }} />
+                      <Tooltip
+                        contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
+                        formatter={(value: number) => [`${Number(value).toLocaleString()} contracts`, '']}
+                      />
                       <Legend />
                       <Bar dataKey="Long" stackId="a" fill="hsl(142 70% 45%)" />
                       <Bar dataKey="Short" stackId="a" fill="hsl(0 70% 55%)" />
