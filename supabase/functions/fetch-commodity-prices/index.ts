@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/utils.ts'
 import { IpRateLimiter } from '../_shared/rateLimit.ts'
 import { FMP_SYMBOLS, MASSIVE_PRODUCT_CODES } from '../_shared/commodity-mappings.ts'
@@ -95,6 +96,33 @@ const getBasePriceForCommodity = (commodityName: string): number => {
   };
   return basePrices[commodityName] || 100;
 };
+
+async function fetchSnapshotPrice(commodityName: string): Promise<any | null> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+  if (!supabaseUrl || !serviceKey) return null;
+
+  const sb = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+  const { data, error } = await sb
+    .from('commodity_price_snapshots')
+    .select('commodity_name, price, snapshot_date, created_at')
+    .eq('commodity_name', commodityName)
+    .order('snapshot_date', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  const price = Number(data.price);
+  if (!Number.isFinite(price) || price <= 0) return null;
+  return {
+    symbol: OIL_API_CODES[commodityName] || commodityName,
+    price,
+    change: 0,
+    changePercent: 0,
+    lastUpdate: data.created_at || data.snapshot_date || new Date().toISOString(),
+  };
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -224,7 +252,13 @@ serve(async (req) => {
       }
     }
 
-    // ── Step 3: Fallback ──
+    // ── Step 3: Warmed snapshot fallback for energy ──
+    if (!priceData && ENERGY_NAMES.has(commodityName)) {
+      priceData = await fetchSnapshotPrice(commodityName);
+      if (priceData) dataSource = 'snapshot';
+    }
+
+    // ── Step 4: Synthetic fallback ──
     if (!priceData) {
       console.log(`Fallback for ${commodityName}`)
       const basePrice = getBasePriceForCommodity(commodityName)
