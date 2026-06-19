@@ -324,7 +324,7 @@ export class CommodityService {
 
     // Upsert today's snapshot for every commodity with a valid price.
     const payload = merged
-      .filter((c) => Number.isFinite(c.price) && c.price > 0)
+      .filter((c) => !c.isSynthetic && Number.isFinite(c.price) && c.price > 0)
       .map((c) => ({
         commodity_name: c.name,
         price: c.price,
