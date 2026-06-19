@@ -351,9 +351,6 @@ const Auth = () => {
                     spellCheck={false}
                     className="mobile-input"
                   />
-                  {validity.passwordMismatch && (
-                    <p className="text-sm text-red-500">Passwords do not match</p>
-                  )}
                 </div>
 
                 <Button 
