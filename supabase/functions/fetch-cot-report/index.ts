@@ -10,8 +10,8 @@ import { corsHeaders, EdgeLogger } from '../_shared/utils.ts';
 
 // Map CFTC contract names → our display names
 const COMMODITY_MAP: Record<string, string> = {
-  'CRUDE OIL, LIGHT SWEET-NYMEX': 'WTI Crude Oil',
-  'NAT GAS NYME': 'Natural Gas',
+  'CRUDE OIL, LIGHT SWEET - NEW YORK MERCANTILE EXCHANGE': 'WTI Crude Oil',
+  'NATURAL GAS - NEW YORK MERCANTILE EXCHANGE': 'Natural Gas',
   'GOLD - COMMODITY EXCHANGE INC.': 'Gold',
   'SILVER - COMMODITY EXCHANGE INC.': 'Silver',
   'COPPER- #1 - COMMODITY EXCHANGE INC.': 'Copper',
