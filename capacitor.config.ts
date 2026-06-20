@@ -37,7 +37,10 @@ const config: CapacitorConfig = {
       background: '#1e3a5f'
     },
     allowMixedContent: false,
-    captureInput: true,
+    // captureInput must stay false on Android — when true, the WebView
+    // intercepts key events and interferes with Gboard's IME composition,
+    // causing visible lag on Backspace inside text inputs.
+    captureInput: false,
     webContentsDebuggingEnabled: false
   },
   ios: {
