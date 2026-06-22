@@ -106,7 +106,7 @@ const DashboardContent = ({
   highlightCommodity?: string | null;
   isPremium: boolean;
 }) => {
-  const { setOpenMobile } = useSidebar();
+  const { setOpenMobile, toggleSidebar } = useSidebar();
   const { connected: realtimeConnected, delayStatus } = useRealtimeDataContext();
 
   // Simple swipe handler for mobile sidebar
@@ -170,19 +170,17 @@ const DashboardContent = ({
       
       <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
         {/* Top bar */}
-        <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 supports-[backdrop-filter]:bg-background/80 pt-[100px]">
+        <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 supports-[backdrop-filter]:bg-background/80 pt-[140px]">
           <div className="flex h-14 items-center justify-between px-3 sm:px-5 gap-3">
-            {isMobile && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setOpenMobile(true)}
-                className="h-9 w-9 shrink-0"
-                aria-label="Open navigation"
-              >
-                <Menu className="w-5 h-5" />
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => (isMobile ? setOpenMobile(true) : toggleSidebar())}
+              className="h-10 w-10 shrink-0"
+              aria-label="Open navigation menu"
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
               <getGroupInfo.icon className="w-4 h-4 text-muted-foreground shrink-0" />
               <div className="min-w-0">
