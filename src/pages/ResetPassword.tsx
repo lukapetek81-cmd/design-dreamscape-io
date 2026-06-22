@@ -124,7 +124,7 @@ const ResetPassword = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/20 to-background">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -136,9 +136,9 @@ const ResetPassword = () => {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/20 to-background p-4">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="w-full max-w-md space-y-6">
-          <Card className="p-6 bg-gradient-to-br from-card/80 to-muted/20 border border-border/50 shadow-soft text-center">
+          <Card className="p-6 bg-card border border-border text-center">
             <div className="space-y-4">
               <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto">
                 <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
@@ -160,7 +160,7 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/20 to-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md space-y-6">
         {/* Header */}
         <div className="text-center space-y-4">
@@ -173,17 +173,17 @@ const ResetPassword = () => {
           </Link>
           
           <div className="flex items-center justify-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-medium">
-              <TrendingUp className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 bg-primary/15 ring-1 ring-primary/30 rounded-md flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gradient">Commodity Hub</h1>
+              <h1 className="font-display text-xl font-semibold tracking-tight">Commodity Hub</h1>
               <p className="text-sm text-muted-foreground">Set your new password</p>
             </div>
           </div>
         </div>
 
-        <Card className="p-6 bg-gradient-to-br from-card/80 to-muted/20 border border-border/50 shadow-soft">
+        <Card className="p-6 bg-card border border-border">
           <div className="space-y-6">
             <div className="text-center space-y-2">
               <h2 className="text-xl font-semibold">Create New Password</h2>

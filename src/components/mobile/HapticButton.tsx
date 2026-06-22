@@ -92,7 +92,7 @@ const HapticButton: React.FC<HapticButtonProps> = ({
 
   return (
     <button
-      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className} transform active:scale-95 hover:scale-105 transition-transform duration-200`}
+      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className} transform transition-colors duration-200`}
       onClick={handleClick}
       disabled={disabled}
     >

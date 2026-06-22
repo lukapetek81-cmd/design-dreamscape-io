@@ -88,7 +88,7 @@ const Auth = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/20 to-background">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -100,7 +100,7 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/20 to-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="text-center space-y-4">
@@ -113,17 +113,17 @@ const Auth = () => {
           </Link>
           
           <div className="flex items-center justify-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-medium">
-              <TrendingUp className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 bg-primary/15 ring-1 ring-primary/30 rounded-md flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gradient">Commodity Hub</h1>
+              <h1 className="font-display text-xl font-semibold tracking-tight">Commodity Hub</h1>
               <p className="text-sm text-muted-foreground">Real-time commodity prices & insights</p>
             </div>
           </div>
         </div>
 
-        <Card className="p-4 sm:p-6 bg-gradient-to-br from-card/80 to-muted/20 border border-border/50 shadow-soft mobile-card">
+        <Card className="p-4 sm:p-6 bg-card border border-border mobile-card">
           <Tabs defaultValue="signin" className="space-y-4 sm:space-y-6">
             <TabsList className="grid w-full grid-cols-2 h-12 mobile-touch-target">
               <TabsTrigger value="signin" className="mobile-touch-target">Sign In</TabsTrigger>
@@ -395,8 +395,8 @@ const Auth = () => {
 
           {/* Forgot Password Modal */}
           {showForgotPassword && (
-            <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <Card className="w-full max-w-md p-6 bg-gradient-to-br from-card/90 to-muted/20 border border-border/50 shadow-soft">
+            <div className="fixed inset-0 bg-background/95 z-50 flex items-center justify-center p-4">
+              <Card className="w-full max-w-md p-6 bg-card border border-border">
                 <div className="space-y-4">
                   <div className="text-center space-y-2">
                     <h3 className="text-lg font-semibold">Reset Password</h3>
