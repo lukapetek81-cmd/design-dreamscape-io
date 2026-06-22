@@ -92,14 +92,25 @@
     --app-top-buffer: calc(env(safe-area-inset-top, 0px) + 140px);
   }
 
-  /* Push the entire app shell below Android's overlaid status bar,
-     and shrink the scroll window by the same amount so the page
-     doesn't grow taller than the visible viewport. */
-  html.capacitor-native body {
+  /* Push the top bar's own content below Android's overlaid status bar. */
+  .app-top-bar {
     padding-top: var(--app-top-buffer);
   }
-  html.capacitor-native #root {
-    min-height: calc(100vh - var(--app-top-buffer));
+  /* Opaque cover behind Android's overlaid status bar so page content
+     scrolling past the sticky header is never visible underneath it. */
+  html.capacitor-native body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--app-top-buffer);
+    background: hsl(var(--background));
+    z-index: 60;
+    pointer-events: none;
+  }
+  html.capacitor-native .app-top-bar {
+    z-index: 50;
   }
 
   /* Safety net: prevent any descendant from causing horizontal page scroll */
