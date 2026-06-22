@@ -89,18 +89,14 @@
   }
 
   html.capacitor-native {
-    --app-top-buffer: max(140px, calc(env(safe-area-inset-top, 0px) + 140px));
+    --app-top-buffer: max(56px, calc(env(safe-area-inset-top, 0px) + 24px));
   }
 
-  html.capacitor-native #root {
+  /* Push the top bar's own content down so the title clears the status bar.
+     Using padding on the header itself (instead of #root padding + sticky top
+     offset) guarantees the title is visible both at rest and while scrolling. */
+  .app-top-bar {
     padding-top: var(--app-top-buffer);
-    min-height: 100vh;
-    box-sizing: border-box;
-  }
-
-  html.capacitor-native .app-top-bar {
-    top: var(--app-top-buffer);
-    padding-top: 0 !important;
   }
 
   /* Safety net: prevent any descendant from causing horizontal page scroll */
