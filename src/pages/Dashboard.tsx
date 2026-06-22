@@ -172,7 +172,6 @@ const DashboardContent = ({
         {/* Top bar */}
         <header
           className="app-top-bar sticky top-0 z-40 w-full border-b border-border bg-background/95 supports-[backdrop-filter]:bg-background/80"
-          style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 140px)' }}
         >
           <div className="flex h-14 items-center justify-between px-3 sm:px-5 gap-3">
             <Button
