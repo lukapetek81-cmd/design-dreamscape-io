@@ -1,7 +1,13 @@
 import { useEffect } from 'react';
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+
+interface FirebaseConfigPlugin {
+  isConfigured(): Promise<{ configured: boolean }>;
+}
+
+const FirebaseConfig = registerPlugin<FirebaseConfigPlugin>('FirebaseConfig');
 
 /**
  * Registers the device with FCM and stores the resulting token in
@@ -24,6 +30,11 @@ export const usePushNotifications = () => {
 
     (async () => {
       try {
+        if (Capacitor.getPlatform() === 'android') {
+          const { configured } = await FirebaseConfig.isConfigured();
+          if (!configured || cancelled) return;
+        }
+
         const { PushNotifications } = await import('@capacitor/push-notifications');
 
         const perm = await PushNotifications.checkPermissions();
