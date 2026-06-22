@@ -15,6 +15,17 @@ export interface SpreadPreset {
   unit: string;
 }
 
+/**
+ * Custom spread formula persisted in user_spreads.formula (jsonb).
+ * - op 'sum'   → Σ(leg.weight × price)
+ * - op 'ratio' → legs[0].price / legs[1].price (weights ignored)
+ */
+export interface CustomSpreadFormula {
+  op: 'sum' | 'ratio';
+  unit: string;
+  legs: SpreadLeg[];
+}
+
 export const SPREAD_PRESETS: SpreadPreset[] = [
   {
     id: 'wti-brent',
@@ -98,6 +109,27 @@ export function computeSpread(preset: SpreadPreset, commodities: CommodityPrice[
     const p = findLegPrice(commodities, leg.match);
     if (p == null) return null;
     total += p * leg.weight;
+  }
+  return total;
+}
+
+/** Compute a user-defined custom spread. */
+export function computeCustomSpread(
+  formula: CustomSpreadFormula,
+  commodities: CommodityPrice[],
+): number | null {
+  if (!formula?.legs?.length) return null;
+  if (formula.op === 'ratio') {
+    if (formula.legs.length < 2) return null;
+    const a = findLegPrice(commodities, formula.legs[0].match);
+    const b = findLegPrice(commodities, formula.legs[1].match);
+    return a && b ? a / b : null;
+  }
+  let total = 0;
+  for (const leg of formula.legs) {
+    const p = findLegPrice(commodities, leg.match);
+    if (p == null) return null;
+    total += p * (leg.weight ?? 0);
   }
   return total;
 }
