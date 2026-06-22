@@ -169,61 +169,46 @@ const DashboardContent = ({
       />
       
       <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
-        {/* Simplified Header */}
-        <header className="sticky top-0 z-40 w-full border-b bg-background">
-          <div className="container flex h-20 sm:h-16 items-center justify-between px-4 pt-4 sm:pt-0">
-            {isMobile ? (
-              <div className="flex w-full items-center justify-between">
-                 <Button
-                   variant="ghost"
-                   size="lg"
-                   onClick={() => setOpenMobile(true)}
-                   className="ml-6 sm:ml-12 md:ml-16 mt-6 sm:mt-8 md:mt-10 mr-3 sm:mr-4 mb-3 p-5 sm:p-6 min-h-[64px] min-w-[64px] sm:min-h-[72px] sm:min-w-[72px]"
-                 >
-                   <Menu className="w-9 h-9 sm:w-10 sm:h-10" />
-                 </Button>
-                
-                <div className="text-center flex-1">
-                  <p className="text-xs text-muted-foreground">
-                    {delayStatus.delayText} data
-                  </p>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <OfflineIndicator />
-                  <div className={`w-2 h-2 rounded-full ${
-                    loading ? 'bg-blue-500' : error ? 'bg-red-500' : 'bg-green-500'
-                  }`} />
-                  <AlertNotificationBell />
-                  <UserProfile />
-                </div>
-              </div>
-            ) : (
-              <div className="flex w-full items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <getGroupInfo.icon className="w-6 h-6" />
-                  <div>
-                    <h1 className="text-lg font-semibold">{getGroupInfo.title}</h1>
-                    <p className="text-sm text-muted-foreground">
-                      {filteredCommodities.length} commodities
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2 text-sm">
-                    <div className={`w-2 h-2 rounded-full ${
-                      loading ? 'bg-blue-500' : error ? 'bg-red-500' : 'bg-green-500'
-                    }`} />
-                    <span className="text-muted-foreground">
-                      {loading ? 'Loading' : error ? 'Error' : delayStatus.delayText}
-                    </span>
-                  </div>
-                  <AlertNotificationBell />
-                  <UserProfile />
-                </div>
-              </div>
+        {/* Top bar */}
+        <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 supports-[backdrop-filter]:bg-background/80">
+          <div className="flex h-14 items-center justify-between px-3 sm:px-5 gap-3">
+            {isMobile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setOpenMobile(true)}
+                className="h-9 w-9 shrink-0"
+                aria-label="Open navigation"
+              >
+                <Menu className="w-5 h-5" />
+              </Button>
             )}
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <getGroupInfo.icon className="w-4 h-4 text-muted-foreground shrink-0" />
+              <div className="min-w-0">
+                <h1 className="font-display text-[15px] sm:text-base font-semibold tracking-tight truncate leading-tight">
+                  {getGroupInfo.title}
+                </h1>
+                <p className="text-[11px] text-muted-foreground number-display leading-tight">
+                  {filteredCommodities.length} {filteredCommodities.length === 1 ? 'instrument' : 'instruments'} · {delayStatus.delayText}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <OfflineIndicator />
+              <div
+                className={`w-1.5 h-1.5 rounded-full ${
+                  loading
+                    ? 'bg-[hsl(var(--warning))]'
+                    : error
+                      ? 'bg-[hsl(var(--destructive))]'
+                      : 'bg-[hsl(var(--success))]'
+                }`}
+                title={loading ? 'Loading' : error ? 'Error' : 'Live'}
+              />
+              <AlertNotificationBell />
+              <UserProfile />
+            </div>
           </div>
         </header>
 
