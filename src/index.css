@@ -84,12 +84,22 @@
     overscroll-behavior-x: none;
   }
 
-  html.capacitor-native body {
-    padding-top: max(140px, calc(env(safe-area-inset-top, 0px) + 140px));
+  :root {
+    --app-top-buffer: 0px;
+  }
+
+  html.capacitor-native {
+    --app-top-buffer: max(140px, calc(env(safe-area-inset-top, 0px) + 140px));
+  }
+
+  html.capacitor-native #root {
+    padding-top: var(--app-top-buffer);
+    min-height: 100vh;
+    box-sizing: border-box;
   }
 
   html.capacitor-native .app-top-bar {
-    top: 0;
+    top: var(--app-top-buffer);
     padding-top: 0 !important;
   }
 
