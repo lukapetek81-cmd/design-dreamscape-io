@@ -33,16 +33,16 @@ const CommoditySidebar = React.memo(({ activeGroup, onGroupSelect, commodityCoun
   }, [openMobile]);
 
   return (
-    <Sidebar className="border-r bg-background">
-      <SidebarHeader className="border-b bg-background">
-        <div className={`flex items-center gap-3 ${isMobile ? 'p-6' : 'p-4'}`}>
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <TrendingUp className="w-4 h-4 text-primary-foreground" />
+    <Sidebar className="border-r border-border bg-background">
+      <SidebarHeader className="border-b border-border bg-background">
+        <div className={`flex items-center gap-2.5 ${isMobile ? 'px-4 py-4' : 'px-3 py-3'}`}>
+          <div className="w-7 h-7 rounded-md bg-primary/15 ring-1 ring-primary/30 flex items-center justify-center">
+            <TrendingUp className="w-3.5 h-3.5 text-primary" />
           </div>
           {!collapsed && (
-            <div>
-              <h2 className="font-bold text-base">Commodity Hub</h2>
-              <p className="text-xs text-muted-foreground">Commodity Prices</p>
+            <div className="leading-tight">
+              <h2 className="font-display text-[15px] font-semibold tracking-tight">Commodity Hub</h2>
+              <p className="text-[11px] text-muted-foreground">Markets &amp; Analytics</p>
             </div>
           )}
         </div>

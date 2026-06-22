@@ -183,46 +183,46 @@ const CommodityCard = React.memo<CommodityCardProps>(({
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full min-w-0 max-w-full overflow-hidden">
       <div className="w-full min-w-0 max-w-full overflow-hidden">
-        <Card className="group relative w-full min-w-0 max-w-full overflow-hidden border border-border/50 bg-card shadow-soft rounded-[1.25rem]">
-          <CardHeader className="relative p-3 sm:p-4 md:p-6 lg:p-8">
+        <Card className="group relative w-full min-w-0 max-w-full overflow-hidden border border-border bg-card rounded-lg transition-colors hover:border-border/80">
+          <CardHeader className="relative p-4 sm:p-5">
             {/* Header with click handler */}
             <div 
-              className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between cursor-pointer touch-manipulation rounded-[1.125rem] focus-ring"
+              className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between cursor-pointer touch-manipulation rounded-md focus-ring"
               onClick={handleToggle}
               role="button"
               tabIndex={0}
               aria-label={`${isOpen ? 'Collapse' : 'Expand'} details for ${name} commodity`}
             >
               {/* Main Content */}
-              <div className="flex-1 space-y-3 sm:space-y-4">
+              <div className="flex-1 space-y-2.5">
                 {/* Title and badges */}
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2 sm:gap-3 flex-1">
-                    <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 text-primary">
-                      <DollarSign className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="w-8 h-8 rounded-md bg-muted text-muted-foreground flex items-center justify-center shrink-0">
+                      <DollarSign className="w-3.5 h-3.5" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-base sm:text-lg lg:text-xl font-bold text-foreground tracking-tight truncate">
+                      <h3 className="font-display text-[15px] sm:text-base font-semibold text-foreground tracking-tight truncate">
                         {name}
                       </h3>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-bold bg-muted/60 rounded-full text-muted-foreground uppercase tracking-wider">
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                        <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium font-mono bg-muted rounded text-muted-foreground tracking-wide">
                           {selectedContract}
                         </span>
-                        <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-medium bg-primary/10 text-primary rounded-full uppercase tracking-wider">
+                        <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground border border-border rounded tracking-wide">
                           {selectedContractData?.venue || venue}
                         </span>
                         {(selectedContractData?.contractSize || contractSize) && (
-                          <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-medium bg-secondary/10 text-secondary-foreground rounded-full tracking-wider">
+                          <span className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground/80 tracking-wide">
                             {selectedContractData?.contractSize || contractSize}
                           </span>
                         )}
                         {dataFreshness !== 'live' && (
                           <span
-                            className={`inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-bold rounded-full uppercase tracking-wider ${
+                            className={`inline-block px-1.5 py-0.5 text-[10px] font-semibold rounded tracking-wide ${
                               dataFreshness === 'eod'
-                                ? 'bg-blue-500/15 text-blue-300 border border-blue-500/30'
-                                : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                                ? 'text-muted-foreground border border-border'
+                                : 'text-[hsl(var(--warning))] border border-[hsl(var(--warning))]/40'
                             }`}
                             title={
                               dataFreshness === 'eod'
@@ -234,22 +234,25 @@ const CommodityCard = React.memo<CommodityCardProps>(({
                           </span>
                         )}
                         {selectedContractData && (
-                          <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs font-medium bg-accent text-accent-foreground rounded-full tracking-wider">
-                            <Calendar className="w-3 h-3" />
+                          <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                            <Calendar className="w-2.5 h-2.5" />
                             {selectedContractData.expirationDate ? new Date(selectedContractData.expirationDate).toLocaleDateString() : 'N/A'}
                           </span>
                         )}
-                        <div className={`w-1.5 h-1.5 rounded-full ${
-                          marketStatus.isOpen ? 'bg-green-500' : 'bg-red-500'
-                        }`}></div>
+                        <div
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            marketStatus.isOpen ? 'bg-[hsl(var(--success))]' : 'bg-muted-foreground/40'
+                          }`}
+                          title={marketStatus.isOpen ? 'Market open' : 'Market closed'}
+                        />
                       </div>
                     </div>
                   </div>
                   
                   {/* Mobile Expand Icon */}
                   <div className="flex items-center sm:hidden">
-                    <div className={`p-2 rounded-full transition-colors duration-150 ${
-                      isOpen ? 'bg-primary/20 text-primary' : 'bg-muted/50 text-muted-foreground'
+                    <div className={`p-1.5 rounded-md transition-colors duration-100 ${
+                      isOpen ? 'text-foreground' : 'text-muted-foreground'
                     }`}>
                       {isOpen ? (
                         <ChevronUp className="w-4 h-4" />
@@ -261,46 +264,38 @@ const CommodityCard = React.memo<CommodityCardProps>(({
                 </div>
                 
                 {/* Price Section */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                <div className="flex items-baseline gap-3 flex-wrap">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground number-display tracking-tight">
+                    <span className="text-2xl sm:text-[26px] font-semibold text-foreground number-display tracking-tight">
                       {displayPrice !== null ? (
                         typeof displayPrice === 'string' 
                           ? displayPrice 
                           : `${getPricePrefix(name)}${formatPrice(displayPrice)}`
                       ) : (
-                        <span className="text-muted-foreground text-lg">Loading...</span>
+                        <span className="text-muted-foreground text-base">—</span>
                       )}
                     </span>
+                    <span className="text-[11px] text-muted-foreground/80 number-display">{getPriceUnits(name)}</span>
                   </div>
                   
-                  <div className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold shadow-soft w-fit ${
-                    isPositive 
-                      ? 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200 dark:from-green-950/20 dark:to-emerald-950/20 dark:text-green-400 dark:border-green-800' 
-                      : 'bg-gradient-to-r from-red-50 to-rose-50 text-red-700 border border-red-200 dark:from-red-950/20 dark:to-rose-950/20 dark:text-red-400 dark:border-red-800'
+                  <div className={`inline-flex items-center gap-1 text-sm font-medium number-display ${
+                    isPositive ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'
                   }`}>
-                    {isPositive ? <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" /> : <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4" />}
-                    <span className="number-display">{Math.abs(currentChange).toFixed(2)}%</span>
+                    {isPositive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                    <span>{isPositive ? '+' : '−'}{Math.abs(currentChange).toFixed(2)}%</span>
                   </div>
                 </div>
               </div>
               
               {/* Desktop Stats Section */}
-              <div className="hidden sm:flex sm:items-center sm:gap-4 lg:gap-6">
-                <div className="text-right space-y-2 lg:space-y-3">
-                  <div className="space-y-1">
-                    <p className="text-2xs lg:text-xs font-semibold text-muted-foreground uppercase tracking-wider">Price Units</p>
-                    <p className="text-xs lg:text-sm font-semibold text-muted-foreground number-display">{getPriceUnits(name)}</p>
-                  </div>
-                </div>
-                
-                <div className={`flex items-center p-2 rounded-full transition-colors duration-150 ${
-                  isOpen ? 'bg-primary/20 text-primary' : 'bg-muted/50 text-muted-foreground'
+              <div className="hidden sm:flex sm:items-center sm:gap-2 ml-3">
+                <div className={`flex items-center p-1.5 rounded-md transition-colors duration-100 ${
+                  isOpen ? 'text-foreground bg-muted' : 'text-muted-foreground hover:text-foreground'
                 }`}>
                   {isOpen ? (
-                    <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <ChevronUp className="w-4 h-4" />
                   ) : (
-                    <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <ChevronDown className="w-4 h-4" />
                   )}
                 </div>
               </div>
