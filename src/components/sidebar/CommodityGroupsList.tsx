@@ -43,11 +43,11 @@ const CommodityGroupsList = ({ activeGroup, onGroupSelect, commodityCounts }: Co
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel className={`font-bold text-muted-foreground uppercase tracking-wider ${isMobile ? 'text-sm px-4 py-4' : 'text-xs px-2 py-3'}`}>
-        Commodity Groups
+      <SidebarGroupLabel className="px-3 pt-4 pb-1 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground/70">
+        Markets
       </SidebarGroupLabel>
       <SidebarGroupContent>
-        <SidebarMenu className={`space-y-2 ${isMobile ? 'px-4' : 'px-2'}`}>
+        <SidebarMenu className="space-y-0.5 px-2">
           {COMMODITY_GROUPS.map((group) => {
             const Icon = group.icon;
             const isActive = activeGroup === group.id;
@@ -58,24 +58,21 @@ const CommodityGroupsList = ({ activeGroup, onGroupSelect, commodityCounts }: Co
                 <SidebarMenuButton
                   isActive={isActive}
                   onClick={() => handleGroupSelect(group.id)}
-                  className={`flex items-center gap-3 rounded-lg transition-all duration-200 focus-ring ${
-                    isMobile 
-                      ? 'px-6 py-6 min-h-[72px] active:scale-95 touch-manipulation text-base' 
-                      : 'px-3 py-2'
-                  }`}
+                  className={`relative flex items-center gap-2.5 rounded-md transition-colors duration-100 ${
+                    isMobile ? 'px-3 py-3 min-h-[44px] text-sm' : 'px-2.5 py-1.5 text-[13px]'
+                  } ${isActive ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'}`}
                   aria-label={`View ${group.label} commodities (${count} available)`}
                   aria-pressed={isActive}
                 >
-                  <div className={`flex items-center justify-center w-8 h-8 rounded-lg ${group.color}`}>
-                    <Icon className="w-4 h-4" />
-                  </div>
+                  {isActive && (
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-[2px] rounded-r bg-primary" />
+                  )}
+                  <Icon className="w-4 h-4 shrink-0 opacity-80" />
                   {!collapsed && (
                     <>
-                      <div className="flex-1 min-w-0">
-                        <span className="font-bold text-foreground">{group.label}</span>
-                      </div>
-                      <span 
-                        className="text-xs bg-muted px-2 py-1 rounded-full font-semibold"
+                      <span className="flex-1 min-w-0 truncate font-medium">{group.label}</span>
+                      <span
+                        className="text-[11px] tabular-nums text-muted-foreground/70"
                         aria-label={`${count} commodities in this category`}
                       >
                         {count}

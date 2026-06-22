@@ -4,13 +4,14 @@ import {
   SidebarGroupLabel,
 } from "@/components/ui/sidebar";
 import { useSidebar } from "@/components/ui/sidebar";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MARKET_TOOLS, COMMUNITY_TOOLS, ACTIVITY_TOOLS, PRO_TOOLS } from "./constants";
 
 const MarketToolsList = () => {
   const { setOpenMobile } = useSidebar();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const isMobile = useIsMobile();
 
   const handleNavigate = (path: string) => {
@@ -23,71 +24,55 @@ const MarketToolsList = () => {
 
   const renderToolButton = (tool: any) => {
     const Icon = tool.icon;
-    
+    const isActive = pathname === tool.path || pathname.startsWith(tool.path + '/');
     return (
-      <div 
+      <button
         key={tool.id}
-        className={`rounded-lg ${tool.color} border cursor-pointer transition-all duration-200 ${
-          isMobile 
-            ? 'p-6 min-h-[72px] active:scale-95 touch-manipulation' 
-            : 'p-3'
-        }`}
+        type="button"
         onClick={() => handleNavigate(tool.path)}
+        className={`relative w-full flex items-center gap-2.5 rounded-md transition-colors duration-100 ${
+          isMobile ? 'px-3 py-3 min-h-[44px] text-sm' : 'px-2.5 py-1.5 text-[13px]'
+        } ${isActive ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'}`}
       >
-        <div className="flex justify-between items-center">
-          <span className={`font-semibold uppercase tracking-wider ${isMobile ? 'text-sm' : 'text-xs'}`}>
-            {tool.label}
-          </span>
-          <div className="flex items-center gap-1">
-            <Icon className="w-4 h-4" style={{ color: tool.color.includes('text-') ? undefined : 'currentColor' }} />
-          </div>
-        </div>
-      </div>
+        {isActive && (
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-[2px] rounded-r bg-primary" />
+        )}
+        <Icon className="w-4 h-4 shrink-0 opacity-80" />
+        <span className="flex-1 min-w-0 truncate text-left font-medium">{tool.label}</span>
+      </button>
     );
   };
 
+  const sectionLabel = "px-3 pt-5 pb-1 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground/70";
+  const sectionList = "space-y-0.5 px-2";
+
   return (
     <>
-      <SidebarGroup className="mt-8">
-        <SidebarGroupLabel className={`font-bold text-muted-foreground uppercase tracking-wider ${isMobile ? 'text-sm px-4 py-4' : 'text-xs px-2 py-3'}`}>
-          Market Tools
-        </SidebarGroupLabel>
+      <SidebarGroup>
+        <SidebarGroupLabel className={sectionLabel}>Tools</SidebarGroupLabel>
         <SidebarGroupContent>
-          <div className={`space-y-4 ${isMobile ? 'px-4 py-3' : 'px-2 py-3'}`}>
-            {MARKET_TOOLS.map(renderToolButton)}
-          </div>
+          <div className={sectionList}>{MARKET_TOOLS.map(renderToolButton)}</div>
         </SidebarGroupContent>
       </SidebarGroup>
 
-      <SidebarGroup className="mt-8">
-        <SidebarGroupLabel className={`font-bold text-muted-foreground uppercase tracking-wider ${isMobile ? 'text-sm px-4 py-4' : 'text-xs px-2 py-3'}`}>
-          Pro Tools
-        </SidebarGroupLabel>
+      <SidebarGroup>
+        <SidebarGroupLabel className={sectionLabel}>Pro</SidebarGroupLabel>
         <SidebarGroupContent>
-          <div className={`space-y-4 ${isMobile ? 'px-4 py-3' : 'px-2 py-3'}`}>
-            {PRO_TOOLS.map(renderToolButton)}
-          </div>
+          <div className={sectionList}>{PRO_TOOLS.map(renderToolButton)}</div>
         </SidebarGroupContent>
       </SidebarGroup>
 
-      <SidebarGroup className="mt-8">
-        <SidebarGroupLabel className={`font-bold text-muted-foreground uppercase tracking-wider ${isMobile ? 'text-sm px-4 py-4' : 'text-xs px-2 py-3'}`}>
-          Community & Learning
-        </SidebarGroupLabel>
+      <SidebarGroup>
+        <SidebarGroupLabel className={sectionLabel}>Insights</SidebarGroupLabel>
         <SidebarGroupContent>
-          <div className={`space-y-4 ${isMobile ? 'px-4 py-3' : 'px-2 py-3'}`}>
-            {COMMUNITY_TOOLS.map(renderToolButton)}
-          </div>
+          <div className={sectionList}>{COMMUNITY_TOOLS.map(renderToolButton)}</div>
         </SidebarGroupContent>
       </SidebarGroup>
-      <SidebarGroup className="mt-8">
-        <SidebarGroupLabel className={`font-bold text-muted-foreground uppercase tracking-wider ${isMobile ? 'text-sm px-4 py-4' : 'text-xs px-2 py-3'}`}>
-          Activity & Tracking
-        </SidebarGroupLabel>
+
+      <SidebarGroup>
+        <SidebarGroupLabel className={sectionLabel}>Status</SidebarGroupLabel>
         <SidebarGroupContent>
-          <div className={`space-y-4 ${isMobile ? 'px-4 py-3' : 'px-2 py-3'}`}>
-            {ACTIVITY_TOOLS.map(renderToolButton)}
-          </div>
+          <div className={sectionList}>{ACTIVITY_TOOLS.map(renderToolButton)}</div>
         </SidebarGroupContent>
       </SidebarGroup>
     </>
