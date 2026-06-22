@@ -92,9 +92,14 @@
     --app-top-buffer: calc(env(safe-area-inset-top, 0px) + 140px);
   }
 
-  /* Push native app top chrome well below Android's overlaid status bar. */
-  .app-top-bar {
+  /* Push the entire app shell below Android's overlaid status bar,
+     and shrink the scroll window by the same amount so the page
+     doesn't grow taller than the visible viewport. */
+  html.capacitor-native body {
     padding-top: var(--app-top-buffer);
+  }
+  html.capacitor-native #root {
+    min-height: calc(100vh - var(--app-top-buffer));
   }
 
   /* Safety net: prevent any descendant from causing horizontal page scroll */
