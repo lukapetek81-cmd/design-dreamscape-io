@@ -86,6 +86,7 @@
 
   :root {
     --app-top-buffer: 0px;
+    --app-top-bar-height: 3.5rem; /* matches h-14 in the header row */
   }
 
   html.capacitor-native {
@@ -96,8 +97,21 @@
   .app-top-bar {
     padding-top: var(--app-top-buffer);
   }
-  /* Opaque cover behind Android's overlaid status bar so page content
-     scrolling past the sticky header is never visible underneath it. */
+  /* Native: truly pin the top bar with position:fixed (position:sticky
+     can't pin here because ancestors use overflow-x: clip). Offset the
+     page content by the bar's full height so nothing renders underneath. */
+  html.capacitor-native .app-top-bar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 60;
+  }
+  html.capacitor-native body:has(.app-top-bar) {
+    padding-top: calc(var(--app-top-buffer) + var(--app-top-bar-height));
+  }
+  /* Opaque cover behind Android's overlaid status bar — sits above the
+     fixed header so its border-bottom never bleeds into the status area. */
   html.capacitor-native body::before {
     content: "";
     position: fixed;
@@ -106,11 +120,8 @@
     right: 0;
     height: var(--app-top-buffer);
     background: hsl(var(--background));
-    z-index: 60;
+    z-index: 61;
     pointer-events: none;
-  }
-  html.capacitor-native .app-top-bar {
-    z-index: 50;
   }
 
   /* Safety net: prevent any descendant from causing horizontal page scroll */
