@@ -101,6 +101,24 @@
   html.capacitor-native #root {
     min-height: calc(100vh - var(--app-top-buffer));
   }
+  /* Opaque cover behind Android's overlaid status bar so scrolling
+     content is never visible underneath it. */
+  html.capacitor-native body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--app-top-buffer);
+    background: hsl(var(--background));
+    z-index: 50;
+    pointer-events: none;
+  }
+  /* Sticky top bar must stick BELOW the status-bar cover, not under it. */
+  html.capacitor-native .app-top-bar {
+    top: var(--app-top-buffer) !important;
+    z-index: 51;
+  }
 
   /* Safety net: prevent any descendant from causing horizontal page scroll */
   body * {
