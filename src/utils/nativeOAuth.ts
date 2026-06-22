@@ -63,19 +63,23 @@ export const redirectNativeOAuthCallbackFromWeb = () => {
   const appCallbackUrl = buildNativeAuthCallbackUrl(callbackUrl.href);
   const androidIntentUrl = buildAndroidIntentCallbackUrl(callbackUrl.href);
 
+  const openInstalledApp = () => {
+    window.location.href = androidIntentUrl;
+  };
+
   window.setTimeout(() => {
     document.body.innerHTML = `
       <main style="min-height:100vh;display:grid;place-items:center;background:#0f172a;color:#f8fafc;font-family:system-ui,sans-serif;padding:24px;text-align:center">
         <div>
           <h1 style="font-size:22px;margin:0 0 8px">Opening Commodity Hub</h1>
           <p style="margin:0 0 20px;color:#cbd5e1">If the app did not open, return to your installed Commodity Hub app.</p>
-          <a href="${androidIntentUrl}" style="color:#2dd4bf">Open app</a>
+          <button id="open-app" type="button" style="appearance:none;border:0;border-radius:8px;background:#2dd4bf;color:#042f2e;font-weight:700;padding:12px 18px">Open app</button>
         </div>
       </main>
     `;
-    window.setTimeout(() => window.location.assign(appCallbackUrl), 900);
-  }, 900);
+    document.getElementById('open-app')?.addEventListener('click', openInstalledApp);
+  }, 1200);
 
-  window.location.replace(androidIntentUrl);
+  openInstalledApp();
   return true;
 };
