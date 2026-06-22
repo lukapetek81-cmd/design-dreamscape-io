@@ -89,12 +89,10 @@
   }
 
   html.capacitor-native {
-    --app-top-buffer: max(56px, calc(env(safe-area-inset-top, 0px) + 24px));
+    --app-top-buffer: calc(env(safe-area-inset-top, 0px) + 140px);
   }
 
-  /* Push the top bar's own content down so the title clears the status bar.
-     Using padding on the header itself (instead of #root padding + sticky top
-     offset) guarantees the title is visible both at rest and while scrolling. */
+  /* Push native app top chrome well below Android's overlaid status bar. */
   .app-top-bar {
     padding-top: var(--app-top-buffer);
   }
