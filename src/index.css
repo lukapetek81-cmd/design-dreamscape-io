@@ -84,6 +84,15 @@
     overscroll-behavior-x: none;
   }
 
+  html.capacitor-native body {
+    padding-top: max(140px, calc(env(safe-area-inset-top, 0px) + 140px));
+  }
+
+  html.capacitor-native .app-top-bar {
+    top: 0;
+    padding-top: 0 !important;
+  }
+
   /* Safety net: prevent any descendant from causing horizontal page scroll */
   body * {
     box-sizing: border-box;
