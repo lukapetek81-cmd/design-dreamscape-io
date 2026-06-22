@@ -1,62 +1,90 @@
-## Goal
+# Professional Redesign — Linear-style, full polish
 
-Stop the Android startup crash by completing the Firebase configuration that `@capacitor/push-notifications` requires, and harden the JS side so a missing/broken Firebase config never crashes the app again.
+A complete visual overhaul in the spirit of Linear / modern SaaS: refined dark neutrals, a single restrained purple accent, crisp Space Grotesk + DM Sans typography, and consistent spacing/hierarchy across every page. No teal, no purple gradients, no "vibe coded" tells.
 
-## Root cause (recap)
+## Design language
 
-`@capacitor/push-notifications` merges a `FirebaseMessagingService` and `FirebaseInitProvider` into `AndroidManifest.xml`. The `FirebaseInitProvider` runs before any JS, calls `FirebaseApp.initializeApp()`, and reads `google-services.json`. The file is missing, so the process crashes immediately on launch. Your `app/build.gradle` already conditionally applies `com.google.gms.google-services`, so adding the file is the only missing piece at the Gradle level — but auto-init in the manifest is what's actually killing the app.
+**Palette (tokens in `src/index.css`)**
+- `--background` `#08090a` (near-black, slight warm bias)
+- `--card` / `--popover` `#0e0f12`
+- `--muted` `#1c1d22`
+- `--border` `#23252b` (1px, never heavier)
+- `--foreground` `#e6e7eb`
+- `--muted-foreground` `#8a8f98`
+- `--primary` `#5e6ad2` (Linear-style indigo — the only saturated color, used sparingly)
+- `--accent` `#3d4ba8` (hover/pressed only)
+- `--success` `#4cb782`, `--destructive` `#eb5757`, `--warning` `#f2c94c` (data-only, never decorative)
+- Remove all teal references and purple gradients. No `bg-gradient-to-*` on chrome.
 
-## You provide (one-time, outside the codebase)
+**Typography**
+- Install `@fontsource/space-grotesk` + `@fontsource/dm-sans`, import in `src/main.tsx`, wire into `tailwind.config.ts`.
+- Headings: Space Grotesk, tight tracking (`-0.02em`), weight 500–600 (not 700+).
+- Body/UI: DM Sans, 14px base on desktop, 15px mobile. Drop the current giant responsive H1 scale.
+- Numbers: keep JetBrains Mono, tabular-nums everywhere prices/changes render.
 
-1. Create a Firebase project at https://console.firebase.google.com (free Spark plan is fine).
-2. Add an Android app with package name **`app.lovable.c8fabd7a96c74aff8d7b001690ec23c7`** (must match `capacitor.config.ts` exactly — case-sensitive).
-3. Download the generated **`google-services.json`** and place it at **`android/app/google-services.json`** in your local clone after `git pull`. Do not commit secrets you care about — this file contains only public client IDs and is the standard FCM workflow, but treat per your policy.
-4. In Firebase Console → Project Settings → Cloud Messaging, note the **Server key / FCM HTTP v1 service account JSON**. We already have the `FCM_SERVICE_ACCOUNT_JSON` Supabase secret configured, so the server side is ready — just confirm it belongs to the same Firebase project you just created. If it doesn't, re-upload the new project's service account JSON to that secret.
+**Surfaces & depth**
+- Flat. One elevation level (subtle 1px border + `rgba(0,0,0,0.4)` shadow on popovers only).
+- Remove `shadow-soft/medium/strong` overuse, `backdrop-blur`, glass effects, `hover:scale`, `animate-float`, `animate-pulse-soft`, shimmer text.
+- Radii: `--radius: 0.5rem` (down from 0.75). Buttons `rounded-md`, cards `rounded-lg`.
 
-## I will change in the codebase
+**Motion**
+- 120–150ms ease-out only. No bounces, no float, no shine. Hover = subtle bg shift, not scale.
 
-### `android/app/build.gradle`
-Add the Firebase BoM + messaging dependency so the runtime classpath actually contains the Firebase classes the plugin's manifest entries reference. Without these, even with `google-services.json` present, the app can crash on init:
+## Scope — every page
 
-```gradle
-dependencies {
-    // ...existing
-    implementation platform('com.google.firebase:firebase-bom:33.5.1')
-    implementation 'com.google.firebase:firebase-messaging'
-}
+**Chrome**
+- Rebuild `CommoditySidebar` in Linear style: 240px, single-column, no group cards, subtle section labels in `--muted-foreground` uppercase 11px, active row = `bg-muted` + left 2px primary bar.
+- New top bar: 48px, left-aligned breadcrumb, right-aligned search + currency + profile. Remove decorative elements.
+- Consistent page header component: H1 (24px), one-line description, action buttons right-aligned.
+
+**Pages (full pass)**
+- Dashboard, Portfolio, Watchlists, Price Alerts, COT Reports, Economic Calendar, Forward Curves, Term Structure, Vol Cone, Roll Scanner, Spread/Position Calculators, Market Screener, Market Correlation, Market Sentiment, Market Status, News Settings, Expert Insights, Learning Hub, Copilot, Auth, Settings.
+- Each gets: standardized page header, consistent card grid, real empty states, skeleton loaders matching final layout (no spinners), proper error states.
+
+**Components**
+- `CommodityCard`: denser, mono price, single-line change with arrow glyph (no colored pills), sparkline inline.
+- Charts: remove drop shadows, thin 1px gridlines `--border`, axis labels `--muted-foreground` 11px, single series color = `--primary`, comparison series = neutral whites/grays not rainbow.
+- Tables: zebra removed, row hover only, sticky header, right-aligned numerics.
+- Buttons: ghost = default for secondary actions, primary reserved for one CTA per view.
+- Toasts/dialogs: flat, single border, no blur.
+
+**Micro-interactions**
+- Tab/route transitions: 100ms opacity only.
+- Focus rings: 2px `--primary` at 40% opacity, no offset glow.
+- Keyboard shortcuts visible in menus (⌘K palette already exists — surface it).
+
+## Technical changes
+
+```text
+src/index.css            → rewrite :root + .dark tokens, delete shimmer/shine/float/glass utilities
+tailwind.config.ts       → fontFamily.sans = Space Grotesk fallback chain irrelevant; body = DM Sans;
+                           remove soft/medium/strong shadows, add single `shadow-popover`
+src/main.tsx             → import '@fontsource/space-grotesk/500.css' etc.
+src/App.css              → delete (legacy Vite template leftovers leaking #root max-width)
+src/components/CommoditySidebar.tsx + sidebar/*  → rebuild Linear-style
+src/components/sidebar/ThemeSwitcher.tsx         → simplify
+src/components/CommodityCard.tsx                 → denser layout, mono numerics
+src/components/charts/*                          → strip shadows, neutral palette, thin gridlines
+src/components/ui/{card,button,input,dialog,
+  popover,toast,tabs,table,badge}.tsx            → variant cleanup, remove gradient/glass variants
+src/components/mobile/*                          → remove scale/bounce, keep haptics
+src/components/loading/LoadingSkeletons.tsx      → rebuild skeletons matching new layouts
+src/pages/*.tsx (all 25+)                        → apply PageHeader component, fix spacing,
+                                                   replace ad-hoc styling with tokens
 ```
 
-### `android/app/src/main/AndroidManifest.xml`
-Add **`firebase_messaging_auto_init_enabled` = false** and **`firebase_analytics_collection_enabled` = false** meta-data inside `<application>`. This prevents the FirebaseInitProvider from hard-crashing if `google-services.json` is ever missing again, and defers FCM init until our JS code explicitly calls `PushNotifications.register()` after the user is signed in.
-
-```xml
-<meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false" />
-<meta-data android:name="firebase_analytics_collection_enabled" android:value="false" />
+Install:
+```text
+bun add @fontsource/space-grotesk @fontsource/dm-sans
 ```
 
-(`@capacitor/push-notifications` enables messaging automatically when `register()` is called — these flags only stop the *manifest-driven* auto-init that runs before JS.)
-
-### `src/hooks/usePushNotifications.ts`
-Already defensive (try/catch around dynamic import + register). Add one safety net: wrap `register()` itself in its own try/catch so a Firebase init failure on the user's device logs a warning instead of bubbling. No functional change in the happy path.
-
-### `.gitignore`
-Add `android/app/google-services.json` so each developer/CI environment supplies its own file via a build step (Lovable preview doesn't need it). Update `mem://launch/android-signing` with the new "drop google-services.json into android/app/ before `npx cap sync android`" step.
-
-## Verification flow (you run locally)
-
-```
-git pull
-npm install --legacy-peer-deps         # @capacitor/push-notifications@^8 vs @capacitor/core@^7 peer warning
-# drop google-services.json into android/app/
-npm run build
-npx cap sync android
-npx cap run android
-```
-
-Expected: app launches normally; after sign-in, Android shows the notifications permission prompt; if granted, an FCM token registers via the `register-device-token` edge function. If anything still crashes, capture `adb logcat | grep -E "FirebaseApp|AndroidRuntime"` and paste the first 30 lines — the line that contains "Default FirebaseApp is not initialized" or "google-app-id" tells us exactly what's missing.
+No backend, RLS, edge function, or data-layer changes. No new routes. Capacitor config untouched.
 
 ## Out of scope
+- Light theme polish (dark is primary; light gets token updates only, not page-by-page review).
+- New features or content changes.
+- Marketing/landing page (separate concern).
 
-- Notification icon/colors customization, channel setup, deep-link payload handling — separate task once basic delivery works.
-- iOS APNs setup — not requested.
-- Re-pinning `@capacitor/push-notifications` down to v7 (we keep v8 and accept the peer warning with `--legacy-peer-deps`, since v8 contains the Android 14 foreground-service fixes you want).
+## Risks
+- Large surface area — I'll work page-by-page so the preview stays usable between edits.
+- Some custom one-off styling in pages may need judgment calls; I'll default to tokens over preserving quirks.

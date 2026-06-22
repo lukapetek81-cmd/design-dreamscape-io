@@ -2,39 +2,39 @@ import { Zap, Coins, Wheat, Beef, Briefcase, BarChart3, Star, Filter, Calendar, 
 import { CommodityGroup, MarketTool } from "./types";
 
 export const COMMODITY_GROUPS: CommodityGroup[] = [
-  { id: "energy", label: "Energy", icon: Zap, color: "text-orange-500" },
-  { id: "metals", label: "Metals", icon: Coins, color: "text-yellow-500" },
-  { id: "grains", label: "Grains", icon: Wheat, color: "text-green-500" },
-  { id: "livestock", label: "Livestock", icon: Beef, color: "text-red-500" },
-  { id: "industrials", label: "Industrials", icon: Factory, color: "text-cyan-500" },
+  { id: "energy", label: "Energy", icon: Zap, color: "text-muted-foreground" },
+  { id: "metals", label: "Metals", icon: Coins, color: "text-muted-foreground" },
+  { id: "grains", label: "Grains", icon: Wheat, color: "text-muted-foreground" },
+  { id: "livestock", label: "Livestock", icon: Beef, color: "text-muted-foreground" },
+  { id: "industrials", label: "Industrials", icon: Factory, color: "text-muted-foreground" },
 ];
 
 export const MARKET_TOOLS: MarketTool[] = [
-  { id: "copilot", label: "AI Copilot", icon: Bot, color: "bg-purple-50 dark:bg-purple-950/20 border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300", path: "/copilot" },
-  { id: "portfolio", label: "Portfolio", icon: Briefcase, color: "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400", path: "/portfolio" },
-  { id: "alerts", label: "Price Alerts", icon: Bell, color: "bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400", path: "/alerts" },
-  { id: "correlation", label: "Correlation", icon: BarChart3, color: "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400", path: "/correlation" },
-  { id: "watchlists", label: "Watchlists", icon: Star, color: "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400", path: "/watchlists" },
-  { id: "screener", label: "Screener", icon: Filter, color: "bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800 text-orange-600 dark:text-orange-400", path: "/screener" },
-  { id: "calendar", label: "Calendar", icon: Calendar, color: "bg-cyan-50 dark:bg-cyan-950/20 border-cyan-200 dark:border-cyan-800 text-cyan-600 dark:text-cyan-400", path: "/calendar" },
-  { id: "position-calculator", label: "Position Size Calculator", icon: Calculator, color: "bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400", path: "/position-calculator" },
+  { id: "copilot", label: "AI Copilot", icon: Bot, color: "text-foreground", path: "/copilot" },
+  { id: "portfolio", label: "Portfolio", icon: Briefcase, color: "text-foreground", path: "/portfolio" },
+  { id: "alerts", label: "Price Alerts", icon: Bell, color: "text-foreground", path: "/alerts" },
+  { id: "correlation", label: "Correlation", icon: BarChart3, color: "text-foreground", path: "/correlation" },
+  { id: "watchlists", label: "Watchlists", icon: Star, color: "text-foreground", path: "/watchlists" },
+  { id: "screener", label: "Screener", icon: Filter, color: "text-foreground", path: "/screener" },
+  { id: "calendar", label: "Calendar", icon: Calendar, color: "text-foreground", path: "/calendar" },
+  { id: "position-calculator", label: "Position Size Calculator", icon: Calculator, color: "text-foreground", path: "/position-calculator" },
 ];
 
 export const PRO_TOOLS: MarketTool[] = [
-  { id: "forward-curves", label: "Forward Curves", icon: TrendingUp, color: "bg-indigo-50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400", path: "/forward-curves" },
-  { id: "spreads", label: "Spread Calculator", icon: GitCompare, color: "bg-teal-50 dark:bg-teal-950/20 border-teal-200 dark:border-teal-800 text-teal-600 dark:text-teal-400", path: "/spreads" },
-  { id: "cot", label: "COT Reports", icon: Users, color: "bg-fuchsia-50 dark:bg-fuchsia-950/20 border-fuchsia-200 dark:border-fuchsia-800 text-fuchsia-600 dark:text-fuchsia-400", path: "/cot" },
-  { id: "roll-scanner", label: "Roll Yield Scanner", icon: ArrowUpDown, color: "bg-violet-50 dark:bg-violet-950/20 border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400", path: "/roll-scanner" },
-  { id: "vol-cone", label: "Volatility Cone", icon: Gauge, color: "bg-pink-50 dark:bg-pink-950/20 border-pink-200 dark:border-pink-800 text-pink-600 dark:text-pink-400", path: "/volatility-cone" },
-  { id: "term-structure", label: "Term Structure Shift", icon: Layers, color: "bg-sky-50 dark:bg-sky-950/20 border-sky-200 dark:border-sky-800 text-sky-600 dark:text-sky-400", path: "/term-structure" },
+  { id: "forward-curves", label: "Forward Curves", icon: TrendingUp, color: "text-foreground", path: "/forward-curves" },
+  { id: "spreads", label: "Spread Calculator", icon: GitCompare, color: "text-foreground", path: "/spreads" },
+  { id: "cot", label: "COT Reports", icon: Users, color: "text-foreground", path: "/cot" },
+  { id: "roll-scanner", label: "Roll Yield Scanner", icon: ArrowUpDown, color: "text-foreground", path: "/roll-scanner" },
+  { id: "vol-cone", label: "Volatility Cone", icon: Gauge, color: "text-foreground", path: "/volatility-cone" },
+  { id: "term-structure", label: "Term Structure Shift", icon: Layers, color: "text-foreground", path: "/term-structure" },
 ];
 
 export const COMMUNITY_TOOLS: MarketTool[] = [
-  { id: "insights", label: "Expert Insights", icon: Lightbulb, color: "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800 text-yellow-600 dark:text-yellow-400", path: "/insights" },
-  { id: "learning", label: "Learning Hub", icon: GraduationCap, color: "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400", path: "/learning" },
-  { id: "sentiment", label: "Market Sentiment", icon: Users, color: "bg-violet-50 dark:bg-violet-950/20 border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400", path: "/sentiment" },
+  { id: "insights", label: "Expert Insights", icon: Lightbulb, color: "text-foreground", path: "/insights" },
+  { id: "learning", label: "Learning Hub", icon: GraduationCap, color: "text-foreground", path: "/learning" },
+  { id: "sentiment", label: "Market Sentiment", icon: Users, color: "text-foreground", path: "/sentiment" },
 ];
 
 export const ACTIVITY_TOOLS: MarketTool[] = [
-  { id: "market-status", label: "Market Status", icon: Activity, color: "bg-slate-50 dark:bg-slate-950/20 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400", path: "/market-status" },
+  { id: "market-status", label: "Market Status", icon: Activity, color: "text-foreground", path: "/market-status" },
 ];
