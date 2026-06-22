@@ -248,7 +248,7 @@ const MarketCorrelation = () => {
                         return (
                           <div 
                             key={`${commodity1.symbol}-${commodity2.symbol}-cell-${idx2}`}
-                            className={`p-2 text-xs font-bold text-center rounded transition-all hover:scale-110 cursor-pointer ${getCorrelationColor(correlation)} ${
+                            className={`p-2 text-xs font-medium text-center rounded transition-colors cursor-pointer hover:opacity-80 ${getCorrelationColor(correlation)} ${
                               correlation > 0 ? 'text-white' : correlation < -0.5 ? 'text-white' : 'text-gray-800'
                             }`}
                             title={`${commodity1.name} vs ${commodity2.name}: ${correlation.toFixed(3)} (${getCorrelationIntensity(correlation)})`}

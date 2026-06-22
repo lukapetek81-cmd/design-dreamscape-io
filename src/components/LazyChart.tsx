@@ -32,7 +32,7 @@ interface LazyChartProps {
 
 // Chart skeleton component
 const ChartSkeleton = () => (
-  <Card className="box-border p-3 sm:p-6 mt-4 sm:mt-6 w-full min-w-0 max-w-full overflow-hidden bg-gradient-to-br from-card/80 to-muted/20 border border-border/50 shadow-soft">
+  <Card className="box-border p-3 sm:p-6 mt-4 sm:mt-6 w-full min-w-0 max-w-full overflow-hidden bg-card border border-border">
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-lg bg-primary/10 text-primary">
@@ -50,7 +50,7 @@ const ChartSkeleton = () => (
       </div>
     </div>
     
-    <div className="h-[200px] sm:h-[250px] lg:h-[300px] w-full min-w-0 max-w-full overflow-hidden p-2 sm:p-4 bg-gradient-to-br from-background/50 to-muted/20 rounded-xl border border-border/30">
+    <div className="h-[200px] sm:h-[250px] lg:h-[300px] w-full min-w-0 max-w-full overflow-hidden p-2 sm:p-4 bg-muted/20 rounded-md border border-border">
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-center space-y-3">
           <div className="w-12 h-12 mx-auto bg-muted/50 rounded-full flex items-center justify-center">

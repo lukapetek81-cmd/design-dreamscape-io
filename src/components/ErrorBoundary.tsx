@@ -69,7 +69,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-muted/20">
+        <div className="min-h-screen flex items-center justify-center p-4 bg-background">
           <Card className="max-w-md w-full">
             <CardContent className="p-6 text-center space-y-6">
               <div className="w-16 h-16 mx-auto bg-destructive/10 rounded-full flex items-center justify-center">

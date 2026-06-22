@@ -125,7 +125,7 @@ const CommodityNews = ({ commodity }: CommodityNewsProps) => {
   };
 
   return (
-    <Card className="box-border p-3 sm:p-6 mt-4 sm:mt-6 w-full min-w-0 max-w-full overflow-hidden bg-gradient-to-br from-card/80 to-muted/20 border border-border/50 shadow-soft hover:shadow-medium transition-all duration-300 animate-fade-in">
+    <Card className="box-border p-3 sm:p-6 mt-4 sm:mt-6 w-full min-w-0 max-w-full overflow-hidden bg-card border border-border animate-fade-in">
       <div className="flex items-center justify-between mb-4 sm:mb-6 min-w-0 max-w-full overflow-hidden">
         <div className="flex items-center gap-3 min-w-0">
           <div className="p-2 sm:p-3 rounded-xl bg-blue-100 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400">

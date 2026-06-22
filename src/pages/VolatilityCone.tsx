@@ -40,7 +40,7 @@ const VolatilityCone: React.FC = () => {
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Activity className="w-6 h-6 text-primary" />
               Volatility Cone
-              <Badge className="ml-1 bg-gradient-to-r from-violet-600 to-indigo-600">Pro</Badge>
+              <Badge className="ml-1 bg-primary/15 text-primary border-transparent">Pro</Badge>
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               Annualized realized vol vs 5-year historical distribution across 10/20/60/120-day windows.

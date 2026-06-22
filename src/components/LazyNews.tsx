@@ -14,7 +14,7 @@ interface LazyNewsProps {
 
 // News skeleton component
 const NewsSkeleton = () => (
-  <Card className="box-border p-3 sm:p-6 mt-4 sm:mt-6 w-full min-w-0 max-w-[calc(100vw-1rem)] sm:max-w-full overflow-hidden bg-gradient-to-br from-card/80 to-muted/20 border border-border/50 shadow-soft">
+  <Card className="box-border p-3 sm:p-6 mt-4 sm:mt-6 w-full min-w-0 max-w-[calc(100vw-1rem)] sm:max-w-full overflow-hidden bg-card border border-border">
     <div className="flex items-center gap-3 mb-4">
       <div className="p-2 rounded-lg bg-primary/10 text-primary">
         <Newspaper className="w-4 h-4" />

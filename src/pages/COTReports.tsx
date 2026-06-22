@@ -69,7 +69,7 @@ const COTReports: React.FC = () => {
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Users className="w-6 h-6 text-primary" />
             COT Reports
-            <Badge variant="default" className="bg-gradient-to-r from-violet-600 to-indigo-600">Pro</Badge>
+            <Badge variant="default" className="bg-primary/15 text-primary border-transparent">Pro</Badge>
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             CFTC Commitments of Traders — track managed-money positioning week-by-week.

@@ -92,14 +92,14 @@ const CommodityGroupSection = React.memo(({
   if (commodities.length === 0) return null;
 
   return (
-    <Card className="w-full min-w-0 max-w-full overflow-hidden bg-gradient-to-r from-card via-card to-card/80 border border-border/50 shadow-soft">
+    <Card className="w-full min-w-0 max-w-full overflow-hidden bg-card border border-border">
       <div 
-        className="p-4 sm:p-6 border-b border-border/30 bg-gradient-to-r from-background/50 to-muted/20 cursor-pointer hover:from-background/70 hover:to-muted/30 transition-all duration-300 mobile-touch-target"
+        className="p-4 sm:p-6 border-b border-border bg-muted/20 cursor-pointer hover:bg-muted/30 transition-colors duration-150 mobile-touch-target"
         onClick={handleToggle}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 sm:gap-4">
-            <div className={`p-2 sm:p-3 rounded-xl ${groupColor} transition-all duration-300 hover:scale-110`}>
+            <div className={`p-2 sm:p-3 rounded-md ${groupColor} transition-colors duration-150`}>
               {groupIcon}
             </div>
             <div>

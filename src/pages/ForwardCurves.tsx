@@ -72,7 +72,7 @@ const ForwardCurves: React.FC = () => {
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Activity className="w-6 h-6 text-primary" />
               Forward Curves
-              <Badge variant="default" className="ml-1 bg-gradient-to-r from-violet-600 to-indigo-600">Pro</Badge>
+              <Badge variant="default" className="ml-1 bg-primary/15 text-primary border-transparent">Pro</Badge>
               {data?.source === 'market' && (
                 <Badge variant="outline" className="ml-1 border-emerald-500/40 text-emerald-600 dark:text-emerald-400">Live EOD</Badge>
               )}
