@@ -12,6 +12,7 @@ import '@fontsource/dm-sans/500.css';
 import '@fontsource/dm-sans/600.css';
 import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/500.css';
+import { Capacitor } from '@capacitor/core';
 import { redirectNativeOAuthCallbackFromWeb } from './utils/nativeOAuth';
 
 // Default to dark theme unless the user explicitly picked another.
@@ -24,6 +25,10 @@ import { redirectNativeOAuthCallbackFromWeb } from './utils/nativeOAuth';
   document.documentElement.classList.add(resolved);
   if (!saved) localStorage.setItem('theme', 'dark');
 })();
+
+if (Capacitor.isNativePlatform()) {
+  document.documentElement.classList.add('capacitor-native');
+}
 
 if (!redirectNativeOAuthCallbackFromWeb()) {
   const root = createRoot(document.getElementById("root")!);
