@@ -1,90 +1,31 @@
-# Professional Redesign — Linear-style, full polish
+## Problem
 
-A complete visual overhaul in the spirit of Linear / modern SaaS: refined dark neutrals, a single restrained purple accent, crisp Space Grotesk + DM Sans typography, and consistent spacing/hierarchy across every page. No teal, no purple gradients, no "vibe coded" tells.
+Two related bugs in native Google sign-in:
 
-## Design language
+1. **Wrong Android package name in the OAuth bridge.** `src/utils/nativeOAuth.ts` hardcodes `ANDROID_PACKAGE_NAME = 'com.commodityhub.app'`, but the actual installed app id (from `capacitor.config.ts` and `AndroidManifest.xml`) is `app.lovable.c8fabd7a96c74aff8d7b001690ec23c7`. The `intent://...;package=com.commodityhub.app;...` URL therefore can't resolve the installed app, so Android falls back to the browser and the session lands there instead of in the app.
 
-**Palette (tokens in `src/index.css`)**
-- `--background` `#08090a` (near-black, slight warm bias)
-- `--card` / `--popover` `#0e0f12`
-- `--muted` `#1c1d22`
-- `--border` `#23252b` (1px, never heavier)
-- `--foreground` `#e6e7eb`
-- `--muted-foreground` `#8a8f98`
-- `--primary` `#5e6ad2` (Linear-style indigo — the only saturated color, used sparingly)
-- `--accent` `#3d4ba8` (hover/pressed only)
-- `--success` `#4cb782`, `--destructive` `#eb5757`, `--warning` `#f2c94c` (data-only, never decorative)
-- Remove all teal references and purple gradients. No `bg-gradient-to-*` on chrome.
+2. **The bridge depends on the published web build being current.** Native sign-in redirects to `https://commodity-hub.lovable.app/?native=1`, which runs `redirectNativeOAuthCallbackFromWeb` to bounce the `?code=...` back into the app. If that hosted build is stale (older than what's installed on the device), users perceive sign-in as "out of sync." A direct `commodityhub://auth-callback` redirect from Supabase removes the dependency entirely — Chrome Custom Tabs honor it via the existing `commodityhub` intent filter in `AndroidManifest.xml`, and `useCapacitorAuthDeepLink` already handles both PKCE and implicit payloads.
 
-**Typography**
-- Install `@fontsource/space-grotesk` + `@fontsource/dm-sans`, import in `src/main.tsx`, wire into `tailwind.config.ts`.
-- Headings: Space Grotesk, tight tracking (`-0.02em`), weight 500–600 (not 700+).
-- Body/UI: DM Sans, 14px base on desktop, 15px mobile. Drop the current giant responsive H1 scale.
-- Numbers: keep JetBrains Mono, tabular-nums everywhere prices/changes render.
+## Plan
 
-**Surfaces & depth**
-- Flat. One elevation level (subtle 1px border + `rgba(0,0,0,0.4)` shadow on popovers only).
-- Remove `shadow-soft/medium/strong` overuse, `backdrop-blur`, glass effects, `hover:scale`, `animate-float`, `animate-pulse-soft`, shimmer text.
-- Radii: `--radius: 0.5rem` (down from 0.75). Buttons `rounded-md`, cards `rounded-lg`.
+1. **Fix the package name** in `src/utils/nativeOAuth.ts`:
+   - `ANDROID_PACKAGE_NAME = 'app.lovable.c8fabd7a96c74aff8d7b001690ec23c7'`
+   - Keeps the web bridge working as a fallback for users whose Supabase project still has only the hosted URL whitelisted.
 
-**Motion**
-- 120–150ms ease-out only. No bounces, no float, no shine. Hover = subtle bg shift, not scale.
+2. **Prefer the direct app-scheme redirect on native** in `src/contexts/AuthContext.tsx`:
+   - Change `redirectTo` for native from `NATIVE_OAUTH_WEB_BRIDGE_URL` to `NATIVE_AUTH_CALLBACK_URL` (`commodityhub://auth-callback`).
+   - Leaves `skipBrowserRedirect: true` and the `Browser.open(...)` Custom-Tabs flow untouched, so the existing deep-link listener picks the callback up and completes the session in-app.
 
-## Scope — every page
+3. **Supabase dashboard step (user action, documented in the response):**
+   - Add `commodityhub://auth-callback` to **Authentication → URL Configuration → Redirect URLs** so Supabase will accept the native redirect. The hosted bridge URL stays whitelisted as fallback.
 
-**Chrome**
-- Rebuild `CommoditySidebar` in Linear style: 240px, single-column, no group cards, subtle section labels in `--muted-foreground` uppercase 11px, active row = `bg-muted` + left 2px primary bar.
-- New top bar: 48px, left-aligned breadcrumb, right-aligned search + currency + profile. Remove decorative elements.
-- Consistent page header component: H1 (24px), one-line description, action buttons right-aligned.
+4. **Verification after rebuild + `npx cap sync android`:**
+   - Tap "Continue with Google" → Custom Tabs opens → after consent the browser closes and the user lands back inside the app, signed in.
+   - Confirm via `adb logcat` that `[OAuth] Session established via PKCE` fires.
 
-**Pages (full pass)**
-- Dashboard, Portfolio, Watchlists, Price Alerts, COT Reports, Economic Calendar, Forward Curves, Term Structure, Vol Cone, Roll Scanner, Spread/Position Calculators, Market Screener, Market Correlation, Market Sentiment, Market Status, News Settings, Expert Insights, Learning Hub, Copilot, Auth, Settings.
-- Each gets: standardized page header, consistent card grid, real empty states, skeleton loaders matching final layout (no spinners), proper error states.
+## Files touched
 
-**Components**
-- `CommodityCard`: denser, mono price, single-line change with arrow glyph (no colored pills), sparkline inline.
-- Charts: remove drop shadows, thin 1px gridlines `--border`, axis labels `--muted-foreground` 11px, single series color = `--primary`, comparison series = neutral whites/grays not rainbow.
-- Tables: zebra removed, row hover only, sticky header, right-aligned numerics.
-- Buttons: ghost = default for secondary actions, primary reserved for one CTA per view.
-- Toasts/dialogs: flat, single border, no blur.
+- `src/utils/nativeOAuth.ts` — package id constant
+- `src/contexts/AuthContext.tsx` — `redirectTo` on native
 
-**Micro-interactions**
-- Tab/route transitions: 100ms opacity only.
-- Focus rings: 2px `--primary` at 40% opacity, no offset glow.
-- Keyboard shortcuts visible in menus (⌘K palette already exists — surface it).
-
-## Technical changes
-
-```text
-src/index.css            → rewrite :root + .dark tokens, delete shimmer/shine/float/glass utilities
-tailwind.config.ts       → fontFamily.sans = Space Grotesk fallback chain irrelevant; body = DM Sans;
-                           remove soft/medium/strong shadows, add single `shadow-popover`
-src/main.tsx             → import '@fontsource/space-grotesk/500.css' etc.
-src/App.css              → delete (legacy Vite template leftovers leaking #root max-width)
-src/components/CommoditySidebar.tsx + sidebar/*  → rebuild Linear-style
-src/components/sidebar/ThemeSwitcher.tsx         → simplify
-src/components/CommodityCard.tsx                 → denser layout, mono numerics
-src/components/charts/*                          → strip shadows, neutral palette, thin gridlines
-src/components/ui/{card,button,input,dialog,
-  popover,toast,tabs,table,badge}.tsx            → variant cleanup, remove gradient/glass variants
-src/components/mobile/*                          → remove scale/bounce, keep haptics
-src/components/loading/LoadingSkeletons.tsx      → rebuild skeletons matching new layouts
-src/pages/*.tsx (all 25+)                        → apply PageHeader component, fix spacing,
-                                                   replace ad-hoc styling with tokens
-```
-
-Install:
-```text
-bun add @fontsource/space-grotesk @fontsource/dm-sans
-```
-
-No backend, RLS, edge function, or data-layer changes. No new routes. Capacitor config untouched.
-
-## Out of scope
-- Light theme polish (dark is primary; light gets token updates only, not page-by-page review).
-- New features or content changes.
-- Marketing/landing page (separate concern).
-
-## Risks
-- Large surface area — I'll work page-by-page so the preview stays usable between edits.
-- Some custom one-off styling in pages may need judgment calls; I'll default to tokens over preserving quirks.
+No backend or schema changes.

@@ -12,7 +12,7 @@ export const NATIVE_OAUTH_REDIRECT_URL = NATIVE_AUTH_CALLBACK_URL;
 export const NATIVE_OAUTH_WEB_BRIDGE_URL =
   'https://commodity-hub.lovable.app/?native=1';
 
-const ANDROID_PACKAGE_NAME = 'com.commodityhub.app';
+const ANDROID_PACKAGE_NAME = 'app.lovable.c8fabd7a96c74aff8d7b001690ec23c7';
 
 const OAUTH_SEARCH_KEYS = ['code', 'error', 'error_description', 'error_code'];
 const OAUTH_HASH_KEYS = [

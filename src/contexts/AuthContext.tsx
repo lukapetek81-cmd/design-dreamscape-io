@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { validateFormData } from '@/utils/validation';
 import { authRateLimiter } from '@/utils/security';
 import { Capacitor } from '@capacitor/core';
-import { NATIVE_OAUTH_WEB_BRIDGE_URL } from '@/utils/nativeOAuth';
+import { NATIVE_AUTH_CALLBACK_URL } from '@/utils/nativeOAuth';
 import { tierFromProfile, type Tier } from '@/utils/tiers';
 
 interface Profile {
@@ -280,7 +280,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const isNative = Capacitor.isNativePlatform();
       const redirectTo = isNative
-        ? NATIVE_OAUTH_WEB_BRIDGE_URL
+        ? NATIVE_AUTH_CALLBACK_URL
         : `${window.location.origin}/`;
 
       const { data, error } = await supabase.auth.signInWithOAuth({
