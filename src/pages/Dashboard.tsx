@@ -219,24 +219,22 @@ const DashboardContent = ({
           <div className="w-full max-w-screen-xl mx-auto px-3 sm:px-4 py-6 overflow-x-hidden">
             {/* Loading State */}
             {loading && (
-              <div className="text-center py-16">
-                <Loader className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-                <p className="text-lg font-semibold">Loading Commodities</p>
-                <p className="text-sm text-muted-foreground">Fetching real-time market data...</p>
+              <div className="space-y-2 py-6">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="h-[88px] rounded-lg border border-border bg-card animate-pulse" />
+                ))}
               </div>
             )}
 
             {/* Error State */}
             {error && !loading && (
-              <div className="text-center py-16">
-                <div className="w-12 h-12 mx-auto bg-red-100 dark:bg-red-950/50 rounded-full flex items-center justify-center mb-4">
-                  <BarChart3 className="w-6 h-6 text-red-600 dark:text-red-400" />
+              <div className="rounded-lg border border-border bg-card p-6 text-center">
+                <div className="w-9 h-9 mx-auto rounded-md bg-muted flex items-center justify-center mb-3">
+                  <BarChart3 className="w-4 h-4 text-[hsl(var(--destructive))]" />
                 </div>
-                <p className="text-lg font-semibold text-red-700 dark:text-red-400">Connection Issue</p>
-                <p className="text-sm text-red-600 dark:text-red-400 mt-1">{error}</p>
-                <Button onClick={onRetry} className="mt-4">
-                  Try Again
-                </Button>
+                <p className="font-display text-base font-semibold">Connection issue</p>
+                <p className="text-sm text-muted-foreground mt-1">{error}</p>
+                <Button onClick={onRetry} size="sm" className="mt-4">Try again</Button>
               </div>
             )}
 
