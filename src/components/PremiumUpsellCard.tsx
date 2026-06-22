@@ -66,7 +66,7 @@ const PremiumUpsellCard: React.FC<PremiumUpsellCardProps> = ({ onUpgrade, varian
 
   return (
     <>
-      <Card className="mb-6 border-primary/30 bg-gradient-to-br from-primary/5 via-background to-accent/5 overflow-hidden">
+      <Card className="mb-6 border-primary/30 bg-card overflow-hidden">
         <CardHeader className="pb-4">
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div className="flex items-start gap-3">

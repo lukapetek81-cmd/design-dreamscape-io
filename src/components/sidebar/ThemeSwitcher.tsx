@@ -87,9 +87,9 @@ const ThemeSwitcher = () => {
             <SidebarMenuButton
               onClick={toggleTheme}
               data-theme-toggle
-              className={`flex items-center gap-3 rounded-lg transition-all duration-200 ${
+              className={`flex items-center gap-3 rounded-md transition-colors duration-150 ${
                 isMobile 
-                  ? 'px-4 py-3 min-h-[56px] active:scale-95 touch-manipulation' 
+                  ? 'px-4 py-3 min-h-[56px] touch-manipulation' 
                   : 'px-3 py-2'
               }`}
             >

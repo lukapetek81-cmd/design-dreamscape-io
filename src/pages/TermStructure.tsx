@@ -51,7 +51,7 @@ const TermStructure: React.FC = () => {
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Layers className="w-6 h-6 text-primary" />
               Term Structure Shift
-              <Badge className="ml-1 bg-gradient-to-r from-violet-600 to-indigo-600">Pro</Badge>
+              <Badge className="ml-1 bg-primary/15 text-primary border-transparent">Pro</Badge>
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               Current forward curve overlaid against 1-week-ago and 1-month-ago settlements per contract.

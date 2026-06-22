@@ -306,7 +306,7 @@ const CommodityCard = React.memo<CommodityCardProps>(({
               <div className="mt-3" onClick={(e) => e.stopPropagation()}>
                 <Select value={selectedContract} onValueChange={handleContractChange}>
                   <SelectTrigger 
-                    className="w-full sm:w-[280px] h-8 text-xs focus-ring bg-background/80 backdrop-blur-sm border-border/50 hover:bg-background"
+                    className="w-full sm:w-[280px] h-8 text-xs focus-ring bg-background border-border hover:bg-muted/50"
                     aria-label="Select futures contract"
                     onClick={(e) => e.stopPropagation()}
                   >

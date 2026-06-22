@@ -98,7 +98,7 @@ const ChartHeader: React.FC<ChartHeaderProps> = ({
               disabled={loading}
               className={`text-xs sm:text-sm font-semibold transition-all duration-200 ${
                 selectedTimeframe === tf.value
-                  ? 'bg-primary text-primary-foreground shadow-soft hover:bg-primary/90'
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
                   : 'hover:bg-muted/80 text-muted-foreground hover:text-foreground'
               }`}
             >

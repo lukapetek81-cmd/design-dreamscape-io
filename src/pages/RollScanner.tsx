@@ -59,7 +59,7 @@ const RollScanner: React.FC = () => {
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <ArrowUpDown className="w-6 h-6 text-primary" />
               Roll Yield Scanner
-              <Badge className="ml-1 bg-gradient-to-r from-violet-600 to-indigo-600">Pro</Badge>
+              <Badge className="ml-1 bg-primary/15 text-primary border-transparent">Pro</Badge>
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               Live front-month → next-month roll across {data?.results.length ?? 14} futures. Spot contango vs backwardation at a glance.
