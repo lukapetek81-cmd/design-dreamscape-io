@@ -96,6 +96,10 @@
   /* Push the top bar's own content below Android's overlaid status bar. */
   .app-top-bar {
     padding-top: var(--app-top-buffer);
+    /* Clear side-mounted cameras / punch-holes in landscape and on
+       edge-to-edge devices where insets are reported horizontally. */
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
   }
   /* Native: truly pin the top bar with position:fixed (position:sticky
      can't pin here because ancestors use overflow-x: clip). Offset the
