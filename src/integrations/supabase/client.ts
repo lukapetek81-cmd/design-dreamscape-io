@@ -2,8 +2,8 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://kcxhsmlqqyarhlmcapmj.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjeGhzbWxxcXlhcmhsbWNhcG1qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU3ODM0MDcsImV4cCI6MjA2MTM1OTQwN30.qC25iAjNhbPVotryl7GONMgYkvg0DzEYp8uxioWzkfs";
+export const SUPABASE_URL = "https://kcxhsmlqqyarhlmcapmj.supabase.co";
+export const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjeGhzbWxxcXlhcmhsbWNhcG1qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU3ODM0MDcsImV4cCI6MjA2MTM1OTQwN30.qC25iAjNhbPVotryl7GONMgYkvg0DzEYp8uxioWzkfs";
 export const SUPABASE_AUTH_STORAGE_KEY = 'sb-kcxhsmlqqyarhlmcapmj-auth-token';
 
 // Import the supabase client like this:
@@ -142,3 +142,24 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     flowType: 'pkce',
   }
 });
+
+/**
+ * Native OAuth must not depend on PKCE code-verifier storage because Android
+ * opens Google in Chrome Custom Tabs while the app WebView is backgrounded.
+ * The main app client stays on PKCE for web, while this throwaway client only
+ * builds an implicit-flow provider URL for native sign-in. The returned
+ * access/refresh tokens are then persisted with the main `supabase` client via
+ * `setSession()` when the app receives the deep link.
+ */
+export const createNativeImplicitOAuthClient = () => createClient<Database>(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY,
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+      flowType: 'implicit',
+    },
+  },
+);
