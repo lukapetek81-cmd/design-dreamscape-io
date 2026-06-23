@@ -90,7 +90,7 @@
   }
 
   html.capacitor-native {
-    --app-top-buffer: calc(env(safe-area-inset-top, 0px) + 140px);
+    --app-top-buffer: calc(env(safe-area-inset-top, 0px) + 12px);
   }
 
   /* Push the top bar's own content below Android's overlaid status bar. */
