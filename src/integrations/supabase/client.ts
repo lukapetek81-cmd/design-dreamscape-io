@@ -100,12 +100,16 @@ export const purgeMalformedSupabaseTokens = (): number => {
         const token: string | undefined =
           parsed?.access_token ?? parsed?.currentSession?.access_token ?? parsed?.session?.access_token;
 
-        if (typeof token !== 'string' || token.split('.').length !== 3) {
+        // Only remove entries that actually contain a token we can decode
+        // AND that token is malformed (e.g. missing `sub`). Without a token
+        // present, the entry may be a transient helper value the Supabase
+        // client manages itself — leave it alone.
+        if (typeof token !== 'string') continue;
+        if (token.split('.').length !== 3) {
           localStorage.removeItem(k);
           removed++;
           continue;
         }
-
         const payload = decodeJwtPayload(token);
         if (!payload?.sub) {
           localStorage.removeItem(k);
@@ -113,6 +117,7 @@ export const purgeMalformedSupabaseTokens = (): number => {
           console.warn('Cleared malformed Supabase auth session');
         }
       } catch {
+        // Unparseable JSON in an auth storage slot — safe to remove.
         localStorage.removeItem(k);
         removed++;
       }
@@ -133,6 +138,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storageKey: SUPABASE_AUTH_STORAGE_KEY,
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true,
     flowType: 'pkce',
   }
 });
