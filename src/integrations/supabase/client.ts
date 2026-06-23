@@ -4,14 +4,85 @@ import type { Database } from './types';
 
 const SUPABASE_URL = "https://kcxhsmlqqyarhlmcapmj.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjeGhzbWxxcXlhcmhsbWNhcG1qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU3ODM0MDcsImV4cCI6MjA2MTM1OTQwN30.qC25iAjNhbPVotryl7GONMgYkvg0DzEYp8uxioWzkfs";
+export const SUPABASE_AUTH_STORAGE_KEY = 'sb-kcxhsmlqqyarhlmcapmj-auth-token';
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-// Guard: clear any malformed Supabase auth tokens left in localStorage from
+type StoredAuthInspection = {
+  found: boolean;
+  valid: boolean;
+  reason?: string;
+};
+
+const isAuthSessionStorageKey = (key: string) => {
+  if (key.endsWith('-code-verifier')) return false;
+  return (
+    key === SUPABASE_AUTH_STORAGE_KEY ||
+    key === 'supabase.auth.token' ||
+    (key.startsWith('sb-') && key.endsWith('-auth-token'))
+  );
+};
+
+const decodeJwtPayload = (token: string): Record<string, unknown> | null => {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=');
+    return JSON.parse(atob(padded));
+  } catch {
+    return null;
+  }
+};
+
+const getStoredAccessToken = (raw: string): string | null => {
+  try {
+    const parsed = JSON.parse(raw);
+    return (
+      parsed?.access_token ??
+      parsed?.currentSession?.access_token ??
+      parsed?.session?.access_token ??
+      null
+    );
+  } catch {
+    return null;
+  }
+};
+
+export const inspectSupabaseAuthStorage = (): StoredAuthInspection => {
+  if (typeof window === 'undefined') return { found: false, valid: false };
+
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key || !isAuthSessionStorageKey(key)) continue;
+
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+
+      const token = getStoredAccessToken(raw);
+      if (!token) return { found: true, valid: false, reason: 'Malformed auth session' };
+
+      const payload = decodeJwtPayload(token);
+      if (!payload) return { found: true, valid: false, reason: 'Token not decodable' };
+      if (!payload.sub) return { found: true, valid: false, reason: 'Missing sub claim' };
+
+      return { found: true, valid: true };
+    }
+  } catch {
+    return { found: false, valid: false, reason: 'localStorage unavailable' };
+  }
+
+  return { found: false, valid: false };
+};
+
+// Guard: clear malformed Supabase auth sessions left in localStorage from
 // previous sessions. A token without a `sub` claim causes /auth/v1/user to
 // return 403 ("invalid claim: missing sub claim"), which breaks sign-in
-// (including Google OAuth callbacks) until the bad token is removed.
+// (including Google OAuth callbacks) until the bad session is removed. OAuth
+// PKCE code-verifier entries are intentionally ignored because they are not
+// sessions and should never be reported as invalid auth tokens.
 export const purgeMalformedSupabaseTokens = (): number => {
   if (typeof window === 'undefined') return 0;
   let removed = 0;
@@ -19,7 +90,7 @@ export const purgeMalformedSupabaseTokens = (): number => {
     const keys: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (k && (k.startsWith('sb-') || k.includes('supabase.auth'))) keys.push(k);
+      if (k && isAuthSessionStorageKey(k)) keys.push(k);
     }
     for (const k of keys) {
       const raw = localStorage.getItem(k);
@@ -27,19 +98,23 @@ export const purgeMalformedSupabaseTokens = (): number => {
       try {
         const parsed = JSON.parse(raw);
         const token: string | undefined =
-          parsed?.currentSession?.access_token ?? parsed?.access_token;
-        if (typeof token === 'string' && token.split('.').length === 3) {
-          const payload = JSON.parse(
-            atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))
-          );
-          if (!payload?.sub) {
-            localStorage.removeItem(k);
-            removed++;
-            console.warn('Cleared malformed Supabase auth token (missing sub claim):', k);
-          }
+          parsed?.access_token ?? parsed?.currentSession?.access_token ?? parsed?.session?.access_token;
+
+        if (typeof token !== 'string' || token.split('.').length !== 3) {
+          localStorage.removeItem(k);
+          removed++;
+          continue;
+        }
+
+        const payload = decodeJwtPayload(token);
+        if (!payload?.sub) {
+          localStorage.removeItem(k);
+          removed++;
+          console.warn('Cleared malformed Supabase auth session');
         }
       } catch {
-        // Non-JSON or undecodable token entry — leave alone
+        localStorage.removeItem(k);
+        removed++;
       }
     }
   } catch {
@@ -54,7 +129,8 @@ purgeMalformedSupabaseTokens();
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: localStorage,
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    storageKey: SUPABASE_AUTH_STORAGE_KEY,
     persistSession: true,
     autoRefreshToken: true,
     flowType: 'pkce',

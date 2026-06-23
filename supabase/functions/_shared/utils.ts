@@ -142,6 +142,47 @@ export function corsResponse(): Response {
 }
 
 // Authentication helpers
+export function getBearerToken(authHeader: string | null): string | null {
+  const token = authHeader?.replace(/^Bearer\s+/i, '').trim();
+  return token || null;
+}
+
+export function jwtHasSubject(token: string | null): boolean {
+  if (!token) return false;
+  const payload = token.split('.')[1];
+  if (!payload) return false;
+
+  try {
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=');
+    const decoded = JSON.parse(atob(padded));
+    return typeof decoded?.sub === 'string' && decoded.sub.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+export function getUserAuthorizationHeader(authHeader: string | null): string | undefined {
+  const token = getBearerToken(authHeader);
+  return jwtHasSubject(token) ? `Bearer ${token}` : undefined;
+}
+
+export async function getOptionalAuthenticatedUser(
+  supabaseClient: any,
+  authHeader: string | null
+): Promise<any | null> {
+  const token = getBearerToken(authHeader);
+  if (!jwtHasSubject(token)) return null;
+
+  try {
+    const { data, error } = await supabaseClient.auth.getUser(token);
+    if (error || !data?.user) return null;
+    return data.user;
+  } catch {
+    return null;
+  }
+}
+
 export async function authenticateUser(
   supabaseClient: any,
   authHeader: string | null
@@ -151,7 +192,10 @@ export async function authenticateUser(
   }
 
   try {
-    const token = authHeader.replace('Bearer ', '');
+    const token = getBearerToken(authHeader);
+    if (!token || !jwtHasSubject(token)) {
+      return { user: null, error: 'Invalid or expired token' };
+    }
     const { data, error } = await supabaseClient.auth.getUser(token);
     
     if (error || !data.user) {
