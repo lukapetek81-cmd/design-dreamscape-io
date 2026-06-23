@@ -222,7 +222,7 @@ export class CommodityService {
     try {
       const energyNames = Object.entries(COMMODITY_SYMBOLS)
         .filter(([name, info]) =>
-          info.category === 'energy' &&
+          (info.category === 'energy' || info.category === 'emissions') &&
           (includePremium || !PREMIUM_COMMODITIES.has(name))
         )
         .map(([name]) => name);
@@ -288,7 +288,7 @@ export class CommodityService {
     const existingNames = new Set(existing.map((c) => c.name));
     const targets = Object.entries(COMMODITY_SYMBOLS)
       .filter(([name, info]) =>
-        info.category === 'energy' &&
+        (info.category === 'energy' || info.category === 'emissions') &&
         !existingNames.has(name) &&
         (includePremium || !PREMIUM_COMMODITIES.has(name))
       )
