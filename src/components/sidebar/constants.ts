@@ -1,4 +1,4 @@
-import { Zap, Coins, Wheat, Beef, Briefcase, BarChart3, Star, Filter, Calendar, Lightbulb, GraduationCap, Users, Activity, Factory, Calculator, Bell, TrendingUp, GitCompare, ArrowUpDown, Gauge, Layers, Bot } from "lucide-react";
+import { Zap, Coins, Wheat, Beef, Briefcase, BarChart3, Star, Filter, Calendar, Lightbulb, GraduationCap, Users, Activity, Factory, Calculator, Bell, TrendingUp, GitCompare, ArrowUpDown, Gauge, Layers, Bot, Leaf } from "lucide-react";
 import { CommodityGroup, MarketTool } from "./types";
 
 export const COMMODITY_GROUPS: CommodityGroup[] = [
@@ -7,6 +7,7 @@ export const COMMODITY_GROUPS: CommodityGroup[] = [
   { id: "grains", label: "Grains", icon: Wheat, color: "text-muted-foreground" },
   { id: "livestock", label: "Livestock", icon: Beef, color: "text-muted-foreground" },
   { id: "industrials", label: "Industrials", icon: Factory, color: "text-muted-foreground" },
+  { id: "emissions", label: "Emissions", icon: Leaf, color: "text-muted-foreground" },
 ];
 
 export const MARKET_TOOLS: MarketTool[] = [
