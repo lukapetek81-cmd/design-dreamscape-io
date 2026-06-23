@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, AlertCircle, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { inspectSupabaseAuthStorage, purgeMalformedSupabaseTokens, supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 type Status = 'ok' | 'warn' | 'error' | 'idle';
@@ -15,44 +15,6 @@ interface Row {
 }
 
 const SUPABASE_URL = 'https://kcxhsmlqqyarhlmcapmj.supabase.co';
-
-function decodeJwt(token: string): Record<string, any> | null {
-  try {
-    const part = token.split('.')[1];
-    if (!part) return null;
-    const json = atob(part.replace(/-/g, '+').replace(/_/g, '/'));
-    return JSON.parse(json);
-  } catch {
-    return null;
-  }
-}
-
-function inspectStoredToken(): { found: boolean; valid: boolean; reason?: string } {
-  if (typeof window === 'undefined') return { found: false, valid: false };
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k || (!k.startsWith('sb-') && !k.includes('supabase.auth'))) continue;
-      const raw = localStorage.getItem(k);
-      if (!raw) continue;
-      try {
-        const parsed = JSON.parse(raw);
-        const token: string | undefined =
-          parsed?.currentSession?.access_token ?? parsed?.access_token;
-        if (!token) continue;
-        const payload = decodeJwt(token);
-        if (!payload) return { found: true, valid: false, reason: 'Token not decodable' };
-        if (!payload.sub) return { found: true, valid: false, reason: 'Missing sub claim' };
-        return { found: true, valid: true };
-      } catch {
-        return { found: true, valid: false, reason: 'Stored entry not JSON' };
-      }
-    }
-  } catch {
-    return { found: false, valid: false, reason: 'localStorage unavailable' };
-  }
-  return { found: false, valid: false };
-}
 
 const StatusDot: React.FC<{ status: Status }> = ({ status }) => {
   const cls =
@@ -71,13 +33,13 @@ export const AuthHealthPanel: React.FC = () => {
   const [open, setOpen] = React.useState(false);
   const [lastEvent, setLastEvent] = React.useState<string>('—');
   const [lastError, setLastError] = React.useState<string | null>(null);
-  const [tokenCheck, setTokenCheck] = React.useState(inspectStoredToken());
+  const [tokenCheck, setTokenCheck] = React.useState(inspectSupabaseAuthStorage());
   const [tick, setTick] = React.useState(0);
 
   React.useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
       setLastEvent(`${event}${session?.user?.email ? ` · ${session.user.email}` : ''}`);
-      setTokenCheck(inspectStoredToken());
+      setTokenCheck(inspectSupabaseAuthStorage());
     });
 
     // Capture latest auth errors broadcast from AuthContext via toasts is not
@@ -96,7 +58,8 @@ export const AuthHealthPanel: React.FC = () => {
   }, []);
 
   const refresh = () => {
-    setTokenCheck(inspectStoredToken());
+    purgeMalformedSupabaseTokens();
+    setTokenCheck(inspectSupabaseAuthStorage());
     setTick((t) => t + 1);
   };
 
