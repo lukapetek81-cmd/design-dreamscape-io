@@ -19,10 +19,30 @@ interface RealtimeDataContextType {
 
 const RealtimeDataContext = createContext<RealtimeDataContextType | undefined>(undefined);
 
+const defaultRealtimeDataContext: RealtimeDataContextType = {
+  prices: {},
+  connected: false,
+  error: null,
+  lastUpdate: null,
+  getPriceForCommodity: () => null,
+  isLiveData: () => false,
+  isDelayedData: false,
+  delayStatus: {
+    isDelayed: false,
+    delayText: 'Real-time',
+    statusText: 'Live market data',
+  },
+};
+
 export const useRealtimeDataContext = () => {
   const context = useContext(RealtimeDataContext);
   if (context === undefined) {
-    throw new Error('useRealtimeDataContext must be used within a RealtimeDataProvider');
+    // Fall back to safe defaults instead of throwing so a transient
+    // provider unmount (HMR, error boundary recovery) doesn't blank the UI.
+    if (typeof console !== 'undefined') {
+      console.warn('useRealtimeDataContext used outside RealtimeDataProvider — using defaults');
+    }
+    return defaultRealtimeDataContext;
   }
   return context;
 };
