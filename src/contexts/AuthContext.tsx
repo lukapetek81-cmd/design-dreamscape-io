@@ -69,6 +69,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .single();
 
       if (error) {
+        // PGRST116 = no rows. For OAuth users whose profile wasn't auto-
+        // created (or the trigger failed), upsert one from auth metadata so
+        // the UI doesn't keep treating them as signed out.
+        if ((error as any).code === 'PGRST116' || /no rows/i.test(error.message || '')) {
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          if (authUser) {
+            const fallback = {
+              id: authUser.id,
+              email: authUser.email ?? '',
+              full_name:
+                (authUser.user_metadata as any)?.full_name ??
+                (authUser.user_metadata as any)?.name ??
+                authUser.email ?? null,
+              avatar_url:
+                (authUser.user_metadata as any)?.avatar_url ??
+                (authUser.user_metadata as any)?.picture ?? null,
+            };
+            const { data: upserted } = await supabase
+              .from('profiles')
+              .upsert(fallback, { onConflict: 'id' })
+              .select('*')
+              .single();
+            if (upserted) setProfile(upserted);
+          }
+          return;
+        }
         console.error('Error fetching profile:', error);
         return;
       }
@@ -117,9 +143,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       async (event, session) => {
         console.log('Auth state change:', event, session?.user?.email || 'no user');
         clearTimeout(loadingTimeout);
-        // After sign-out or token refresh failure, scrub any malformed tokens
-        // left in localStorage so the next reload starts clean.
-        if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+        // After explicit sign-out, scrub any malformed tokens left in
+        // localStorage so the next reload starts clean. Do NOT purge on
+        // TOKEN_REFRESHED — a successful refresh is the happy path and the
+        // narrowed purge wouldn't touch a valid session anyway, but running
+        // it adds risk of race conditions during OAuth callback handoff.
+        if (event === 'SIGNED_OUT') {
           purgeMalformedSupabaseTokens();
         }
         setSession(session);
@@ -142,12 +171,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
+    // If we returned from an OAuth provider with a `?code=...` in the URL
+    // but the supabase client hasn't (yet) finished the auto-exchange, do
+    // it explicitly and then clean the URL so a refresh can't replay it.
+    const finalizeOAuthRedirect = async () => {
+      if (typeof window === 'undefined') return;
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get('code');
+      if (!code) return;
+      try {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) console.warn('OAuth code exchange failed:', error.message);
+      } catch (e) {
+        console.warn('OAuth code exchange threw:', e);
+      } finally {
+        url.searchParams.delete('code');
+        url.searchParams.delete('state');
+        window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+      }
+    };
+
     // Check for existing session with error handling. If the stored token is
     // malformed (e.g. missing `sub` claim from a prior project key rotation),
     // signOut() to flush it from memory + localStorage so the user can sign
     // back in cleanly instead of being stuck in a half-authenticated state.
     const initSession = async () => {
       try {
+        await finalizeOAuthRedirect();
         const { data: { session }, error } = await supabase.auth.getSession();
         clearTimeout(loadingTimeout);
 

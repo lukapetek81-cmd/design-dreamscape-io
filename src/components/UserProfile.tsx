@@ -20,7 +20,10 @@ const UserProfile = () => {
   const { user, profile, signOut, isGuest } = auth ?? ({} as any);
   const isPremium = Boolean(auth?.isPremium);
 
-  if (isGuest) {
+  // Show signed-in UI as soon as we have a Supabase user, even if the
+  // `profiles` row hasn't loaded yet. Otherwise the header keeps showing
+  // "Sign In" right after a successful Google OAuth round-trip.
+  if (!user) {
     return (
       <div className="flex items-center gap-1.5">
         <Link to="/auth">
@@ -49,14 +52,24 @@ const UserProfile = () => {
       .slice(0, 2);
   };
 
+  // Prefer the loaded profile, but fall back to the Supabase user metadata
+  // (Google provides full_name/name + avatar_url/picture) so the avatar and
+  // menu render immediately after sign-in.
+  const meta: any = (user as any)?.user_metadata ?? {};
+  const displayName: string =
+    profile?.full_name || meta.full_name || meta.name || user?.email || 'Account';
+  const displayEmail: string = profile?.email || user?.email || '';
+  const displayAvatar: string | undefined =
+    profile?.avatar_url || meta.avatar_url || meta.picture || undefined;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 sm:h-8 sm:w-8 rounded-full mobile-touch-target">
           <Avatar className="h-10 w-10 sm:h-8 sm:w-8">
-            <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || 'User'} />
+            <AvatarImage src={displayAvatar} alt={displayName} />
             <AvatarFallback className="bg-primary/10 text-primary font-medium">
-              {getInitials(profile?.full_name || profile?.email || 'User')}
+              {getInitials(displayName)}
             </AvatarFallback>
           </Avatar>
         </Button>
@@ -64,9 +77,9 @@ const UserProfile = () => {
       <DropdownMenuContent className="w-64 sm:w-56 mr-2 sm:mr-0" align="end" forceMount>
         <DropdownMenuLabel className="font-normal p-4">
           <div className="flex flex-col space-y-3">
-            <p className="text-sm font-medium leading-none truncate">{profile?.full_name}</p>
+            <p className="text-sm font-medium leading-none truncate">{displayName}</p>
             <p className="text-xs leading-none text-muted-foreground break-words">
-              {profile?.email}
+              {displayEmail}
             </p>
           </div>
         </DropdownMenuLabel>
