@@ -27,6 +27,10 @@ export const COMMODITY_SYMBOLS: Record<string, CommoditySymbol> = {
   'Gasoil': { symbol: 'GO=F', category: 'energy', contractSize: '1 MT', venue: 'ICE' },
   'Naphtha': { symbol: 'NAP=F', category: 'energy', contractSize: '1 MT', venue: 'ICE' },
 
+  // ============ EMISSIONS — Carbon futures (OilPriceAPI, premium) ============
+  'UK Carbon (UKA)': { symbol: 'UKA=F', category: 'emissions', contractSize: '1,000 tCO₂e', venue: 'ICE' },
+  'EU Carbon (EUA)': { symbol: 'EUA=F', category: 'emissions', contractSize: '1,000 tCO₂e', venue: 'ICE' },
+
   // ============ METALS — Free (FMP) ============
   'Gold Futures': { symbol: 'GC=F', category: 'metals', contractSize: '100 oz', venue: 'COMEX' },
   'Silver Futures': { symbol: 'SI=F', category: 'metals', contractSize: '5,000 oz', venue: 'COMEX' },
@@ -119,6 +123,8 @@ export const PREMIUM_COMMODITIES = new Set<string>([
   'Western Canadian Select', 'WTI Midland', 'Mars Blend', 'Louisiana Light Sweet',
   'Natural Gas UK', 'Dutch TTF Gas', 'Japan/Korea LNG',
   'Gasoline RBOB', 'Heating Oil', 'Jet Fuel', 'ULSD Diesel', 'Gasoil', 'Naphtha',
+  // Emissions — premium
+  'UK Carbon (UKA)', 'EU Carbon (EUA)',
   // Metals — premium
   'Palladium',
   // Grains — premium
@@ -152,6 +158,9 @@ export const CATEGORY_MAPPINGS: Record<string, string[]> = {
   ],
   industrials: [
     'Lumber Futures',
+  ],
+  emissions: [
+    'UK Carbon (UKA)', 'EU Carbon (EUA)',
   ],
 };
 
