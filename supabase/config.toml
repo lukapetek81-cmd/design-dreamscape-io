@@ -12,6 +12,7 @@ enabled = true
 port = 54320
 site_url = "https://commodity-hub.lovable.app"
 additional_redirect_urls = [
+  "commodityhub://auth-callback",
   "https://id-preview--0cea242b-6aba-4f5a-9e49-91997ef3b761.lovable.app",
   "https://0cea242b-6aba-4f5a-9e49-91997ef3b761.lovableproject.com",
   "https://commodity-hub.lovableproject.com",

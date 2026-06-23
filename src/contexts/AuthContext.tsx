@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { validateFormData } from '@/utils/validation';
 import { authRateLimiter } from '@/utils/security';
 import { Capacitor } from '@capacitor/core';
-import { NATIVE_OAUTH_WEB_BRIDGE_URL } from '@/utils/nativeOAuth';
+import { NATIVE_OAUTH_REDIRECT_URL } from '@/utils/nativeOAuth';
 import { tierFromProfile, type Tier } from '@/utils/tiers';
 
 interface Profile {
@@ -346,7 +346,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const isNative = Capacitor.isNativePlatform();
       const redirectTo = isNative
-        ? NATIVE_OAUTH_WEB_BRIDGE_URL
+        ? NATIVE_OAUTH_REDIRECT_URL
         : `${window.location.origin}/`;
 
       const oauthClient = isNative ? createNativeImplicitOAuthClient() : supabase;
@@ -376,9 +376,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { error };
       }
 
-      // On native, open Google's consent screen in the system browser.
-      // Using a direct app-scheme redirect lets Android return to the installed app
-      // instead of leaving the confirmed session in the hosted web app/browser.
+      // On native, open Google's consent screen in the system browser. The
+      // redirect target must be the app's custom scheme so Supabase returns the
+      // session to the installed app, not to the hosted website in Chrome.
       if (isNative && data?.url) {
         try {
           const { Browser } = await import('@capacitor/browser');
