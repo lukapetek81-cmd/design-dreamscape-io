@@ -3,7 +3,7 @@ export const NATIVE_OAUTH_REDIRECT_URL = NATIVE_AUTH_CALLBACK_URL;
 
 /**
  * Hosted web URL Supabase should redirect to after Google OAuth on native.
- * The page at this URL detects `native=1` and bridges the `?code=...` payload
+ * The page at this URL detects `native=1` and bridges the OAuth payload
  * back into the installed app via an Android intent (see
  * `redirectNativeOAuthCallbackFromWeb`). This is far more reliable than asking
  * Chrome Custom Tabs to follow a `commodityhub://` redirect directly, which
@@ -33,8 +33,17 @@ export const buildNativeAuthCallbackUrl = (callbackHref: string) => {
   const searchParams = new URLSearchParams(callbackUrl.search);
   searchParams.delete('native');
 
+  // Supabase implicit OAuth returns tokens in the URL fragment. Android intent
+  // URLs use `#Intent` as their own delimiter, so a normal fragment would be
+  // swallowed by Chrome instead of delivered to the app. Move callback fragment
+  // params into the custom-scheme query string before building the intent.
+  const hashParams = new URLSearchParams(callbackUrl.hash.replace(/^#/, ''));
+  for (const [key, value] of hashParams) {
+    if (!searchParams.has(key)) searchParams.set(key, value);
+  }
+
   const search = searchParams.toString();
-  return `${NATIVE_AUTH_CALLBACK_URL}${search ? `?${search}` : ''}${callbackUrl.hash}`;
+  return `${NATIVE_AUTH_CALLBACK_URL}${search ? `?${search}` : ''}`;
 };
 
 export const buildAndroidIntentCallbackUrl = (callbackHref: string) => {
@@ -60,7 +69,6 @@ export const redirectNativeOAuthCallbackFromWeb = () => {
 
   if (!hasOAuthPayload) return false;
 
-  const appCallbackUrl = buildNativeAuthCallbackUrl(callbackUrl.href);
   const androidIntentUrl = buildAndroidIntentCallbackUrl(callbackUrl.href);
 
   const openInstalledApp = () => {
