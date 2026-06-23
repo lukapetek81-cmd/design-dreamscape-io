@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { CommodityService } from '../_shared/commodity-service.ts';
-import { corsHeaders } from '../_shared/utils.ts'
+import { corsHeaders, getOptionalAuthenticatedUser, getUserAuthorizationHeader } from '../_shared/utils.ts'
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -17,11 +17,15 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
-        global: { headers: { Authorization: req.headers.get('Authorization')! } },
+        global: {
+          headers: getUserAuthorizationHeader(req.headers.get('Authorization'))
+            ? { Authorization: getUserAuthorizationHeader(req.headers.get('Authorization'))! }
+            : {},
+        },
       }
     );
 
-    const { data: { user } } = await supabaseClient.auth.getUser();
+    const user = await getOptionalAuthenticatedUser(supabaseClient, req.headers.get('Authorization'));
     let isPremium = false;
     if (user) {
       const { data: profile } = await supabaseClient

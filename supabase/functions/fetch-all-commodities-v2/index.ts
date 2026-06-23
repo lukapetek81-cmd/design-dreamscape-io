@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { corsHeaders, EdgeLogger } from '../_shared/utils.ts';
+import { corsHeaders, EdgeLogger, getOptionalAuthenticatedUser, getUserAuthorizationHeader } from '../_shared/utils.ts';
 import { CommodityService } from '../_shared/commodity-service.ts';
 
 serve(async (req) => {
@@ -23,17 +23,20 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
+          headers: getUserAuthorizationHeader(req.headers.get('Authorization'))
+            ? { Authorization: getUserAuthorizationHeader(req.headers.get('Authorization'))! }
+            : {},
         },
       }
     );
 
-    // Check if user is authenticated and premium
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    // Check if user is authenticated and premium. Ignore anon/service tokens so
+    // public commodity loads don't create noisy /auth/v1/user bad_jwt errors.
+    const user = await getOptionalAuthenticatedUser(supabaseClient, req.headers.get('Authorization'));
     
     let isPremium = false;
     
-    if (user && !userError) {
+    if (user) {
       const { data: profile } = await supabaseClient
         .from('profiles')
         .select('subscription_active, subscription_tier')
