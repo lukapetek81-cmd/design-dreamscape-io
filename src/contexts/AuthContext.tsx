@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase, purgeMalformedSupabaseTokens } from '@/integrations/supabase/client';
+import { createNativeImplicitOAuthClient, supabase, purgeMalformedSupabaseTokens } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { validateFormData } from '@/utils/validation';
 import { authRateLimiter } from '@/utils/security';
@@ -349,7 +349,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         ? NATIVE_OAUTH_WEB_BRIDGE_URL
         : `${window.location.origin}/`;
 
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const oauthClient = isNative ? createNativeImplicitOAuthClient() : supabase;
+      const { data, error } = await oauthClient.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo,
