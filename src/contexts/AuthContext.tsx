@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, purgeMalformedSupabaseTokens } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { validateFormData } from '@/utils/validation';
 import { authRateLimiter } from '@/utils/security';
@@ -117,6 +117,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       async (event, session) => {
         console.log('Auth state change:', event, session?.user?.email || 'no user');
         clearTimeout(loadingTimeout);
+        // After sign-out or token refresh failure, scrub any malformed tokens
+        // left in localStorage so the next reload starts clean.
+        if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+          purgeMalformedSupabaseTokens();
+        }
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -137,34 +142,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    // Check for existing session with error handling
-    supabase.auth.getSession()
-      .then(({ data: { session }, error }) => {
-        console.log('Initial session check:', session?.user?.email || 'no user', error);
+    // Check for existing session with error handling. If the stored token is
+    // malformed (e.g. missing `sub` claim from a prior project key rotation),
+    // signOut() to flush it from memory + localStorage so the user can sign
+    // back in cleanly instead of being stuck in a half-authenticated state.
+    const initSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
         clearTimeout(loadingTimeout);
-        
+
         if (error) {
-          console.error('Session check error:', error);
-          // Still proceed with no session to avoid infinite loading
+          console.error('Session check error — flushing bad token:', error);
+          try { await supabase.auth.signOut({ scope: 'local' } as any); } catch {}
+          purgeMalformedSupabaseTokens();
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+          return;
         }
-        
+
+        console.log('Initial session check:', session?.user?.email || 'no user');
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
           setTimeout(() => {
             fetchProfile(session.user.id);
           }, 0);
         }
-        
+
         setLoading(false);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error('Failed to get session:', error);
         clearTimeout(loadingTimeout);
-        // Fail gracefully - proceed without authentication
+        try { await supabase.auth.signOut({ scope: 'local' } as any); } catch {}
+        purgeMalformedSupabaseTokens();
         setLoading(false);
-      });
+      }
+    };
+    void initSession();
 
     return () => {
       subscription.unsubscribe();

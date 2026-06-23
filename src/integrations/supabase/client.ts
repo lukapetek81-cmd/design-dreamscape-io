@@ -12,7 +12,9 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // previous sessions. A token without a `sub` claim causes /auth/v1/user to
 // return 403 ("invalid claim: missing sub claim"), which breaks sign-in
 // (including Google OAuth callbacks) until the bad token is removed.
-if (typeof window !== 'undefined') {
+export const purgeMalformedSupabaseTokens = (): number => {
+  if (typeof window === 'undefined') return 0;
+  let removed = 0;
   try {
     const keys: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
@@ -27,9 +29,12 @@ if (typeof window !== 'undefined') {
         const token: string | undefined =
           parsed?.currentSession?.access_token ?? parsed?.access_token;
         if (typeof token === 'string' && token.split('.').length === 3) {
-          const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+          const payload = JSON.parse(
+            atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))
+          );
           if (!payload?.sub) {
             localStorage.removeItem(k);
+            removed++;
             console.warn('Cleared malformed Supabase auth token (missing sub claim):', k);
           }
         }
@@ -40,7 +45,12 @@ if (typeof window !== 'undefined') {
   } catch {
     // localStorage unavailable — ignore
   }
-}
+  return removed;
+};
+
+// Run once at module load so a bad token from a prior session never reaches
+// the Supabase client during boot.
+purgeMalformedSupabaseTokens();
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
