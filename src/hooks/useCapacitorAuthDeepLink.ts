@@ -35,11 +35,24 @@ export function useCapacitorAuthDeepLink() {
           // Match any commodityhub:// deep-link that carries an OAuth payload,
           // tolerating trailing slashes, host casing, or alternate paths.
           if (!url.toLowerCase().startsWith('commodityhub://')) return false;
-          console.log('[OAuth] Received native deep link:', url);
+          console.log('[OAuth] Received native deep link');
 
           try {
-            // PKCE flow — ?code=...
             const callbackUrl = new URL(url);
+            const searchParams = callbackUrl.searchParams;
+            const hashParams = new URLSearchParams(callbackUrl.hash.slice(1));
+
+            const oauthError =
+              searchParams.get('error_description') ||
+              searchParams.get('error') ||
+              hashParams.get('error_description') ||
+              hashParams.get('error');
+            if (oauthError) {
+              console.error('[OAuth] Native callback returned an error:', oauthError);
+              return true;
+            }
+
+            // PKCE flow — ?code=...
             const code = callbackUrl.searchParams.get('code');
 
             if (code) {
@@ -49,19 +62,18 @@ export function useCapacitorAuthDeepLink() {
               else console.log('[OAuth] Session established via PKCE');
             }
 
-            // Implicit flow — #access_token=...&refresh_token=...
-            if (callbackUrl.hash) {
-              const params = new URLSearchParams(callbackUrl.hash.slice(1));
-              const access_token = params.get('access_token');
-              const refresh_token = params.get('refresh_token');
-              if (access_token && refresh_token) {
-                console.log('[OAuth] Setting session via implicit tokens');
-                const { error } = await supabase.auth.setSession({
-                  access_token,
-                  refresh_token,
-                });
-                if (error) console.error('setSession failed:', error);
-              }
+            // Implicit flow. The web bridge moves fragment tokens into the
+            // query string for Android intents because `#Intent` consumes the
+            // URL fragment before Capacitor can receive it.
+            const access_token = searchParams.get('access_token') || hashParams.get('access_token');
+            const refresh_token = searchParams.get('refresh_token') || hashParams.get('refresh_token');
+            if (access_token && refresh_token) {
+              console.log('[OAuth] Setting session via implicit tokens');
+              const { error } = await supabase.auth.setSession({
+                access_token,
+                refresh_token,
+              });
+              if (error) console.error('setSession failed:', error);
             }
 
             window.history.replaceState({}, document.title, '/');
