@@ -98,8 +98,9 @@ export class CommodityService {
         this.fetchAllFromMassive(includePremium),
       ]);
 
-      const snapshotResults = await this.fetchEnergySnapshotBackfill(includePremium, oilResults);
-      const merged = [...oilResults, ...snapshotResults, ...fmpResults, ...massiveResults];
+      const liveResults = [...oilResults, ...fmpResults, ...massiveResults];
+      const snapshotResults = await this.fetchSnapshotBackfill(includePremium, liveResults);
+      const merged = [...liveResults, ...snapshotResults];
       const seen = new Set(merged.map((c) => c.name));
       for (const [name, info] of Object.entries(COMMODITY_SYMBOLS)) {
         if (seen.has(name)) continue;
@@ -278,7 +279,7 @@ export class CommodityService {
    * premium symbols by JWT, but this shared service calls it with the anon key,
    * so premium energy would otherwise fall through to synthetic placeholders.
    */
-  private async fetchEnergySnapshotBackfill(
+  private async fetchSnapshotBackfill(
     includePremium: boolean,
     existing: CommodityData[],
   ): Promise<CommodityData[]> {
@@ -287,8 +288,7 @@ export class CommodityService {
 
     const existingNames = new Set(existing.map((c) => c.name));
     const targets = Object.entries(COMMODITY_SYMBOLS)
-      .filter(([name, info]) =>
-        (info.category === 'energy' || info.category === 'emissions') &&
+      .filter(([name]) =>
         !existingNames.has(name) &&
         (includePremium || !PREMIUM_COMMODITIES.has(name))
       )
