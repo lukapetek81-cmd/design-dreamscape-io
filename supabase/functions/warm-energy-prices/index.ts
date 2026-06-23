@@ -31,6 +31,9 @@ const OIL_BLEND_CODES: Record<string, string> = {
   "Natural Gas UK": "NATURAL_GAS_GBP",
   "Dutch TTF Gas": "DUTCH_TTF_EUR",
   "Japan/Korea LNG": "JKM_LNG_USD",
+  // Carbon / Emissions futures
+  "UK Carbon (UKA)": "UKA_CARBON_GBP",
+  "EU Carbon (EUA)": "EUA_CARBON_EUR",
 };
 
 interface OilApiResponse {

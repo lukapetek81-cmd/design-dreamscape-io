@@ -137,6 +137,9 @@ const OIL_API_BLEND_CODES: Record<string, string> = {
   'Dutch TTF Gas': 'DUTCH_TTF_EUR',
   'Japan/Korea LNG': 'JKM_LNG_USD',
   'US Gas Storage': 'NATURAL_GAS_STORAGE',
+  // Carbon / Emissions
+  'UK Carbon (UKA)': 'UKA_CARBON_GBP',
+  'EU Carbon (EUA)': 'EUA_CARBON_EUR',
   // Marine Fuels
   'VLSFO Global': 'VLSFO_USD',
   'HFO 380 Global': 'HFO_380_USD',
