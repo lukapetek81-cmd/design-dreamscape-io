@@ -75,22 +75,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if ((error as any).code === 'PGRST116' || /no rows/i.test(error.message || '')) {
           const { data: { user: authUser } } = await supabase.auth.getUser();
           if (authUser) {
-            const fallback = {
-              id: authUser.id,
-              email: authUser.email ?? '',
-              full_name:
-                (authUser.user_metadata as any)?.full_name ??
-                (authUser.user_metadata as any)?.name ??
-                authUser.email ?? null,
-              avatar_url:
-                (authUser.user_metadata as any)?.avatar_url ??
-                (authUser.user_metadata as any)?.picture ?? null,
-            };
-            const { data: upserted } = await supabase
-              .from('profiles')
-              .upsert(fallback, { onConflict: 'id' })
-              .select('*')
-              .single();
+            const upserted = await ensureProfileRow(authUser);
             if (upserted) setProfile(upserted);
           }
           return;
@@ -133,7 +118,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Show the signed-in avatar/menu immediately from Google metadata; the
       // database profile can arrive later without blocking the top-right UI.
       setProfile((current) => current?.id === nextSession.user.id ? current : profileFromUser(nextSession.user));
-      setTimeout(() => fetchProfile(nextSession.user.id), 0);
+      // Proactively ensure a profiles row exists for OAuth/Google sign-ins
+      // (don't rely solely on the auth.users trigger — if it ever fails the
+      // user would be stuck without a profile). Upsert from auth metadata,
+      // then fetch the canonical row.
+      setTimeout(async () => {
+        const upserted = await ensureProfileRow(nextSession.user);
+        if (upserted) {
+          setProfile(upserted);
+        } else {
+          fetchProfile(nextSession.user.id);
+        }
+      }, 0);
     } else {
       setProfile(null);
     }
