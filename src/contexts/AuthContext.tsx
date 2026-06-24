@@ -44,6 +44,29 @@ interface AuthContextType {
 
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
+// Upsert a profiles row from a Supabase auth user (Google/OAuth metadata).
+// Safe to call on every sign-in — onConflict:'id' makes it idempotent and
+// preserves existing subscription fields by only setting identity columns.
+async function ensureProfileRow(authUser: User) {
+  const meta: any = authUser.user_metadata ?? {};
+  const payload = {
+    id: authUser.id,
+    email: authUser.email ?? '',
+    full_name: meta.full_name ?? meta.name ?? authUser.email ?? null,
+    avatar_url: meta.avatar_url ?? meta.picture ?? null,
+  };
+  const { data, error } = await supabase
+    .from('profiles')
+    .upsert(payload, { onConflict: 'id', ignoreDuplicates: false })
+    .select('*')
+    .single();
+  if (error) {
+    console.warn('ensureProfileRow upsert failed:', error.message);
+    return null;
+  }
+  return data;
+}
+
 export const useAuth = (): AuthContextType | null => {
   const context = React.useContext(AuthContext);
   if (context === undefined) {
