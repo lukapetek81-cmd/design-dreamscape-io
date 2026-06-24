@@ -1,23 +1,27 @@
-Plan to fix Google sign-in not showing the user as signed in:
+## Plan
 
-1. Repair the OAuth callback/session handoff
-   - Make the Supabase client explicitly enable OAuth callback detection for PKCE (`detectSessionInUrl: true`).
-   - Add a small callback finalization path in the auth context so when the app returns with `?code=...`, it exchanges the code for a session before the app decides the user is signed out.
-   - Clean the URL after a successful exchange so refresh/back navigation does not reuse the same OAuth code.
+1. **Make native OAuth completion update UI immediately**
+   - After the installed app receives the `commodityhub://` callback and calls `setSession()`, explicitly broadcast a local app event with the new session instead of waiting for the normal Supabase auth listener timing.
+   - Close the browser only after session handling is attempted, so the app returns to the foreground with auth state already available.
 
-2. Stop valid OAuth sessions from being treated as bad tokens
-   - Narrow the malformed-token cleanup so it only removes real broken session values, not temporary PKCE verifier entries or other Supabase auth helper storage.
-   - Avoid calling cleanup during normal `SIGNED_IN` / `TOKEN_REFRESHED` events unless the inspected session is actually invalid.
+2. **Harden AuthProvider session readiness**
+   - Add a small `applySession()` helper that sets `session`, `user`, `profile` fallback data, and `loading` consistently.
+   - Listen for the native OAuth completion event and call `applySession()` immediately.
+   - Keep profile/subscription loading asynchronous so the top-right avatar can appear as soon as Supabase has a user.
 
-3. Make the header use the auth user immediately
-   - Update the signed-in UI so it displays the avatar/account menu as soon as `auth.user` exists, even if the `profiles` row is still loading or missing.
-   - Use Google metadata (`user_metadata.full_name`, `avatar_url`, email) as a fallback while the profile fetch completes.
+3. **Improve visible feedback during Google sign-in**
+   - On native, show a short “Finishing sign in…” state while the callback is being processed.
+   - Ensure the auth page redirects to the dashboard as soon as `user` exists, not after profile data loads.
 
-4. Make profile loading resilient
-   - If a Google-authenticated user has no `profiles` row, create or upsert a minimal profile from the Supabase user metadata.
-   - This prevents the app from looking signed out just because profile creation/fetching failed.
+4. **Validate the likely failure mode**
+   - Confirm web auth still initializes correctly.
+   - Confirm the code path no longer depends on the slower profile fetch to show the signed-in top-right UI.
 
-5. Add targeted diagnostics only if needed
-   - Keep concise auth logs around OAuth callback exchange/session state, without logging tokens or secrets.
+## Technical details
 
-After approval, I’ll implement only these auth-related changes and leave the rest of the app untouched.
+- Files to update:
+  - `src/hooks/useCapacitorAuthDeepLink.ts`
+  - `src/contexts/AuthContext.tsx`
+  - possibly `src/pages/Auth.tsx` if the loading message needs to distinguish native OAuth completion
+- No database changes are needed.
+- The Supabase logs already show Google login succeeds, so the fix focuses on local session handoff and UI state timing rather than provider configuration.
