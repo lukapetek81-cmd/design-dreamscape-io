@@ -6,6 +6,7 @@ import { validateFormData } from '@/utils/validation';
 import { authRateLimiter } from '@/utils/security';
 import { Capacitor } from '@capacitor/core';
 import { tierFromProfile, type Tier } from '@/utils/tiers';
+import { NATIVE_AUTH_CALLBACK_URL } from '@/utils/nativeOAuth';
 
 interface Profile {
   id: string;
@@ -405,7 +406,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // NOTE: `commodityhub://auth-callback` MUST be added to the project's
       // Supabase Auth → URL Configuration → Redirect URLs allow-list.
       const redirectTo = isNative
-        ? 'commodityhub://auth-callback'
+        ? NATIVE_AUTH_CALLBACK_URL
         : `${window.location.origin}/`;
 
       const oauthClient = isNative ? createNativeImplicitOAuthClient() : supabase;
@@ -435,11 +436,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { error };
       }
 
-      // On native, open Google's consent screen in the system browser. We use
-      // the hosted bridge as the Supabase redirect target because it is already
-      // a normal HTTPS app URL in Supabase/Google allow-lists. The bridge then
-      // forwards the OAuth payload back to the installed app with the
-      // commodityhub:// deep link.
+      // On native, open Google's consent screen in the system browser. Supabase
+      // returns straight to the registered commodityhub:// deep link, where the
+      // Capacitor App plugin exchanges the OAuth payload into a local session.
       if (isNative && data?.url) {
         try {
           localStorage.setItem('auth:native-oauth-pending', '1');
