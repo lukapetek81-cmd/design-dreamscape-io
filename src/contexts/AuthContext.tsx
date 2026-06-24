@@ -60,7 +60,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = React.useState(true);
   const { toast } = useToast();
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = React.useCallback(async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -103,7 +103,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Error fetching profile:', error);
     }
-  };
+  }, []);
+
+  const profileFromUser = React.useCallback((authUser: User): Profile => {
+    const meta: any = authUser.user_metadata ?? {};
+    const now = new Date().toISOString();
+
+    return {
+      id: authUser.id,
+      email: authUser.email ?? '',
+      full_name: meta.full_name ?? meta.name ?? authUser.email ?? null,
+      avatar_url: meta.avatar_url ?? meta.picture ?? null,
+      subscription_tier: 'free',
+      subscription_active: false,
+      subscription_end: null,
+      billing_state: null,
+      grace_period_expires_at: null,
+      created_at: authUser.created_at ?? now,
+      updated_at: now,
+    };
+  }, []);
+
+  const applySession = React.useCallback((nextSession: Session | null) => {
+    setSession(nextSession);
+    setUser(nextSession?.user ?? null);
+    setLoading(false);
+
+    if (nextSession?.user) {
+      // Show the signed-in avatar/menu immediately from Google metadata; the
+      // database profile can arrive later without blocking the top-right UI.
+      setProfile((current) => current?.id === nextSession.user.id ? current : profileFromUser(nextSession.user));
+      setTimeout(() => fetchProfile(nextSession.user.id), 0);
+    } else {
+      setProfile(null);
+    }
+  }, [fetchProfile, profileFromUser]);
 
   const checkSubscriptionStatus = React.useCallback(async (userId: string) => {
     try {
@@ -123,7 +157,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Error checking subscription status:', error);
     }
-  }, []);
+  }, [fetchProfile]);
 
   const refreshProfile = async () => {
     if (user) {
@@ -138,6 +172,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     }, 5000);
 
+    // Native OAuth deep-link handler dispatches this after setSession() so
+    // the avatar/menu update without waiting for the Supabase listener tick.
+    const handleNativeSession = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { session: Session | null } | undefined;
+      applySession(detail?.session ?? null);
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('auth:native-session', handleNativeSession);
+    }
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -151,23 +195,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (event === 'SIGNED_OUT') {
           purgeMalformedSupabaseTokens();
         }
-        setSession(session);
-        setUser(session?.user ?? null);
+        applySession(session);
         
         if (session?.user) {
           // Defer profile fetching and subscription check to avoid blocking auth state changes
           setTimeout(() => {
-            fetchProfile(session.user.id);
             // Check subscription status on login (with slight delay)
             setTimeout(() => {
               checkSubscriptionStatus(session.user.id);
             }, 2000);
           }, 0);
-        } else {
-          setProfile(null);
         }
-        
-        setLoading(false);
       }
     );
 
@@ -212,16 +250,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
 
         console.log('Initial session check:', session?.user?.email || 'no user');
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        if (session?.user) {
-          setTimeout(() => {
-            fetchProfile(session.user.id);
-          }, 0);
-        }
-
-        setLoading(false);
+        applySession(session);
       } catch (error) {
         console.error('Failed to get session:', error);
         clearTimeout(loadingTimeout);
@@ -232,22 +261,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
     void initSession();
 
-    // Native OAuth deep-link handler dispatches this after setSession() so
-    // the avatar/menu update without waiting for the Supabase listener tick.
-    const handleNativeSession = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { session: Session | null } | undefined;
-      const s = detail?.session ?? null;
-      setSession(s);
-      setUser(s?.user ?? null);
-      setLoading(false);
-      if (s?.user) {
-        setTimeout(() => fetchProfile(s.user.id), 0);
-      }
-    };
-    if (typeof window !== 'undefined') {
-      window.addEventListener('auth:native-session', handleNativeSession);
-    }
-
     return () => {
       subscription.unsubscribe();
       clearTimeout(loadingTimeout);
@@ -255,7 +268,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         window.removeEventListener('auth:native-session', handleNativeSession);
       }
     };
-  }, [checkSubscriptionStatus]);
+  }, [applySession, checkSubscriptionStatus]);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     try {
@@ -402,6 +415,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // commodityhub:// deep link.
       if (isNative && data?.url) {
         try {
+          localStorage.setItem('auth:native-oauth-pending', '1');
           const { Browser } = await import('@capacitor/browser');
           await Browser.open({
             url: data.url,
@@ -409,6 +423,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             windowName: '_self',
           });
         } catch (browserErr) {
+          localStorage.removeItem('auth:native-oauth-pending');
           console.error('Failed to open in-app browser for OAuth:', browserErr);
           return { error: browserErr };
         }

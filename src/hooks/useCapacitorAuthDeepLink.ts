@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
+import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -12,6 +13,39 @@ export function useCapacitorAuthDeepLink() {
     if (!Capacitor.isNativePlatform()) return;
 
     let removeListener: (() => void) | undefined;
+    const nativeOAuthPendingKey = 'auth:native-oauth-pending';
+
+    const broadcastNativeSession = (session: Session | null) => {
+      if (typeof window === 'undefined') return;
+
+      const emit = () => {
+        window.dispatchEvent(
+          new CustomEvent('auth:native-session', { detail: { session } })
+        );
+      };
+
+      // Emit now, then replay shortly after. On Android the deep-link hook can
+      // finish before AuthProvider's effect listener has attached, especially
+      // when the app is being foregrounded from Chrome Custom Tabs.
+      emit();
+      window.setTimeout(emit, 75);
+      window.setTimeout(emit, 300);
+      window.setTimeout(emit, 900);
+    };
+
+    const refreshAndBroadcastSession = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          localStorage.removeItem(nativeOAuthPendingKey);
+          broadcastNativeSession(data.session);
+          return true;
+        }
+      } catch (e) {
+        console.warn('[OAuth] Failed to refresh native session', e);
+      }
+      return false;
+    };
 
     (async () => {
       try {
@@ -41,6 +75,7 @@ export function useCapacitorAuthDeepLink() {
             const callbackUrl = new URL(url);
             const searchParams = callbackUrl.searchParams;
             const hashParams = new URLSearchParams(callbackUrl.hash.slice(1));
+            let establishedSession: Session | null = null;
 
             const oauthError =
               searchParams.get('error_description') ||
@@ -57,9 +92,12 @@ export function useCapacitorAuthDeepLink() {
 
             if (code) {
               console.log('[OAuth] Exchanging PKCE code for session');
-              const { error } = await supabase.auth.exchangeCodeForSession(code);
+              const { data, error } = await supabase.auth.exchangeCodeForSession(code);
               if (error) console.error('exchangeCodeForSession failed:', error);
-              else console.log('[OAuth] Session established via PKCE');
+              else {
+                establishedSession = data.session;
+                console.log('[OAuth] Session established via PKCE');
+              }
             }
 
             // Implicit flow. The web bridge moves fragment tokens into the
@@ -69,11 +107,17 @@ export function useCapacitorAuthDeepLink() {
             const refresh_token = searchParams.get('refresh_token') || hashParams.get('refresh_token');
             if (access_token && refresh_token) {
               console.log('[OAuth] Setting session via implicit tokens');
-              const { error } = await supabase.auth.setSession({
+              const { data, error } = await supabase.auth.setSession({
                 access_token,
                 refresh_token,
               });
               if (error) console.error('setSession failed:', error);
+              else establishedSession = data.session;
+            }
+
+            if (establishedSession) {
+              localStorage.removeItem(nativeOAuthPendingKey);
+              broadcastNativeSession(establishedSession);
             }
 
             window.history.replaceState({}, document.title, '/');
@@ -81,13 +125,8 @@ export function useCapacitorAuthDeepLink() {
             // Notify the AuthProvider directly so the top-right UI updates
             // immediately, without waiting for the next onAuthStateChange tick
             // (which can be delayed by the WebView coming back to foreground).
-            try {
-              const { data } = await supabase.auth.getSession();
-              window.dispatchEvent(
-                new CustomEvent('auth:native-session', { detail: { session: data.session } })
-              );
-            } catch (e) {
-              console.warn('[OAuth] Failed to broadcast native session', e);
+            if (!establishedSession) {
+              await refreshAndBroadcastSession();
             }
           } catch (err) {
             console.error('OAuth deep-link handling failed:', err);
@@ -96,19 +135,33 @@ export function useCapacitorAuthDeepLink() {
           return true;
         };
 
-        const launchUrl = await App.getLaunchUrl();
-        await handleOAuthUrl(launchUrl?.url);
-
         const handle = await App.addListener('appUrlOpen', async ({ url }) => {
           await handleOAuthUrl(url);
         });
 
+        const appStateHandle = await App.addListener('appStateChange', async ({ isActive }) => {
+          if (!isActive || localStorage.getItem(nativeOAuthPendingKey) !== '1') return;
+          // When Android foregrounds the WebView before appUrlOpen has flushed,
+          // poll briefly so the header flips as soon as Supabase storage exists.
+          for (let attempt = 0; attempt < 6; attempt++) {
+            if (await refreshAndBroadcastSession()) break;
+            await new Promise((resolve) => window.setTimeout(resolve, 250));
+          }
+        });
+
+        const launchUrl = await App.getLaunchUrl();
+        await handleOAuthUrl(launchUrl?.url);
+
         const browserHandle = await Browser.addListener('browserFinished', async () => {
           await closeBrowserAndRefreshSession();
+          if (localStorage.getItem(nativeOAuthPendingKey) === '1') {
+            await refreshAndBroadcastSession();
+          }
         });
 
         removeListener = () => {
           handle.remove();
+          appStateHandle.remove();
           browserHandle.remove();
         };
       } catch (err) {
