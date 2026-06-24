@@ -5,7 +5,6 @@ import { useToast } from '@/hooks/use-toast';
 import { validateFormData } from '@/utils/validation';
 import { authRateLimiter } from '@/utils/security';
 import { Capacitor } from '@capacitor/core';
-import { NATIVE_OAUTH_WEB_BRIDGE_URL } from '@/utils/nativeOAuth';
 import { tierFromProfile, type Tier } from '@/utils/tiers';
 
 interface Profile {
