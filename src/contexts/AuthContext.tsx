@@ -60,7 +60,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = React.useState(true);
   const { toast } = useToast();
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = React.useCallback(async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -103,7 +103,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Error fetching profile:', error);
     }
-  };
+  }, []);
 
   const profileFromUser = React.useCallback((authUser: User): Profile => {
     const meta: any = authUser.user_metadata ?? {};
@@ -137,7 +137,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } else {
       setProfile(null);
     }
-  }, [profileFromUser]);
+  }, [fetchProfile, profileFromUser]);
 
   const checkSubscriptionStatus = React.useCallback(async (userId: string) => {
     try {
@@ -157,7 +157,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Error checking subscription status:', error);
     }
-  }, []);
+  }, [fetchProfile]);
 
   const refreshProfile = async () => {
     if (user) {
