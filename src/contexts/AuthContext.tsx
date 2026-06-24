@@ -232,9 +232,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
     void initSession();
 
+    // Native OAuth deep-link handler dispatches this after setSession() so
+    // the avatar/menu update without waiting for the Supabase listener tick.
+    const handleNativeSession = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { session: Session | null } | undefined;
+      const s = detail?.session ?? null;
+      setSession(s);
+      setUser(s?.user ?? null);
+      setLoading(false);
+      if (s?.user) {
+        setTimeout(() => fetchProfile(s.user.id), 0);
+      }
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('auth:native-session', handleNativeSession);
+    }
+
     return () => {
       subscription.unsubscribe();
       clearTimeout(loadingTimeout);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('auth:native-session', handleNativeSession);
+      }
     };
   }, [checkSubscriptionStatus]);
 

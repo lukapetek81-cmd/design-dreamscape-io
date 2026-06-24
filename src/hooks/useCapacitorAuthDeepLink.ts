@@ -24,10 +24,6 @@ export function useCapacitorAuthDeepLink() {
           } catch {
             /* no-op — browser may already be closed */
           }
-
-          const { data, error } = await supabase.auth.getSession();
-          if (error) console.error('[OAuth] Session refresh after browser close failed:', error);
-          else if (data.session) console.log('[OAuth] Session available after native return');
         };
 
         const handleOAuthUrl = async (url?: string) => {
@@ -36,6 +32,10 @@ export function useCapacitorAuthDeepLink() {
           // tolerating trailing slashes, host casing, or alternate paths.
           if (!url.toLowerCase().startsWith('commodityhub://')) return false;
           console.log('[OAuth] Received native deep link');
+
+          // Close the in-app browser FIRST so the app WebView is foregrounded
+          // and JS timers/microtasks run promptly while we finalize the session.
+          await closeBrowserAndRefreshSession();
 
           try {
             const callbackUrl = new URL(url);
@@ -77,10 +77,20 @@ export function useCapacitorAuthDeepLink() {
             }
 
             window.history.replaceState({}, document.title, '/');
+
+            // Notify the AuthProvider directly so the top-right UI updates
+            // immediately, without waiting for the next onAuthStateChange tick
+            // (which can be delayed by the WebView coming back to foreground).
+            try {
+              const { data } = await supabase.auth.getSession();
+              window.dispatchEvent(
+                new CustomEvent('auth:native-session', { detail: { session: data.session } })
+              );
+            } catch (e) {
+              console.warn('[OAuth] Failed to broadcast native session', e);
+            }
           } catch (err) {
             console.error('OAuth deep-link handling failed:', err);
-          } finally {
-            await closeBrowserAndRefreshSession();
           }
 
           return true;
