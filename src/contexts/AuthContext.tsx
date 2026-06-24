@@ -6,7 +6,7 @@ import { validateFormData } from '@/utils/validation';
 import { authRateLimiter } from '@/utils/security';
 import { Capacitor } from '@capacitor/core';
 import { tierFromProfile, type Tier } from '@/utils/tiers';
-import { NATIVE_AUTH_CALLBACK_URL } from '@/utils/nativeOAuth';
+import { NATIVE_OAUTH_WEB_BRIDGE_URL } from '@/utils/nativeOAuth';
 
 interface Profile {
   id: string;
@@ -396,17 +396,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signInWithGoogle = async () => {
     try {
       const isNative = Capacitor.isNativePlatform();
-      // On native, redirect Supabase OAuth straight at the registered
-      // `commodityhub://` deep link. Chrome Custom Tabs follows custom-scheme
-      // redirects that originate from the OAuth provider, and Android delivers
-      // the URL straight to the installed app via `appUrlOpen` — far more
-      // reliable than bouncing through a hosted web bridge that depends on
-      // intent:// redirects being followed without a user gesture.
+      // On Android, direct custom-scheme redirects from OAuth/Chrome Custom
+      // Tabs can be dropped before Capacitor receives `appUrlOpen`. Send the
+      // Supabase callback to the hosted web bridge first; it converts the OAuth
+      // payload into an Android intent/custom-scheme URL that reopens the app.
       //
-      // NOTE: `commodityhub://auth-callback` MUST be added to the project's
-      // Supabase Auth → URL Configuration → Redirect URLs allow-list.
+      // NOTE: the bridge URL MUST be allowed in Supabase Auth → URL
+      // Configuration → Redirect URLs.
       const redirectTo = isNative
-        ? NATIVE_AUTH_CALLBACK_URL
+        ? NATIVE_OAUTH_WEB_BRIDGE_URL
         : `${window.location.origin}/`;
 
       const oauthClient = isNative ? createNativeImplicitOAuthClient() : supabase;
@@ -437,8 +435,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // On native, open Google's consent screen in the system browser. Supabase
-      // returns straight to the registered commodityhub:// deep link, where the
-      // Capacitor App plugin exchanges the OAuth payload into a local session.
+      // returns to the hosted bridge, which reopens the installed app with the
+      // OAuth payload so the Capacitor App plugin can persist the session.
       if (isNative && data?.url) {
         try {
           localStorage.setItem('auth:native-oauth-pending', '1');
