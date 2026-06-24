@@ -423,6 +423,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             windowName: '_self',
           });
         } catch (browserErr) {
+          localStorage.removeItem('auth:native-oauth-pending');
           console.error('Failed to open in-app browser for OAuth:', browserErr);
           return { error: browserErr };
         }
