@@ -396,8 +396,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signInWithGoogle = async () => {
     try {
       const isNative = Capacitor.isNativePlatform();
+      // On native, redirect Supabase OAuth straight at the registered
+      // `commodityhub://` deep link. Chrome Custom Tabs follows custom-scheme
+      // redirects that originate from the OAuth provider, and Android delivers
+      // the URL straight to the installed app via `appUrlOpen` — far more
+      // reliable than bouncing through a hosted web bridge that depends on
+      // intent:// redirects being followed without a user gesture.
+      //
+      // NOTE: `commodityhub://auth-callback` MUST be added to the project's
+      // Supabase Auth → URL Configuration → Redirect URLs allow-list.
       const redirectTo = isNative
-        ? NATIVE_OAUTH_WEB_BRIDGE_URL
+        ? 'commodityhub://auth-callback'
         : `${window.location.origin}/`;
 
       const oauthClient = isNative ? createNativeImplicitOAuthClient() : supabase;
