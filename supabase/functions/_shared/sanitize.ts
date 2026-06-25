@@ -59,7 +59,7 @@ const VALUE_PATTERNS: Array<{ re: RegExp; replace: string }> = [
     replace: "[JWT_REDACTED]",
   },
   // Bearer tokens
-  { re: /Bearer\s+[A-Za-z0-9._\-]+/gi, replace: "Bearer [REDACTED]" },
+  { re: /Bearer\s+[A-Za-z0-9._-]+/gi, replace: "Bearer [REDACTED]" },
   // Email addresses
   {
     re: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
@@ -72,7 +72,7 @@ const VALUE_PATTERNS: Array<{ re: RegExp; replace: string }> = [
   },
   // Long alphanumeric blobs that look like API keys (32+ chars, mixed)
   {
-    re: /\b(?=[A-Za-z0-9_\-]{32,})(?=[A-Za-z0-9_\-]*[A-Z])(?=[A-Za-z0-9_\-]*[a-z])(?=[A-Za-z0-9_\-]*\d)[A-Za-z0-9_\-]{32,}\b/g,
+    re: /\b(?=[A-Za-z0-9_-]{32,})(?=[A-Za-z0-9_-]*[A-Z])(?=[A-Za-z0-9_-]*[a-z])(?=[A-Za-z0-9_-]*\d)[A-Za-z0-9_-]{32,}\b/g,
     replace: "[KEY_REDACTED]",
   },
   // Stripe-style keys

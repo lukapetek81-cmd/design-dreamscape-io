@@ -5,7 +5,7 @@ import { z } from "https://esm.sh/zod@3.23.8";
 
 // ── Common validators ──────────────────────────────────────────────
 
-const symbolPattern = /^[a-zA-Z0-9.\-]+$/;
+const symbolPattern = /^[a-zA-Z0-9.-]+$/;
 
 export const SessionIdSchema = z.object({
   sessionId: z.string().min(1, "sessionId is required").max(200),
