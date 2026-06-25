@@ -72,7 +72,7 @@ serve(async (req) => {
     // Reuse cached prices from fetch-all-commodities (CPA + OilPriceAPI).
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
     const anon = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
-    let pricesByName = new Map<string, { price: number; change: number; changePercent: number }>()
+    const pricesByName = new Map<string, { price: number; change: number; changePercent: number }>()
     try {
       const upstream = await fetch(`${supabaseUrl}/functions/v1/fetch-all-commodities`, {
         method: 'POST',

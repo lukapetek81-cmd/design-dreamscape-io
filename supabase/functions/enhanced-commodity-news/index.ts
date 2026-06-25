@@ -57,7 +57,7 @@ serve(async (req) => {
     const newsApiKey = Deno.env.get('NEWS_API_KEY');
     const marketauxApiKey = Deno.env.get('MARKETAUX_API_KEY');
     
-    let articles: NewsItem[] = [];
+    const articles: NewsItem[] = [];
 
     // Try Marketaux API first (financial news aggregator)
     if (source === 'marketaux' || source === 'all') {
