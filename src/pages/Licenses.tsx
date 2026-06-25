@@ -22,8 +22,20 @@ const LIBRARIES: Entry[] = [
   { name: 'date-fns', license: 'MIT', url: 'https://github.com/date-fns/date-fns' },
   { name: 'Supabase JS', license: 'MIT', url: 'https://github.com/supabase/supabase-js' },
   { name: 'Capacitor', license: 'MIT', url: 'https://github.com/ionic-team/capacitor' },
-  { name: 'Mermaid', license: 'MIT', url: 'https://github.com/mermaid-js/mermaid' },
   { name: 'Sonner', license: 'MIT', url: 'https://github.com/emilkowalski/sonner' },
+  { name: 'Vercel AI SDK', license: 'Apache-2.0', url: 'https://github.com/vercel/ai' },
+  { name: 'Streamdown', license: 'MIT', url: 'https://github.com/vercel/streamdown' },
+  { name: 'Mermaid', license: 'MIT', url: 'https://github.com/mermaid-js/mermaid' },
+  { name: 'React Hook Form', license: 'MIT', url: 'https://github.com/react-hook-form/react-hook-form' },
+  { name: 'Motion (Framer Motion)', license: 'MIT', url: 'https://github.com/motiondivision/motion' },
+  { name: 'next-themes', license: 'MIT', url: 'https://github.com/pacocoursey/next-themes' },
+  { name: 'cmdk', license: 'MIT', url: 'https://github.com/pacocoursey/cmdk' },
+  { name: 'Embla Carousel', license: 'MIT', url: 'https://github.com/davidjerleke/embla-carousel' },
+  { name: 'class-variance-authority', license: 'Apache-2.0', url: 'https://github.com/joe-bell/cva' },
+  { name: 'tailwind-merge', license: 'MIT', url: 'https://github.com/dcastil/tailwind-merge' },
+  { name: 'RevenueCat Purchases Capacitor', license: 'MIT', url: 'https://github.com/RevenueCat/purchases-capacitor' },
+  { name: 'lodash', license: 'MIT', url: 'https://github.com/lodash/lodash' },
+  { name: 'axios', license: 'MIT', url: 'https://github.com/axios/axios' },
 ];
 
 const DATA_SOURCES: Entry[] = [
