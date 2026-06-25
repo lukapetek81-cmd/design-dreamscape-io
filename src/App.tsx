@@ -34,6 +34,7 @@ const DeleteAccount = lazy(() => import('@/pages/DeleteAccount'));
 const VersionInfo = lazy(() => import('@/pages/VersionInfo'));
 const CatalogAudit = lazy(() => import('@/pages/CatalogAudit'));
 const Legal = lazy(() => import('@/pages/Legal'));
+const Licenses = lazy(() => import('@/pages/Licenses'));
 const PositionCalculator = lazy(() => import('@/pages/PositionCalculator'));
 const PriceAlerts = lazy(() => import('@/pages/PriceAlerts'));
 const ForwardCurves = lazy(() => import('@/pages/ForwardCurves'));
