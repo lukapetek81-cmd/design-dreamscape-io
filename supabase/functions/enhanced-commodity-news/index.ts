@@ -43,7 +43,7 @@ serve(async (req) => {
     
     // Input validation
     const commodity = typeof body.commodity === 'string' && body.commodity.length > 0 && body.commodity.length <= 100
-      ? body.commodity.replace(/[^a-zA-Z0-9\s\-]/g, '')
+      ? body.commodity.replace(/[^a-zA-Z0-9\s-]/g, '')
       : null;
     const validSources = ['all', 'marketaux', 'news'];
     const source = validSources.includes(body.source) ? body.source : 'all';
@@ -57,7 +57,7 @@ serve(async (req) => {
     const newsApiKey = Deno.env.get('NEWS_API_KEY');
     const marketauxApiKey = Deno.env.get('MARKETAUX_API_KEY');
     
-    let articles: NewsItem[] = [];
+    const articles: NewsItem[] = [];
 
     // Try Marketaux API first (financial news aggregator)
     if (source === 'marketaux' || source === 'all') {

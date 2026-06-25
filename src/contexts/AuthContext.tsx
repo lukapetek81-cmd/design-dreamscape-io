@@ -260,7 +260,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         if (error) {
           console.error('Session check error — flushing bad token:', error);
-          try { await supabase.auth.signOut({ scope: 'local' } as any); } catch {}
+          try { await supabase.auth.signOut({ scope: 'local' } as any); } catch { /* noop */ }
           purgeMalformedSupabaseTokens();
           setSession(null);
           setUser(null);
@@ -273,7 +273,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } catch (error) {
         console.error('Failed to get session:', error);
         clearTimeout(loadingTimeout);
-        try { await supabase.auth.signOut({ scope: 'local' } as any); } catch {}
+        try { await supabase.auth.signOut({ scope: 'local' } as any); } catch { /* noop */ }
         purgeMalformedSupabaseTokens();
         setLoading(false);
       }
