@@ -85,7 +85,7 @@ const UserProfile = () => {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem className="cursor-pointer mobile-touch-target px-4 py-3" asChild>
-          <Link to="/billing">
+          <Link to="/account-settings">
             <Settings className="mr-3 h-4 w-4" />
             <span className="text-sm">Account Settings</span>
           </Link>
