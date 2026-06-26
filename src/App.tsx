@@ -31,6 +31,7 @@ const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
 const Watchlists = lazy(() => import('@/pages/Watchlists'));
 const DeleteAccount = lazy(() => import('@/pages/DeleteAccount'));
+const AccountSettings = lazy(() => import('@/pages/AccountSettings'));
 const VersionInfo = lazy(() => import('@/pages/VersionInfo'));
 const CatalogAudit = lazy(() => import('@/pages/CatalogAudit'));
 const Legal = lazy(() => import('@/pages/Legal'));
@@ -99,6 +100,10 @@ const App = () => {
                 
                 <Route path="/watchlists" element={<Watchlists />} />
                 <Route path="/delete-account" element={<DeleteAccount />} />
+                <Route path="/account-settings" element={<AccountSettings />} />
+                <Route path="/account" element={<AccountSettings />} />
+                <Route path="/settings" element={<AccountSettings />} />
+                <Route path="/billing" element={<AccountSettings />} />
                 <Route path="/version" element={<VersionInfo />} />
                 <Route path="/about" element={<VersionInfo />} />
                 <Route path="/legal" element={<Legal />} />
