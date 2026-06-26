@@ -36,10 +36,36 @@ function readPkg(name) {
 }
 
 function normalizeLicense(lic) {
-  if (!lic) return 'UNKNOWN';
+  if (!lic) return null;
   if (typeof lic === 'string') return lic;
-  if (Array.isArray(lic)) return lic.map((l) => l.type || l).join(' OR ');
-  return lic.type || 'UNKNOWN';
+  if (Array.isArray(lic)) {
+    const joined = lic.map((l) => (typeof l === 'string' ? l : l?.type)).filter(Boolean).join(' OR ');
+    return joined || null;
+  }
+  return lic.type || null;
+}
+function detectLicenseFromFiles(name) {
+  try {
+    const dir = path.join(ROOT, 'node_modules', name);
+    const entries = fs.readdirSync(dir);
+    const file = entries.find((f) => /^licen[cs]e(\.|$)/i.test(f));
+    if (!file) return null;
+    const text = fs.readFileSync(path.join(dir, file), 'utf8').slice(0, 4000);
+    const patterns = [
+      [/\bMIT License\b/i, 'MIT*'],
+      [/\bApache License,? Version 2\.0\b/i, 'Apache-2.0*'],
+      [/\bBSD 3-Clause\b/i, 'BSD-3-Clause*'],
+      [/\bBSD 2-Clause\b/i, 'BSD-2-Clause*'],
+      [/\bISC License\b/i, 'ISC*'],
+      [/\bMozilla Public License Version 2\.0\b/i, 'MPL-2.0*'],
+      [/\bGNU GENERAL PUBLIC LICENSE\b/i, 'GPL*'],
+      [/\bUnlicense\b/i, 'Unlicense*'],
+    ];
+    for (const [re, id] of patterns) if (re.test(text)) return id;
+    return 'See LICENSE file*';
+  } catch {
+    return null;
+  }
 }
 
 function normalizeUrl(pkg, name) {
@@ -62,11 +88,33 @@ const deps = Object.keys(PKG.dependencies || {})
 const libraries = deps
   .map((name) => {
     const pkg = readPkg(name);
-    if (!pkg) return { name, version: PKG.dependencies[name], license: 'UNKNOWN', url: `https://www.npmjs.com/package/${name}` };
+    if (!pkg) {
+      return {
+        name,
+        version: PKG.dependencies[name],
+        license: 'Not installed — see npm',
+        licenseSource: 'missing',
+        url: `https://www.npmjs.com/package/${name}`,
+      };
+    }
+    let license = normalizeLicense(pkg.license);
+    let licenseSource = license ? 'package.json' : null;
+    if (!license) {
+      const fromFile = detectLicenseFromFiles(name);
+      if (fromFile) {
+        license = fromFile;
+        licenseSource = 'license-file';
+      }
+    }
+    if (!license) {
+      license = 'Unspecified — see source';
+      licenseSource = 'unknown';
+    }
     return {
       name,
       version: pkg.version,
-      license: normalizeLicense(pkg.license),
+      license,
+      licenseSource,
       url: normalizeUrl(pkg, name),
     };
   });
