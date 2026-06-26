@@ -4,46 +4,12 @@ import SEOHead from '@/components/SEOHead';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, FileText } from 'lucide-react';
+import attributions from '@/data/ossAttributions.json';
 
-type Entry = { name: string; license: string; url: string };
-
-const LIBRARIES: Entry[] = [
-  { name: 'React', license: 'MIT', url: 'https://github.com/facebook/react' },
-  { name: 'React Router', license: 'MIT', url: 'https://github.com/remix-run/react-router' },
-  { name: 'Vite', license: 'MIT', url: 'https://github.com/vitejs/vite' },
-  { name: 'TypeScript', license: 'Apache-2.0', url: 'https://github.com/microsoft/TypeScript' },
-  { name: 'Tailwind CSS', license: 'MIT', url: 'https://github.com/tailwindlabs/tailwindcss' },
-  { name: 'shadcn/ui', license: 'MIT', url: 'https://github.com/shadcn-ui/ui' },
-  { name: 'Radix UI', license: 'MIT', url: 'https://github.com/radix-ui/primitives' },
-  { name: 'Lucide Icons', license: 'ISC', url: 'https://github.com/lucide-icons/lucide' },
-  { name: 'TanStack Query', license: 'MIT', url: 'https://github.com/TanStack/query' },
-  { name: 'Recharts', license: 'MIT', url: 'https://github.com/recharts/recharts' },
-  { name: 'Zod', license: 'MIT', url: 'https://github.com/colinhacks/zod' },
-  { name: 'date-fns', license: 'MIT', url: 'https://github.com/date-fns/date-fns' },
-  { name: 'Supabase JS', license: 'MIT', url: 'https://github.com/supabase/supabase-js' },
-  { name: 'Capacitor', license: 'MIT', url: 'https://github.com/ionic-team/capacitor' },
-  { name: 'Sonner', license: 'MIT', url: 'https://github.com/emilkowalski/sonner' },
-  { name: 'Vercel AI SDK', license: 'Apache-2.0', url: 'https://github.com/vercel/ai' },
-  { name: 'Streamdown', license: 'MIT', url: 'https://github.com/vercel/streamdown' },
-  { name: 'Mermaid', license: 'MIT', url: 'https://github.com/mermaid-js/mermaid' },
-  { name: 'React Hook Form', license: 'MIT', url: 'https://github.com/react-hook-form/react-hook-form' },
-  { name: 'Motion (Framer Motion)', license: 'MIT', url: 'https://github.com/motiondivision/motion' },
-  { name: 'next-themes', license: 'MIT', url: 'https://github.com/pacocoursey/next-themes' },
-  { name: 'cmdk', license: 'MIT', url: 'https://github.com/pacocoursey/cmdk' },
-  { name: 'Embla Carousel', license: 'MIT', url: 'https://github.com/davidjerleke/embla-carousel' },
-  { name: 'class-variance-authority', license: 'Apache-2.0', url: 'https://github.com/joe-bell/cva' },
-  { name: 'tailwind-merge', license: 'MIT', url: 'https://github.com/dcastil/tailwind-merge' },
-  { name: 'RevenueCat Purchases Capacitor', license: 'MIT', url: 'https://github.com/RevenueCat/purchases-capacitor' },
-  { name: 'lodash', license: 'MIT', url: 'https://github.com/lodash/lodash' },
-  { name: 'axios', license: 'MIT', url: 'https://github.com/axios/axios' },
-];
-
-const DATA_SOURCES: Entry[] = [
-  { name: 'OilPriceAPI', license: 'Commercial license', url: 'https://oilpriceapi.com' },
-  { name: 'Financial Modeling Prep', license: 'Commercial license', url: 'https://financialmodelingprep.com' },
-  { name: 'Marketaux', license: 'Commercial license', url: 'https://www.marketaux.com' },
-  { name: 'BloFin API', license: 'Commercial license', url: 'https://blofin.com' },
-];
+type Entry = { name: string; version?: string; license: string; url: string };
+const LIBRARIES = attributions.libraries as Entry[];
+const DATA_SOURCES = attributions.dataSources as Entry[];
+const GENERATED_AT = attributions.generatedAt as string;
 
 const Licenses: React.FC = () => {
   const navigate = useNavigate();
@@ -87,11 +53,18 @@ const Licenses: React.FC = () => {
                         className="font-medium hover:underline"
                       >
                         {lib.name}
+                        {lib.version ? (
+                          <span className="text-muted-foreground text-xs ml-2">v{lib.version}</span>
+                        ) : null}
                       </a>
                       <span className="text-muted-foreground text-xs">{lib.license}</span>
                     </li>
                   ))}
                 </ul>
+                <p className="text-muted-foreground text-xs mt-2">
+                  Auto-generated from package.json on{' '}
+                  {new Date(GENERATED_AT).toLocaleDateString()}.
+                </p>
               </section>
 
               <section>
