@@ -10,7 +10,8 @@
     "android:bump": "node scripts/bump-android-version.mjs",
     "android:release": "node scripts/bump-android-version.mjs && vite build && npx cap sync android",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "gen:attributions": "node scripts/generate-oss-attributions.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.48",
