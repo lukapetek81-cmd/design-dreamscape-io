@@ -65,8 +65,8 @@ const UserProfile = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative aspect-square h-11 w-11 min-h-11 min-w-11 p-0 rounded-full mobile-touch-target">
-          <Avatar className="aspect-square h-11 w-11">
+        <Button variant="ghost" className="relative aspect-square h-12 w-12 min-h-12 min-w-12 p-0 rounded-full flex items-center justify-center">
+          <Avatar className="aspect-square h-12 w-12">
             <AvatarImage src={displayAvatar} alt={displayName} />
             <AvatarFallback className="bg-primary/10 text-primary font-medium">
               {getInitials(displayName)}
