@@ -14,6 +14,39 @@ const limiter = new IpRateLimiter({ limit: 60, windowMs: 60_000 });
 const priceCache = new Map<string, { data: any; timestamp: number }>();
 const SINGLE_CACHE_TTL = 2 * 60 * 60 * 1000; // 2 hours — protects OilPriceAPI quota for premium subscribers
 const BATCH_CACHE_TTL = 2 * 60 * 60 * 1000;  // 2 hours
+// DB snapshot fallback TTL — survives Edge Function cold starts (in-memory cache
+// is per-instance and lost on reboot). 4h is fine for daily-moving futures.
+const SNAPSHOT_FALLBACK_TTL = 4 * 60 * 60 * 1000;
+
+let _sbClient: ReturnType<typeof createClient> | null = null;
+function getServiceClient() {
+  if (_sbClient) return _sbClient;
+  const url = Deno.env.get('SUPABASE_URL') ?? '';
+  const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+  if (!url || !key) return null;
+  _sbClient = createClient(url, key, { auth: { persistSession: false } });
+  return _sbClient;
+}
+
+async function readSnapshot(name: string): Promise<{ price: number; ts: string } | null> {
+  const sb = getServiceClient();
+  if (!sb) return null;
+  try {
+    const since = new Date(Date.now() - SNAPSHOT_FALLBACK_TTL).toISOString();
+    const { data } = await sb
+      .from('commodity_price_snapshots')
+      .select('price, created_at')
+      .eq('commodity_name', name)
+      .gte('created_at', since)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (data && Number(data.price) > 0) {
+      return { price: Number(data.price), ts: (data as any).created_at };
+    }
+  } catch (_e) { /* fall through to upstream */ }
+  return null;
+}
 
 function getCached(key: string, ttl: number): any | null {
   const entry = priceCache.get(key);
@@ -166,6 +199,25 @@ serve(async (req) => {
         );
       }
 
+      // DB snapshot fallback (survives cold starts) — avoids burning OilPriceAPI credit
+      // when a fresh-enough price already exists in commodity_price_snapshots.
+      const snap = await readSnapshot(commodityName);
+      if (snap) {
+        const snapData = {
+          price: snap.price,
+          formatted: `$${snap.price}`,
+          code,
+          timestamp: snap.ts,
+          source: 'oilpriceapi-snapshot',
+        };
+        setCache(cacheKey, snapData);
+        console.log(`Snapshot fallback for ${code}: $${snap.price}`);
+        return new Response(
+          JSON.stringify({ data: snapData }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       const response = await fetch(`${OIL_API_BASE}/prices/latest?by_code=${code}`, {
         headers: { 'Authorization': `Token ${apiKey}` },
       });
@@ -224,6 +276,52 @@ serve(async (req) => {
 
       console.log(`Batch: ${Object.keys(results).length} cached, ${uncachedNames.length} to fetch`);
 
+      // DB snapshot fallback before burning upstream credits. Bulk query for
+      // all uncached names in one round-trip.
+      const stillMissing: string[] = [];
+      if (uncachedNames.length > 0) {
+        const sb = getServiceClient();
+        if (sb) {
+          try {
+            const since = new Date(Date.now() - SNAPSHOT_FALLBACK_TTL).toISOString();
+            const { data: snaps } = await sb
+              .from('commodity_price_snapshots')
+              .select('commodity_name, price, created_at')
+              .in('commodity_name', uncachedNames)
+              .gte('created_at', since)
+              .order('created_at', { ascending: false });
+            const seen = new Set<string>();
+            for (const row of (snaps ?? []) as Array<{ commodity_name: string; price: number; created_at: string }>) {
+              if (seen.has(row.commodity_name)) continue;
+              seen.add(row.commodity_name);
+              if (!(Number(row.price) > 0)) continue;
+              const code = OIL_BLEND_CODES[row.commodity_name];
+              results[row.commodity_name] = {
+                price: Number(row.price),
+                change: 0,
+                changePercent: 0,
+                timestamp: row.created_at,
+                source: 'oilpriceapi-snapshot',
+                code,
+              };
+              setCache(`single:${code}`, {
+                price: Number(row.price),
+                formatted: `$${row.price}`,
+                code,
+                timestamp: row.created_at,
+                source: 'oilpriceapi-snapshot',
+              });
+            }
+            for (const n of uncachedNames) if (!seen.has(n)) stillMissing.push(n);
+          } catch (_e) {
+            stillMissing.push(...uncachedNames);
+          }
+        } else {
+          stillMissing.push(...uncachedNames);
+        }
+      }
+      console.log(`Batch after snapshot: ${stillMissing.length} still need upstream fetch`);
+
       // Sequential fetch with throttling — OilPriceAPI rate-limits aggressive parallel calls (429).
       // Concurrency=4 with small inter-batch delay keeps us under typical free-tier limits
       // while still finishing 33 commodities in a few seconds.
@@ -231,9 +329,9 @@ serve(async (req) => {
       const INTER_BATCH_DELAY_MS = 1100;
       let rateLimited = false;
 
-      for (let i = 0; i < uncachedNames.length; i += CONCURRENCY) {
+      for (let i = 0; i < stillMissing.length; i += CONCURRENCY) {
         if (rateLimited) break; // Stop hammering the API once we hit a 429
-        const slice = uncachedNames.slice(i, i + CONCURRENCY);
+        const slice = stillMissing.slice(i, i + CONCURRENCY);
         await Promise.all(slice.map(async (name: string) => {
           const code = OIL_BLEND_CODES[name];
           try {
@@ -275,12 +373,12 @@ serve(async (req) => {
             console.warn(`Failed to fetch ${code} from OilPriceAPI:`, err);
           }
         }));
-        if (i + CONCURRENCY < uncachedNames.length && !rateLimited) {
+        if (i + CONCURRENCY < stillMissing.length && !rateLimited) {
           await new Promise((r) => setTimeout(r, INTER_BATCH_DELAY_MS));
         }
       }
 
-      console.log(`OilPriceAPI batch: ${Object.keys(results).length} total (${uncachedNames.length} requested, ${rateLimited ? 'RATE-LIMITED' : 'ok'})`);
+      console.log(`OilPriceAPI batch: ${Object.keys(results).length} total (${stillMissing.length} upstream, ${rateLimited ? 'RATE-LIMITED' : 'ok'})`);
 
       return new Response(
         JSON.stringify({ data: results }),
