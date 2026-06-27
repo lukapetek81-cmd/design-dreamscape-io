@@ -96,10 +96,10 @@ serve(async (req) => {
   });
 
   // Cooldown guard: if the canonical refined-product row was upserted in the
-  // last 25 minutes, skip. Protects OilPriceAPI quota even if the endpoint
+  // last 110 minutes, skip. Protects OilPriceAPI quota even if the endpoint
   // is hit repeatedly by anyone holding the (public) anon key.
   try {
-    const since = new Date(Date.now() - 25 * 60 * 1000).toISOString();
+    const since = new Date(Date.now() - 110 * 60 * 1000).toISOString();
     const { data: recent } = await sb
       .from("commodity_price_snapshots")
       .select("commodity_name, created_at")
