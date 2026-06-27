@@ -29,7 +29,7 @@ describe('Utils - Currency and Number Formatting', () => {
 
     it('should handle large percentages', () => {
       expect(formatPercent(1.5)).toBe('150.00%')
-      expect(formatPercent(10)).toBe('1000.00%')
+      expect(formatPercent(10)).toBe('1,000.00%')
     })
   })
 
