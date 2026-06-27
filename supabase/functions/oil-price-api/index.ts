@@ -199,6 +199,25 @@ serve(async (req) => {
         );
       }
 
+      // DB snapshot fallback (survives cold starts) — avoids burning OilPriceAPI credit
+      // when a fresh-enough price already exists in commodity_price_snapshots.
+      const snap = await readSnapshot(commodityName);
+      if (snap) {
+        const snapData = {
+          price: snap.price,
+          formatted: `$${snap.price}`,
+          code,
+          timestamp: snap.ts,
+          source: 'oilpriceapi-snapshot',
+        };
+        setCache(cacheKey, snapData);
+        console.log(`Snapshot fallback for ${code}: $${snap.price}`);
+        return new Response(
+          JSON.stringify({ data: snapData }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       const response = await fetch(`${OIL_API_BASE}/prices/latest?by_code=${code}`, {
         headers: { 'Authorization': `Token ${apiKey}` },
       });
