@@ -11,6 +11,17 @@ vi.mock('@/hooks/useCommodityData', () => ({
   }),
 }))
 
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({
+    user: null,
+    session: null,
+    profile: null,
+    loading: false,
+    signOut: vi.fn(),
+  }),
+  AuthProvider: ({ children }: { children: React.ReactNode }) => children,
+}))
+
 describe('CommodityCard Component', () => {
   const mockCommodityProps = {
     name: 'Gold',
