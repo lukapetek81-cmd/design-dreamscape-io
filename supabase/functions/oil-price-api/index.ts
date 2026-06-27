@@ -14,6 +14,39 @@ const limiter = new IpRateLimiter({ limit: 60, windowMs: 60_000 });
 const priceCache = new Map<string, { data: any; timestamp: number }>();
 const SINGLE_CACHE_TTL = 2 * 60 * 60 * 1000; // 2 hours — protects OilPriceAPI quota for premium subscribers
 const BATCH_CACHE_TTL = 2 * 60 * 60 * 1000;  // 2 hours
+// DB snapshot fallback TTL — survives Edge Function cold starts (in-memory cache
+// is per-instance and lost on reboot). 4h is fine for daily-moving futures.
+const SNAPSHOT_FALLBACK_TTL = 4 * 60 * 60 * 1000;
+
+let _sbClient: ReturnType<typeof createClient> | null = null;
+function getServiceClient() {
+  if (_sbClient) return _sbClient;
+  const url = Deno.env.get('SUPABASE_URL') ?? '';
+  const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+  if (!url || !key) return null;
+  _sbClient = createClient(url, key, { auth: { persistSession: false } });
+  return _sbClient;
+}
+
+async function readSnapshot(name: string): Promise<{ price: number; ts: string } | null> {
+  const sb = getServiceClient();
+  if (!sb) return null;
+  try {
+    const since = new Date(Date.now() - SNAPSHOT_FALLBACK_TTL).toISOString();
+    const { data } = await sb
+      .from('commodity_price_snapshots')
+      .select('price, created_at')
+      .eq('commodity_name', name)
+      .gte('created_at', since)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (data && Number(data.price) > 0) {
+      return { price: Number(data.price), ts: (data as any).created_at };
+    }
+  } catch (_e) { /* fall through to upstream */ }
+  return null;
+}
 
 function getCached(key: string, ttl: number): any | null {
   const entry = priceCache.get(key);
