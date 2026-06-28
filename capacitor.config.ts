@@ -25,6 +25,17 @@ const config: CapacitorConfig = {
     StatusBar: {
       style: "DARK",
       backgroundColor: "#1e3a5f"
+    },
+    GoogleAuth: {
+      // The Web OAuth Client ID from Google Cloud Console (the same client ID
+      // configured in Supabase → Auth → Providers → Google). This is NOT a
+      // secret — it's a public OAuth client identifier and safe to ship.
+      // Read from VITE_GOOGLE_WEB_CLIENT_ID at build time so it can be rotated
+      // without code changes.
+      clientId: process.env.VITE_GOOGLE_WEB_CLIENT_ID,
+      serverClientId: process.env.VITE_GOOGLE_WEB_CLIENT_ID,
+      scopes: ['profile', 'email'],
+      forceCodeForRefreshToken: true,
     }
   },
   android: {
