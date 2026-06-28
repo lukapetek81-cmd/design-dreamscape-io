@@ -1,12 +1,11 @@
 import React, { ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { createNativeImplicitOAuthClient, supabase, purgeMalformedSupabaseTokens } from '@/integrations/supabase/client';
+import { supabase, purgeMalformedSupabaseTokens } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { validateFormData } from '@/utils/validation';
 import { authRateLimiter } from '@/utils/security';
 import { Capacitor } from '@capacitor/core';
 import { tierFromProfile, type Tier } from '@/utils/tiers';
-import { NATIVE_OAUTH_WEB_BRIDGE_URL } from '@/utils/nativeOAuth';
 
 interface Profile {
   id: string;
