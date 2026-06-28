@@ -1,12 +1,11 @@
 import React, { ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { createNativeImplicitOAuthClient, supabase, purgeMalformedSupabaseTokens } from '@/integrations/supabase/client';
+import { supabase, purgeMalformedSupabaseTokens } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { validateFormData } from '@/utils/validation';
 import { authRateLimiter } from '@/utils/security';
 import { Capacitor } from '@capacitor/core';
 import { tierFromProfile, type Tier } from '@/utils/tiers';
-import { NATIVE_OAUTH_WEB_BRIDGE_URL } from '@/utils/nativeOAuth';
 
 interface Profile {
   id: string;
@@ -396,23 +395,64 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signInWithGoogle = async () => {
     try {
       const isNative = Capacitor.isNativePlatform();
-      // On Android, direct custom-scheme redirects from OAuth/Chrome Custom
-      // Tabs can be dropped before Capacitor receives `appUrlOpen`. Send the
-      // Supabase callback to the hosted web bridge first; it converts the OAuth
-      // payload into an Android intent/custom-scheme URL that reopens the app.
-      //
-      // NOTE: the bridge URL MUST be allowed in Supabase Auth → URL
-      // Configuration → Redirect URLs.
-      const redirectTo = isNative
-        ? NATIVE_OAUTH_WEB_BRIDGE_URL
-        : `${window.location.origin}/`;
 
-      const oauthClient = isNative ? createNativeImplicitOAuthClient() : supabase;
-      const { data, error } = await oauthClient.auth.signInWithOAuth({
+      // === Native: use the Google Sign-In SDK + signInWithIdToken ===
+      // This eliminates the browser hop, deep link, and web bridge entirely.
+      // The native Google account picker returns an ID token directly in-app,
+      // which Supabase exchanges for a session synchronously.
+      if (isNative) {
+        try {
+          const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth');
+          // initialize() is a no-op if already initialized; safe to call each tap.
+          try {
+            await GoogleAuth.initialize({
+              clientId: import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID as string,
+              scopes: ['profile', 'email'],
+              grantOfflineAccess: true,
+            });
+          } catch { /* already initialized */ }
+
+          const result = await GoogleAuth.signIn();
+          const idToken = result?.authentication?.idToken;
+          if (!idToken) throw new Error('Google Sign-In returned no ID token');
+
+          const { data, error } = await supabase.auth.signInWithIdToken({
+            provider: 'google',
+            token: idToken,
+          });
+          if (error) throw error;
+
+          // Broadcast immediately so the avatar/menu update without waiting
+          // for the onAuthStateChange listener tick.
+          if (data.session && typeof window !== 'undefined') {
+            window.dispatchEvent(
+              new CustomEvent('auth:native-session', { detail: { session: data.session } })
+            );
+          }
+          toast({ title: 'Welcome!', description: 'Signed in with Google.' });
+          return { error: null };
+        } catch (err: any) {
+          const message = err?.message || String(err);
+          // User-cancelled flows shouldn't surface as errors.
+          if (/cancel|canceled|cancelled|12501/i.test(message)) {
+            return { error: null };
+          }
+          toast({
+            title: 'Google Sign In Error',
+            description: message,
+            variant: 'destructive',
+          });
+          return { error: err };
+        }
+      }
+
+      // === Web: standard Supabase OAuth redirect flow ===
+      const redirectTo = `${window.location.origin}/`;
+
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo,
-          skipBrowserRedirect: isNative,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -432,25 +472,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           variant: "destructive",
         });
         return { error };
-      }
-
-      // On native, open Google's consent screen in the system browser. Supabase
-      // returns to the hosted bridge, which reopens the installed app with the
-      // OAuth payload so the Capacitor App plugin can persist the session.
-      if (isNative && data?.url) {
-        try {
-          localStorage.setItem('auth:native-oauth-pending', '1');
-          const { Browser } = await import('@capacitor/browser');
-          await Browser.open({
-            url: data.url,
-            presentationStyle: 'fullscreen',
-            windowName: '_self',
-          });
-        } catch (browserErr) {
-          localStorage.removeItem('auth:native-oauth-pending');
-          console.error('Failed to open in-app browser for OAuth:', browserErr);
-          return { error: browserErr };
-        }
       }
 
       return { error: null };
